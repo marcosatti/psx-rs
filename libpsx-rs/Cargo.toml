@@ -1,0 +1,15 @@
+[package]
+name = "libpsx-rs"
+version = "0.1.0"
+authors = ["Marco Satti <marcosatti@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+spin = "0.5"
+euclid = "0.19"
+rayon = "1.0"
+num-traits = "0.2"
+sdl2 = "0.32"
+opengl-sys = { path = "../opengl-sys" }
+openal-sys = { path = "../openal-sys" }

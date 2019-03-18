@@ -1,0 +1,8 @@
+[package]
+name = "openal-sys"
+version = "1.1.0"
+authors = ["Marco Satti <marcosatti@gmail.com>"]
+edition = "2018"
+
+[build-dependencies]
+bindgen = "0.42"

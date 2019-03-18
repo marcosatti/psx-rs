@@ -1,0 +1,8 @@
+/target/
+/workspace/
+/external/
+/doc/
+
+**/*.rs.bk
+**/*.dll
+perf*

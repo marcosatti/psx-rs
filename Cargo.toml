@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "opengl-sys",
+    "openal-sys",
+    "libpsx-rs",
+    "psx-rs",
+]
+
+[profile.release]
+debug = true
