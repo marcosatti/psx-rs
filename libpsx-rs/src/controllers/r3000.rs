@@ -9,7 +9,6 @@ use crate::constants::r3000::{CLOCK_SPEED, INSTRUCTION_SIZE};
 use crate::controllers::Event;
 use crate::controllers::r3000::memory_controller::translate_address;
 use crate::controllers::r3000::instruction::lookup as instruction_lookup;
-use crate::types::access_context::AccessContext;
 use crate::types::mips1::instruction::Instruction;
 use crate::utilities::mips1::status_push_exception;
 use crate::resources::r3000::cp0::{STATUS_BEV, STATUS_IM, CAUSE_IP, CAUSE_BD, STATUS_IEC, CAUSE_EXCCODE, CAUSE_EXCCODE_INT, CAUSE_EXCCODE_SYSCALL};
@@ -49,7 +48,7 @@ unsafe fn tick(state: &State) -> i64 {
     let pc_pa = translate_address(pc_va);
 
     let mapper = &mut resources.r3000.memory_mapper;
-    let inst_value = mapper.read_u32(pc_pa, AccessContext::R3000);   
+    let inst_value = mapper.read_u32(pc_pa);   
     let inst = Instruction::new(inst_value);                
 
     resources.r3000.pc.write_u32(pc_va + INSTRUCTION_SIZE);

@@ -4,7 +4,6 @@ use crate::types::register::b16_register::B16Register;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::bitfield::Bitfield;
-use crate::types::access_context::AccessContext;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TransferMode {
@@ -29,7 +28,7 @@ impl Fifo {
 }
 
 impl B8MemoryMap for Fifo {
-    fn write_u16(&mut self, offset: usize, _context: AccessContext, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) {
         if offset != 0 { panic!("Invalid offset"); }
         let _lock = self.lock.lock();
         self.fifo.push_back(value);
@@ -51,13 +50,13 @@ impl TransferAddress {
 }
 
 impl B8MemoryMap for TransferAddress {
-    fn read_u16(&mut self, offset: usize, context: AccessContext) -> u16 {
-        B8MemoryMap::read_u16(&mut self.register, offset, context)
+    fn read_u16(&mut self, offset: usize) -> u16 {
+        B8MemoryMap::read_u16(&mut self.register, offset)
     }
 
-    fn write_u16(&mut self, offset: usize, context: AccessContext, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) {
         if self.write_latch { panic!("Write latch still on"); }
-        B8MemoryMap::write_u16(&mut self.register, offset, context, value);
+        B8MemoryMap::write_u16(&mut self.register, offset, value);
         self.write_latch = true;
     }
 }
@@ -79,25 +78,25 @@ impl VoiceKey {
 }
 
 impl B8MemoryMap for VoiceKey {
-    fn read_u16(&mut self, offset: usize, context: AccessContext) -> u16 {
-        B8MemoryMap::read_u16(&mut self.register, offset, context)
+    fn read_u16(&mut self, offset: usize) -> u16 {
+        B8MemoryMap::read_u16(&mut self.register, offset)
     }
 
-    fn write_u16(&mut self, offset: usize, context: AccessContext, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) {
         let _lock = self.mutex.lock();
-        B8MemoryMap::write_u16(&mut self.register, offset, context, value);
+        B8MemoryMap::write_u16(&mut self.register, offset, value);
         for i in 0..16 {
             self.write_latch[(offset * 8) + i] = Bitfield::new(i, 1).extract_from(value) != 0;
         }
     }
 
-    fn read_u32(&mut self, offset: usize, context: AccessContext) -> u32 {
-        B8MemoryMap::read_u32(&mut self.register, offset, context)
+    fn read_u32(&mut self, offset: usize) -> u32 {
+        B8MemoryMap::read_u32(&mut self.register, offset)
     }
 
-    fn write_u32(&mut self, offset: usize, context: AccessContext, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) {
         let _lock = self.mutex.lock();
-        B8MemoryMap::write_u32(&mut self.register, offset, context, value);
+        B8MemoryMap::write_u32(&mut self.register, offset, value);
         for i in 0..32 {
             self.write_latch[i] = Bitfield::new(i, 1).extract_from(value) != 0;
         }

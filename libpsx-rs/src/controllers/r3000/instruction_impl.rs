@@ -2,7 +2,6 @@ use log::debug;
 use crate::State;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
-use crate::types::access_context::AccessContext;
 use crate::controllers::r3000::set_exception;
 use crate::controllers::r3000::DEBUG_TICK_COUNT;
 use crate::controllers::r3000::memory_controller::translate_address;
@@ -534,7 +533,7 @@ pub unsafe fn lb(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u8(addr, AccessContext::R3000) as i8 as i32 as u32
+        resources.r3000.memory_mapper.read_u8(addr) as i8 as i32 as u32
     } else { 
         0 
     };
@@ -552,7 +551,7 @@ pub unsafe fn lh(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u16(addr, AccessContext::R3000) as i16 as i32 as u32
+        resources.r3000.memory_mapper.read_u16(addr) as i16 as i32 as u32
     } else { 
         0 
     };
@@ -576,7 +575,7 @@ pub unsafe fn lwl(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u32(addr, AccessContext::R3000)
+        resources.r3000.memory_mapper.read_u32(addr)
     } else { 
         0
     };
@@ -598,7 +597,7 @@ pub unsafe fn lw(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u32(addr, AccessContext::R3000)
+        resources.r3000.memory_mapper.read_u32(addr)
     } else { 
         0
     };
@@ -616,7 +615,7 @@ pub unsafe fn lbu(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u8(addr, AccessContext::R3000) as u32
+        resources.r3000.memory_mapper.read_u8(addr) as u32
     } else { 
         0 
     };
@@ -634,7 +633,7 @@ pub unsafe fn lhu(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u16(addr, AccessContext::R3000) as u32
+        resources.r3000.memory_mapper.read_u16(addr) as u32
     } else { 
         0 
     };
@@ -658,7 +657,7 @@ pub unsafe fn lwr(state: &State, instruction: Instruction) {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        resources.r3000.memory_mapper.read_u32(addr, AccessContext::R3000)
+        resources.r3000.memory_mapper.read_u32(addr)
     } else { 
         0
     };
@@ -684,7 +683,7 @@ pub unsafe fn sb(state: &State, instruction: Instruction) {
     //debug!("sb (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
-        resources.r3000.memory_mapper.write_u8(addr, AccessContext::R3000, value);
+        resources.r3000.memory_mapper.write_u8(addr, value);
     }
 }
 
@@ -700,7 +699,7 @@ pub unsafe fn sh(state: &State, instruction: Instruction) {
     //debug!("sh (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
-        resources.r3000.memory_mapper.write_u16(addr, AccessContext::R3000, value);
+        resources.r3000.memory_mapper.write_u16(addr, value);
     }
 }
 
@@ -719,7 +718,7 @@ pub unsafe fn swl(state: &State, instruction: Instruction) {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     let mem_value = if !isc { 
-        resources.r3000.memory_mapper.read_u32(addr, AccessContext::R3000)
+        resources.r3000.memory_mapper.read_u32(addr)
     } else { 
         0
     };
@@ -731,7 +730,7 @@ pub unsafe fn swl(state: &State, instruction: Instruction) {
     //debug!("swl (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
-        resources.r3000.memory_mapper.write_u32(addr, AccessContext::R3000, value);
+        resources.r3000.memory_mapper.write_u32(addr, value);
     }
 }
 
@@ -747,7 +746,7 @@ pub unsafe fn sw(state: &State, instruction: Instruction) {
     //debug!("sw (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
-        resources.r3000.memory_mapper.write_u32(addr, AccessContext::R3000, value);
+        resources.r3000.memory_mapper.write_u32(addr, value);
     }
 }
 
@@ -766,7 +765,7 @@ pub unsafe fn swr(state: &State, instruction: Instruction) {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     let mem_value = if !isc { 
-        resources.r3000.memory_mapper.read_u32(addr, AccessContext::R3000)
+        resources.r3000.memory_mapper.read_u32(addr)
     } else { 
         0
     };
@@ -778,6 +777,6 @@ pub unsafe fn swr(state: &State, instruction: Instruction) {
     //debug!("swl (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
-        resources.r3000.memory_mapper.write_u32(addr, AccessContext::R3000, value);
+        resources.r3000.memory_mapper.write_u32(addr, value);
     }
 }

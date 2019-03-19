@@ -1,7 +1,6 @@
 use spin::Mutex;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::access_context::AccessContext;
 use crate::types::bitfield::Bitfield;
 
 pub struct Stat {
@@ -24,23 +23,23 @@ impl Stat {
 }
 
 impl B8MemoryMap for Stat {
-    fn read_u16(&mut self, offset: usize, context: AccessContext) -> u16 {
-        B8MemoryMap::read_u16(&mut self.register, offset, context)
+    fn read_u16(&mut self, offset: usize) -> u16 {
+        B8MemoryMap::read_u16(&mut self.register, offset)
     }
     
-    fn write_u16(&mut self, offset: usize, context: AccessContext, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) {
         let _lock = self.mutex.lock();
         let value = value & self.register.read_u16(offset);
-        B8MemoryMap::write_u16(&mut self.register, offset, context, value);
+        B8MemoryMap::write_u16(&mut self.register, offset, value);
     }
 
-    fn read_u32(&mut self, offset: usize, context: AccessContext) -> u32 {
-        B8MemoryMap::read_u32(&mut self.register, offset, context)
+    fn read_u32(&mut self, offset: usize) -> u32 {
+        B8MemoryMap::read_u32(&mut self.register, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, context: AccessContext, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) {
         let _lock = self.mutex.lock();
         let value = value & self.register.read_u32();
-        B8MemoryMap::write_u32(&mut self.register, offset, context, value);
+        B8MemoryMap::write_u32(&mut self.register, offset, value);
     }
 }

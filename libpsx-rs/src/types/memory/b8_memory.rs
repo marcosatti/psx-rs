@@ -1,5 +1,4 @@
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::access_context::AccessContext;
 
 pub struct B8Memory {
     memory: Vec<u8>,
@@ -60,27 +59,27 @@ impl B8Memory {
 }
 
 impl B8MemoryMap for B8Memory {
-    fn read_u8(&mut self, offset: usize, _context: AccessContext) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> u8 {
         Self::read_u8(self, offset)
     }
     
-    fn write_u8(&mut self, offset: usize, _context: AccessContext, value: u8) {
+    fn write_u8(&mut self, offset: usize, value: u8) {
         Self::write_u8(self, offset, value);
     }
 
-    fn read_u16(&mut self, offset: usize, _context: AccessContext) -> u16 {
+    fn read_u16(&mut self, offset: usize) -> u16 {
         Self::read_u16(self, offset)
     }
     
-    fn write_u16(&mut self, offset: usize, _context: AccessContext, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) {
         Self::write_u16(self, offset, value);
     }
 
-    fn read_u32(&mut self, offset: usize, _context: AccessContext) -> u32 {
+    fn read_u32(&mut self, offset: usize) -> u32 {
         Self::read_u32(self, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, _context: AccessContext, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) {
         Self::write_u32(self, offset, value);
     }
 }

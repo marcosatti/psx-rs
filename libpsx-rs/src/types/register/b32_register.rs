@@ -1,6 +1,5 @@
 use crate::types::bitfield::Bitfield;
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::access_context::AccessContext;
 
 #[repr(C)]
 pub union B32Register_ {
@@ -77,30 +76,30 @@ impl B32Register {
 }
 
 impl B8MemoryMap for B32Register {
-    fn read_u8(&mut self, offset: usize, _context: AccessContext) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> u8 {
         Self::read_u8(self, offset)
     }
     
-    fn write_u8(&mut self, offset: usize, _context: AccessContext, value: u8) {
+    fn write_u8(&mut self, offset: usize, value: u8) {
         Self::write_u8(self, offset, value);
     }
 
-    fn read_u16(&mut self, offset: usize, _context: AccessContext) -> u16 {
+    fn read_u16(&mut self, offset: usize) -> u16 {
         if offset % 2 != 0 { panic!("Non aligned offset"); }
         Self::read_u16(self, offset / 2)
     }
     
-    fn write_u16(&mut self, offset: usize, _context: AccessContext, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) {
         if offset % 2 != 0 { panic!("Non aligned offset"); }
         Self::write_u16(self, offset / 2, value);
     }
 
-    fn read_u32(&mut self, offset: usize, _context: AccessContext) -> u32 {
+    fn read_u32(&mut self, offset: usize) -> u32 {
         if offset != 0 { panic!("Invalid offset"); }
         Self::read_u32(self)
     }
     
-    fn write_u32(&mut self, offset: usize, _context: AccessContext, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) {
         if offset != 0 { panic!("Invalid offset"); }
         Self::write_u32(self, value);
     }
