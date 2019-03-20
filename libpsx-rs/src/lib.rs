@@ -143,7 +143,7 @@ fn load_bios(path: &PathBuf, resources: &mut Resources) {
 
 fn video_setup(video_backend: &VideoBackend) {
     match video_backend {
-        VideoBackend::OpenGl(ref params) => {
+        VideoBackend::Opengl(ref params) => {
             let (_gl_context_guard, _gl_context) = params.context.guard();
 
             unsafe {

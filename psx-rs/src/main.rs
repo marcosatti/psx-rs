@@ -66,13 +66,13 @@ fn main() {
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
-        video_backend: VideoBackend::OpenGl(
-            open_gl::BackendParams {
+        video_backend: VideoBackend::Opengl(
+            opengl::BackendParams {
                 context: BackendContext::new(&opengl_acquire_context, &opengl_release_context),
             }
         ),
-        audio_backend: AudioBackend::OpenAl(
-            open_al::BackendParams {
+        audio_backend: AudioBackend::Openal(
+            openal::BackendParams {
                 context: BackendContext::new(&openal_acquire_context, &openal_release_context),
             }
         )

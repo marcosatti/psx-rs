@@ -2,7 +2,7 @@ pub mod voice;
 pub mod transfer;
 pub mod adpcm;
 pub mod sound;
-pub mod open_al;
+pub mod openal;
 pub mod dac;
 
 use std::time::Duration;

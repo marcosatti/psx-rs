@@ -1,7 +1,7 @@
-pub mod open_gl;
+pub mod opengl;
 
-use crate::backends::video::open_gl::*;
+use crate::backends::video::opengl::*;
 
 pub enum VideoBackend<'a> {
-    OpenGl(BackendParams<'a>),
+    Opengl(BackendParams<'a>),
 }

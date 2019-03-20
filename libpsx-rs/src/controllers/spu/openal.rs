@@ -1,5 +1,5 @@
 use openal_sys::*;
-use crate::backends::audio::open_al::*;
+use crate::backends::audio::openal::*;
 
 // TODO: very quick hack to get things working
 

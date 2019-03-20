@@ -1,7 +1,7 @@
 use opengl_sys::*;
 use euclid::{Point2D, Rect};
 use log::debug;
-use crate::backends::video::open_gl::*;
+use crate::backends::video::opengl::*;
 
 pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32>; 4], r: u8, g: u8, b: u8, a: u8) {
     let (_gl_context_guard, context) = backend_params.context.guard();

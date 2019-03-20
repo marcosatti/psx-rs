@@ -3,15 +3,12 @@ use euclid::{Rect, Point2D, point2, rect};
 use crate::backends::video::VideoBackend;
 use crate::State;
 use crate::types::bitfield::Bitfield;
-use crate::controllers::gpu::open_gl;
+use crate::controllers::gpu::opengl;
 use crate::resources::gpu::*;
 
 pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
     let stat = &mut resources.gpu.gpu1814.stat;
-
-    let b24_color_depth = stat.read_bitfield(STAT_DISPLAY_COLOR_DEPTH) !=0;
-    if b24_color_depth { unimplemented!("24 bit color depth not supported yet"); }
 
     let fifo = &mut resources.gpu.gpu1810.gp0;
     
@@ -161,8 +158,8 @@ unsafe fn command_28(state: &State, values: [u32; 5]) {
     };
 
     match state.video_backend {
-        VideoBackend::OpenGl(ref backend_params) => {
-            open_gl::draw_polygon_4_solid(backend_params, vertices, r, g, b, a);
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_4_solid(backend_params, vertices, r, g, b, a);
         },
     }
 }
@@ -270,8 +267,8 @@ fn command_2c(state: &State, values: [u32; 9]) {
     // debug!("clut: x = {}, y = {}", clut_x, clut_y);
 
     match state.video_backend {
-        VideoBackend::OpenGl(ref backend_params) => {
-            open_gl::draw_polygon_4_fb_blended(backend_params, vertices, texcoords);
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_4_fb_blended(backend_params, vertices, texcoords);
         },
     }
 }
@@ -315,8 +312,8 @@ fn command_30(state: &State, values: [u32; 6]) {
     };
 
     match state.video_backend {
-        VideoBackend::OpenGl(ref backend_params) => {
-            open_gl::draw_polygon_3_shaded(backend_params, vertices, colors);
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_3_shaded(backend_params, vertices, colors);
         },
     }
 }
@@ -362,8 +359,8 @@ fn command_38(state: &State, values: [u32; 8]) {
     };
 
     match state.video_backend {
-        VideoBackend::OpenGl(ref backend_params) => {
-            open_gl::draw_polygon_4_shaded(backend_params, vertices, colors);
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_4_shaded(backend_params, vertices, colors);
         },
     }
 }
@@ -426,8 +423,8 @@ fn command_a0(state: &State, values: [u32; 3], data: &[u32]) {
     }
 
     match state.video_backend {
-        VideoBackend::OpenGl(ref backend_params) => {
-            open_gl::draw_rectangle_textured(backend_params, rect, width, height, &data_rgb);
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_rectangle_textured(backend_params, rect, width, height, &data_rgb);
         },
     }
 }

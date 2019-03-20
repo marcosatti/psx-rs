@@ -5,7 +5,7 @@ use crate::backends::audio::AudioBackend;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::spu::voice::*;
 use crate::controllers::spu::adpcm::*;
-use crate::controllers::spu::open_al;
+use crate::controllers::spu::openal;
 use crate::resources::spu::voice::*;
 
 pub unsafe fn generate_sound(state: &State) {
@@ -85,8 +85,8 @@ unsafe fn handle_play_sound_buffer(state: &State, voice_id: usize, force: bool) 
     if play_state.sample_buffer.len() == BUFFER_SIZE || forced {
         // TODO: proper frequency, although pcsxr just assumes 44100 all the time...
         match state.audio_backend {
-            AudioBackend::OpenAl(ref backend_params) => {
-                open_al::play_pcm_samples(backend_params, &play_state.sample_buffer, 44100, voice_id);
+            AudioBackend::Openal(ref backend_params) => {
+                openal::play_pcm_samples(backend_params, &play_state.sample_buffer, 44100, voice_id);
             },
         }
 

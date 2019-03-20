@@ -1,7 +1,7 @@
-pub mod open_al;
+pub mod openal;
 
-use crate::backends::audio::open_al::*;
+use crate::backends::audio::openal::*;
 
 pub enum AudioBackend<'a> {
-    OpenAl(BackendParams<'a>),
+    Openal(BackendParams<'a>),
 }

@@ -1,8 +1,9 @@
 use std::time::{Duration, Instant};
 use opengl_sys::*;
 use log::debug;
+use crate::constants::gpu::crtc::*;
 use crate::backends::video::VideoBackend;
-use crate::backends::video::open_gl::*;
+use crate::backends::video::opengl::*;
 use crate::State;
 use crate::controllers::Event;
 use crate::resources::gpu::*;
@@ -30,8 +31,8 @@ unsafe fn handle_display(state: &State, duration: Duration) {
     }
 
     *vblank_time += duration;
-    if *vblank_time >= Duration::from_float_secs(1.0 / 60.0) {
-        *vblank_time -= Duration::from_float_secs(1.0 / 60.0);
+    if *vblank_time >= REFRESH_RATE_NTSC_PERIOD {
+        *vblank_time -= REFRESH_RATE_NTSC_PERIOD;
         
         handle_vblank(state);
     }
@@ -61,7 +62,7 @@ unsafe fn vblank_interrupt(state: &State) {
 
 fn render(state: &State) {
     match state.video_backend {
-        VideoBackend::OpenGl(ref params) => {
+        VideoBackend::Opengl(ref params) => {
             let (_context_guard, context) = params.context.guard();
 
             let positions_flat: [f32; 8] = [

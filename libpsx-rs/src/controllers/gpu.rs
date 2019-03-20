@@ -1,7 +1,7 @@
 pub mod crtc;
 pub mod gp0;
 pub mod gp1;
-pub mod open_gl;
+pub mod opengl;
 
 use std::time::Duration;
 use crate::State;
