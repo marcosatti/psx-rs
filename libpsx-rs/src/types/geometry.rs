@@ -1,4 +1,4 @@
-use euclid::{TypedPoint2D, TypedSize2D, UnknownUnit};
+use euclid::{TypedPoint2D, TypedSize2D};
 
 // Units
 pub struct Normalized;

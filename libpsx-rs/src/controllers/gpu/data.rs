@@ -183,7 +183,7 @@ pub fn extract_texcoords_4(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw:
 }
 
 pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw: [u32; 4]) -> [Point2D<f64, Normalized>; 4] {
-    normalize_points_4(extract_texcoords(texpage_raw, clut_mode, texcoords_raw))
+    normalize_points_4(extract_texcoords_4(texpage_raw, clut_mode, texcoords_raw))
 }
 
 pub fn extract_clut_base(clut_raw: u32) -> Point2D<usize, Pixel> {
