@@ -23,8 +23,8 @@ unsafe fn tick(state: &State, duration: Duration) {
     let current_duration = &mut resources.spu.dac.current_duration;
 
     *current_duration += duration;
-    if (*current_duration).as_float_secs() > SAMPLE_RATE_PERIOD {
-        *current_duration -= Duration::from_float_secs(SAMPLE_RATE_PERIOD);
+    if *current_duration > SAMPLE_RATE_PERIOD {
+        *current_duration -= SAMPLE_RATE_PERIOD;
 
         if control.read_bitfield(CONTROL_ENABLE) == 0 {
             return;

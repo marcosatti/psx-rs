@@ -19,7 +19,7 @@ pub fn run(state: &State, event: Event) {
 }
 
 fn run_time(state: &State, duration: Duration) {
-    let mut ticks = (CLOCK_SPEED * duration.as_float_secs()) as i64;
+    let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 

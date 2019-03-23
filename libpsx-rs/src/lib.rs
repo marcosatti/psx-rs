@@ -157,8 +157,8 @@ fn video_setup(video_backend: &VideoBackend) {
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, 1024, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);  
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);  
 
                 let mut rbo = 0;
                 glGenRenderbuffers(1, &mut rbo);

@@ -33,7 +33,7 @@ pub unsafe fn get_madr(state: &State, channel: usize) -> *mut B32Register {
         4 => &mut resources.dmac.spu_madr,
         5 => &mut resources.dmac.pio_madr,
         6 => &mut resources.dmac.otc_madr,
-        _ => panic!("Unknown DMAC channel"),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
@@ -47,7 +47,7 @@ pub unsafe fn get_bcr(state: &State, channel: usize) -> *mut B32Register {
         4 => &mut resources.dmac.spu_bcr,
         5 => &mut resources.dmac.pio_bcr,
         6 => &mut resources.dmac.otc_bcr,
-        _ => panic!("Unknown DMAC channel"),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
@@ -61,7 +61,7 @@ pub unsafe fn get_chcr(state: &State, channel: usize) -> *mut B32Register {
         4 => &mut resources.dmac.spu_chcr.register,
         5 => &mut resources.dmac.pio_chcr.register,
         6 => &mut resources.dmac.otc_chcr.chcr.register,
-        _ => panic!("Unknown DMAC channel"),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
@@ -75,7 +75,7 @@ pub unsafe fn get_transfer_state(state: &State, channel: usize) -> *mut Transfer
         4 => &mut resources.dmac.spu_transfer_state,
         5 => &mut resources.dmac.pio_transfer_state,
         6 => &mut resources.dmac.otc_transfer_state,
-        _ => panic!("Unknown DMAC channel"),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
@@ -89,7 +89,7 @@ pub unsafe fn pop_channel_data(state: &State, channel: usize, madr: u32, last_tr
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
         6 => if !last_transfer { (madr - 4) & 0x00FF_FFFF } else { 0x00FF_FFFF },
-        _ => panic!("Unknown DMAC channel"),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
@@ -106,7 +106,7 @@ pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) {
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
         6 => panic!("Channel 6 cannot recieve data (OTC)"),
-        _ => panic!("Unknown DMAC channel"),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
@@ -114,7 +114,7 @@ pub fn get_transfer_direction(chcr: &B32Register) -> TransferDirection {
     match chcr.read_bitfield(CHCR_TRANSFER_DIRECTION) {
         0 => TransferDirection::FromChannel,
         1 => TransferDirection::ToChannel,
-        _ => panic!("Unknown transfer direction"),
+        _ => unreachable!("Invalid transfer direction"),
     }
 }
 
@@ -122,7 +122,7 @@ pub fn get_step_direction(chcr: &B32Register) -> StepDirection {
     match chcr.read_bitfield(CHCR_MADR_STEP_DIRECTION) { 
         0 => StepDirection::Forwards,
         1 => StepDirection::Backwards,
-        _ => panic!("Unknown step direction"),
+        _ => unreachable!("Invalid step direction"),
     }
 }
 
@@ -131,7 +131,7 @@ pub fn get_sync_mode(chcr: &B32Register) -> SyncMode {
         0 => SyncMode::Continuous,
         1 => SyncMode::Blocks,
         2 => SyncMode::LinkedList,
-        _ => panic!("Unknown sync mode"),
+        _ => unreachable!("Invalid sync mode"),
     }
 }
 

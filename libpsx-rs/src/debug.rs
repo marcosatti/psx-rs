@@ -58,14 +58,14 @@ pub fn trace_performance(time_elapsed: &Duration, benchmark_results: &BenchmarkD
         *BENCHMARK_CONTROLLERS.intc_benchmark.get() += *benchmark_results.intc_benchmark.get();
 
         if BENCHMARK_LAST_REPORTED.unwrap().elapsed() > BENCHMARK_REPORTING_FREQUENCY {
-            let overall_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / BENCHMARK_REPORTING_FREQUENCY.as_float_secs() * 100.0;
-            let r3000_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.r3000_benchmark.get()).as_float_secs() * 100.0;
-            let dmac_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.dmac_benchmark.get()).as_float_secs() * 100.0;
-            let gpu_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.gpu_benchmark.get()).as_float_secs() * 100.0;
-            let spu_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.spu_benchmark.get()).as_float_secs() * 100.0;
-            let gpu_crtc_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.gpu_crtc_benchmark.get()).as_float_secs() * 100.0;
-            let spu_dac_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.spu_dac_benchmark.get()).as_float_secs() * 100.0;
-            let intc_percentage = BENCHMARK_TIME_ELAPSED.as_float_secs() / (*BENCHMARK_CONTROLLERS.intc_benchmark.get()).as_float_secs() * 100.0;
+            let overall_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / BENCHMARK_REPORTING_FREQUENCY.as_secs_f64() * 100.0;
+            let r3000_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.r3000_benchmark.get()).as_secs_f64() * 100.0;
+            let dmac_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.dmac_benchmark.get()).as_secs_f64() * 100.0;
+            let gpu_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.gpu_benchmark.get()).as_secs_f64() * 100.0;
+            let spu_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.spu_benchmark.get()).as_secs_f64() * 100.0;
+            let gpu_crtc_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.gpu_crtc_benchmark.get()).as_secs_f64() * 100.0;
+            let spu_dac_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.spu_dac_benchmark.get()).as_secs_f64() * 100.0;
+            let intc_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.intc_benchmark.get()).as_secs_f64() * 100.0;
 
             let time_elapsed = BENCHMARK_TIME_ELAPSED.as_micros();
 

@@ -250,6 +250,7 @@ name = "libpsx-rs"
 version = "0.1.0"
 dependencies = [
  "euclid 0.19.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "openal-sys 1.1.0",

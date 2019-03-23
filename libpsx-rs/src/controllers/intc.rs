@@ -11,7 +11,7 @@ pub fn run(state: &State, event: Event) {
 }
 
 fn run_time(state: &State, duration: Duration) {
-    let ticks = (CLOCK_SPEED * duration.as_float_secs()) as i64;
+    let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     for _ in 0..ticks {
         unsafe { handle_interrupt_check(state) };
     }

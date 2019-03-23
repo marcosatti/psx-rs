@@ -11,7 +11,7 @@ pub fn get_transfer_mode(control: &B16Register) -> TransferMode {
         1 => TransferMode::ManualWrite,
         2 => TransferMode::DmaWrite,
         3 => TransferMode::DmaRead,
-        _ => panic!("Unknown transfer mode"),
+        _ => unreachable!("Invalid transfer mode"),
     }
 }
 
@@ -42,7 +42,7 @@ pub unsafe fn get_vollr(state: &State, voice_id: usize) -> *mut B32Register {
         21 => &mut resources.spu.voice21_vollr as *mut B32Register,
         22 => &mut resources.spu.voice22_vollr as *mut B32Register,
         23 => &mut resources.spu.voice23_vollr as *mut B32Register,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
 
@@ -73,7 +73,7 @@ pub unsafe fn get_adpcm_sr(state: &State, voice_id: usize) -> *mut B16Register {
         21 => &mut resources.spu.voice21_srate as *mut B16Register,
         22 => &mut resources.spu.voice22_srate as *mut B16Register,
         23 => &mut resources.spu.voice23_srate as *mut B16Register,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
 
@@ -104,7 +104,7 @@ pub unsafe fn get_adpcm_sa(state: &State, voice_id: usize) -> *mut B16Register {
         21 => &mut resources.spu.voice21_saddr as *mut B16Register,
         22 => &mut resources.spu.voice22_saddr as *mut B16Register,
         23 => &mut resources.spu.voice23_saddr as *mut B16Register,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
 
@@ -135,7 +135,7 @@ pub unsafe fn get_adpcm_envelope(state: &State, voice_id: usize) -> *mut B32Regi
         21 => &mut resources.spu.voice21_adsr as *mut B32Register,
         22 => &mut resources.spu.voice22_adsr as *mut B32Register,
         23 => &mut resources.spu.voice23_adsr as *mut B32Register,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
 
@@ -166,7 +166,7 @@ pub unsafe fn get_adpcm_cvol(state: &State, voice_id: usize) -> *mut B16Register
         21 => &mut resources.spu.voice21_cvol as *mut B16Register,
         22 => &mut resources.spu.voice22_cvol as *mut B16Register,
         23 => &mut resources.spu.voice23_cvol as *mut B16Register,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
 
@@ -197,7 +197,7 @@ pub unsafe fn get_adpcm_ra(state: &State, voice_id: usize) -> *mut B16Register {
         21 => &mut resources.spu.voice21_raddr as *mut B16Register,
         22 => &mut resources.spu.voice22_raddr as *mut B16Register,
         23 => &mut resources.spu.voice23_raddr as *mut B16Register,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
 
@@ -228,6 +228,6 @@ pub unsafe fn get_play_state(state: &State, voice_id: usize) -> *mut PlayState {
         21 => &mut resources.spu.dac.voice21_state as *mut PlayState,
         22 => &mut resources.spu.dac.voice22_state as *mut PlayState,
         23 => &mut resources.spu.dac.voice23_state as *mut PlayState,
-        _ => panic!("Invalid voice id"),
+        _ => unreachable!("Invalid voice id"),
     }
 }
