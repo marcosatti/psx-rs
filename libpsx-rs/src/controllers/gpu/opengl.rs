@@ -1,11 +1,14 @@
 use opengl_sys::*;
-use euclid::{Point2D, Rect};
-use log::debug;
 use crate::backends::video::opengl::*;
+use crate::backends::video::opengl::rendering::*;
+use crate::types::geometry::*;
+use crate::types::color::*;
 
-pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32>; 4], r: u8, g: u8, b: u8, a: u8) {
+pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
+    static mut PROGRAM_CONTEXT: Option<ProgramContext<(GLuint,)>> = None;
+
     let (_gl_context_guard, context) = backend_params.context.guard();
-
+    
     let positions_flat: [f32; 8] = [
         positions[0].x, positions[0].y,
         positions[1].x, positions[1].y,
@@ -13,48 +16,46 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
         positions[3].x, positions[3].y,  
     ];
 
-    let positions_indices: [GLubyte; 6] = [
-        0, 1, 2,
-        1, 2, 3,
-    ];
+    let (r, g, b, a) = color.normalize();
 
     unsafe {
-        let program_id = shaders::get_program(context, shaders::vertex::SOLID_POLYGON, shaders::fragment::SOLID_POLYGON);
-        glUseProgram(program_id);
+        if PROGRAM_CONTEXT.is_none() {
+            let vs = shaders::compile_shader(shaders::vertex::SOLID_POLYGON, GL_VERTEX_SHADER);
+            let fs = shaders::compile_shader(shaders::fragment::SOLID_POLYGON, GL_FRAGMENT_SHADER);
+            let program = shaders::create_program(&[vs, fs]);
 
-        let mut vao = 0;
-        glGenVertexArrays(1, &mut vao);
-        glBindVertexArray(vao);
-        glEnableVertexAttribArray(0);
+            let mut vao = 0;
+            glGenVertexArrays(1, &mut vao);
+            glBindVertexArray(vao);
+            glEnableVertexAttribArray(0);
 
-        let mut vbo_position = 0;
-        glGenBuffers(1, &mut vbo_position);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-        glBufferData(GL_ARRAY_BUFFER, (positions_flat.len() * std::mem::size_of::<f32>()) as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+            let mut vbo_position = 0;
+            glGenBuffers(1, &mut vbo_position);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, (vbo_position,)));
+        }
+
+        let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
 
         let in_color_cstr = b"in_color\0";
-        let uniform_in_color = glGetUniformLocation(program_id, in_color_cstr.as_ptr() as *const GLchar);
-        glUniform4f(uniform_in_color, r as f32 / std::u8::MAX as f32, g as f32 / std::u8::MAX as f32, b as f32 / std::u8::MAX as f32, a as f32 / std::u8::MAX as f32);
+        let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
+        glUniform4f(uniform_in_color, r, g, b, a);
 
-        let mut vbo_indices = 0;
-        glGenBuffers(1, &mut vbo_indices);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (positions_indices.len() * std::mem::size_of::<GLubyte>()) as GLsizeiptr, positions_indices.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-    
-        glDrawElements(GL_TRIANGLES, positions_indices.len() as GLint, GL_UNSIGNED_BYTE, std::ptr::null());
+        glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids.0);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        glDisableVertexAttribArray(0);
-        glDeleteBuffers(1, &mut vbo_position);
-        glDeleteBuffers(1, &mut vbo_indices);
-        glDeleteVertexArrays(1, &mut vao);
+        glUseProgram(program_context.program_id);
+        glBindVertexArray(program_context.vao_id);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 }
 
-pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32>; 4], colors: [(u8, u8, u8, u8); 4]) {
+pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
+    static mut PROGRAM_CONTEXT: Option<ProgramContext<(GLuint, GLuint)>> = None;
+
     let (_gl_context_guard, context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [
@@ -64,56 +65,55 @@ pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D
         positions[3].x, positions[3].y,    
     ];
 
-    let colors_flat: [u8; 16] = [
-        colors[0].0, colors[0].1, colors[0].2, colors[0].3,
-        colors[1].0, colors[1].1, colors[1].2, colors[1].3,
-        colors[2].0, colors[2].1, colors[2].2, colors[2].3,
-        colors[3].0, colors[3].1, colors[3].2, colors[3].3,
-    ];
+    let (r0, g0, b0, a0) = colors[0].normalize();
+    let (r1, g1, b1, a1) = colors[1].normalize();
+    let (r2, g2, b2, a2) = colors[2].normalize();
+    let (r3, g3, b3, a3) = colors[3].normalize();
 
-    let positions_indices: [GLubyte; 6] = [
-        0, 1, 2,
-        1, 2, 3,
+    let colors_flat: [f32; 16] = [
+        r0, g0, b0, a0,
+        r1, g1, b1, a1,
+        r2, g2, b2, a2,
+        r3, g3, b3, a3,
     ];
 
     unsafe {
-        let program_id = shaders::get_program(context, shaders::vertex::SHADED_POLYGON, shaders::fragment::SHADED_POLYGON);
-        glUseProgram(program_id);
+        if PROGRAM_CONTEXT.is_none() {
+            let vs = shaders::compile_shader(shaders::vertex::SHADED_POLYGON, GL_VERTEX_SHADER);
+            let fs = shaders::compile_shader(shaders::fragment::SHADED_POLYGON, GL_FRAGMENT_SHADER);
+            let program = shaders::create_program(&[vs, fs]);
 
-        let mut vao = 0;
-        glGenVertexArrays(1, &mut vao);
-        glBindVertexArray(vao);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
+            let mut vao = 0;
+            glGenVertexArrays(1, &mut vao);
+            glBindVertexArray(vao);
+            glEnableVertexAttribArray(0);
 
-        let mut vbo_position = 0;
-        glGenBuffers(1, &mut vbo_position);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-        glBufferData(GL_ARRAY_BUFFER, (positions_flat.len() * std::mem::size_of::<f32>()) as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+            let mut vbo_position = 0;
+            glGenBuffers(1, &mut vbo_position);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-        let mut vbo_color = 0;
-        glGenBuffers(1, &mut vbo_color);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_color);
-        glBufferData(GL_ARRAY_BUFFER, (colors_flat.len() * std::mem::size_of::<u8>()) as GLsizeiptr, colors_flat.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE as GLboolean, 0, std::ptr::null());
+            let mut vbo_color = 0;
+            glGenBuffers(1, &mut vbo_color);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_color);
+            glBufferData(GL_ARRAY_BUFFER, 16 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-        let mut vbo_indices = 0;
-        glGenBuffers(1, &mut vbo_indices);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (positions_indices.len() * std::mem::size_of::<GLubyte>()) as GLsizeiptr, positions_indices.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-    
-        glDrawElements(GL_TRIANGLES, positions_indices.len() as GLint, GL_UNSIGNED_BYTE, std::ptr::null());
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, (vbo_position, vbo_color)));
+        }
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDeleteBuffers(1, &mut vbo_position);
-        glDeleteBuffers(1, &mut vbo_color);
-        glDeleteBuffers(1, &mut vbo_indices);
-        glDeleteVertexArrays(1, &mut vao);
+        let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
+
+        glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids.0);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
+
+        glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids.1);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * std::mem::size_of::<f32>() as GLsizeiptr, colors_flat.as_ptr() as *const GLvoid);
+
+        glUseProgram(program_context.program_id);
+        glBindVertexArray(program_context.vao_id);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 }
 

@@ -1,4 +1,5 @@
 pub mod shaders;
+pub mod rendering;
 
 use crate::backends::context::*;
 

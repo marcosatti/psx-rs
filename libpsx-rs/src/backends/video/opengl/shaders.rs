@@ -67,26 +67,3 @@ pub fn create_program(shaders: &[GLuint]) -> GLuint {
         program_id
     }
 }
-
-pub fn get_program(context: &sdl2::video::GLContext, vertex: &'static str, fragment: &'static str) -> GLuint {
-    unsafe {
-        if PROGRAMS.is_none() {
-            PROGRAMS = Some(HashMap::new());
-        }
-
-        match PROGRAMS.as_ref().unwrap().get(&(context.raw(), vertex, fragment)) {
-            Some(&p) => p,
-            None => {
-                let vertex_shader_id = compile_shader(vertex, GL_VERTEX_SHADER);
-                let fragment_shader_id = compile_shader(fragment, GL_FRAGMENT_SHADER);
-                let program_id = create_program(&[vertex_shader_id, fragment_shader_id]);
-                glDetachShader(program_id, vertex_shader_id);
-                glDetachShader(program_id, fragment_shader_id);
-                glDeleteShader(vertex_shader_id);
-                glDeleteShader(fragment_shader_id);
-                PROGRAMS.as_mut().unwrap().insert((context.raw(), vertex, fragment), program_id);
-                program_id
-            }
-        }
-    }
-}
