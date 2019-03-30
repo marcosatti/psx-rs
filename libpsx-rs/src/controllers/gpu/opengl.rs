@@ -7,9 +7,9 @@ use crate::types::color::*;
 pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
-    let (_gl_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 8] = [
+    let positions_flat: [f32; 6] = [
         positions[0].x, positions[0].y,
         positions[1].x, positions[1].y,
         positions[2].x, positions[2].y,
@@ -19,7 +19,7 @@ pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D
     let (r1, g1, b1, a1) = colors[1].normalize();
     let (r2, g2, b2, a2) = colors[2].normalize();
 
-    let colors_flat: [f32; 16] = [
+    let colors_flat: [f32; 12] = [
         r0, g0, b0, a0,
         r1, g1, b1, a1,
         r2, g2, b2, a2,
@@ -48,6 +48,10 @@ pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D
             glBufferData(GL_ARRAY_BUFFER, 12 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error initializing OpenGL program: draw_polygon_3_shaded");
+            }
+
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_color], &[]));
         }
 
@@ -68,7 +72,7 @@ pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D
 pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
-    let (_gl_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, context) = backend_params.context.guard();
     
     let positions_flat: [f32; 8] = [
         positions[0].x, positions[0].y,
@@ -96,6 +100,10 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
             glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error initializing OpenGL program: draw_polygon_4_solid");
+            }
+
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position], &[]));
         }
 
@@ -117,7 +125,7 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
 pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
-    let (_gl_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [
         positions[0].x, positions[0].y,
@@ -161,6 +169,10 @@ pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D
             glBufferData(GL_ARRAY_BUFFER, 16 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error initializing OpenGL program: draw_polygon_4_shaded");
+            }
+
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_color], &[]));
         }
 
@@ -178,10 +190,10 @@ pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D
     }
 }
 
-pub fn draw_polygon_4_textured(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize, texture_data: &[u8]) {
+pub fn draw_polygon_4_textured(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize, texture_data: &[Color]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
-    let (_gl_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [
         positions[0].x, positions[0].y,
@@ -228,7 +240,11 @@ pub fn draw_polygon_4_textured(backend_params: &BackendParams, positions: [Point
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, texture_width as GLsizei, texture_height as GLsizei, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, texture_width as GLsizei, texture_height as GLsizei, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error initializing OpenGL program: draw_polygon_4_textured");
+            }
 
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[texture]));
         }
@@ -237,7 +253,7 @@ pub fn draw_polygon_4_textured(backend_params: &BackendParams, positions: [Point
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, program_context.texture_ids[0]);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_width as GLsizei, texture_height as GLsizei, GL_RGB, GL_UNSIGNED_BYTE, texture_data.as_ptr() as *const std::ffi::c_void);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_width as GLsizei, texture_height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, texture_data.as_ptr() as *const std::ffi::c_void);
 
         let tex2d_cstr = b"tex2d\0";
         let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
@@ -258,7 +274,7 @@ pub fn draw_polygon_4_textured(backend_params: &BackendParams, positions: [Point
 pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
-    let (_gl_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [
         positions[0].x, positions[0].y,
@@ -299,6 +315,10 @@ pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, posit
             glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error initializing OpenGL program: draw_polygon_4_textured_framebuffer");
+            }
+
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
         }
 
@@ -309,7 +329,7 @@ pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, posit
         let mut texture = 0;
         glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, texture as GLuint);
 
         let tex2d_cstr = b"tex2d\0";
         let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);

@@ -3,7 +3,7 @@ use opengl_sys::*;
 use log::debug;
 use crate::constants::gpu::crtc::*;
 use crate::backends::video::VideoBackend;
-use crate::backends::video::opengl::*;
+use crate::backends::video::opengl;
 use crate::State;
 use crate::controllers::Event;
 use crate::resources::gpu::*;
@@ -62,9 +62,19 @@ unsafe fn vblank_interrupt(state: &State) {
 
 fn render(state: &State) {
     match state.video_backend {
-        VideoBackend::Opengl(ref params) => {
-            let (_context_guard, context) = params.context.guard();
+        VideoBackend::Opengl(ref params) => render_opengl(params),
+    }
+}
 
+fn render_opengl(backend_params: &opengl::BackendParams) {
+    static mut PROGRAM_CONTEXT: Option<opengl::rendering::ProgramContext> = None;
+
+    let (_context_guard, context) = backend_params.context.guard();
+
+    unsafe {
+        glFinish();
+
+        if PROGRAM_CONTEXT.is_none() {
             let positions_flat: [f32; 8] = [
                 -1.0, -1.0,
                 1.0, -1.0,
@@ -72,70 +82,60 @@ fn render(state: &State) {
                 -1.0, 1.0,
             ];
 
-            let texcoords: [f32; 8] = [
+            let texcoords_flat: [f32; 8] = [
                 0.0, 0.0,
                 1.0, 0.0,
                 1.0, 1.0,
                 0.0, 1.0,
             ];
 
-            unsafe {
-                let mut fbo = 0;
-                glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mut fbo);
+            let vs = opengl::shaders::compile_shader(opengl::shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
+            let fs = opengl::shaders::compile_shader(opengl::shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
+            let program = opengl::shaders::create_program(&[vs, fs]);
 
-                let mut texture = 0;
-                glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);
-                
-                glFinish();
+            let mut vao = 0;
+            glGenVertexArrays(1, &mut vao);
+            glBindVertexArray(vao);
+            glEnableVertexAttribArray(0);
 
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-                
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, texture as GLuint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
+            let mut vbo_position = 0;
+            glGenBuffers(1, &mut vbo_position);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const std::ffi::c_void, GL_STATIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-                let program_id = shaders::get_program(context, shaders::vertex::TEXTURED_POLYGON, shaders::fragment::TEXTURED_POLYGON);
-                glUseProgram(program_id);
+            let mut vbo_texcoord = 0;
+            glGenBuffers(1, &mut vbo_texcoord);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoord);
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, texcoords_flat.as_ptr() as *const std::ffi::c_void, GL_STATIC_DRAW);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-                let mut vao = 0;
-                glGenVertexArrays(1, &mut vao);
-                glBindVertexArray(vao);
-                glEnableVertexAttribArray(0);
-                glEnableVertexAttribArray(1);
+            PROGRAM_CONTEXT = Some(opengl::rendering::ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
+        }
 
-                let tex2d_cstr = b"tex2d\0";
-                let uniform_tex2d = glGetUniformLocation(program_id, tex2d_cstr.as_ptr() as *const GLchar);
-                glUniform1i(uniform_tex2d, 0);
+        let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
 
-                let mut vbo_position = 0;
-                glGenBuffers(1, &mut vbo_position);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-                glBufferData(GL_ARRAY_BUFFER, (positions_flat.len() * std::mem::size_of::<f32>()) as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-                glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+        let mut fbo = 0;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mut fbo);
 
-                let mut vbo_texcoord = 0;
-                glGenBuffers(1, &mut vbo_texcoord);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoord);
-                glBufferData(GL_ARRAY_BUFFER, (texcoords.len() * std::mem::size_of::<f32>()) as GLsizeiptr, texcoords.as_ptr() as *const GLvoid, GL_STATIC_DRAW);
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+        let mut texture = 0;
+        glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);
+        
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, opengl::rendering::WINDOW_FBO);
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture as GLuint);
 
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-                glBindVertexArray(0);
-                glDisableVertexAttribArray(0);
-                glDisableVertexAttribArray(1);
-                glDeleteBuffers(1, &mut vbo_position);
-                glDeleteBuffers(1, &mut vbo_texcoord);
-                glDeleteVertexArrays(1, &mut vao);
+        let tex2d_cstr = b"tex2d\0";
+        let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
+        glUniform1i(uniform_tex2d, 0);
 
-                glFinish();
+        glUseProgram(program_context.program_id);
+        glBindVertexArray(program_context.vao_id);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo as GLuint);
-            }
-        },
+        glFinish();
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo as GLuint);
     }
 }

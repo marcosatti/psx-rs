@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use std::fs::File;
 use std::io::Write;
 use std::time::{Duration, Instant};
+use std::ffi::CStr;
+use opengl_sys::*;
 use log::debug;
 use crate::Core;
 use crate::resources::{self, Resources};
@@ -169,4 +171,11 @@ pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
     }
     let dicr_irq_master_flag_value = DICR_IRQ_MASTER_FLAG.extract_from(dicr) != 0;
     debug!("DMAC DICR: master flag = {}", dicr_irq_master_flag_value);
+}
+
+pub fn debug_opengl_trace(source: GLenum, type_: GLenum, id: GLuint, severity: GLenum, length: GLsizei, message: *const GLchar, user_param: *const std::ffi::c_void) {
+    if type_ == GL_DEBUG_TYPE_ERROR_ARB {
+        let message = CStr::from_ptr(message);
+        debug!("OpenGL error: type: {}, severity = {}, message = {}", type_, severity, message.to_str().unwrap());
+    }
 }

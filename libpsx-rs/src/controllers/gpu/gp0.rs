@@ -3,6 +3,7 @@ use crate::backends::video::VideoBackend;
 use crate::State;
 use crate::types::bitfield::Bitfield;
 use crate::types::color::*;
+use crate::types::geometry::*;
 use crate::controllers::gpu::data::*;
 use crate::controllers::gpu::opengl;
 use crate::resources::gpu::*;
@@ -153,7 +154,7 @@ fn command_2c(state: &State, values: [u32; 9]) {
 
     match state.video_backend {
         VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_fb_blended(backend_params, vertices, texcoords);
+            opengl::draw_polygon_4_textured_framebuffer(backend_params, vertices, texcoords);
         },
     }
 }
@@ -205,8 +206,22 @@ fn command_a0(state: &State, values: [u32; 3], data: &[u32]) {
     
     let base_point = extract_point_normalized(values[1]);
     let size = extract_size_normalized(values[2]);
-    let texture_width = Bitfield::new(0, 16).extract_from(values[2]);
-    let texture_height = Bitfield::new(16, 16).extract_from(values[2]);
+    let texture_width = Bitfield::new(0, 16).extract_from(values[2]) as usize;
+    let texture_height = Bitfield::new(16, 16).extract_from(values[2]) as usize;
+
+    let positions = [
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
+        Point2D::new(base_point.x, base_point.y - size.height),
+        Point2D::new(base_point.x + size.width, base_point.y - size.height),
+    ];
+
+    let texcoords = [
+        Point2D::new(0.0, 1.0),
+        Point2D::new(1.0, 1.0),
+        Point2D::new(0.0, 0.0),
+        Point2D::new(1.0, 0.0),
+    ];
 
     // TODO: This is not a proper way to implement this command - the halfwords do not strictly represent pixels (16-bit colors / 5-5-5-1 colors).
     // However, the command addresses the VRAM (and incoming data) as 16-bit units through the coordinates given.
@@ -217,9 +232,9 @@ fn command_a0(state: &State, values: [u32; 3], data: &[u32]) {
         let color_bitfields = [Bitfield::new(0, 16), Bitfield::new(16, 16)];
         for field in color_bitfields.iter() {
             let packed_16 = field.extract_from(data[i]);
-            let r = (Bitfield::new(0, 5).extract_from(packed_16) * 255 / 31) as u8;
-            let g = (Bitfield::new(5, 5).extract_from(packed_16) * 255 / 31) as u8;
-            let b = (Bitfield::new(10, 5).extract_from(packed_16) * 255 / 31) as u8;
+            let r = ((Bitfield::new(0, 5).extract_from(packed_16) * 255) / 31) as u8;
+            let g = ((Bitfield::new(5, 5).extract_from(packed_16) * 255) / 31) as u8;
+            let b = ((Bitfield::new(10, 5).extract_from(packed_16) * 255) / 31) as u8;
             //let mask = if Bitfield::new(15, 1).extract_from(packed_16) != 0 { std::u8::MAX } else { 0 };
             let mask = std::u8::MAX;
             texture_colors.push(Color { r: r, g: g, b: b, a: mask });
@@ -228,7 +243,7 @@ fn command_a0(state: &State, values: [u32; 3], data: &[u32]) {
 
     match state.video_backend {
         VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_rectangle_textured(backend_params, base_point, size, texture_width, texture_height, &texture_colors);
+            opengl::draw_polygon_4_textured(backend_params, positions, texcoords, texture_width, texture_height, &texture_colors);
         },
     }
 }

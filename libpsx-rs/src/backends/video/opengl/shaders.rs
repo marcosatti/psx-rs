@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use opengl_sys::*;
 use lazy_static::lazy_static;
+use spin::Mutex;
 
 pub mod vertex {
     pub const SOLID_POLYGON: &'static str = include_str!("./shaders/vertex/solid_polygon.glsl");
@@ -16,11 +17,13 @@ pub mod fragment {
 }
 
 lazy_static! {
-    static ref SHADERS: HashMap<&'static str, GLuint> = HashMap::new();
+    static ref SHADERS: Mutex<HashMap<&'static str, GLuint>> = Mutex::new(HashMap::new());
 }
 
-pub fn compile_shader(code: &str, type_: GLenum) -> GLuint {
-    match SHADERS.get(code) {
+pub fn compile_shader(code: &'static str, type_: GLenum) -> GLuint {
+    let mut shaders = SHADERS.lock();
+
+    match shaders.get(code) {
         Some(&id) => id,
         None => {
             let id = unsafe {
@@ -42,7 +45,7 @@ pub fn compile_shader(code: &str, type_: GLenum) -> GLuint {
 
                 shader_id
             };
-            SHADERS.insert(code, id);
+            shaders.insert(code, id);
             id
         },
     }

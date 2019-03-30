@@ -4,7 +4,7 @@ use crate::types::bitfield::Bitfield;
 use crate::types::geometry::*;
 
 #[derive(Copy, Clone, Debug)]
-enum TransparencyMode {
+pub enum TransparencyMode {
     Average,
     Additive,
     Difference,
@@ -12,7 +12,7 @@ enum TransparencyMode {
 }
 
 #[derive(Copy, Clone, Debug)]
-enum ClutMode {
+pub enum ClutMode {
     Bits4,
     Bits8,
     Bits15,
@@ -65,10 +65,10 @@ pub fn extract_colors_4_rgb(colors_raw: [u32; 4], alpha: u8) -> [Color; 4] {
     ]
 }
 
-pub fn normalize_point(point: Point2D<usize, Pixel>) -> Point2D<f64, Normalized> {
+pub fn normalize_point(point: Point2D<usize, Pixel>) -> Point2D<f32, Normalized> {
     Point2D::new(
-        (point.x as f64 - ((VRAM_WIDTH_16B as f64 / 2.0) - 1.0)) / ((VRAM_WIDTH_16B as f64 / 2.0) - 1.0),
-        -((point.y as f64 - ((VRAM_HEIGHT_LINES as f64 / 2.0) - 1.0)) / ((VRAM_HEIGHT_LINES as f64 / 2.0) - 1.0)),
+        (point.x as f32 - ((VRAM_WIDTH_16B as f32 / 2.0) - 1.0)) / ((VRAM_WIDTH_16B as f32 / 2.0) - 1.0),
+        -((point.y as f32 - ((VRAM_HEIGHT_LINES as f32 / 2.0) - 1.0)) / ((VRAM_HEIGHT_LINES as f32 / 2.0) - 1.0)),
     )
 }
 
@@ -79,14 +79,14 @@ pub fn extract_point(point_raw: u32) -> Point2D<usize, Pixel> {
     )
 }
 
-pub fn extract_point_normalized(point_raw: u32) -> Point2D<f64, Normalized> {
+pub fn extract_point_normalized(point_raw: u32) -> Point2D<f32, Normalized> {
     normalize_point(extract_point(point_raw))
 }
 
-pub fn normalize_size(size: Size2D<usize, Pixel>) -> Size2D<f64, Normalized> {
+pub fn normalize_size(size: Size2D<usize, Pixel>) -> Size2D<f32, Normalized> {
     Size2D::new(
-        (size.width as f64 / VRAM_WIDTH_16B as f64) * 2.0, 
-        (size.height as f64 / VRAM_HEIGHT_LINES as f64) * 2.0, 
+        (size.width as f32 / VRAM_WIDTH_16B as f32) * 2.0, 
+        (size.height as f32 / VRAM_HEIGHT_LINES as f32) * 2.0, 
     )
 }
 
@@ -97,11 +97,11 @@ pub fn extract_size(size_raw: u32) -> Size2D<usize, Pixel> {
     )
 }
 
-pub fn extract_size_normalized(size_raw: u32) -> Size2D<f64, Normalized> {
+pub fn extract_size_normalized(size_raw: u32) -> Size2D<f32, Normalized> {
     normalize_size(extract_size(size_raw))
 }
 
-pub fn normalize_points_3(points: [Point2D<usize, Pixel>; 3]) -> [Point2D<f64, Normalized>; 3] {
+pub fn normalize_points_3(points: [Point2D<usize, Pixel>; 3]) -> [Point2D<f32, Normalized>; 3] {
     [
         normalize_point(points[0]),
         normalize_point(points[1]),
@@ -117,11 +117,11 @@ pub fn extract_vertices_3(vertices_raw: [u32; 3]) -> [Point2D<usize, Pixel>; 3] 
     ]
 }
 
-pub fn extract_vertices_3_normalized(vertices_raw: [u32; 3]) -> [Point2D<f64, Normalized>; 3] {
+pub fn extract_vertices_3_normalized(vertices_raw: [u32; 3]) -> [Point2D<f32, Normalized>; 3] {
     normalize_points_3(extract_vertices_3(vertices_raw))
 }
 
-pub fn normalize_points_4(points: [Point2D<usize, Pixel>; 4]) -> [Point2D<f64, Normalized>; 4] {
+pub fn normalize_points_4(points: [Point2D<usize, Pixel>; 4]) -> [Point2D<f32, Normalized>; 4] {
     [
         normalize_point(points[0]),
         normalize_point(points[1]),
@@ -139,7 +139,7 @@ pub fn extract_vertices_4(vertices_raw: [u32; 4]) -> [Point2D<usize, Pixel>; 4] 
     ]
 }
 
-pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4]) -> [Point2D<f64, Normalized>; 4] {
+pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4]) -> [Point2D<f32, Normalized>; 4] {
     normalize_points_4(extract_vertices_4(vertices_raw))
 }
 
@@ -158,7 +158,7 @@ pub fn extract_texcoords_4(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw:
     for i in 0..4 {
         // Each framebuffer pixel represents {scale_factor} number of texture pixels.
         let scale_factor = match clut_mode {
-            Bits4 => 4,
+            ClutMode::Bits4 => 4,
             _ => unimplemented!("Extracting texcoords CLUT mode unimplemented: {:?}", clut_mode),
         };
 
@@ -182,7 +182,7 @@ pub fn extract_texcoords_4(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw:
     texcoords
 }
 
-pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw: [u32; 4]) -> [Point2D<f64, Normalized>; 4] {
+pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw: [u32; 4]) -> [Point2D<f32, Normalized>; 4] {
     normalize_points_4(extract_texcoords_4(texpage_raw, clut_mode, texcoords_raw))
 }
 
@@ -197,6 +197,6 @@ pub fn extract_clut_base(clut_raw: u32) -> Point2D<usize, Pixel> {
     )
 }
 
-pub fn extract_clut_base_normalized(clut_raw: u32) -> Point2D<f64, Normalized> {
+pub fn extract_clut_base_normalized(clut_raw: u32) -> Point2D<f32, Normalized> {
     normalize_point(extract_clut_base(clut_raw))
 }
