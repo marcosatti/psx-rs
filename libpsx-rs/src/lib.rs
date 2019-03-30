@@ -153,7 +153,7 @@ fn video_setup_opengl(backend_params: &opengl::BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
-        glEnable(GL_DEBUG_OUTPUT_ARB);
+        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
         glDebugMessageCallbackARB(Some(debug_opengl_trace), std::ptr::null());
 
         let mut window_fbo = 0;

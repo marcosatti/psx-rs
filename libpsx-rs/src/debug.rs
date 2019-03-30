@@ -173,9 +173,11 @@ pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
     debug!("DMAC DICR: master flag = {}", dicr_irq_master_flag_value);
 }
 
-pub fn debug_opengl_trace(source: GLenum, type_: GLenum, id: GLuint, severity: GLenum, length: GLsizei, message: *const GLchar, user_param: *const std::ffi::c_void) {
-    if type_ == GL_DEBUG_TYPE_ERROR_ARB {
-        let message = CStr::from_ptr(message);
-        debug!("OpenGL error: type: {}, severity = {}, message = {}", type_, severity, message.to_str().unwrap());
+pub extern "C" fn debug_opengl_trace(source: GLenum, type_: GLenum, id: GLuint, severity: GLenum, length: GLsizei, message: *const GLchar, user_param: *const std::ffi::c_void) {
+    unsafe {
+        if type_ == GL_DEBUG_TYPE_ERROR_ARB {
+            let message = CStr::from_ptr(message);
+            debug!("OpenGL error: type: {}, severity = {}, message = {}", type_, severity, message.to_str().unwrap());
+        }
     }
 }
