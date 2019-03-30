@@ -69,7 +69,7 @@ fn render(state: &State) {
 fn render_opengl(backend_params: &opengl::BackendParams) {
     static mut PROGRAM_CONTEXT: Option<opengl::rendering::ProgramContext> = None;
 
-    let (_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
         glFinish();
@@ -97,6 +97,7 @@ fn render_opengl(backend_params: &opengl::BackendParams) {
             glGenVertexArrays(1, &mut vao);
             glBindVertexArray(vao);
             glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
 
             let mut vbo_position = 0;
             glGenBuffers(1, &mut vbo_position);
@@ -110,10 +111,16 @@ fn render_opengl(backend_params: &opengl::BackendParams) {
             glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, texcoords_flat.as_ptr() as *const std::ffi::c_void, GL_STATIC_DRAW);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error initializing OpenGL program: render_opengl");
+            }
+
             PROGRAM_CONTEXT = Some(opengl::rendering::ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
         }
 
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
+        glUseProgram(program_context.program_id);
+        glBindVertexArray(program_context.vao_id);
 
         let mut fbo = 0;
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mut fbo);
@@ -130,8 +137,6 @@ fn render_opengl(backend_params: &opengl::BackendParams) {
         let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
         glUniform1i(uniform_tex2d, 0);
 
-        glUseProgram(program_context.program_id);
-        glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
         glFinish();

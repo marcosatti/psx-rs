@@ -217,10 +217,10 @@ fn command_a0(state: &State, values: [u32; 3], data: &[u32]) {
     ];
 
     let texcoords = [
-        Point2D::new(0.0, 1.0),
-        Point2D::new(1.0, 1.0),
         Point2D::new(0.0, 0.0),
         Point2D::new(1.0, 0.0),
+        Point2D::new(0.0, 1.0),
+        Point2D::new(1.0, 1.0),
     ];
 
     // TODO: This is not a proper way to implement this command - the halfwords do not strictly represent pixels (16-bit colors / 5-5-5-1 colors).
