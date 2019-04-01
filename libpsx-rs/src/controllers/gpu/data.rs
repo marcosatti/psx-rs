@@ -21,7 +21,7 @@ pub enum ClutMode {
 }
 
 pub fn extract_texpage_transparency_mode(texpage_raw: u32) -> TransparencyMode {
-    match Bitfield::new(16 + 5, 2).extract_from(texpage_raw) {
+    match Bitfield::new(21, 2).extract_from(texpage_raw) {
         0 => TransparencyMode::Average,
         1 => TransparencyMode::Additive,
         2 => TransparencyMode::Difference,
@@ -31,7 +31,7 @@ pub fn extract_texpage_transparency_mode(texpage_raw: u32) -> TransparencyMode {
 }
 
 pub fn extract_texpage_clut_mode(texpage_raw: u32) -> ClutMode {
-    match Bitfield::new(16 + 7, 2).extract_from(texpage_raw) {
+    match Bitfield::new(23, 2).extract_from(texpage_raw) {
         0 => ClutMode::Bits4,
         1 => ClutMode::Bits8,
         2 => ClutMode::Bits15,
@@ -145,6 +145,15 @@ pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4]) -> [Point2D<f32, No
 }
 
 pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw: [u32; 4]) -> [Point2D<f32, Normalized>; 4] {
+    let texpage = Bitfield::new(16, 16).extract_from(texpage_raw);
+    let texpage_x_base = (Bitfield::new(0, 4).extract_from(texpage) * 64) as usize;
+    let texpage_y_base = (Bitfield::new(4, 1).extract_from(texpage) * 256) as usize;
+    let texpage_x_base = texpage_x_base as f32 / (VRAM_WIDTH_16B as f32 - 1.0);
+    let texpage_y_base = 1.0 - (texpage_y_base as f32 / (VRAM_HEIGHT_LINES as f32 - 1.0));
+    let texpage_base = Point2D::new(texpage_x_base, texpage_y_base);
+    
+    let mut texcoords: [Point2D<f32, Normalized>; 4] = [texpage_base; 4];
+
     let texcoord_x_bitfield = Bitfield::new(0, 8);
     let texcoord_y_bitfield = Bitfield::new(8, 8);
 
@@ -156,30 +165,15 @@ pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, tex
         Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[3]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[3]) as usize),
     ];
 
-    for i in 0..4 {
-        // Each framebuffer pixel represents {scale_factor} number of texture pixels.
-        let scale_factor = match clut_mode {
-            ClutMode::Bits4 => 4,
-            _ => unimplemented!("Extracting texcoords CLUT mode unimplemented: {:?}", clut_mode),
-        };
-
-        //if (texcoord_offset_points[i].x + 1) % scale_factor != 0 { warn!("Unhandled case where texcoord offset is not fully divisible by scale factor: {}", (texcoord_offset_points[i].x + 1)); }
-        texcoord_offset_points[i].x = (texcoord_offset_points[i].x + 1) / scale_factor;
-        //if (texcoord_offset_points[i].y + 1) % scale_factor != 0 { warn!("Unhandled case where texcoord offset is not fully divisible by scale factor: {}", (texcoord_offset_points[i].y + 1)); }
-        texcoord_offset_points[i].y = (texcoord_offset_points[i].y + 1) / scale_factor;
-    }
-
-    let texpage = Bitfield::new(16, 16).extract_from(texpage_raw);
-    let texpage_x_base = (Bitfield::new(0, 4).extract_from(texpage) * 64) as usize;
-    let texpage_y_base = (Bitfield::new(4, 1).extract_from(texpage) * 256) as usize;
-    let texpage_base = normalize_point(Point2D::new(texpage_x_base, texpage_y_base));
-
-    let mut texcoords: [Point2D<f32, Normalized>; 4] = [texpage_base; 4];
+    // Each framebuffer pixel represents {scale_factor} number of texture pixels.
+    let scale_factor = match clut_mode {
+        ClutMode::Bits4 => 4.0,
+        _ => unimplemented!("Extracting texcoords CLUT mode unimplemented: {:?}", clut_mode),
+    };
 
     for i in 0..4 {
-        let size = normalize_size(Size2D::new(texcoord_offset_points[i].x, texcoord_offset_points[i].y));
-        texcoords[i].x += size.width;
-        texcoords[i].y -= size.height;
+        texcoords[i].x += (texcoord_offset_points[i].x as f32 / scale_factor) / (VRAM_WIDTH_16B as f32 - 1.0);
+        texcoords[i].y -= texcoord_offset_points[i].y as f32 / (VRAM_HEIGHT_LINES as f32 - 1.0);
     }
 
     texcoords
