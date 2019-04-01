@@ -13,6 +13,7 @@ pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[i16], _freque
         };
 
         alBufferData(BUFFERS[buffer_index], AL_FORMAT_MONO16 as ALenum, samples.as_ptr() as *const std::ffi::c_void, samples.len() as ALsizei, 44100);
+        alSourceStop(SOURCES[voice_id]);
         alSourcei(SOURCES[voice_id], AL_BUFFER as ALenum, BUFFERS[buffer_index] as ALint);
         alSourcePlay(SOURCES[voice_id]);
 

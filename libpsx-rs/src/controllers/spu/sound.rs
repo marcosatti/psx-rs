@@ -82,7 +82,10 @@ unsafe fn handle_play_sound_buffer(state: &State, voice_id: usize, force: bool) 
 
     let forced = force && play_state.sample_buffer.len() > 0;
 
-    if play_state.sample_buffer.len() == BUFFER_SIZE || forced {
+    if (play_state.sample_buffer.len() == BUFFER_SIZE) || forced {
+        //let sample_rate = &mut *get_adpcm_sr(state, voice_id);
+        //debug!("Playing sound [{}], sample rate should be {:X}h", voice_id, sample_rate.read_u16());
+
         // TODO: proper frequency, although pcsxr just assumes 44100 all the time...
         match state.audio_backend {
             AudioBackend::Openal(ref backend_params) => {
