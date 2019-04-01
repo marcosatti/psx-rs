@@ -1,3 +1,5 @@
+pub mod rendering;
+
 use openal_sys::*;
 use crate::backends::context::*;
 

@@ -17,6 +17,7 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use opengl_sys::*;
+use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use log::debug;
 use crate::debug::BenchmarkDebug;
@@ -24,6 +25,7 @@ use crate::debug::debug_opengl_trace;
 use crate::backends::video::VideoBackend;
 use crate::backends::video::opengl;
 use crate::backends::audio::AudioBackend;
+use crate::backends::audio::openal;
 use crate::resources::Resources;
 use crate::controllers::Event;
 use crate::controllers::r3000::run as run_r3000;
@@ -190,5 +192,21 @@ fn video_setup_opengl(backend_params: &opengl::BackendParams) {
     }
 }
 
-fn audio_setup(_audio_backend: &AudioBackend) {
+fn audio_setup(audio_backend: &AudioBackend) {
+    match audio_backend {
+        AudioBackend::Openal(ref params) => audio_setup_openal(params),
+    }
+}
+
+fn audio_setup_openal(backend_params: &openal::BackendParams) {
+    let (_context_guard, _context) = backend_params.context.guard();
+
+    unsafe {
+        alGenSources(openal::rendering::SOURCES.len() as ALsizei, openal::rendering::SOURCES.as_mut_ptr());
+        alGenBuffers(openal::rendering::BUFFERS.len() as ALsizei, openal::rendering::BUFFERS.as_mut_ptr());
+
+        if alGetError() != AL_NO_ERROR as ALenum {
+            panic!("Error initializing OpenAL audio backend");
+        }
+    }
 }
