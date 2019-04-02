@@ -237,7 +237,7 @@ fn command_a0(state: &State, values: [u32; 3], data: &[u32]) {
             let b = ((Bitfield::new(10, 5).extract_from(packed_16) * 255) / 31) as u8;
             //let mask = if Bitfield::new(15, 1).extract_from(packed_16) != 0 { std::u8::MAX } else { 0 };
             let mask = std::u8::MAX;
-            texture_colors.push(Color { r: r, g: g, b: b, a: mask });
+            texture_colors.push(Color::new(r, g, b, mask));
         }
     }
 

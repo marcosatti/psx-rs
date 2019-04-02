@@ -1,3 +1,4 @@
+use num_traits::clamp;
 use crate::types::bitfield::Bitfield;
 use crate::resources::spu::voice::*;
 
@@ -11,7 +12,7 @@ pub fn decode_header(data: [u8; 2]) -> AdpcmParams {
     }
 }
 
-pub fn decode_frame(data: u8, params: AdpcmParams, old_sample: &mut i16, older_sample: &mut i16) -> [i16; 2]{
+pub fn decode_frame(data: u8, params: &AdpcmParams, old_sample: &mut i16, older_sample: &mut i16) -> [i16; 2]{
     let mut samples = [
         Bitfield::new(0, 4).extract_from(data) as i16,
         Bitfield::new(4, 4).extract_from(data) as i16,
@@ -26,13 +27,7 @@ pub fn decode_frame(data: u8, params: AdpcmParams, old_sample: &mut i16, older_s
         // Right shift != division (pow 2) when negatives...
         shifted_sample += ((*old_sample as i32 * pos_filter_value) >> 6) + ((*older_sample as i32 * neg_filter_value) >> 6);
 
-        samples[i] = if shifted_sample > std::i16::MAX as i32 { 
-            std::i16::MAX 
-        } else if shifted_sample < std::i16::MIN as i32 {
-            std::i16::MIN
-        } else {
-            shifted_sample as i16
-        };
+        samples[i] = clamp(shifted_sample, std::i16::MIN as i32, std::i16::MAX as i32) as i16; 
 
         *older_sample = *old_sample;
         *old_sample = samples[i];

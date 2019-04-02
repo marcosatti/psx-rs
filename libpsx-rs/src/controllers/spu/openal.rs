@@ -1,8 +1,10 @@
+use log::debug;
 use openal_sys::*;
 use crate::backends::audio::openal::*;
 use crate::backends::audio::openal::rendering::*;
+use crate::types::stereo::*;
 
-pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[i16], _frequency: usize, voice_id: usize) {
+pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], _frequency: usize, voice_id: usize) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {        
@@ -12,7 +14,9 @@ pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[i16], _freque
             voice_id * 2 + 1
         };
 
-        alBufferData(BUFFERS[buffer_index], AL_FORMAT_MONO16 as ALenum, samples.as_ptr() as *const std::ffi::c_void, samples.len() as ALsizei, 44100);
+        let samples_size = (samples.len() * std::mem::size_of::<Stereo>()) as ALsizei;
+        alBufferData(BUFFERS[buffer_index], AL_FORMAT_STEREO16 as ALenum, samples.as_ptr() as *const std::ffi::c_void, samples_size, 44100);
+
         alSourceStop(SOURCES[voice_id]);
         alSourcei(SOURCES[voice_id], AL_BUFFER as ALenum, BUFFERS[buffer_index] as ALint);
         alSourcePlay(SOURCES[voice_id]);

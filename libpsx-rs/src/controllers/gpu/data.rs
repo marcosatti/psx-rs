@@ -41,12 +41,12 @@ pub fn extract_texpage_clut_mode(texpage_raw: u32) -> ClutMode {
 }
 
 pub fn extract_color_rgb(color_raw: u32, alpha: u8) -> Color {
-    Color {
-        r: Bitfield::new(0, 8).extract_from(color_raw) as u8, 
-        g: Bitfield::new(8, 8).extract_from(color_raw) as u8, 
-        b: Bitfield::new(16, 8).extract_from(color_raw) as u8, 
-        a: alpha,
-    }
+    Color::new(
+        Bitfield::new(0, 8).extract_from(color_raw) as u8, 
+        Bitfield::new(8, 8).extract_from(color_raw) as u8, 
+        Bitfield::new(16, 8).extract_from(color_raw) as u8, 
+        alpha,
+    )
 }
 
 pub fn extract_colors_3_rgb(colors_raw: [u32; 3], alpha: u8) -> [Color; 3] {
