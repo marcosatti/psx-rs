@@ -60,7 +60,7 @@ pub struct Core<'a> {
 impl<'a> Core<'a> {
     pub fn new(config: Config) -> Core {
         let mut resources = Resources::new();
-        let task_executor = ThreadPoolBuilder::new().num_threads(2).build().unwrap();
+        let task_executor = ThreadPoolBuilder::new().num_threads(4).build().unwrap();
 
         let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
         load_bios(&bios_path, &mut resources);

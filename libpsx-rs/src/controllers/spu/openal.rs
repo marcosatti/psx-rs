@@ -4,7 +4,7 @@ use crate::backends::audio::openal::*;
 use crate::backends::audio::openal::rendering::*;
 use crate::types::stereo::*;
 
-pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], _frequency: usize, voice_id: usize) {
+pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {        

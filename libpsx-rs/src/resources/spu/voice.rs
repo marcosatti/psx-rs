@@ -25,9 +25,8 @@ impl AdpcmParams {
 pub struct AdpcmState {
     pub old_sample: i16,
     pub older_sample: i16,
-    pub block_count: usize,
     pub params: AdpcmParams,
-    pub sample_buffer: Vec<i16>,
+    pub sample_buffer: [i16; 28],
 }
 
 impl AdpcmState {
@@ -35,9 +34,8 @@ impl AdpcmState {
         AdpcmState {
             old_sample: 0,
             older_sample: 0,
-            block_count: 0,
             params: AdpcmParams::new(),
-            sample_buffer: Vec::new(),
+            sample_buffer: [0; 28],
         }
     }
 }
@@ -47,6 +45,10 @@ pub struct PlayState {
     pub playing: bool,
     pub current_address: usize,
     pub adpcm_state: AdpcmState, 
+    pub pitch_counter: u32,
+    pub old_sample: i16,
+    pub older_sample: i16,
+    pub oldest_sample: i16,
     pub sample_buffer: Vec<Stereo>,
 }
 
@@ -56,6 +58,10 @@ impl PlayState {
             playing: false,
             current_address: 0x1000,
             adpcm_state: AdpcmState::new(),
+            pitch_counter: 0,
+            old_sample: 0,
+            older_sample: 0,
+            oldest_sample: 0,
             sample_buffer: Vec::new(),
         }
     }

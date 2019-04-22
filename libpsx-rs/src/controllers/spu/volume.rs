@@ -55,7 +55,7 @@ pub fn transform_sample_fixed(sample: i16, volume15: u16) -> i16 {
 
     let result = (sample as f64 * scale_factor) as i16;
     
-    debug!("sample: {}, volume15: {}, signed_volume: {}, scale_factor: {}, result: {}", sample, volume15, signed_volume, scale_factor, result);
+    //debug!("sample: {}, volume15: {}, signed_volume: {}, scale_factor: {}, result: {}", sample, volume15, signed_volume, scale_factor, result);
 
     result
 }
