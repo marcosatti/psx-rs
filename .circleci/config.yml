@@ -1,0 +1,35 @@
+version: 2.0
+jobs:
+  build:
+    docker:
+      - image: rustlang/rust:nightly-slim
+    steps:
+      - run:
+          name: OpenAL (openal-soft)
+          command: |
+            apt-get install libopenal-dev
+      - run:
+          name: OpenGL (mesa)
+          command: |
+            apt-get install mesa-common-dev
+      - run:
+          name: SDL2
+          command: |
+            apt-get install libsdl2-dev
+      - checkout
+      - run:
+          name: External setup
+          command: |
+            mkdir -p external/openal
+            mkdir -p external/opengl
+      - run:
+          name: OpenAL bindgen wrapper
+          command: |
+            cp external-sample/openal/wrapper.h.sample-linux external/openal/wrapper.h
+      - run:
+          name: OpenGL bindgen wrapper
+          command: |
+            cp external-sample/opengl/wrapper.h.sample-linux external/opengl/wrapper.h
+      - run:
+          name: Build
+          command: cargo build
