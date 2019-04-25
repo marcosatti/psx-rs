@@ -11,15 +11,15 @@ jobs:
       - run:
           name: OpenAL (openal-soft)
           command: |
-            apt-get install libopenal-dev
+            apt-get -y install libopenal-dev
       - run:
           name: OpenGL (mesa)
           command: |
-            apt-get install mesa-common-dev
+            apt-get -y install mesa-common-dev
       - run:
           name: SDL2
           command: |
-            apt-get install libsdl2-dev
+            apt-get -y install libsdl2-dev
       - checkout
       - run:
           name: External setup
