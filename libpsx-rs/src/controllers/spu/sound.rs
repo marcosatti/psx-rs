@@ -21,28 +21,22 @@ pub unsafe fn generate_sound(state: &State) {
             continue;
         }
 
-        let adpcm_sample_index = Bitfield::new(12, 20).extract_from(play_state.pitch_counter);
-
-        if adpcm_sample_index == 0 {
-            if voice_id == 0 { debug!("decoding new block"); }
+        if play_state.adpcm_state.sample_buffer.is_none() {
             decode_adpcm_block(state, voice_id);
         }
 
-        let adpcm_sample = play_state.adpcm_state.sample_buffer[adpcm_sample_index as usize];
+        let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
+        let adpcm_sample = adpcm_sample_buffer[play_state.pitch_counter_base];
+
+        handle_pitch_counter_update(state, voice_id);
+
+        // The incoming ADPCM sample (mono) is transformed into stereo through volume transformations. 
+        // This wasn't very clear in the docs...
         let mut pcm_frame = handle_volume_transform(state, voice_id, adpcm_sample);
         pcm_frame = handle_main_volume_transform(state, pcm_frame);
-        play_state.sample_buffer.push(pcm_frame);
-        
-        let sample_rate = &mut *get_adpcm_sr(state, voice_id);
-        let sample_rate_value = sample_rate.read_u16() as u32;
-        if voice_id == 0 {
-            debug!("adpcm_sample_index: {}, sample_rate: 0x{:4X}, pitch_counter: 0x{:4X}", adpcm_sample_index, sample_rate_value, play_state.pitch_counter);
-        }
-        play_state.pitch_counter += sample_rate_value;
-        let sample_index_bitfield = Bitfield::new(12, 20);
-        let adpcm_sample_index = sample_index_bitfield.extract_from(play_state.pitch_counter) % 28;
-        play_state.pitch_counter = sample_index_bitfield.insert_into(play_state.pitch_counter, adpcm_sample_index);
 
+        // All processing done, ready to be played.
+        play_state.sample_buffer.push(pcm_frame);
         handle_play_sound_buffer(state, voice_id, false);
 
         handle_play_termination(state, voice_id);
@@ -67,7 +61,8 @@ unsafe fn handle_play_initialization(state: &State, voice_id: usize) {
         play_state.playing = true;
         play_state.current_address = start_address.read_u16() as usize * 8;
         play_state.adpcm_state = AdpcmState::new();
-        play_state.pitch_counter = 0;
+        play_state.pitch_counter_base = 0;
+        play_state.pitch_counter_interp = 0;
         play_state.old_sample = 0;
         play_state.older_sample = 0;
         play_state.oldest_sample = 0;
@@ -105,10 +100,6 @@ unsafe fn handle_play_sound_buffer(state: &State, voice_id: usize, force: bool) 
     let forced = force && play_state.sample_buffer.len() > 0;
 
     if (play_state.sample_buffer.len() == BUFFER_SIZE) || forced {
-        //let sample_rate = &mut *get_adpcm_sr(state, voice_id);
-        //debug!("Playing sound [{}], sample rate should be {:X}h", voice_id, sample_rate.read_u16());
-
-        // TODO: proper frequency, although pcsxr just assumes 44100 all the time...
         match state.audio_backend {
             AudioBackend::Openal(ref backend_params) => {
                 openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id);
@@ -131,7 +122,7 @@ unsafe fn decode_adpcm_block(state: &State, voice_id: usize) {
     let repeat_address = &mut *get_adpcm_ra(state, voice_id);
     let status = &mut resources.spu.voice_channel_status;
 
-    // On next block decode, process the previous block's parameters.
+    // On next block decode, process the previous block's header parameters.
     if play_state.adpcm_state.params.loop_start {
         repeat_address.write_u16((play_state.current_address / 8) as u16);
     }
@@ -151,12 +142,14 @@ unsafe fn decode_adpcm_block(state: &State, voice_id: usize) {
     play_state.adpcm_state.params = decode_header(header);
 
     // ADPCM (packed) samples are from indexes 2 -> 15, with each byte containing 2 real samples.
+    let mut sample_buffer = [0; 28];
     for i in 0..14 {
         let data = memory.read_u8(play_state.current_address + (2 + i));
         let samples = decode_frame(data, &play_state.adpcm_state.params, &mut play_state.adpcm_state.old_sample, &mut play_state.adpcm_state.older_sample);
-        play_state.adpcm_state.sample_buffer[i * 2] = samples[0];
-        play_state.adpcm_state.sample_buffer[(i * 2) + 1] = samples[1];
+        sample_buffer[i * 2] = samples[0];
+        sample_buffer[(i * 2) + 1] = samples[1];
     }
+    play_state.adpcm_state.sample_buffer = Some(sample_buffer);
 }
 
 unsafe fn handle_volume_transform(state: &State, voice_id: usize, adpcm_sample: i16) -> Stereo {
@@ -202,4 +195,27 @@ unsafe fn handle_main_volume_transform(state: &State, pcm_frame: Stereo) -> Ster
     let right_sample = process_sample(pcm_frame.right, mvol_right);
 
     Stereo::new(left_sample, right_sample)
+}
+
+unsafe fn handle_pitch_counter_update(state: &State, voice_id: usize) {
+    let play_state = &mut *get_play_state(state, voice_id);
+    let sample_rate = &mut *get_adpcm_sr(state, voice_id);
+
+    let sample_rate_value = sample_rate.read_u16() as u32;
+    let interp_value = Bitfield::new(0, 12).extract_from(sample_rate_value) as usize;
+    let base_value = Bitfield::new(12, 4).extract_from(sample_rate_value) as usize;
+
+    play_state.pitch_counter_base += base_value;
+    play_state.pitch_counter_interp += interp_value;
+
+    if play_state.pitch_counter_interp >= 0x1000 {
+        play_state.pitch_counter_interp -= 0x1000;
+        play_state.pitch_counter_base += 1;
+    }
+
+    if play_state.pitch_counter_base >= 28 {
+        play_state.pitch_counter_base -= 28;
+        // We need a new block to decode and get samples from.
+        play_state.adpcm_state.sample_buffer = None; 
+    }
 }
