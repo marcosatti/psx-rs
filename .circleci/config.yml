@@ -1,4 +1,4 @@
-version: 2.0
+version: 2.1
 jobs:
   build:
     docker:
@@ -20,6 +20,10 @@ jobs:
           name: SDL2
           command: |
             apt-get -y install libsdl2-dev
+      - run:
+          name: LLVM & Clang
+          command: |
+            apt-get -y install llvm-dev libclang-dev clang
       - checkout
       - run:
           name: External setup
@@ -37,3 +41,8 @@ jobs:
       - run:
           name: Build
           command: cargo build
+workflows:
+  version: 2
+  Main:
+    jobs:
+      - build
