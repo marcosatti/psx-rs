@@ -5,6 +5,10 @@ jobs:
       - image: rustlang/rust:nightly-slim
     steps:
       - run:
+          name: Apt package list update
+          command: |
+            apt-get update
+      - run:
           name: OpenAL (openal-soft)
           command: |
             apt-get install libopenal-dev
