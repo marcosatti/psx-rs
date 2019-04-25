@@ -44,9 +44,15 @@ impl AdpcmState {
 }
 
 #[derive(Debug)]
+pub enum AdsrMode {
+    Attack,
+    Decay,
+    Sustain,
+    Release,
+}
+
+#[derive(Debug)]
 pub struct PlayState {
-    /// Key on/off state
-    pub playing: bool,
     /// Voice (ADPCM) decoding address
     pub current_address: usize,
     /// ADPCM decoding state
@@ -74,12 +80,14 @@ pub struct PlayState {
     /// PCM sample buffer
     /// This is filled with the output of the SPU after all processing is done.
     pub sample_buffer: Vec<Stereo>,
+    /// ADSR parameters
+    pub adsr_mode: AdsrMode,
+    pub adsr_current_volume: i16,
 }
 
 impl PlayState {
     pub fn new() -> PlayState {
         PlayState {
-            playing: false,
             current_address: 0x1000,
             adpcm_state: AdpcmState::new(),
             pitch_counter_base: 0,
@@ -88,6 +96,8 @@ impl PlayState {
             older_sample: 0,
             oldest_sample: 0,
             sample_buffer: Vec::new(),
+            adsr_mode: AdsrMode::Attack,
+            adsr_current_volume: 0,
         }
     }
 }

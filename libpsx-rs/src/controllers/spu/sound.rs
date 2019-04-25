@@ -9,26 +9,26 @@ use crate::controllers::spu::voice::*;
 use crate::controllers::spu::adpcm::*;
 use crate::controllers::spu::openal;
 use crate::controllers::spu::volume::*;
+use crate::controllers::spu::adsr::*;
 use crate::resources::spu::voice::*;
 
 pub unsafe fn generate_sound(state: &State) {
     for voice_id in 0..24 {
         let play_state = &mut *get_play_state(state, voice_id);
 
-        handle_play_initialization(state, voice_id);
-        
-        if !play_state.playing {
-            continue;
-        }
+        handle_key_on(state, voice_id);
 
         if play_state.adpcm_state.sample_buffer.is_none() {
             decode_adpcm_block(state, voice_id);
         }
 
         let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
-        let adpcm_sample = adpcm_sample_buffer[play_state.pitch_counter_base];
+        let adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
 
         handle_pitch_counter_update(state, voice_id);
+
+        handle_adsr_envelope(state, voice_id);
+        let adpcm_sample = ((adpcm_sample_raw as i32 * play_state.adsr_current_volume as i32) / std::i16::MAX as i32) as i16;
 
         // The incoming ADPCM sample (mono) is transformed into stereo through volume transformations. 
         // This wasn't very clear in the docs...
@@ -37,28 +37,29 @@ pub unsafe fn generate_sound(state: &State) {
 
         // All processing done, ready to be played.
         play_state.sample_buffer.push(pcm_frame);
-        handle_play_sound_buffer(state, voice_id, false);
+        handle_play_sound_buffer(state, voice_id);
 
-        handle_play_termination(state, voice_id);
+        handle_key_off(state, voice_id);
     }
 }
 
-unsafe fn handle_play_initialization(state: &State, voice_id: usize) {
+unsafe fn handle_key_on(state: &State, voice_id: usize) {
     let resources = &mut *state.resources;
     let key_on = &mut resources.spu.voice_key_on;
     let key_off = &mut resources.spu.voice_key_off;
     let status = &mut resources.spu.voice_channel_status;
     let play_state = &mut *get_play_state(state, voice_id);
     let start_address = &mut *get_adpcm_sa(state, voice_id);
+
     let voice_bitfield = Bitfield::new(voice_id, 1);
 
     let _key_on_lock = key_on.mutex.lock();
     let _key_off_lock = key_off.mutex.lock();
 
-    let voice_on = key_on.write_latch[voice_id] && key_on.register.read_bitfield(Bitfield::new(voice_id, 1)) > 0;
+    let key_on_value = key_on.write_latch[voice_id] && key_on.register.read_bitfield(voice_bitfield) > 0;
 
-    if voice_on {
-        play_state.playing = true;
+    if key_on_value {
+        *play_state = PlayState::new();
         play_state.current_address = start_address.read_u16() as usize * 8;
         play_state.adpcm_state = AdpcmState::new();
         play_state.pitch_counter_base = 0;
@@ -66,40 +67,40 @@ unsafe fn handle_play_initialization(state: &State, voice_id: usize) {
         play_state.old_sample = 0;
         play_state.older_sample = 0;
         play_state.oldest_sample = 0;
-        
+        play_state.adsr_mode = AdsrMode::Attack;
+        play_state.adsr_current_volume = 0;
         initialize_sound_buffer(state, voice_id);
+
+        key_off.register.write_bitfield(voice_bitfield, 0);
+        key_off.write_latch[voice_id] = false;
 
         status.write_bitfield(voice_bitfield, 0);
 
-        //debug!("Voice {}: key on, current address = 0x{:X}", voice_id, play_state.current_address);
         key_on.write_latch[voice_id] = false;
     }
 }
 
-unsafe fn handle_play_termination(state: &State, voice_id: usize) {
+unsafe fn handle_key_off(state: &State, voice_id: usize) {
     let resources = &mut *state.resources;
     let key_off = &mut resources.spu.voice_key_off;
     let play_state = &mut *get_play_state(state, voice_id);
 
+    let voice_bitfield = Bitfield::new(voice_id, 1);
+
     let _key_off_lock = key_off.mutex.lock();
 
-    let voice_off = key_off.write_latch[voice_id] && key_off.register.read_bitfield(Bitfield::new(voice_id, 1)) > 0;
+    let key_off_value = key_off.write_latch[voice_id] && key_off.register.read_bitfield(voice_bitfield) > 0;
 
-    if voice_off {
-        handle_play_sound_buffer(state, voice_id, true);
-
-        play_state.playing = false;
-        //debug!("Voice {}: key off, current address = 0x{:X}", voice_id, play_state.current_address);
+    if key_off_value {
+        play_state.adsr_mode = AdsrMode::Release;
         key_off.write_latch[voice_id] = false;
     }
 }
 
-unsafe fn handle_play_sound_buffer(state: &State, voice_id: usize, force: bool) {
+unsafe fn handle_play_sound_buffer(state: &State, voice_id: usize) {
     let play_state = &mut *get_play_state(state, voice_id);
 
-    let forced = force && play_state.sample_buffer.len() > 0;
-
-    if (play_state.sample_buffer.len() == BUFFER_SIZE) || forced {
+    if play_state.sample_buffer.len() == BUFFER_SIZE {
         match state.audio_backend {
             AudioBackend::Openal(ref backend_params) => {
                 openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id);
@@ -122,22 +123,7 @@ unsafe fn decode_adpcm_block(state: &State, voice_id: usize) {
     let repeat_address = &mut *get_adpcm_ra(state, voice_id);
     let status = &mut resources.spu.voice_channel_status;
 
-    // On next block decode, process the previous block's header parameters.
-    if play_state.adpcm_state.params.loop_start {
-        repeat_address.write_u16((play_state.current_address / 8) as u16);
-    }
-
-    if play_state.adpcm_state.params.loop_end {
-        play_state.current_address = (repeat_address.read_u16() as usize * 8) & 0x7FFFF;
-        status.write_bitfield(Bitfield::new(voice_id, 1), 1);
-    } else {
-        play_state.current_address = (play_state.current_address + 16) & 0x7FFFF;
-    }
-
-    if !play_state.adpcm_state.params.loop_repeat {
-        // Set ADSR to release by writing 0x0000
-    }
-
+    // ADPCM header.
     let header = [memory.read_u8(play_state.current_address), memory.read_u8(play_state.current_address + 1)];
     play_state.adpcm_state.params = decode_header(header);
 
@@ -150,6 +136,24 @@ unsafe fn decode_adpcm_block(state: &State, voice_id: usize) {
         sample_buffer[(i * 2) + 1] = samples[1];
     }
     play_state.adpcm_state.sample_buffer = Some(sample_buffer);
+
+    let mut next_address = (play_state.current_address + 16) & 0x7FFFF;
+
+    // Process header flags.
+    if play_state.adpcm_state.params.loop_start {
+        repeat_address.write_u16((play_state.current_address / 8) as u16);
+    }
+
+    if play_state.adpcm_state.params.loop_end {
+        next_address = (repeat_address.read_u16() as usize * 8) & 0x7FFFF;
+        status.write_bitfield(Bitfield::new(voice_id, 1), 1);
+
+        if !play_state.adpcm_state.params.loop_repeat {
+            play_state.adsr_mode = AdsrMode::Release;
+        }
+    }
+
+    play_state.current_address = next_address;
 }
 
 unsafe fn handle_volume_transform(state: &State, voice_id: usize, adpcm_sample: i16) -> Stereo {

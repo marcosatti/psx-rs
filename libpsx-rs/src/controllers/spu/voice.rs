@@ -170,7 +170,7 @@ pub unsafe fn get_adpcm_envelope(state: &State, voice_id: usize) -> *mut B32Regi
     }
 }
 
-pub unsafe fn get_adpcm_cvol(state: &State, voice_id: usize) -> *mut B16Register {
+pub unsafe fn get_adsr_cvol(state: &State, voice_id: usize) -> *mut B16Register {
     let resources = &mut *state.resources;
     match voice_id {
         0 => &mut resources.spu.voice0_cvol as *mut B16Register,

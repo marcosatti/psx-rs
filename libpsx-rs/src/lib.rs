@@ -84,7 +84,7 @@ impl<'a> Core<'a> {
 
         let benchmark_debug = BenchmarkDebug::empty();
 
-        let time = Duration::from_micros(50);
+        let time = Duration::from_micros(30);
 
         self.task_executor.join(
             || {

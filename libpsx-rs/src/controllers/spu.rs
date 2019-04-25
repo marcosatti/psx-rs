@@ -5,6 +5,7 @@ pub mod sound;
 pub mod openal;
 pub mod dac;
 pub mod volume;
+pub mod adsr;
 
 use std::time::Duration;
 use crate::State;
