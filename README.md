@@ -1,4 +1,5 @@
 # psx-rs: Playstation emulator written in Rust
+[![CircleCI](https://circleci.com/gh/marco9999/psx-rs.svg?style=svg)](https://circleci.com/gh/marco9999/psx-rs)
 
 Work in progress!
 
