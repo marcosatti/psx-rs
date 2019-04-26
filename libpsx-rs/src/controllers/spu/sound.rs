@@ -12,6 +12,18 @@ use crate::controllers::spu::interpolation::*;
 use crate::resources::spu::voice::*;
 
 pub unsafe fn generate_sound(state: &State) {
+    let resources = &mut *state.resources;
+
+    let pmon_value = resources.spu.voice_channel_fm.read_u32();
+    if pmon_value > 0 {
+        unimplemented!("Pitch modulation not implemented: 0x{:X}", pmon_value);
+    }
+
+    let noise_value = resources.spu.voice_channel_noise.read_u32();
+    if noise_value > 0 {
+        unimplemented!("Noise generation not implemented: 0x{:X}", noise_value);
+    }
+
     for voice_id in 0..24 {
         let play_state = &mut *get_play_state(state, voice_id);
 
