@@ -6,6 +6,7 @@ pub mod openal;
 pub mod dac;
 pub mod volume;
 pub mod adsr;
+pub mod interpolation;
 
 use std::time::Duration;
 use crate::State;

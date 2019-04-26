@@ -8,6 +8,7 @@ use crate::controllers::spu::adpcm::*;
 use crate::controllers::spu::openal;
 use crate::controllers::spu::volume::*;
 use crate::controllers::spu::adsr::*;
+use crate::controllers::spu::interpolation::*;
 use crate::resources::spu::voice::*;
 
 pub unsafe fn generate_sound(state: &State) {
@@ -21,7 +22,8 @@ pub unsafe fn generate_sound(state: &State) {
         }
 
         let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
-        let adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
+        let mut adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
+        adpcm_sample_raw = interpolate_sample(adpcm_sample_raw, &mut play_state.old_sample, &mut play_state.older_sample, &mut play_state.oldest_sample, play_state.pitch_counter_interp);
 
         handle_pitch_counter(state, voice_id);
 
