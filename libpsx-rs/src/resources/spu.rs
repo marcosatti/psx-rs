@@ -52,7 +52,8 @@ pub struct Spu {
     pub stat: B16Register,
     pub cd_volume: B32Register,
     pub extern_volume: B32Register,
-    pub current_volume: B32Register,
+    pub current_volume_left: B16Register,
+    pub current_volume_right: B16Register,
     pub unknown_1: B32Register,
 
     pub dapf1: B16Register,
@@ -300,7 +301,8 @@ impl Spu {
             stat: B16Register::new(),
             cd_volume: B32Register::new(),
             extern_volume: B32Register::new(),
-            current_volume: B32Register::new(),
+            current_volume_left: B16Register::new(),
+            current_volume_right: B16Register::new(),
             unknown_1: B32Register::new(),
             dapf1: B16Register::new(),
             dapf2: B16Register::new(),
@@ -520,7 +522,8 @@ pub fn initialize(resources: &mut Resources) {
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1DAE, 2, &mut resources.spu.stat as *mut B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1DB0, 4, &mut resources.spu.cd_volume as *mut B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1DB4, 4, &mut resources.spu.extern_volume as *mut B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1DB8, 4, &mut resources.spu.current_volume as *mut B8MemoryMap);
+    resources.r3000.memory_mapper.map::<u32>(0x1F80_1DB8, 2, &mut resources.spu.current_volume_left as *mut B8MemoryMap);
+    resources.r3000.memory_mapper.map::<u32>(0x1F80_1DBA, 2, &mut resources.spu.current_volume_right as *mut B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1DBC, 4, &mut resources.spu.unknown_1 as *mut B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1DC0, 2, &mut resources.spu.dapf1 as *mut B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1DC2, 2, &mut resources.spu.dapf2 as *mut B8MemoryMap);
