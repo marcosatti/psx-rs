@@ -3,8 +3,6 @@ use crate::constants::spu::dac::*;
 use crate::State;
 use crate::backends::audio::AudioBackend;
 use crate::types::bitfield::Bitfield;
-use crate::types::register::b16_register::*;
-use crate::types::stereo::*;
 use crate::controllers::spu::voice::*;
 use crate::controllers::spu::adpcm::*;
 use crate::controllers::spu::openal;
@@ -25,15 +23,14 @@ pub unsafe fn generate_sound(state: &State) {
         let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
         let adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
 
-        handle_pitch_counter_update(state, voice_id);
+        handle_pitch_counter(state, voice_id);
 
         handle_adsr_envelope(state, voice_id);
-        let adpcm_sample = ((adpcm_sample_raw as i32 * play_state.adsr_current_volume as i32) / std::i16::MAX as i32) as i16;
 
-        // The incoming ADPCM sample (mono) is transformed into stereo through volume transformations. 
-        // This wasn't very clear in the docs...
-        let mut pcm_frame = handle_volume_transform(state, voice_id, adpcm_sample);
-        pcm_frame = handle_main_volume_transform(state, pcm_frame);
+        // The incoming ADPCM sample (mono) is volume transformed 3 times, and turned into stereo. 
+        let adpcm_sample = transform_voice_adsr_volume(state, voice_id, adpcm_sample_raw);
+        let mut pcm_frame = transform_voice_volume(state, voice_id, adpcm_sample);
+        pcm_frame = transform_main_volume(state, pcm_frame);
 
         // All processing done, ready to be played.
         play_state.sample_buffer.push(pcm_frame);
@@ -68,7 +65,7 @@ unsafe fn handle_key_on(state: &State, voice_id: usize) {
         play_state.older_sample = 0;
         play_state.oldest_sample = 0;
         play_state.adsr_mode = AdsrMode::Attack;
-        play_state.adsr_current_volume = 0;
+        play_state.adsr_current_volume = 0.0;
         initialize_sound_buffer(state, voice_id);
 
         key_off.register.write_bitfield(voice_bitfield, 0);
@@ -156,52 +153,7 @@ unsafe fn decode_adpcm_block(state: &State, voice_id: usize) {
     play_state.current_address = next_address;
 }
 
-unsafe fn handle_volume_transform(state: &State, voice_id: usize, adpcm_sample: i16) -> Stereo {
-    let vol_left = &mut *get_voll(state, voice_id);
-    let vol_right = &mut *get_volr(state, voice_id);
-
-    let process_sample = |vol: &mut B16Register| -> i16 {
-        let vol_value = vol.read_u16();
-        let volume_mode = Bitfield::new(15, 1).extract_from(vol_value);
-        if volume_mode != 0 {
-            let (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode) = extract_sweep_params(vol_value);
-            transform_sample_sweep(adpcm_sample, sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode)
-        } else {
-            let volume15 = Bitfield::new(0, 15).extract_from(vol_value);
-            transform_sample_fixed(adpcm_sample, volume15)
-        }
-    };
-
-    let left_sample = process_sample(vol_left);
-    let right_sample = process_sample(vol_right);
-
-    Stereo::new(left_sample, right_sample)
-}
-
-unsafe fn handle_main_volume_transform(state: &State, pcm_frame: Stereo) -> Stereo {
-    let resources = &mut *state.resources;
-    let mvol_left = &mut resources.spu.main_volume_left;
-    let mvol_right = &mut resources.spu.main_volume_right;
-
-    let process_sample = |sample, mvol: &mut B16Register| -> i16 {
-        let mvol_value = mvol.read_u16();
-        let volume_mode = Bitfield::new(15, 1).extract_from(mvol_value);
-        if volume_mode != 0 {
-            let (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode) = extract_sweep_params(mvol_value);
-            transform_sample_sweep(sample, sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode)
-        } else {
-            let volume15 = Bitfield::new(0, 15).extract_from(mvol_value);
-            transform_sample_fixed(sample, volume15)
-        }
-    };
-
-    let left_sample = process_sample(pcm_frame.left, mvol_left);
-    let right_sample = process_sample(pcm_frame.right, mvol_right);
-
-    Stereo::new(left_sample, right_sample)
-}
-
-unsafe fn handle_pitch_counter_update(state: &State, voice_id: usize) {
+unsafe fn handle_pitch_counter(state: &State, voice_id: usize) {
     let play_state = &mut *get_play_state(state, voice_id);
     let sample_rate = &mut *get_adpcm_sr(state, voice_id);
 

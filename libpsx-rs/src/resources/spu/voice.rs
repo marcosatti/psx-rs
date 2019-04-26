@@ -80,9 +80,12 @@ pub struct PlayState {
     /// PCM sample buffer
     /// This is filled with the output of the SPU after all processing is done.
     pub sample_buffer: Vec<Stereo>,
-    /// ADSR parameters
+    /// ADSR mode (attack, decay, sustain, release)
     pub adsr_mode: AdsrMode,
-    pub adsr_current_volume: i16,
+    /// ADSR volume
+    /// Internally, it is described as a normalized scaling factor. This is to support delay
+    /// cycles without losing accuracy / increasing emulator complexity.
+    pub adsr_current_volume: f64,
 }
 
 impl PlayState {
@@ -97,7 +100,7 @@ impl PlayState {
             oldest_sample: 0,
             sample_buffer: Vec::new(),
             adsr_mode: AdsrMode::Attack,
-            adsr_current_volume: 0,
+            adsr_current_volume: 0.0,
         }
     }
 }
