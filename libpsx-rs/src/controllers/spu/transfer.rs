@@ -43,6 +43,12 @@ pub unsafe fn handle_manual_write_transfer(state: &State) {
     let memory = &mut resources.spu.memory;
     let current_transfer_mode = &mut resources.spu.current_transfer_mode;
     let current_transfer_address = &mut resources.spu.current_transfer_address;
+
+    let data_transfer_control = &resources.spu.data_transfer_control;
+    if data_transfer_control.read_u16() != 0x4 {
+        unimplemented!("Data transfer control not set to normal mode");
+    }
+
     let _lock = resources.spu.data_fifo.lock.lock();
     let fifo = &mut resources.spu.data_fifo.fifo;
 
@@ -61,10 +67,22 @@ pub unsafe fn handle_manual_write_transfer(state: &State) {
     }
 }
 
-pub unsafe fn handle_dma_write_transfer(_state: &State) {
+pub unsafe fn handle_dma_write_transfer(state: &State) {
+    let resources = &mut *state.resources;
+    let data_transfer_control = &resources.spu.data_transfer_control;
+    if data_transfer_control.read_u16() != 0x4 {
+        unimplemented!("Data transfer control not set to normal mode");
+    }
+
     unimplemented!("DmaWrite transfer mode not implemented");
 }
 
-pub unsafe fn handle_dma_read_transfer(_state: &State) {
+pub unsafe fn handle_dma_read_transfer(state: &State) {
+    let resources = &mut *state.resources;
+    let data_transfer_control = &resources.spu.data_transfer_control;
+    if data_transfer_control.read_u16() != 0x4 {
+        unimplemented!("Data transfer control not set to normal mode");
+    }
+
     unimplemented!("DmaRead transfer mode not implemented");
 }

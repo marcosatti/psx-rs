@@ -43,6 +43,7 @@ unsafe fn tick(state: &State) {
 
 unsafe fn handle_transfer(state: &State) {
     let resources = &mut *state.resources;
+
     let current_transfer_mode = &mut resources.spu.current_transfer_mode;
 
     handle_current_transfer_address(state);
