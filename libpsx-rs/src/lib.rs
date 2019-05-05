@@ -62,9 +62,15 @@ pub struct Core<'a> {
 impl<'a> Core<'a> {
     pub fn new(config: Config) -> Core {
         info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta_us, config.worker_threads);
+        info!("Main thread ID: {}", thread_id::get());
 
         let mut resources = Resources::new();
-        let task_executor = ThreadPoolBuilder::new().num_threads(config.worker_threads).build().unwrap();
+        let task_executor = ThreadPoolBuilder::new()
+            .num_threads(config.worker_threads)
+            .thread_name(|id| format!("libpsx-rs:{}:{}", thread_id::get(), id))
+            .start_handler(|_| info!("Worker thread ID: {:?}", thread_id::get()))
+            .build()
+            .unwrap();
 
         let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
         load_bios(&bios_path, &mut resources);
@@ -91,8 +97,11 @@ impl<'a> Core<'a> {
         let time = Duration::from_micros(self.config.time_delta_us);
 
         self.task_executor.scope(|scope| {
-            // Spawn other tasks on worker threads, R3000 on main thread as it will take the longest.
-
+            scope.spawn(|_|{
+                let timer = Instant::now();
+                run_r3000(&state, Event::Time(time));
+                unsafe { *benchmark_debug.r3000_benchmark.get() = timer.elapsed(); }
+            });
             scope.spawn(|_| {
                 let timer = Instant::now();
                 run_dmac(&state, Event::Time(time));
@@ -123,10 +132,6 @@ impl<'a> Core<'a> {
                 run_intc(&state, Event::Time(time));
                 unsafe { *benchmark_debug.intc_benchmark.get() = timer.elapsed(); }
             });
-
-            let timer = Instant::now();
-            run_r3000(&state, Event::Time(time));
-            unsafe { *benchmark_debug.r3000_benchmark.get() = timer.elapsed(); }
         });
 
         debug::trace_performance(&time, &benchmark_debug);
