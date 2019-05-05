@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 use opengl_sys::*;
 use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
-use log::debug;
+use log::{debug, info};
 use crate::debug::BenchmarkDebug;
 use crate::debug::debug_opengl_trace;
 use crate::backends::video::VideoBackend;
@@ -49,6 +49,8 @@ pub struct Config<'a> {
     pub bios_filename: String,
     pub video_backend: VideoBackend<'a>,
     pub audio_backend: AudioBackend<'a>,
+    pub time_delta_us: u64,
+    pub worker_threads: usize,
 }
 
 pub struct Core<'a> {
@@ -59,8 +61,10 @@ pub struct Core<'a> {
 
 impl<'a> Core<'a> {
     pub fn new(config: Config) -> Core {
+        info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta_us, config.worker_threads);
+
         let mut resources = Resources::new();
-        let task_executor = ThreadPoolBuilder::new().num_threads(2).build().unwrap();
+        let task_executor = ThreadPoolBuilder::new().num_threads(config.worker_threads).build().unwrap();
 
         let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
         load_bios(&bios_path, &mut resources);
@@ -84,50 +88,46 @@ impl<'a> Core<'a> {
 
         let benchmark_debug = BenchmarkDebug::empty();
 
-        let time = Duration::from_micros(30);
+        let time = Duration::from_micros(self.config.time_delta_us);
 
-        self.task_executor.join(
-            || {
-                let timer = Instant::now();
-                run_r3000(&state, Event::Time(time));
-                unsafe { *benchmark_debug.r3000_benchmark.get() = timer.elapsed(); }
-            },
-            || { rayon::join(|| {
+        self.task_executor.scope(|scope| {
+            // Spawn other tasks on worker threads, R3000 on main thread as it will take the longest.
+
+            scope.spawn(|_| {
                 let timer = Instant::now();
                 run_dmac(&state, Event::Time(time));
                 unsafe { *benchmark_debug.dmac_benchmark.get() = timer.elapsed(); }
-            },
-            || { rayon::join(|| {
+            });
+            scope.spawn(|_| {
                 let timer = Instant::now();
                 run_gpu(&state, Event::Time(time));
                 unsafe { *benchmark_debug.gpu_benchmark.get() = timer.elapsed(); }
-            },
-            || { rayon::join(|| {
+            });
+            scope.spawn(|_| {
                 let timer = Instant::now();
                 run_spu(&state, Event::Time(time));
                 unsafe { *benchmark_debug.spu_benchmark.get() = timer.elapsed(); }
-            },
-            || { rayon::join(|| {
+            });
+            scope.spawn(|_| {
                 let timer = Instant::now();
                 run_gpu_crtc(&state, Event::Time(time));
                 unsafe { *benchmark_debug.gpu_crtc_benchmark.get() = timer.elapsed(); }
-            },
-            || { rayon::join(|| {
+            });
+            scope.spawn(|_| {
                 let timer = Instant::now();
                 run_spu_dac(&state, Event::Time(time));
                 unsafe { *benchmark_debug.spu_dac_benchmark.get() = timer.elapsed(); }
-            },
-            || { 
+            });
+            scope.spawn(|_| { 
                 let timer = Instant::now();
                 run_intc(&state, Event::Time(time));
                 unsafe { *benchmark_debug.intc_benchmark.get() = timer.elapsed(); }
             });
-            });                            
-            });
-            });
-            });
-            }
-        );
+
+            let timer = Instant::now();
+            run_r3000(&state, Event::Time(time));
+            unsafe { *benchmark_debug.r3000_benchmark.get() = timer.elapsed(); }
+        });
 
         debug::trace_performance(&time, &benchmark_debug);
     }

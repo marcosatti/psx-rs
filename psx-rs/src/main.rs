@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::io::{stdout, stderr};
 use std::io::Write;
 use std::panic;
+use std::env::args;
 use log::{error, info};
 use sdl2::video::GLProfile;
 use opengl_sys::*;
@@ -63,6 +64,8 @@ fn main() {
     openal_release_context();
 
     // Initialize psx_rs core
+    let time_delta_us = args().nth(1).map_or(25, |v| v.parse::<u64>().unwrap());
+    let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
@@ -75,7 +78,9 @@ fn main() {
             openal::BackendParams {
                 context: BackendContext::new(&openal_acquire_context, &openal_release_context),
             }
-        )
+        ),
+        time_delta_us: time_delta_us,
+        worker_threads: worker_threads,
     };
     let mut core = Core::new(config);
     info!("Core initialized");
