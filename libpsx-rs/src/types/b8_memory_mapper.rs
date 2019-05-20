@@ -98,18 +98,20 @@ impl B8MemoryMapper
 
     fn object_at(&self, address: usize) -> (*mut B8MemoryMap, usize)
     {
-        let directory_index = self.directory_mask.extract_from(address);
-        let directory = match self.mappings[directory_index].as_ref() {
-            Some(d) => d,
-            None => panic!(format!("Missing object map at address 0x{:0X}", address)),
-        };
-        let page_index = self.page_mask.extract_from(address);
-        let page = &directory[page_index];
-        let page = match page.as_ref() {
-            Some(p) => p,
-            None => panic!(format!("Missing object map at address 0x{:0X}", address)),
-        };
-        (page.0.as_ptr(), page.1)
+        unsafe {
+            let directory_index = self.directory_mask.extract_from(address);
+            let directory = match self.mappings.get_unchecked(directory_index).as_ref() {
+                Some(d) => d,
+                None => panic!(format!("Missing object map at address 0x{:0X}", address)),
+            };
+            let page_index = self.page_mask.extract_from(address);
+            let page = &directory.get_unchecked(page_index);
+            let page = match page.as_ref() {
+                Some(p) => p,
+                None => panic!(format!("Missing object map at address 0x{:0X}", address)),
+            };
+            (page.0.as_ptr(), page.1)
+        }
     }
 
     pub fn read_u8<T>(&self, address: T) -> u8

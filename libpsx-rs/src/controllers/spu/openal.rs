@@ -1,4 +1,3 @@
-use log::debug;
 use openal_sys::*;
 use crate::backends::audio::openal::*;
 use crate::backends::audio::openal::rendering::*;

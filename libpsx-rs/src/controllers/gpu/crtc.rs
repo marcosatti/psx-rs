@@ -1,6 +1,5 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use opengl_sys::*;
-use log::debug;
 use crate::constants::gpu::crtc::*;
 use crate::backends::video::VideoBackend;
 use crate::backends::video::opengl;
@@ -42,10 +41,6 @@ unsafe fn handle_vblank(state: &State) {
     let resources = &mut *state.resources;
     let stat = &mut resources.gpu.gpu1814.stat;
     let drawing_odd = &mut resources.gpu.crtc.drawing_odd;
-
-    // Debug: CRTC is way to fast for R3000 (relies on vblank status), so slow it down for now.
-    // let instant = Instant::now();
-    // while instant.elapsed() < Duration::from_nanos(10_000) {}
 
     *drawing_odd = !*drawing_odd;
     stat.write_bitfield(STAT_DRAWING_ODD, if *drawing_odd { 1 } else { 0 });

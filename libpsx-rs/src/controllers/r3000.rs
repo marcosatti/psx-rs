@@ -14,6 +14,8 @@ use crate::utilities::mips1::status_push_exception;
 use crate::resources::r3000::cp0::{STATUS_BEV, STATUS_IM, CAUSE_IP, CAUSE_BD, STATUS_IEC, CAUSE_EXCCODE, CAUSE_EXCCODE_INT, CAUSE_EXCCODE_SYSCALL};
 use crate::debug::{DEBUG_CORE_EXIT, trace_intc};
 
+static mut ENABLE_DEBUG: bool = false;
+
 pub fn run(state: &State, event: Event) {
     match event {
         Event::Time(duration) => run_time(state, duration),
@@ -55,22 +57,24 @@ unsafe fn tick(state: &State) -> i64 {
 
     let (fn_ptr, mut mnemonic, cycles) = instruction_lookup(inst).unwrap();
 
-    // if pc_va == 0x800513FC && !DEBUG_BREAK_REACHED {
-    //     debug!("Break");
-    //     DEBUG_BREAK_REACHED = true;
-    // }
+    if ENABLE_DEBUG {
+        if pc_va == 0x800513FC && !DEBUG_BREAK_REACHED {
+            debug!("Break");
+            DEBUG_BREAK_REACHED = true;
+        }
 
-    // if DEBUG_TICK_COUNT >= 0x1592686D {
-    //     debug!("Exiting");
-    //     DEBUG_CORE_EXIT = true;
-    // }
+        if DEBUG_TICK_COUNT >= 0x1592686D {
+            debug!("Exiting");
+            DEBUG_CORE_EXIT = true;
+        }
 
-    // if DEBUG_TICK_COUNT >= 0x10001592686D || DEBUG_LOG_INSTRUCTION {
-    //     let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
-    //     let branching = resources.r3000.branch_delay.branching();
-    //     if inst_value == 0 { mnemonic = "nop"; }
-    //     debug!("[{:X}] iec = {}, pc = 0x{:0X}, inst = {}, b = {}", DEBUG_TICK_COUNT, iec, pc_va, mnemonic, branching);
-    // }
+        if DEBUG_TICK_COUNT >= 0x10001592686D || DEBUG_LOG_INSTRUCTION {
+            let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
+            let branching = resources.r3000.branch_delay.branching();
+            if inst_value == 0 { mnemonic = "nop"; }
+            debug!("[{:X}] iec = {}, pc = 0x{:0X}, inst = {}, b = {}", DEBUG_TICK_COUNT, iec, pc_va, mnemonic, branching);
+        }
+    }
 
     fn_ptr(state, inst);
     

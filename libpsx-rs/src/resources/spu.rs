@@ -11,25 +11,25 @@ use crate::resources::Resources;
 use crate::resources::spu::register::*;
 use crate::resources::spu::dac::*;
 
-pub const CONTROL_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
-pub const CONTROL_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);
-pub const CONTROL_CD_AUDIO_REVERB: Bitfield = Bitfield::new(2, 1);
-pub const CONTROL_EXTERNAL_AUDIO_REVERB: Bitfield = Bitfield::new(3, 1);
+pub const _CONTROL_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
+pub const _CONTROL_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);
+pub const _CONTROL_CD_AUDIO_REVERB: Bitfield = Bitfield::new(2, 1);
+pub const _CONTROL_EXTERNAL_AUDIO_REVERB: Bitfield = Bitfield::new(3, 1);
 pub const CONTROL_TRANSFER_MODE: Bitfield = Bitfield::new(4, 2);
 pub const CONTROL_MUTE: Bitfield = Bitfield::new(14, 1);
 pub const CONTROL_ENABLE: Bitfield = Bitfield::new(15, 1);
 
-pub const STAT_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
-pub const STAT_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);
-pub const STAT_CD_AUDIO_REVERB: Bitfield = Bitfield::new(2, 1);
-pub const STAT_EXTERNAL_AUDIO_REVERB: Bitfield = Bitfield::new(3, 1);
+pub const _STAT_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
+pub const _STAT_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);
+pub const _STAT_CD_AUDIO_REVERB: Bitfield = Bitfield::new(2, 1);
+pub const _STAT_EXTERNAL_AUDIO_REVERB: Bitfield = Bitfield::new(3, 1);
 pub const STAT_TRANSFER_MODE: Bitfield = Bitfield::new(4, 2);
-pub const STAT_IRQ_FLAG: Bitfield = Bitfield::new(6, 1);
-pub const STAT_DMA_RW_REQUEST: Bitfield = Bitfield::new(7, 1);
-pub const STAT_DMA_W_REQUEST: Bitfield = Bitfield::new(8, 1);
-pub const STAT_DMA_R_REQUEST: Bitfield = Bitfield::new(9, 1);
+pub const _STAT_IRQ_FLAG: Bitfield = Bitfield::new(6, 1);
+pub const _STAT_DMA_RW_REQUEST: Bitfield = Bitfield::new(7, 1);
+pub const _STAT_DMA_W_REQUEST: Bitfield = Bitfield::new(8, 1);
+pub const _STAT_DMA_R_REQUEST: Bitfield = Bitfield::new(9, 1);
 pub const STAT_DATA_BUSY_FLAG: Bitfield = Bitfield::new(10, 1);
-pub const STAT_WRITING_BUFFER_HALF: Bitfield = Bitfield::new(11, 1);
+pub const _STAT_WRITING_BUFFER_HALF: Bitfield = Bitfield::new(11, 1);
 
 pub struct Spu {
     pub main_volume_left: B16Register,

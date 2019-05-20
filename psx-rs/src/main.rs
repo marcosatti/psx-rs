@@ -3,6 +3,7 @@ use std::io::{stdout, stderr};
 use std::io::Write;
 use std::panic;
 use std::env::args;
+use std::time::Duration;
 use log::{error, info};
 use sdl2::video::GLProfile;
 use opengl_sys::*;
@@ -79,38 +80,34 @@ fn main() {
                 context: BackendContext::new(&openal_acquire_context, &openal_release_context),
             }
         ),
-        time_delta_us: time_delta_us,
+        time_delta: Duration::from_micros(time_delta_us),
         worker_threads: worker_threads,
     };
     let mut core = Core::new(config);
     info!("Core initialized");
 
     // Do event loop
-    'main: while unsafe { !DEBUG_CORE_EXIT } {
-        for event in event_pump.poll_iter() {
-            match event {
-                sdl2::event::Event::Quit { .. } => break 'main,
-                _ => {}
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        while unsafe { !DEBUG_CORE_EXIT } {
+            for event in event_pump.poll_iter() {
+                match event {
+                    sdl2::event::Event::Quit { .. } => break,
+                    _ => {}
+                }
             }
-        }
 
-        if run_core(&mut core).is_err() {
-            error!("Panic occurred, exiting");
-            break;
+            core.run();
         }
+    }));
+
+    if result.is_err() {
+        error!("Panic occurred, exiting");
     }
 
     // Post mortem
     core.debug_analysis();
     stdout().flush().unwrap();
     stderr().flush().unwrap();
-}
-
-fn run_core(core: &mut Core) -> Result<(), ()> {
-    match panic::catch_unwind(panic::AssertUnwindSafe(|| { core.run(); })) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(()),
-    }
 }
 
 fn setup_gl_context(video_subsystem: &sdl2::VideoSubsystem) {

@@ -1,7 +1,6 @@
 use std::cmp::{max, min};
-use log::{debug, warn};
+use log::warn;
 use num_traits::clamp;
-use crate::constants::spu::dac::*;
 use crate::State;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::spu::voice::*;

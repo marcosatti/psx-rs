@@ -1,4 +1,3 @@
-use log::{debug, warn};
 use crate::constants::spu::dac::*;
 use crate::State;
 use crate::backends::audio::AudioBackend;

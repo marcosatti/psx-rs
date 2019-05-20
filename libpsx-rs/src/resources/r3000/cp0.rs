@@ -9,25 +9,32 @@ pub const PRID_IMPLEMENTATION: Bitfield = Bitfield::new(8, 8);
 
 pub const STATUS_IEC: Bitfield = Bitfield::new(0, 1);
 pub const STATUS_KUC: Bitfield = Bitfield::new(1, 1);
-pub const STATUS_IEP: Bitfield = Bitfield::new(2, 1);
-pub const STATUS_KUP: Bitfield = Bitfield::new(3, 1);
-pub const STATUS_IEO: Bitfield = Bitfield::new(4, 1);
-pub const STATUS_KUO: Bitfield = Bitfield::new(5, 1);
+pub const _STATUS_IEP: Bitfield = Bitfield::new(2, 1);
+pub const _STATUS_KUP: Bitfield = Bitfield::new(3, 1);
+pub const _STATUS_IEO: Bitfield = Bitfield::new(4, 1);
+pub const _STATUS_KUO: Bitfield = Bitfield::new(5, 1);
 pub const STATUS_IM: Bitfield = Bitfield::new(8, 8);
 pub const STATUS_ISC: Bitfield = Bitfield::new(16, 1);
 pub const STATUS_TS: Bitfield = Bitfield::new(21, 1);
 pub const STATUS_BEV: Bitfield = Bitfield::new(22, 1);
-pub const STATUS_CU0: Bitfield = Bitfield::new(28, 1);
-pub const STATUS_CU2: Bitfield = Bitfield::new(30, 1);
+pub const _STATUS_CU0: Bitfield = Bitfield::new(28, 1);
+pub const _STATUS_CU2: Bitfield = Bitfield::new(30, 1);
 
 pub const CAUSE_EXCCODE: Bitfield = Bitfield::new(2, 5);
 pub const CAUSE_IP: Bitfield = Bitfield::new(8, 8);
-pub const CAUSE_CE: Bitfield = Bitfield::new(28, 2);
+pub const _CAUSE_CE: Bitfield = Bitfield::new(28, 2);
 pub const CAUSE_BD: Bitfield = Bitfield::new(31, 1);
 
 pub const CAUSE_EXCCODE_INT: usize = 0;
 pub const CAUSE_EXCCODE_SYSCALL: usize = 8;
 pub const CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
+
+fn prid() -> u32 {
+    let value: u32 = 0;
+    PRID_REVISION.insert_into(value, 2);
+    PRID_IMPLEMENTATION.insert_into(value, 0);
+    value
+}
 
 pub struct Cp0 {
     pub bpc: B32Register,
@@ -59,7 +66,7 @@ impl Cp0 {
             status: B32Register::new(),
             cause: B32Register::new(),
             epc: B32Register::new(),
-            prid: B32Register::read_only(0x0000_0002),
+            prid: B32Register::read_only(prid()),
             register: [None; 64],
             mutex: Mutex::new(()),
         }

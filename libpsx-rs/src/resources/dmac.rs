@@ -9,7 +9,6 @@ use crate::resources::Resources;
 use crate::resources::dmac::register::*;
 use crate::resources::dmac::channel::*;
 
-pub const DMA_CHANNEL_IDS: [usize; 7] = [0, 1, 2, 3, 4, 5, 6];
 pub const DMA_CHANNEL_NAMES: [&str; 7] = ["MDECin", "MDECout", "GPU", "CDROM", "SPU", "PIO", "OTC"];
 pub const DPCR_CHANNEL_ENABLE_BITFIELDS: [Bitfield; 7] = [DPCR_MDECIN_ENABLE, DPCR_MDECOUT_ENABLE, DPCR_GPU_ENABLE, DPCR_CDROM_ENABLE, DPCR_SPU_ENABLE, DPCR_PIO_ENABLE, DPCR_OTC_ENABLE];
 pub const DICR_IRQ_ENABLE_BITFIELDS: [Bitfield; 7] = [DICR_MDECIN_IRQ_ENABLE, DICR_MDECOUT_IRQ_ENABLE, DICR_GPU_IRQ_ENABLE, DICR_CDROM_IRQ_ENABLE, DICR_SPU_IRQ_ENABLE, DICR_PIO_IRQ_ENABLE, DICR_OTC_IRQ_ENABLE];
@@ -44,8 +43,8 @@ pub const DICR_IRQ_MASTER_FLAG: Bitfield = Bitfield::new(31, 1);
 pub const CHCR_TRANSFER_DIRECTION: Bitfield = Bitfield::new(0, 1);
 pub const CHCR_MADR_STEP_DIRECTION: Bitfield = Bitfield::new(1, 1);
 pub const CHCR_SYNCMODE: Bitfield = Bitfield::new(9, 2);
-pub const CHCR_CHOPPING_DMA_SIZE: Bitfield = Bitfield::new(16, 3); 
-pub const CHCR_CHOPPING_CPU_SIZE: Bitfield = Bitfield::new(20, 3); 
+pub const _CHCR_CHOPPING_DMA_SIZE: Bitfield = Bitfield::new(16, 3); 
+pub const _CHCR_CHOPPING_CPU_SIZE: Bitfield = Bitfield::new(20, 3); 
 pub const CHCR_CHOPPING: Bitfield = Bitfield::new(8, 1);
 pub const CHCR_STARTBUSY: Bitfield = Bitfield::new(24, 1);
 pub const CHCR_STARTTRIGGER: Bitfield = Bitfield::new(28, 1);

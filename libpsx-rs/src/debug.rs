@@ -1,8 +1,8 @@
-use std::cell::UnsafeCell;
+pub mod benchmark;
+
 use std::path::PathBuf;
 use std::fs::File;
 use std::io::Write;
-use std::time::{Duration, Instant};
 use std::ffi::CStr;
 use opengl_sys::*;
 use log::debug;
@@ -10,78 +10,6 @@ use crate::Core;
 use crate::resources::{self, Resources};
 
 pub static mut DEBUG_CORE_EXIT: bool = false;
-
-pub struct BenchmarkDebug {
-    pub r3000_benchmark: UnsafeCell<Duration>,
-    pub dmac_benchmark: UnsafeCell<Duration>,
-    pub gpu_benchmark: UnsafeCell<Duration>,
-    pub spu_benchmark: UnsafeCell<Duration>,
-    pub gpu_crtc_benchmark: UnsafeCell<Duration>,
-    pub spu_dac_benchmark: UnsafeCell<Duration>,
-    pub intc_benchmark: UnsafeCell<Duration>,
-}
-
-impl BenchmarkDebug {
-    pub const fn empty() -> BenchmarkDebug {
-        BenchmarkDebug {
-            r3000_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-            dmac_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-            gpu_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-            spu_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-            gpu_crtc_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-            spu_dac_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-            intc_benchmark: UnsafeCell::new(Duration::from_secs(0)),
-        }
-    }
-}
-
-unsafe impl Sync for BenchmarkDebug {}
-
-static mut BENCHMARK_TIME_ELAPSED: Duration = Duration::from_secs(0);
-static mut BENCHMARK_CONTROLLERS: BenchmarkDebug = BenchmarkDebug::empty();
-static mut BENCHMARK_LAST_REPORTED: Option<Instant> = None;
-static BENCHMARK_REPORTING_FREQUENCY: Duration = Duration::from_secs(3);
-
-pub fn trace_performance(time_elapsed: &Duration, benchmark_results: &BenchmarkDebug) {
-    unsafe {
-        if BENCHMARK_LAST_REPORTED.is_none() {
-            BENCHMARK_LAST_REPORTED = Some(Instant::now());
-            BENCHMARK_TIME_ELAPSED = Duration::from_secs(0);
-            BENCHMARK_CONTROLLERS = BenchmarkDebug::empty();
-        }
-
-        BENCHMARK_TIME_ELAPSED += *time_elapsed;
-        *BENCHMARK_CONTROLLERS.r3000_benchmark.get() += *benchmark_results.r3000_benchmark.get();
-        *BENCHMARK_CONTROLLERS.dmac_benchmark.get() += *benchmark_results.dmac_benchmark.get();
-        *BENCHMARK_CONTROLLERS.gpu_benchmark.get() += *benchmark_results.gpu_benchmark.get();
-        *BENCHMARK_CONTROLLERS.spu_benchmark.get() += *benchmark_results.spu_benchmark.get();
-        *BENCHMARK_CONTROLLERS.gpu_crtc_benchmark.get() += *benchmark_results.gpu_crtc_benchmark.get();
-        *BENCHMARK_CONTROLLERS.spu_dac_benchmark.get() += *benchmark_results.spu_dac_benchmark.get();
-        *BENCHMARK_CONTROLLERS.intc_benchmark.get() += *benchmark_results.intc_benchmark.get();
-
-        if BENCHMARK_LAST_REPORTED.unwrap().elapsed() > BENCHMARK_REPORTING_FREQUENCY {
-            let overall_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / BENCHMARK_REPORTING_FREQUENCY.as_secs_f64() * 100.0;
-            let r3000_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.r3000_benchmark.get()).as_secs_f64() * 100.0;
-            let dmac_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.dmac_benchmark.get()).as_secs_f64() * 100.0;
-            let gpu_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.gpu_benchmark.get()).as_secs_f64() * 100.0;
-            let spu_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.spu_benchmark.get()).as_secs_f64() * 100.0;
-            let gpu_crtc_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.gpu_crtc_benchmark.get()).as_secs_f64() * 100.0;
-            let spu_dac_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.spu_dac_benchmark.get()).as_secs_f64() * 100.0;
-            let intc_percentage = BENCHMARK_TIME_ELAPSED.as_secs_f64() / (*BENCHMARK_CONTROLLERS.intc_benchmark.get()).as_secs_f64() * 100.0;
-
-            let time_elapsed = BENCHMARK_TIME_ELAPSED.as_micros();
-
-            debug!(
-                "Benchmark of {} us ({:.2}%): r3000 = {:.2}%, dmac = {:.2}%, gpu = {:.2}%, spu = {:.2}%, gpu_crtc = {:.2}%, spu_dac = {:.2}%, intc = {:.2}%", 
-                time_elapsed, 
-                overall_percentage,
-                r3000_percentage, dmac_percentage, gpu_percentage, spu_percentage, gpu_crtc_percentage, spu_dac_percentage, intc_percentage
-            );
-
-            BENCHMARK_LAST_REPORTED = None;
-        }
-    }
-}
 
 pub fn analysis(core: &Core) {
     debug!("Core debug analysis:");
@@ -173,7 +101,7 @@ pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
     debug!("DMAC DICR: master flag = {}", dicr_irq_master_flag_value);
 }
 
-pub extern "C" fn debug_opengl_trace(source: GLenum, type_: GLenum, id: GLuint, severity: GLenum, length: GLsizei, message: *const GLchar, user_param: *const std::ffi::c_void) {
+pub extern "C" fn debug_opengl_trace(_source: GLenum, type_: GLenum, _id: GLuint, severity: GLenum, _length: GLsizei, message: *const GLchar, _user_param: *const std::ffi::c_void) {
     unsafe {
         if type_ == GL_DEBUG_TYPE_ERROR_ARB {
             let message = CStr::from_ptr(message);

@@ -5,6 +5,7 @@ pub mod timers;
 pub mod spu;
 pub mod dmac;
 pub mod gpu;
+pub mod cdrom;
 
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
 use crate::types::memory::b8_memory::B8Memory;
@@ -24,9 +25,15 @@ use crate::resources::dmac::Dmac;
 use crate::resources::dmac::initialize as dmac_initialize;
 use crate::resources::gpu::Gpu;
 use crate::resources::gpu::initialize as gpu_initialize;
+use crate::resources::cdrom::Cdrom;
+use crate::resources::cdrom::initialize as cdrom_initialize;
 
 pub struct Resources {
-    pub bus_locked: bool, // Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening. The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing the DMA controller to read/write garbage if the CPU is allowed to continue to run.
+    /// Bus lock status
+    /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening. 
+    /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing 
+    /// the DMA controller to read/write garbage if the CPU is allowed to continue to run.
+    pub bus_locked: bool, 
 
     pub r3000: R3000,
     pub intc: Intc,
@@ -35,6 +42,7 @@ pub struct Resources {
     pub spu: Spu,
     pub memory_control: MemoryControl,
     pub gpu: Gpu,
+    pub cdrom: Cdrom,
     pub bios: B8Memory,
     pub main_memory: B8Memory,
     pub post_display: B8Register,
@@ -52,6 +60,7 @@ impl Resources {
             spu: Spu::new(),
             memory_control: MemoryControl::new(),
             gpu: Gpu::new(),
+            cdrom: Cdrom::new(),
             bios: B8Memory::new(BIOS_SIZE),
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
             post_display: B8Register::new(),
@@ -71,6 +80,7 @@ fn initialize(resources: &mut Resources) {
     spu_initialize(resources);
     dmac_initialize(resources);
     gpu_initialize(resources);
+    cdrom_initialize(resources);
 
     resources.r3000.memory_mapper.map::<u32>(0x1F80_2041, 1, &mut resources.post_display as *mut B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F00_0000, 0x100, &mut resources.pio as *mut B8MemoryMap);

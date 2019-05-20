@@ -3,6 +3,7 @@ pub mod gpu;
 pub mod intc;
 pub mod dmac;
 pub mod spu;
+pub mod cdrom;
 
 use std::time::Duration;
 

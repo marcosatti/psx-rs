@@ -1,5 +1,4 @@
 use opengl_sys::*;
-use log::debug;
 use crate::backends::video::opengl::*;
 use crate::backends::video::opengl::rendering::*;
 use crate::types::geometry::*;

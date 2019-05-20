@@ -10,7 +10,6 @@ use crate::resources::gpu::*;
 
 pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
-    let stat = &mut resources.gpu.gpu1814.stat;
 
     let fifo = &mut resources.gpu.gpu1810.gp0;
     
@@ -145,12 +144,12 @@ fn command_2c(state: &State, values: [u32; 9]) {
     // TODO: implement this properly - need to make a shader to do this I think...
     // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
 
-    let color = extract_color_rgb(values[0], std::u8::MAX);
+    let _color = extract_color_rgb(values[0], std::u8::MAX);
     let vertices = extract_vertices_4_normalized([values[1], values[3], values[5], values[7]]);
     let clut_mode = extract_texpage_clut_mode(values[4]);
-    let transparency_mode = extract_texpage_transparency_mode(values[4]);
+    let _transparency_mode = extract_texpage_transparency_mode(values[4]);
     let texcoords = extract_texcoords_4_normalized(values[4], clut_mode, [values[2], values[4], values[6], values[8]]);
-    let clut = extract_clut_base_normalized(values[2]);
+    let _clut = extract_clut_base_normalized(values[2]);
 
     match state.video_backend {
         VideoBackend::Opengl(ref backend_params) => {

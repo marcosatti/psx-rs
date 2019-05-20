@@ -15,3 +15,4 @@ sdl2 = "0.32"
 thread-id = "3.3"
 opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
+average = "0.9"

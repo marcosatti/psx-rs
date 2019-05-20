@@ -1,4 +1,5 @@
 use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::bitfield::Bitfield;
 
 #[repr(C)]
 pub union B8Register_ {
@@ -33,6 +34,15 @@ impl B8Register {
         if !self.read_only {
             self.value.v8 = value;
         }
+    }
+    
+    pub fn read_bitfield(&self, bitfield: Bitfield) -> u8 {
+        bitfield.extract_from(self.read_u8())
+    }
+
+    pub fn write_bitfield(&mut self, bitfield: Bitfield, value: u8) {
+        let current = B8Register::read_u8(self);
+        self.write_u8(bitfield.insert_into(current, value));
     }
 }
 

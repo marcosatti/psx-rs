@@ -20,7 +20,7 @@ use opengl_sys::*;
 use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use log::{debug, info};
-use crate::debug::BenchmarkDebug;
+use crate::debug::benchmark::Benchmark;
 use crate::debug::debug_opengl_trace;
 use crate::backends::video::VideoBackend;
 use crate::backends::video::opengl;
@@ -49,7 +49,7 @@ pub struct Config<'a> {
     pub bios_filename: String,
     pub video_backend: VideoBackend<'a>,
     pub audio_backend: AudioBackend<'a>,
-    pub time_delta_us: u64,
+    pub time_delta: Duration,
     pub worker_threads: usize,
 }
 
@@ -61,14 +61,16 @@ pub struct Core<'a> {
 
 impl<'a> Core<'a> {
     pub fn new(config: Config) -> Core {
-        info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta_us, config.worker_threads);
+        info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
         info!("Main thread ID: {}", thread_id::get());
 
         let mut resources = Resources::new();
         let task_executor = ThreadPoolBuilder::new()
             .num_threads(config.worker_threads)
             .thread_name(|id| format!("libpsx-rs:{}:{}", thread_id::get(), id))
-            .start_handler(|_| info!("Worker thread ID: {:?}", thread_id::get()))
+            .start_handler(|_| {
+                info!("Worker thread ID: {:?}", thread_id::get());
+            })
             .build()
             .unwrap();
 
@@ -92,49 +94,51 @@ impl<'a> Core<'a> {
             audio_backend: &self.config.audio_backend,
         };
 
-        let benchmark_debug = BenchmarkDebug::empty();
+        let benchmark = Benchmark::empty();
 
-        let time = Duration::from_micros(self.config.time_delta_us);
+        let time = self.config.time_delta;
 
+        let now = Instant::now();
         self.task_executor.scope(|scope| {
-            scope.spawn(|_|{
+            scope.spawn(|_| {
                 let timer = Instant::now();
                 run_r3000(&state, Event::Time(time));
-                unsafe { *benchmark_debug.r3000_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.r3000.get() = timer.elapsed(); }
             });
             scope.spawn(|_| {
                 let timer = Instant::now();
                 run_dmac(&state, Event::Time(time));
-                unsafe { *benchmark_debug.dmac_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.dmac.get() = timer.elapsed(); }
             });
             scope.spawn(|_| {
                 let timer = Instant::now();
                 run_gpu(&state, Event::Time(time));
-                unsafe { *benchmark_debug.gpu_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.gpu.get() = timer.elapsed(); }
             });
             scope.spawn(|_| {
                 let timer = Instant::now();
                 run_spu(&state, Event::Time(time));
-                unsafe { *benchmark_debug.spu_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.spu.get() = timer.elapsed(); }
             });
             scope.spawn(|_| {
                 let timer = Instant::now();
                 run_gpu_crtc(&state, Event::Time(time));
-                unsafe { *benchmark_debug.gpu_crtc_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.gpu_crtc.get() = timer.elapsed(); }
             });
             scope.spawn(|_| {
                 let timer = Instant::now();
                 run_spu_dac(&state, Event::Time(time));
-                unsafe { *benchmark_debug.spu_dac_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.spu_dac.get() = timer.elapsed(); }
             });
             scope.spawn(|_| { 
                 let timer = Instant::now();
                 run_intc(&state, Event::Time(time));
-                unsafe { *benchmark_debug.intc_benchmark.get() = timer.elapsed(); }
+                unsafe { *benchmark.intc.get() = timer.elapsed(); }
             });
         });
+        let scope_duration = now.elapsed();
 
-        debug::trace_performance(&time, &benchmark_debug);
+        debug::benchmark::trace_performance(&time, &scope_duration, &benchmark);
     }
 
     pub fn debug_analysis(&self) {

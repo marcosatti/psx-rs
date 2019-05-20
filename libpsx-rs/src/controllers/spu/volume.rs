@@ -1,4 +1,3 @@
-use log::debug;
 use num_traits::clamp;
 use crate::State;
 use crate::types::bitfield::Bitfield;

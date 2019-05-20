@@ -1,4 +1,3 @@
-use log::warn;
 use crate::constants::gpu::*;
 use crate::types::color::Color;
 use crate::types::bitfield::Bitfield;
@@ -158,7 +157,7 @@ pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, tex
     let texcoord_y_bitfield = Bitfield::new(8, 8);
 
     // The texcoords are in terms of texture pixels, not framebuffer pixels (see clut_mode below).
-    let mut texcoord_offset_points: [Point2D<usize, Pixel>; 4] = [
+    let texcoord_offset_points: [Point2D<usize, Pixel>; 4] = [
         Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[0]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[0]) as usize),
         Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[1]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[1]) as usize),
         Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[2]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[2]) as usize),
