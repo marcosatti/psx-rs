@@ -106,8 +106,10 @@ fn main() {
 
     // Post mortem
     core.debug_analysis();
-    stdout().flush().unwrap();
-    stderr().flush().unwrap();
+
+    // Audio teardown
+    unsafe { alcDestroyContext(openal_context) };
+    unsafe { alcCloseDevice(openal_device) };
 }
 
 fn setup_gl_context(video_subsystem: &sdl2::VideoSubsystem) {
