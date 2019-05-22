@@ -1,6 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::io::{stdout, stderr};
-use std::io::Write;
 use std::panic;
 use std::env::args;
 use std::time::Duration;
