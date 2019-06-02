@@ -7,6 +7,12 @@ pub mod dmac;
 pub mod gpu;
 pub mod cdrom;
 
+use std::pin::Pin;
+use std::marker::PhantomPinned;
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
+use log::debug;
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
 use crate::types::memory::b8_memory::B8Memory;
 use crate::types::register::b8_register::B8Register;
@@ -29,6 +35,8 @@ use crate::resources::cdrom::Cdrom;
 use crate::resources::cdrom::initialize as cdrom_initialize;
 
 pub struct Resources {
+    _pin: PhantomPinned,
+
     /// Bus lock status
     /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening. 
     /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing 
@@ -50,8 +58,9 @@ pub struct Resources {
 }
 
 impl Resources {
-    pub fn new() -> Box<Resources> {
-        let mut resources = box Resources {
+    pub fn new() -> Pin<Box<Resources>> {
+        let mut resources = Box::pin(Resources {
+            _pin: PhantomPinned,
             bus_locked: false,
             r3000: R3000::new(),
             intc: Intc::new(),
@@ -65,23 +74,37 @@ impl Resources {
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
             post_display: B8Register::new(),
             pio: B8Memory::new_initialized(0x100, 0xFF),
-        };
+        });
 
-        initialize(&mut resources);
+        Self::initialize(&mut resources);
+
         resources
     }
-}
 
-fn initialize(resources: &mut Resources) {
-    r3000_initialize(resources);
-    intc_initialize(resources);
-    timers_initialize(resources);
-    memory_control_initialize(resources);
-    spu_initialize(resources);
-    dmac_initialize(resources);
-    gpu_initialize(resources);
-    cdrom_initialize(resources);
+    fn initialize(resources: &mut Pin<Box<Resources>>) {
+        let resources = unsafe { resources.as_mut().get_unchecked_mut() };
 
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_2041, 1, &mut resources.post_display as *mut B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F00_0000, 0x100, &mut resources.pio as *mut B8MemoryMap);
+        r3000_initialize(resources);
+        intc_initialize(resources);
+        timers_initialize(resources);
+        memory_control_initialize(resources);
+        spu_initialize(resources);
+        dmac_initialize(resources);
+        gpu_initialize(resources);
+        cdrom_initialize(resources);
+
+        resources.r3000.memory_mapper.map::<u32>(0x1F80_2041, 1, &mut resources.post_display as *mut dyn B8MemoryMap);
+        resources.r3000.memory_mapper.map::<u32>(0x1F00_0000, 0x100, &mut resources.pio as *mut dyn B8MemoryMap);
+    }
+
+    pub fn load_bios(resources: &mut Pin<Box<Resources>>, path: &PathBuf) {
+        let resources = unsafe { resources.as_mut().get_unchecked_mut() };
+
+        debug!("Loading BIOS from {}", path.to_str().unwrap());
+        let mut f = File::open(path).unwrap();
+        let mut buffer = Vec::new();
+        f.read_to_end(&mut buffer).unwrap();
+
+        resources.bios.write_raw(&buffer, 0);
+    }
 }

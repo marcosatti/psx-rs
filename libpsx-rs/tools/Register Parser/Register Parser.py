@@ -63,7 +63,7 @@ for row in splitted_text:
 
     declaration_lines.append(f'pub {name}: {rtype},\n')
     definition_lines.append(f'{name}: {rtype}::new(),\n')
-    memory_map_lines.append(f'resources.r3000.memory_mapper.map::<u32>({address}, {size}, &mut {NAMESPACE}.{name} as *mut B8MemoryMap);\n')
+    memory_map_lines.append(f'resources.r3000.memory_mapper.map::<u32>({address}, {size}, &mut {NAMESPACE}.{name} as *mut dyn B8MemoryMap);\n')
 
 with open(os.path.join(BASE_DIR, 'declarations.txt'), 'w') as f:
     f.writelines(declaration_lines)

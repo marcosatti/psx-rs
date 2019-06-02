@@ -89,6 +89,6 @@ impl Gpu {
 }
 
 pub fn initialize(resources: &mut Resources) {
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1810, 4, &mut resources.gpu.gpu1810 as *mut B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1814, 4, &mut resources.gpu.gpu1814 as *mut B8MemoryMap);
+    resources.r3000.memory_mapper.map::<u32>(0x1F80_1810, 4, &mut resources.gpu.gpu1810 as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map::<u32>(0x1F80_1814, 4, &mut resources.gpu.gpu1814 as *mut dyn B8MemoryMap);
 }

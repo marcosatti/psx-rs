@@ -11,15 +11,13 @@ mod controllers;
 pub mod debug;
 pub mod backends;
 
-use std::ops::DerefMut;
-use std::fs::File;
-use std::io::Read;
+use std::pin::Pin;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use opengl_sys::*;
 use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
-use log::{debug, info};
+use log::info;
 use crate::debug::benchmark::Benchmark;
 use crate::debug::debug_opengl_trace;
 use crate::backends::video::VideoBackend;
@@ -54,7 +52,7 @@ pub struct Config<'a> {
 }
 
 pub struct Core<'a> {
-    pub resources: Box<Resources>,
+    pub resources: Pin<Box<Resources>>,
     task_executor: ThreadPool,
     config: Config<'a>,
 }
@@ -65,6 +63,10 @@ impl<'a> Core<'a> {
         info!("Main thread ID: {}", thread_id::get());
 
         let mut resources = Resources::new();
+
+        let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
+        Resources::load_bios(&mut resources, &bios_path);
+
         let task_executor = ThreadPoolBuilder::new()
             .num_threads(config.worker_threads)
             .thread_name(|id| format!("libpsx-rs:{}:{}", thread_id::get(), id))
@@ -73,9 +75,6 @@ impl<'a> Core<'a> {
             })
             .build()
             .unwrap();
-
-        let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
-        load_bios(&bios_path, &mut resources);
 
         video_setup(&config.video_backend);
         audio_setup(&config.audio_backend);
@@ -88,8 +87,10 @@ impl<'a> Core<'a> {
     }
 
     pub fn run(&mut self) {
+        let resources_mut = unsafe { self.resources.as_mut().get_unchecked_mut() as *mut Resources };
+        
         let state = State {
-            resources: self.resources.deref_mut() as *mut Resources,
+            resources: resources_mut,
             video_backend: &self.config.video_backend,
             audio_backend: &self.config.audio_backend,
         };
@@ -144,14 +145,6 @@ impl<'a> Core<'a> {
     pub fn debug_analysis(&self) {
         debug::analysis(self);
     }
-}
-
-fn load_bios(path: &PathBuf, resources: &mut Resources) {
-    debug!("Loading BIOS from {}", path.to_str().unwrap());
-    let mut f = File::open(path).unwrap();
-    let mut buffer = Vec::new();
-    f.read_to_end(&mut buffer).unwrap();
-    resources.bios.write_raw(&buffer, 0);
 }
 
 fn video_setup(video_backend: &VideoBackend) {

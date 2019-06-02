@@ -36,6 +36,6 @@ impl Intc {
 }
 
 pub fn initialize(resources: &mut Resources) {
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1070, 4, &mut resources.intc.stat as *mut B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1074, 4, &mut resources.intc.mask as *mut B8MemoryMap);
+    resources.r3000.memory_mapper.map::<u32>(0x1F80_1070, 4, &mut resources.intc.stat as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map::<u32>(0x1F80_1074, 4, &mut resources.intc.mask as *mut dyn B8MemoryMap);
 }

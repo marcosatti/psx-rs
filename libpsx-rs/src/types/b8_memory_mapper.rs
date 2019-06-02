@@ -31,7 +31,7 @@ pub trait B8MemoryMap {
 }
 
 pub struct B8MemoryMapper {
-    mappings: Vec<Option<Vec<Option<(NonNull<B8MemoryMap>, usize)>>>>,
+    mappings: Vec<Option<Vec<Option<(NonNull<dyn B8MemoryMap>, usize)>>>>,
     directory_mask: Bitfield,
     page_mask: Bitfield,
     offset_mask: Bitfield,
@@ -57,7 +57,7 @@ impl B8MemoryMapper {
 
 impl B8MemoryMapper
 {
-    pub fn map<T>(&mut self, address: T, size: usize, object: *mut B8MemoryMap) 
+    pub fn map<T>(&mut self, address: T, size: usize, object: *mut dyn B8MemoryMap) 
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -96,7 +96,7 @@ impl B8MemoryMapper
         }
     }
 
-    fn object_at(&self, address: usize) -> (*mut B8MemoryMap, usize)
+    fn object_at(&self, address: usize) -> (*mut dyn B8MemoryMap, usize)
     {
         unsafe {
             let directory_index = self.directory_mask.extract_from(address);
