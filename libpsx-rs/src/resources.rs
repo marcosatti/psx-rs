@@ -12,7 +12,7 @@ use std::marker::PhantomPinned;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use log::debug;
+use log::info;
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
 use crate::types::memory::b8_memory::B8Memory;
 use crate::types::register::b8_register::B8Register;
@@ -100,7 +100,7 @@ impl Resources {
     pub fn load_bios(resources: &mut Pin<Box<Resources>>, path: &PathBuf) {
         let resources = unsafe { resources.as_mut().get_unchecked_mut() };
 
-        debug!("Loading BIOS from {}", path.to_str().unwrap());
+        info!("Loading BIOS from {}", path.to_str().unwrap());
         let mut f = File::open(path).unwrap();
         let mut buffer = Vec::new();
         f.read_to_end(&mut buffer).unwrap();

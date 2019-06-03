@@ -98,10 +98,7 @@ pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
-        2 => { 
-            let _lock = resources.gpu.gpu1810.gp0_mutex.lock();
-            resources.gpu.gpu1810.gp0.push_back(value); 
-        },
+        2 => resources.gpu.gpu1810.gp0.write_one(value),
         3 => unimplemented!("Unhandled DMAC channel 3"),
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),

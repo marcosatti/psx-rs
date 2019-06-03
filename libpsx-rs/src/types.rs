@@ -7,3 +7,4 @@ pub mod bitfield;
 pub mod geometry;
 pub mod color;
 pub mod stereo;
+pub mod queue;

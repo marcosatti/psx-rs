@@ -1,3 +1,4 @@
+use std::iter;
 use log::debug;
 use crate::backends::video::VideoBackend;
 use crate::State;
@@ -8,65 +9,62 @@ use crate::controllers::gpu::data::*;
 use crate::controllers::gpu::opengl;
 use crate::resources::gpu::*;
 
+// TODO: Really needs const generics for FIFO operations... :(
+
 pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
 
     let fifo = &mut resources.gpu.gpu1810.gp0;
     
-    if fifo.len() == 0 {
-        return;
-    }
+    let command = fifo.peek_front();
 
-    let _lock = resources.gpu.gpu1810.gp0_mutex.lock();
-
-    let command = fifo.front();
-    if let Some(&value) = command {
+    if let Some(value) = command {
         let cmd = GP_CMD.extract_from(value) as u8;
 
         match cmd {
-            0x00 => command_00(fifo.pop_front().unwrap()),
-            0x01 => command_01(fifo.pop_front().unwrap()),
-            0x05 => command_05(fifo.pop_front().unwrap()),
-            0x06 => command_06(fifo.pop_front().unwrap()),
-            0x0c => command_0c(fifo.pop_front().unwrap()),
+            0x00 => command_00(fifo.read_one().unwrap()),
+            0x01 => command_01(fifo.read_one().unwrap()),
+            0x05 => command_05(fifo.read_one().unwrap()),
+            0x06 => command_06(fifo.read_one().unwrap()),
+            0x0c => command_0c(fifo.read_one().unwrap()),
             0x28 => {
                 if fifo.len() < 5 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_28(state, value);
             },
             0x2C => {
                 if fifo.len() < 9 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_2c(state, value);
             }
             0x30 => {
                 if fifo.len() < 6 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_30(state, value);
             },
             0x38 => {
                 if fifo.len() < 8 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_38(state, value);
             },
             0x3C => {
                 if fifo.len() < 12 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_3c(state, value);
             },
             0x50 => {
                 if fifo.len() < 4 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_50(state, value);
             },
             0x6F => {
                 if fifo.len() < 3 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_6f(state, value);
             },
             0x80 => {
                 if fifo.len() < 4 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_80(state, value);
             },
             0xA0 => {
@@ -80,21 +78,21 @@ pub unsafe fn handle_command(state: &State) {
 
                 if fifo.len() < (3 + fifo_words) { return; }
 
-                let header = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
-                let data = fifo.drain(0..fifo_words).collect::<Vec<_>>();
+                let header = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
+                let data = fifo.read(fifo_words).unwrap();
                 command_a0(state, header, &data);
             },
             0xC0 => {
                 if fifo.len() < 3 { return; }
-                let value = [fifo.pop_front().unwrap(), fifo.pop_front().unwrap(), fifo.pop_front().unwrap()];
+                let value = [fifo.read_one().unwrap(), fifo.read_one().unwrap(), fifo.read_one().unwrap()];
                 command_c0(state, value);
             },
-            0xE1 => command_e1(state, fifo.pop_front().unwrap()),
-            0xE2 => command_e2(state, fifo.pop_front().unwrap()),
-            0xE3 => command_e3(state, fifo.pop_front().unwrap()),
-            0xE4 => command_e4(state, fifo.pop_front().unwrap()),
-            0xE5 => command_e5(state, fifo.pop_front().unwrap()),
-            0xE6 => command_e6(state, fifo.pop_front().unwrap()),
+            0xE1 => command_e1(state, fifo.read_one().unwrap()),
+            0xE2 => command_e2(state, fifo.read_one().unwrap()),
+            0xE3 => command_e3(state, fifo.read_one().unwrap()),
+            0xE4 => command_e4(state, fifo.read_one().unwrap()),
+            0xE5 => command_e5(state, fifo.read_one().unwrap()),
+            0xE6 => command_e6(state, fifo.read_one().unwrap()),
             _ => unimplemented!("Unknown GP0 command: 0x{:0X} (0x{:0X})", cmd, value),
         }
     }
@@ -254,14 +252,11 @@ unsafe fn command_c0(state: &State, values: [u32; 3]) {
     let count = width * height;
     let fifo_words = (count + 1) / 2;
 
-    debug!("Pushing {} words of 0xFFFF_FFFF to GPUREAD", fifo_words);
+    debug!("Pushing {} words of 0xFFFF_FFFF to GPUREAD [not implemented properly]", fifo_words);
 
     let resources = &mut *state.resources;
-    let _lock = resources.gpu.gpu1810.read_mutex.lock();
     let read = &mut resources.gpu.gpu1810.read;
-    for _ in 0..fifo_words {
-        read.push_back(0xFFFF_FFFF);
-    }
+    read.write(iter::repeat(0xFFFF_FFFF).take(fifo_words))
 }
 
 pub unsafe fn command_e1(state: &State, command: u32) {

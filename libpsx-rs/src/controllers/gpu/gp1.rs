@@ -7,35 +7,29 @@ pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
     let fifo = &mut resources.gpu.gpu1814.gp1;
 
-    if fifo.len() == 0 {
-        return;
-    }
-
-    let _lock = resources.gpu.gpu1814.gp1_lock.lock();
-
-    let command = fifo.front();
-    if let Some(&value) = command {
+    let command = fifo.peek_front();
+    if let Some(value) = command {
         let cmd = GP_CMD.extract_from(value) as u8;
 
         match cmd {
             0x00 => {
-                fifo.pop_front().unwrap();
+                fifo.read_one().unwrap();
                 command_00(state);
             },
             0x01 => {
-                fifo.pop_front().unwrap();
+                fifo.read_one().unwrap();
                 command_01(state);
             },
             0x02 => {
-                fifo.pop_front().unwrap();
+                fifo.read_one().unwrap();
                 command_02(state);
             },
-            0x03 => command_03(state, fifo.pop_front().unwrap()),
-            0x04 => command_04(state, fifo.pop_front().unwrap()),
-            0x05 => command_05(state, fifo.pop_front().unwrap()),
-            0x06 => command_06(state, fifo.pop_front().unwrap()),
-            0x07 => command_07(state, fifo.pop_front().unwrap()),
-            0x08 => command_08(state, fifo.pop_front().unwrap()),
+            0x03 => command_03(state, fifo.read_one().unwrap()),
+            0x04 => command_04(state, fifo.read_one().unwrap()),
+            0x05 => command_05(state, fifo.read_one().unwrap()),
+            0x06 => command_06(state, fifo.read_one().unwrap()),
+            0x07 => command_07(state, fifo.read_one().unwrap()),
+            0x08 => command_08(state, fifo.read_one().unwrap()),
             _ => unimplemented!("Unknown GP1 command: 0x{:0X}", value),
         }
     }
@@ -60,7 +54,6 @@ unsafe fn command_00(state: &State) {
 
 unsafe fn command_01(state: &State) {
     let resources = &mut *state.resources;
-    let _lock = resources.gpu.gpu1810.gp0_mutex.lock();
     resources.gpu.gpu1810.gp0.clear();
 }
 

@@ -6,7 +6,8 @@ fn main() {
     let target = env::var("TARGET").unwrap();
 
     let builder = bindgen::Builder::default()
-        .header("../external/opengl/wrapper.h");
+        .header("../external/opengl/wrapper.h")
+        .rustfmt_bindings(true);
 
     if target.contains("linux") {
         builder
