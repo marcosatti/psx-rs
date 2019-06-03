@@ -3,6 +3,8 @@ use std::ops::Index;
 use spin::Mutex;
 
 /// SPSC Queue
+/// Locking is needed for read only operations due to a possible mutable operation occuring in another thread.
+/// TODO: explore https://crates.io/crates/heapless
 pub struct Queue<T> 
 where
     T: Copy + Default
@@ -23,6 +25,7 @@ where
     }
 
     pub fn len(&self) -> usize {
+        let _lock = self.mutex.lock();
         self.queue.len()
     }
 
@@ -31,6 +34,7 @@ where
     }
 
     pub fn peek_front(&self) -> Option<T> {
+        let _lock = self.mutex.lock();
         self.queue.front().map(|v| *v)
     }
 
@@ -77,6 +81,7 @@ where
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
+        let _lock = self.mutex.lock();
         &self.queue[index]
     }
 }
