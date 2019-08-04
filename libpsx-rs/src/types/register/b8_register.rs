@@ -1,4 +1,4 @@
-use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::b8_memory_mapper::*;
 use crate::types::bitfield::Bitfield;
 
 #[repr(C)]
@@ -47,13 +47,14 @@ impl B8Register {
 }
 
 impl B8MemoryMap for B8Register {
-    fn read_u8(&mut self, offset: usize) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
         if offset != 0 { panic!("Invalid offset"); }
-        Self::read_u8(self)
+        Ok(Self::read_u8(self))
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) {
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         Self::write_u8(self, value);
+        Ok(())
     }
 }

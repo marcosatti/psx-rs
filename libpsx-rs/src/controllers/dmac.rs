@@ -3,7 +3,6 @@ pub mod debug;
 
 use std::time::Duration;
 use log::warn;
-//use log::debug;
 use crate::State;
 use crate::constants::dmac::*;
 use crate::types::bitfield::Bitfield;
@@ -35,15 +34,17 @@ fn run_time(state: &State, duration: Duration) {
             if channel_id < 0 {
                 channel_id = 6;
             }
+
+            unsafe { handle_irq_check(state); }
         } else {
-            ticks -= channel_ticks;
+            ticks -= channel_ticks as i64;
         }
     }
     
     unsafe { handle_irq_check(state); }
 }
 
-unsafe fn tick(state: &State, channel: usize) -> i64 {
+unsafe fn tick(state: &State, channel: usize) -> i32 {
     let resources = &mut *state.resources;
     let dpcr = &resources.dmac.dpcr;
 
@@ -56,7 +57,7 @@ unsafe fn tick(state: &State, channel: usize) -> i64 {
     }
 }
 
-unsafe fn handle_transfer(state: &State, channel: usize) -> i64 {
+unsafe fn handle_transfer(state: &State, channel: usize) -> i32 {
     let resources = &mut *state.resources;
     let transfer_state = &mut *get_transfer_state(state, channel);
     let chcr = &mut *get_chcr(state, channel);
@@ -85,14 +86,12 @@ unsafe fn handle_transfer(state: &State, channel: usize) -> i64 {
             SyncMode::Blocks => handle_blocks_transfer(state, channel),
             SyncMode::LinkedList => handle_linked_list_transfer(state, channel),
         }
-
-        1
     } else {
         0
     }
 }
 
-unsafe fn handle_continuous_transfer(state: &State, channel: usize) {
+unsafe fn handle_continuous_transfer(state: &State, channel: usize) -> i32 {
     let resources = &mut *state.resources;
     let main_memory = &mut resources.main_memory;
     let chcr = &mut *get_chcr(state, channel);
@@ -106,12 +105,19 @@ unsafe fn handle_continuous_transfer(state: &State, channel: usize) {
 
     match transfer_direction {
         TransferDirection::FromChannel => {
-            let value = pop_channel_data(state, channel, continuous_state.current_address, last_transfer);
+            let result = pop_channel_data(state, channel, continuous_state.current_address, last_transfer);
+            if result.is_err() {
+                return 0;
+            }
+            let value = result.unwrap();
             main_memory.write_u32(continuous_state.current_address as usize, value);
         },
         TransferDirection::ToChannel => {
             let value = main_memory.read_u32(continuous_state.current_address as usize);
-            push_channel_data(state, channel, value);
+            let result = push_channel_data(state, channel, value);
+            if result.is_err() {
+                return 0;
+            }
         },
     }
 
@@ -131,9 +137,11 @@ unsafe fn handle_continuous_transfer(state: &State, channel: usize) {
         debug::transfer_end(state, channel);
         resources.bus_locked = false;
     }
+
+    return 1;
 }
 
-unsafe fn handle_blocks_transfer(state: &State, channel: usize) {
+unsafe fn handle_blocks_transfer(state: &State, channel: usize) -> i32 {
     let resources = &mut *state.resources;
     let main_memory = &mut resources.main_memory;
     let chcr = &mut *get_chcr(state, channel);
@@ -153,12 +161,19 @@ unsafe fn handle_blocks_transfer(state: &State, channel: usize) {
 
     match transfer_direction {
         TransferDirection::FromChannel => {
-            let value = pop_channel_data(state, channel, blocks_state.current_address, last_transfer);
+            let result = pop_channel_data(state, channel, blocks_state.current_address, last_transfer);
+            if result.is_err() {
+                return 0;
+            }
+            let value = result.unwrap();
             main_memory.write_u32(blocks_state.current_address as usize, value);
         },
         TransferDirection::ToChannel => {
             let value = main_memory.read_u32(blocks_state.current_address as usize);
-            push_channel_data(state, channel, value);
+            let result = push_channel_data(state, channel, value);
+            if result.is_err() {
+                return 0;
+            }
         },
     }
 
@@ -188,9 +203,11 @@ unsafe fn handle_blocks_transfer(state: &State, channel: usize) {
         debug::transfer_end(state, channel);
         resources.bus_locked = false;
     }
+
+    return 1;
 }
 
-unsafe fn handle_linked_list_transfer(state: &State, channel: usize) {
+unsafe fn handle_linked_list_transfer(state: &State, channel: usize) -> i32 {
     let resources = &mut *state.resources;
     let main_memory = &mut resources.main_memory;
     let chcr = &mut *get_chcr(state, channel);
@@ -212,7 +229,7 @@ unsafe fn handle_linked_list_transfer(state: &State, channel: usize) {
             set_interrupt_flag(state, channel);
             debug::transfer_end(state, channel);
             resources.bus_locked = false;
-            return;
+            return 1;
         }
 
         let header_value = main_memory.read_u32(linked_list_state.next_address as usize);
@@ -223,11 +240,18 @@ unsafe fn handle_linked_list_transfer(state: &State, channel: usize) {
         linked_list_state.next_address = next_address;
         linked_list_state.target_count = target_count;
         linked_list_state.current_count = 0;
+
+        return 1;
     } else {
         let address = (linked_list_state.current_address + DATA_SIZE) + ((linked_list_state.current_count as u32) * DATA_SIZE);
         let value = main_memory.read_u32(address as usize);
-        push_channel_data(state, channel, value);
+        let result = push_channel_data(state, channel, value);
+        if result.is_err() {
+            return 0;
+        }
         linked_list_state.current_count += 1;
+
+        return 1;
     }
 }
 

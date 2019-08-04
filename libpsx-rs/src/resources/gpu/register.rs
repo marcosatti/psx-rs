@@ -1,6 +1,6 @@
 use log::debug;
 use crate::types::register::b32_register::B32Register;
-use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::b8_memory_mapper::*;
 use crate::types::queue::Queue;
 
 pub struct Gpu1810 {
@@ -18,21 +18,18 @@ impl Gpu1810 {
 }
 
 impl B8MemoryMap for Gpu1810 {
-    fn read_u32(&mut self, offset: usize) -> u32 {
+    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
         if offset != 0 { panic!("Invalid offset"); }
         
-        match self.read.read_one() {
-            Some(v) => v,
-            None => {
-                debug!("GPUREAD is empty - returning 0");
-                0
-            },
-        }
+        Ok(self.read.read_one().unwrap_or_else(|_| {
+            debug!("GPUREAD is empty - returning 0");
+            0
+        }))
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
-        self.gp0.write_one(value);
+        self.gp0.write_one(value).map_err(|_| WriteError::Full)
     }
 }
 
@@ -51,12 +48,12 @@ impl Gpu1814 {
 }
 
 impl B8MemoryMap for Gpu1814 {
-    fn read_u32(&mut self, offset: usize) -> u32 {
+    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.stat, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
-        self.gp1.write_one(value);
+        self.gp1.write_one(value)
     }
 }

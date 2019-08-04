@@ -1,4 +1,4 @@
-use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::b8_memory_mapper::*;
 
 pub struct B8Memory {
     memory: Vec<u8>,
@@ -59,27 +59,30 @@ impl B8Memory {
 }
 
 impl B8MemoryMap for B8Memory {
-    fn read_u8(&mut self, offset: usize) -> u8 {
-        Self::read_u8(self, offset)
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+        Ok(Self::read_u8(self, offset))
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) {
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
         Self::write_u8(self, offset, value);
+        Ok(())
     }
 
-    fn read_u16(&mut self, offset: usize) -> u16 {
-        Self::read_u16(self, offset)
+    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+        Ok(Self::read_u16(self, offset))
     }
     
-    fn write_u16(&mut self, offset: usize, value: u16) {
+    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
         Self::write_u16(self, offset, value);
+        Ok(())
     }
 
-    fn read_u32(&mut self, offset: usize) -> u32 {
-        Self::read_u32(self, offset)
+    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+        Ok(Self::read_u32(self, offset))
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) {
+    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
         Self::write_u32(self, offset, value);
+        Ok(())
     }
 }

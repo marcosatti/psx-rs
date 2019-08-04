@@ -79,7 +79,7 @@ pub unsafe fn get_transfer_state(state: &State, channel: usize) -> *mut Transfer
     }
 }
 
-pub unsafe fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer: bool) -> u32 {
+pub unsafe fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     let _resources = &mut *state.resources;
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
@@ -88,12 +88,12 @@ pub unsafe fn pop_channel_data(state: &State, channel: usize, madr: u32, last_tr
         3 => unimplemented!("Unhandled DMAC channel 3"),
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
-        6 => if !last_transfer { (madr - 4) & 0x00FF_FFFF } else { 0x00FF_FFFF },
+        6 => Ok(if !last_transfer { (madr - 4) & 0x00FF_FFFF } else { 0x00FF_FFFF }),
         _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
-pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) {
+pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) -> Result<(), ()> {
     let resources = &mut *state.resources;
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),

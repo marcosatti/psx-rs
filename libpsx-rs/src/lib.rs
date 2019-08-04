@@ -2,6 +2,7 @@
 #![feature(nll)]
 #![feature(duration_float)]
 #![feature(box_syntax)]
+#![feature(const_generics)]
 
 mod constants;
 mod types;

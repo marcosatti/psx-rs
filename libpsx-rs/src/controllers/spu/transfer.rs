@@ -48,16 +48,15 @@ pub unsafe fn handle_manual_write_transfer(state: &State) {
         unimplemented!("Data transfer control not set to normal mode");
     }
 
-    let _lock = resources.spu.data_fifo.lock.lock();
     let fifo = &mut resources.spu.data_fifo.fifo;
 
-    match fifo.pop_front() {
-        Some(value) => {
+    match fifo.read_one() {
+        Ok(value) => {
             memory.write_u16(*current_transfer_address as usize, value);
             *current_transfer_address += 2;
             *current_transfer_address &= 0x7FFFF;
         },
-        None => {
+        Err(_) => {
             control.write_bitfield(CONTROL_TRANSFER_MODE, 0);
             stat.write_bitfield(STAT_DATA_BUSY_FLAG, 0);
             stat.write_bitfield(STAT_TRANSFER_MODE, 0);

@@ -14,6 +14,13 @@ use crate::utilities::mips1::status_push_exception;
 use crate::resources::r3000::cp0::{STATUS_BEV, STATUS_IM, CAUSE_IP, CAUSE_BD, STATUS_IEC, CAUSE_EXCCODE, CAUSE_EXCCODE_INT, CAUSE_EXCCODE_SYSCALL};
 use crate::debug::{DEBUG_CORE_EXIT, trace_intc};
 
+pub enum Hazard {
+    MemoryRead,
+    MemoryWrite
+}
+
+pub type InstResult = Result<(), Hazard>;
+
 static mut ENABLE_DEBUG: bool = false;
 
 pub fn run(state: &State, event: Event) {
@@ -36,10 +43,6 @@ pub static mut DEBUG_LOG_INSTRUCTION: bool = false;
 unsafe fn tick(state: &State) -> i64 {
     let resources = &mut *state.resources;
 
-    if resources.bus_locked {
-        return 1;
-    }
-
     handle_interrupts(state);
 
     if let Some(target) = resources.r3000.branch_delay.advance() {
@@ -49,8 +52,7 @@ unsafe fn tick(state: &State) -> i64 {
     let pc_va = resources.r3000.pc.read_u32();
     let pc_pa = translate_address(pc_va);
 
-    let mapper = &mut resources.r3000.memory_mapper;
-    let inst_value = mapper.read_u32(pc_pa);   
+    let inst_value = resources.r3000.memory_mapper.read_u32(pc_pa).unwrap();   
     let inst = Instruction::new(inst_value);                
 
     resources.r3000.pc.write_u32(pc_va + INSTRUCTION_SIZE);
@@ -76,7 +78,12 @@ unsafe fn tick(state: &State) -> i64 {
         }
     }
 
-    fn_ptr(state, inst);
+    let result = fn_ptr(state, inst);
+
+    if result.is_err() {
+        // Pipeline hazard, go back to previous state, instruction was not performed.
+        resources.r3000.pc.write_u32(pc_va);
+    }
     
     DEBUG_TICK_COUNT += 1;
 

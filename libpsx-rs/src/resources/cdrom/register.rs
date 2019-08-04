@@ -1,6 +1,6 @@
 use std::ptr::NonNull;
 use crate::types::register::b8_register::B8Register;
-use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::b8_memory_mapper::*;
 use crate::types::queue::Queue;
 use crate::resources::cdrom::*;
 
@@ -19,14 +19,15 @@ impl Command {
 }
 
 impl B8MemoryMap for Command {
-    fn read_u8(&mut self, offset: usize) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
         B8MemoryMap::read_u8(&mut self.register, offset)
     }
 
-    fn write_u8(&mut self, offset: usize, value: u8) {
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
         if self.write_latch { panic!("Write latch still on"); }
-        B8MemoryMap::write_u8(&mut self.register, offset, value);
+        B8MemoryMap::write_u8(&mut self.register, offset, value).unwrap();
         self.write_latch = true;
+        Ok(())
     }
 }
 
@@ -47,7 +48,7 @@ impl Cdrom1801 {
 }
 
 impl B8MemoryMap for Cdrom1801 {
-    fn read_u8(&mut self, offset: usize) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -61,14 +62,14 @@ impl B8MemoryMap for Cdrom1801 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) {
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => {
                     let command = self.command.as_mut().unwrap().as_mut();
-                    B8MemoryMap::write_u8(command, offset, value);
+                    B8MemoryMap::write_u8(command, offset, value)
                 },
                 1 => unimplemented!(),
                 2 => unimplemented!(),
@@ -98,7 +99,7 @@ impl Cdrom1802 {
 }
 
 impl B8MemoryMap for Cdrom1802 {
-    fn read_u8(&mut self, offset: usize) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -112,7 +113,7 @@ impl B8MemoryMap for Cdrom1802 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, _value: u8) {
+    fn write_u8(&mut self, offset: usize, _value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -126,7 +127,7 @@ impl B8MemoryMap for Cdrom1802 {
         }
     }
 
-    fn read_u16(&mut self, offset: usize) -> u16 {
+    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -158,7 +159,7 @@ impl Cdrom1803 {
 }
 
 impl B8MemoryMap for Cdrom1803 {
-    fn read_u8(&mut self, offset: usize) -> u8 {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -172,7 +173,7 @@ impl B8MemoryMap for Cdrom1803 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, _value: u8) {
+    fn write_u8(&mut self, offset: usize, _value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);

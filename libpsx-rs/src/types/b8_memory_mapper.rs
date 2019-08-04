@@ -4,28 +4,42 @@ use std::convert::TryInto;
 use num_traits::Unsigned;
 use crate::types::bitfield::Bitfield;
 
+#[derive(Clone, Copy, Debug)]
+pub enum ReadError {
+    Empty,
+}
+
+pub type ReadResult<T: Copy> = Result<T, ReadError>;
+
+#[derive(Clone, Copy, Debug)]
+pub enum WriteError {
+    Full,
+}
+
+pub type WriteResult = Result<(), WriteError>;
+
 pub trait B8MemoryMap {
-    fn read_u8(&mut self, _offset: usize) -> u8 {
+    fn read_u8(&mut self, _offset: usize) -> ReadResult<u8> {
         panic!("Nothing implemented");
     }
     
-    fn write_u8(&mut self, _offset: usize, _value: u8) {
+    fn write_u8(&mut self, _offset: usize, _value: u8) -> WriteResult {
         panic!("Nothing implemented");
     }
 
-    fn read_u16(&mut self, _offset: usize) -> u16 {
+    fn read_u16(&mut self, _offset: usize) -> ReadResult<u16> {
         panic!("Nothing implemented");
     }
     
-    fn write_u16(&mut self, _offset: usize, _value: u16) {
+    fn write_u16(&mut self, _offset: usize, _value: u16) -> WriteResult {
         panic!("Nothing implemented");
     }
 
-    fn read_u32(&mut self, _offset: usize) -> u32 {
+    fn read_u32(&mut self, _offset: usize) -> ReadResult<u32> {
         panic!("Nothing implemented");
     }
     
-    fn write_u32(&mut self, _offset: usize, _value: u32) {
+    fn write_u32(&mut self, _offset: usize, _value: u32) -> WriteResult {
         panic!("Nothing implemented");
     }
 }
@@ -114,7 +128,7 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn read_u8<T>(&self, address: T) -> u8
+    pub fn read_u8<T>(&self, address: T) -> ReadResult<u8>
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -128,7 +142,7 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn write_u8<T>(&self, address: T, value: u8)
+    pub fn write_u8<T>(&self, address: T, value: u8) -> WriteResult
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -138,11 +152,11 @@ impl B8MemoryMapper
 
         unsafe {
             let object = &mut *object;
-            object.write_u8(offset_index, value);
+            object.write_u8(offset_index, value)
         }
     }
 
-    pub fn read_u16<T>(&self, address: T) -> u16
+    pub fn read_u16<T>(&self, address: T) -> ReadResult<u16>
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -156,7 +170,7 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn write_u16<T>(&self, address: T, value: u16)
+    pub fn write_u16<T>(&self, address: T, value: u16) -> WriteResult
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -166,11 +180,11 @@ impl B8MemoryMapper
 
         unsafe {
             let object = &mut *object;
-            object.write_u16(offset_index, value);
+            object.write_u16(offset_index, value)
         }
     }
 
-    pub fn read_u32<T>(&self, address: T) -> u32
+    pub fn read_u32<T>(&self, address: T) -> ReadResult<u32>
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -184,7 +198,7 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn write_u32<T>(&self, address: T, value: u32)
+    pub fn write_u32<T>(&self, address: T, value: u32) -> WriteResult
     where 
         T: TryInto<usize> + Unsigned
     {
@@ -194,7 +208,7 @@ impl B8MemoryMapper
 
         unsafe {
             let object = &mut *object;
-            object.write_u32(offset_index, value);
+            object.write_u32(offset_index, value)
         }
     }
 }
