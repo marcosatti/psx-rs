@@ -22,11 +22,11 @@ use crate::resources::spu::*;
 
 pub fn run(state: &State, event: Event) {
     match event {
-        Event::Time(time) => run_time(state, time),
+        Event::Time(time) => unsafe { run_time(state, time) },
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
+unsafe fn run_time(state: &State, duration: Duration) {
     let resources = &mut *state.resources;
     let control = &resources.spu.control;
 

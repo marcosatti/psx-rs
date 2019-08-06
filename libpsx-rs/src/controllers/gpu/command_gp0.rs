@@ -8,7 +8,7 @@ use crate::controllers::gpu::data::*;
 use crate::controllers::gpu::opengl;
 use crate::resources::gpu::*;
 
-struct CommandHandler {
+pub struct CommandHandler {
     /// Determines the amount of words needed to process the command.
     pub length_fn: fn(&[u32]) -> Option<usize>,
     /// The handler logic for the command.
@@ -22,7 +22,12 @@ pub unsafe fn handle_command(state: &State) {
     let command_buffer = &mut resources.gpu.gp0_command_buffer;
 
     // Update the command buffer with any new incoming data.
-    command_buffer.extend(fifo);
+    loop {
+        match fifo.read_one() {
+            Ok(v) => command_buffer.push(v),
+            Err(_) => break,
+        }
+    }
 
     // We cannot do anything yet.
     if command_buffer.is_empty() {
@@ -329,17 +334,19 @@ pub static command_e1: CommandHandler = CommandHandler {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
-        let resources = &mut *state.resources;
-        let stat = &mut resources.gpu.gpu1814.stat;
-        stat.write_bitfield(STAT_TEXPAGEX, Bitfield::new(0, 4).extract_from(data[0]));
-        stat.write_bitfield(STAT_TEXPAGEY, Bitfield::new(4, 1).extract_from(data[0]));
-        stat.write_bitfield(STAT_TRANSPARENCY, Bitfield::new(5, 2).extract_from(data[0]));
-        stat.write_bitfield(STAT_TEXPAGE_COLORS, Bitfield::new(7, 2).extract_from(data[0]));
-        stat.write_bitfield(STAT_DITHER, Bitfield::new(9, 1).extract_from(data[0]));
-        stat.write_bitfield(STAT_DRAW_DISPLAY, Bitfield::new(10, 1).extract_from(data[0]));
-        stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
-        resources.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
-        resources.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
+        unsafe {
+            let resources = &mut *state.resources;
+            let stat = &mut resources.gpu.gpu1814.stat;
+            stat.write_bitfield(STAT_TEXPAGEX, Bitfield::new(0, 4).extract_from(data[0]));
+            stat.write_bitfield(STAT_TEXPAGEY, Bitfield::new(4, 1).extract_from(data[0]));
+            stat.write_bitfield(STAT_TRANSPARENCY, Bitfield::new(5, 2).extract_from(data[0]));
+            stat.write_bitfield(STAT_TEXPAGE_COLORS, Bitfield::new(7, 2).extract_from(data[0]));
+            stat.write_bitfield(STAT_DITHER, Bitfield::new(9, 1).extract_from(data[0]));
+            stat.write_bitfield(STAT_DRAW_DISPLAY, Bitfield::new(10, 1).extract_from(data[0]));
+            stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
+            resources.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
+            resources.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
+        }
     }
 };
 
@@ -348,11 +355,13 @@ pub static command_e2: CommandHandler = CommandHandler {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
-        let resources = &mut *state.resources;
-        resources.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
-        resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
-        resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize;
-        resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as usize;
+        unsafe {
+            let resources = &mut *state.resources;
+            resources.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
+            resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
+            resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize;
+            resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as usize;
+        }
     }
 };
 
@@ -361,9 +370,11 @@ pub static command_e3: CommandHandler = CommandHandler {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
-        let resources = &mut *state.resources;
-        resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
-        resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+        unsafe {
+            let resources = &mut *state.resources;
+            resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
+            resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+        }
     }
 };
 
@@ -372,9 +383,11 @@ pub static command_e4: CommandHandler = CommandHandler {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
-        let resources = &mut *state.resources;
-        resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
-        resources.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+        unsafe {
+            let resources = &mut *state.resources;
+            resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
+            resources.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+        }
     }
 };
 
@@ -383,9 +396,11 @@ pub static command_e5: CommandHandler = CommandHandler {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
-        let resources = &mut *state.resources;
-        resources.gpu.drawing_offset_x = Bitfield::new(0, 11).extract_from(data[0]) as usize;
-        resources.gpu.drawing_offset_y = Bitfield::new(11, 11).extract_from(data[0]) as usize;
+        unsafe {
+            let resources = &mut *state.resources;
+            resources.gpu.drawing_offset_x = Bitfield::new(0, 11).extract_from(data[0]) as usize;
+            resources.gpu.drawing_offset_y = Bitfield::new(11, 11).extract_from(data[0]) as usize;
+        }
     }
 };
 
@@ -394,9 +409,11 @@ pub static command_e6: CommandHandler = CommandHandler {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
-        let resources = &mut *state.resources;
-        let stat = &mut resources.gpu.gpu1814.stat;
-        stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
-        stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
+        unsafe {
+            let resources = &mut *state.resources;
+            let stat = &mut resources.gpu.gpu1814.stat;
+            stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
+            stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
+        }
     }
 };

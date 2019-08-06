@@ -45,7 +45,6 @@ struct State {
     gpu: Mean,
     spu: Mean,
     gpu_crtc: Mean,
-    spu_dac: Mean,
     intc: Mean,
 }
 
@@ -62,7 +61,6 @@ impl State {
             gpu: Mean::new(),
             spu: Mean::new(),
             gpu_crtc: Mean::new(),
-            spu_dac: Mean::new(),
             intc: Mean::new(),
         }
     }

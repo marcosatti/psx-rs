@@ -17,3 +17,4 @@ opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 average = "0.9"
 fixed-vec-deque = "0.1"
+spsc-ringbuffer = { git = "https://github.com/marco9999/spsc-ringbuffer" }

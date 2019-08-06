@@ -294,6 +294,7 @@ dependencies = [
  "rayon 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sdl2 0.32.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "spsc-ringbuffer 0.1.0 (git+https://github.com/marco9999/spsc-ringbuffer)",
  "thread-id 3.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -641,6 +642,19 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "spsc-ringbuffer"
+version = "0.1.0"
+source = "git+https://github.com/marco9999/spsc-ringbuffer#e96dec8b2a4d2306c7bcb64ad2d451a45523c8d7"
+dependencies = [
+ "staticvec 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "staticvec"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "strsim"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -861,6 +875,8 @@ dependencies = [
 "checksum sdl2 0.32.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0ebf85f207d42e4da59fa31fff977be5ff0b224873506c4bd70cc1c94b331593"
 "checksum sdl2-sys 0.32.5 (registry+https://github.com/rust-lang/crates.io-index)" = "e82803e85c2e6178d28886cef25b2c53afc2eecaeff739f2247f23ed3352e6c1"
 "checksum spin 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "44363f6f51401c34e7be73db0db371c04705d35efbe9f7d6082e03a921a32c55"
+"checksum spsc-ringbuffer 0.1.0 (git+https://github.com/marco9999/spsc-ringbuffer)" = "<none>"
+"checksum staticvec 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f65c1b2dcbca2492d25c50d1e7ff0c4adab13eccb754beb9bed4520fc35a67d8"
 "checksum strsim 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bb4f380125926a99e52bc279241539c018323fab05ad6368b56f93d9369ff550"
 "checksum syn 0.15.29 (registry+https://github.com/rust-lang/crates.io-index)" = "1825685f977249735d510a242a6727b46efe914bb67e38d30c071b1b72b1d5c2"
 "checksum termcolor 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "4096add70612622289f2fdcdbd5086dc81c1e2675e6ae58d6c4f62a16c6d7f2f"
