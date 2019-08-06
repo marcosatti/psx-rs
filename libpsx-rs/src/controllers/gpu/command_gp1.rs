@@ -41,12 +41,12 @@ unsafe fn command_00(state: &State, _command: u32) {
     command_06(state, 0);
     command_07(state, 0);
     command_08(state, 0);
-    (command_gp0::command_e1.handler_fn)(state, &[0]);
-    (command_gp0::command_e2.handler_fn)(state, &[0]);
-    (command_gp0::command_e3.handler_fn)(state, &[0]);
-    (command_gp0::command_e4.handler_fn)(state, &[0]);
-    (command_gp0::command_e5.handler_fn)(state, &[0]);
-    (command_gp0::command_e6.handler_fn)(state, &[0]);
+    (command_gp0::COMMAND_E1.handler_fn)(state, &[0]);
+    (command_gp0::COMMAND_E2.handler_fn)(state, &[0]);
+    (command_gp0::COMMAND_E3.handler_fn)(state, &[0]);
+    (command_gp0::COMMAND_E4.handler_fn)(state, &[0]);
+    (command_gp0::COMMAND_E5.handler_fn)(state, &[0]);
+    (command_gp0::COMMAND_E6.handler_fn)(state, &[0]);
 }
 
 unsafe fn command_01(state: &State, _command: u32) {

@@ -64,78 +64,78 @@ pub unsafe fn handle_command(state: &State) {
 
 fn get_command_handler(command_index: u8) -> &'static CommandHandler {
     match command_index {
-        0x00 => &command_00,
-        0x01 => &command_01,
-        0x05 => &command_05,
-        0x06 => &command_06,
-        0x0c => &command_0c,
-        0x28 => &command_28,
-        0x2C => &command_2c,
-        0x30 => &command_30,
-        0x38 => &command_38,
-        0x3C => &command_3c,
-        0x50 => &command_50,
-        0x6F => &command_6f,
-        0x80 => &command_80,
-        0xA0 => &command_a0,
-        0xC0 => &command_c0,
-        0xE1 => &command_e1,
-        0xE2 => &command_e2,
-        0xE3 => &command_e3,
-        0xE4 => &command_e4,
-        0xE5 => &command_e5,
-        0xE6 => &command_e6,
+        0x00 => &COMMAND_00,
+        0x01 => &COMMAND_01,
+        0x05 => &COMMAND_05,
+        0x06 => &COMMAND_06,
+        0x0c => &COMMAND_0C,
+        0x28 => &COMMAND_28,
+        0x2C => &COMMAND_2C,
+        0x30 => &COMMAND_30,
+        0x38 => &COMMAND_38,
+        0x3C => &COMMAND_3C,
+        0x50 => &COMMAND_50,
+        0x6F => &COMMAND_6F,
+        0x80 => &COMMAND_80,
+        0xA0 => &COMMAND_A0,
+        0xC0 => &COMMAND_C0,
+        0xE1 => &COMMAND_E1,
+        0xE2 => &COMMAND_E2,
+        0xE3 => &COMMAND_E3,
+        0xE4 => &COMMAND_E4,
+        0xE5 => &COMMAND_E5,
+        0xE6 => &COMMAND_E6,
         _ => unimplemented!("Unknown GP0 command: 0x{:0X}", command_index),
     }
 }
 
-static command_00: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_00: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
-    handler_fn: |state: &State, _data: &[u32]| {
+    handler_fn: |_state: &State, _data: &[u32]| {
         // NOP
     }
 };
 
-static command_01: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_01: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
-    handler_fn: |state: &State, _data: &[u32]| {
+    handler_fn: |_state: &State, _data: &[u32]| {
         // Flush cache (NOP)
     }
 };
 
-static command_05: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_05: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
-    handler_fn: |state: &State, _data: &[u32]| {
+    handler_fn: |_state: &State, _data: &[u32]| {
         // NOP
     }
 };
 
-static command_06: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_06: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
-    handler_fn: |state: &State, _data: &[u32]| {
+    handler_fn: |_state: &State, _data: &[u32]| {
         // NOP
     }
 };
 
-static command_0c: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_0C: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
-    handler_fn: |state: &State, _data: &[u32]| {
+    handler_fn: |_state: &State, _data: &[u32]| {
         // NOP
     }
 };
 
-static command_28: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_28: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(5)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -152,8 +152,8 @@ static command_28: CommandHandler = CommandHandler {
     }
 };
 
-static command_2c: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_2C: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(9)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -177,8 +177,8 @@ static command_2c: CommandHandler = CommandHandler {
     }
 };
 
-static command_30: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_30: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(6)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -195,8 +195,8 @@ static command_30: CommandHandler = CommandHandler {
     }
 };
 
-static command_38: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_38: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(8)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -213,43 +213,43 @@ static command_38: CommandHandler = CommandHandler {
     }
 };
 
-static command_3c: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_3C: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(12)
     },
-    handler_fn: |state: &State, data: &[u32]| {
+    handler_fn: |_state: &State, data: &[u32]| {
         debug!("Shaded Textured four-point polygon, opaque, texture-blending, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}, c7 = 0x{:0X}, c8 = 0x{:0X}, c9 = 0x{:0X}, c10 = 0x{:0X}, c11 = 0x{:0X}, c12 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
     }
 };
 
-static command_50: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_50: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(4)
     },
-    handler_fn: |state: &State, data: &[u32]| {
+    handler_fn: |_state: &State, data: &[u32]| {
         debug!("Shaded line, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}", data[0], data[1], data[2], data[3]);
     }
 };
 
-static command_6f: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_6F: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(3)
     },
-    handler_fn: |state: &State, data: &[u32]| {
+    handler_fn: |_state: &State, data: &[u32]| {
         debug!("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
     }
 };
 
-static command_80: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_80: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(4)
     },
-    handler_fn: |state: &State, data: &[u32]| {
+    handler_fn: |_state: &State, data: &[u32]| {
         debug!("Copy Rectangle (VRAM to VRAM), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}", data[0], data[1], data[2], data[3]);
     }
 };
 
-static command_a0: CommandHandler = CommandHandler {
+static COMMAND_A0: CommandHandler = CommandHandler {
     length_fn: |data: &[u32]| -> Option<usize> {
         if data.len() < 3 { 
             return None; 
@@ -310,11 +310,11 @@ static command_a0: CommandHandler = CommandHandler {
     }
 };
 
-static command_c0: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+static COMMAND_C0: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(3)
     },
-    handler_fn: |state: &State, data: &[u32]| {
+    handler_fn: |_state: &State, data: &[u32]| {
         //debug!("Copy Rectangle (VRAM to CPU), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
         let width = Bitfield::new(0, 16).extract_from(data[2]) as usize;
         let height = Bitfield::new(16, 16).extract_from(data[2]) as usize;
@@ -329,8 +329,8 @@ static command_c0: CommandHandler = CommandHandler {
     }
 };
 
-pub static command_e1: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+pub static COMMAND_E1: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -350,8 +350,8 @@ pub static command_e1: CommandHandler = CommandHandler {
     }
 };
 
-pub static command_e2: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+pub static COMMAND_E2: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -365,8 +365,8 @@ pub static command_e2: CommandHandler = CommandHandler {
     }
 };
 
-pub static command_e3: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+pub static COMMAND_E3: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -378,8 +378,8 @@ pub static command_e3: CommandHandler = CommandHandler {
     }
 };
 
-pub static command_e4: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+pub static COMMAND_E4: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -391,8 +391,8 @@ pub static command_e4: CommandHandler = CommandHandler {
     }
 };
 
-pub static command_e5: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+pub static COMMAND_E5: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {
@@ -404,8 +404,8 @@ pub static command_e5: CommandHandler = CommandHandler {
     }
 };
 
-pub static command_e6: CommandHandler = CommandHandler {
-    length_fn: |data: &[u32]| -> Option<usize> {
+pub static COMMAND_E6: CommandHandler = CommandHandler {
+    length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
     handler_fn: |state: &State, data: &[u32]| {

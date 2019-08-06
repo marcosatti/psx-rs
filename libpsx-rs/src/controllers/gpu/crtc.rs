@@ -27,15 +27,10 @@ unsafe fn run_time(state: &State, duration: Duration) {
     *vblank_time += duration;
     while *vblank_time >= REFRESH_RATE_NTSC_PERIOD {
         *vblank_time -= REFRESH_RATE_NTSC_PERIOD;
-        
-        unsafe {
-            handle_vblank(state);
-        }
+        handle_vblank(state);
     }
 }
 
 fn tick(state: &State) {
-    unsafe {
-        handle_timers(state);
-    }
+    handle_timers(state);
 }

@@ -9,7 +9,7 @@ pub enum ReadError {
     Empty,
 }
 
-pub type ReadResult<T: Copy> = Result<T, ReadError>;
+pub type ReadResult<T> = Result<T, ReadError>;
 
 #[derive(Clone, Copy, Debug)]
 pub enum WriteError {

@@ -44,10 +44,7 @@ unsafe fn run_time(state: &State, duration: Duration) {
     *current_duration += duration;
     while *current_duration >= SAMPLE_RATE_PERIOD {
         *current_duration -= SAMPLE_RATE_PERIOD;
-
-        unsafe {
-            generate_sound(state);
-        }
+        generate_sound(state);
     }
 }
 

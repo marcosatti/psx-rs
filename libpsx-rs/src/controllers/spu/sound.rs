@@ -8,6 +8,7 @@ use crate::controllers::spu::openal;
 use crate::controllers::spu::volume::*;
 use crate::controllers::spu::adsr::*;
 use crate::controllers::spu::interpolation::*;
+use crate::resources::spu::*;
 use crate::resources::spu::voice::*;
 
 pub unsafe fn generate_sound(state: &State) {
@@ -108,13 +109,19 @@ unsafe fn handle_key_off(state: &State, voice_id: usize) {
 }
 
 unsafe fn handle_play_sound_buffer(state: &State, voice_id: usize) {
+    let resources = &mut *state.resources;
+    let control = &resources.spu.control;
     let play_state = &mut *get_play_state(state, voice_id);
 
     if play_state.sample_buffer.len() == BUFFER_SIZE {
-        match state.audio_backend {
-            AudioBackend::Openal(ref backend_params) => {
-                openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id);
-            },
+        let muted = control.read_bitfield(CONTROL_MUTE) != 0;
+
+        if !muted {
+            match state.audio_backend {
+                AudioBackend::Openal(ref backend_params) => {
+                    openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id);
+                },
+            }
         }
 
         initialize_sound_buffer(state, voice_id);

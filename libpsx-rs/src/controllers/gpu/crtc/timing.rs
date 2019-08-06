@@ -1,4 +1,4 @@
 use crate::State;
 
-pub unsafe fn handle_timers(state: &State) {
+pub fn handle_timers(_state: &State) {
 }
