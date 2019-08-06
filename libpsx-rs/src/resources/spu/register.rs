@@ -14,7 +14,7 @@ pub enum TransferMode {
 }
 
 pub struct Fifo {
-    pub fifo: Queue<u16>, 
+    pub fifo: Queue<u16, 32>, 
 }
 
 impl Fifo {

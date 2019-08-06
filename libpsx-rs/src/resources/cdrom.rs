@@ -19,9 +19,9 @@ static _STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
 pub struct Cdrom {
     pub status: B8Register,
     pub command: Command,
-    pub response: Queue<u8>,
-    pub parameter: Queue<u8>,
-    pub data: Queue<u8>,
+    pub response: Queue<u8, 16>,
+    pub parameter: Queue<u8, 16>,
+    pub data: Queue<u8, 16>,
     pub int_enable: B8Register,
     pub int_flag: B8Register,
     pub request: B8Register,
@@ -51,11 +51,11 @@ impl Cdrom {
 pub fn initialize(resources: &mut Resources) {
     resources.cdrom.cdrom1801.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
     resources.cdrom.cdrom1801.command = NonNull::new(&mut resources.cdrom.command as *mut Command);
-    resources.cdrom.cdrom1801.response = NonNull::new(&mut resources.cdrom.response as *mut Queue<u8>);
+    resources.cdrom.cdrom1801.response = NonNull::new(&mut resources.cdrom.response as *mut Queue<u8, 16>);
 
     resources.cdrom.cdrom1802.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
-    resources.cdrom.cdrom1802.parameter = NonNull::new(&mut resources.cdrom.parameter as *mut Queue<u8>);
-    resources.cdrom.cdrom1802.data = NonNull::new(&mut resources.cdrom.data as *mut Queue<u8>);
+    resources.cdrom.cdrom1802.parameter = NonNull::new(&mut resources.cdrom.parameter as *mut Queue<u8, 16>);
+    resources.cdrom.cdrom1802.data = NonNull::new(&mut resources.cdrom.data as *mut Queue<u8, 16>);
     resources.cdrom.cdrom1802.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut B8Register);
 
     resources.cdrom.cdrom1803.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);

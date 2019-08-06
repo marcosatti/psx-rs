@@ -4,8 +4,8 @@ use crate::types::b8_memory_mapper::*;
 use crate::types::queue::Queue;
 
 pub struct Gpu1810 {
-    pub gp0: Queue<u32>,
-    pub read: Queue<u32>, 
+    pub gp0: Queue<u32, 16>,
+    pub read: Queue<u32, 16>, 
 }
 
 impl Gpu1810 {
@@ -22,8 +22,8 @@ impl B8MemoryMap for Gpu1810 {
         if offset != 0 { panic!("Invalid offset"); }
         
         Ok(self.read.read_one().unwrap_or_else(|_| {
-            debug!("GPUREAD is empty - returning 0");
-            0
+            debug!("GPUREAD is empty - returning 0xFFFF_FFFF");
+            0xFFFF_FFFF
         }))
     }
     
@@ -34,7 +34,7 @@ impl B8MemoryMap for Gpu1810 {
 }
 
 pub struct Gpu1814 {
-    pub gp1: Queue<u32>, 
+    pub gp1: Queue<u32, 16>, 
     pub stat: B32Register,
 }
 
@@ -54,6 +54,6 @@ impl B8MemoryMap for Gpu1814 {
     
     fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
-        self.gp1.write_one(value)
+        self.gp1.write_one(value).map_err(|_| WriteError::Full)
     }
 }

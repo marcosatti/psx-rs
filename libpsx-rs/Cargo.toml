@@ -16,4 +16,4 @@ thread-id = "3.3"
 opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 average = "0.9"
-heapless = "0.4"
+fixed-vec-deque = "0.1"

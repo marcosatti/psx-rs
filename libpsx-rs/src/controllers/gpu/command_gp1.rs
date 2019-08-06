@@ -41,17 +41,17 @@ unsafe fn command_00(state: &State, _command: u32) {
     command_06(state, 0);
     command_07(state, 0);
     command_08(state, 0);
-    command_gp0::command_e1(state, 0);
-    command_gp0::command_e2(state, 0);
-    command_gp0::command_e3(state, 0);
-    command_gp0::command_e4(state, 0);
-    command_gp0::command_e5(state, 0);
-    command_gp0::command_e6(state, 0);
+    (command_gp0::command_e1.handler_fn)(state, &[0]);
+    (command_gp0::command_e2.handler_fn)(state, &[0]);
+    (command_gp0::command_e3.handler_fn)(state, &[0]);
+    (command_gp0::command_e4.handler_fn)(state, &[0]);
+    (command_gp0::command_e5.handler_fn)(state, &[0]);
+    (command_gp0::command_e6.handler_fn)(state, &[0]);
 }
 
 unsafe fn command_01(state: &State, _command: u32) {
     let resources = &mut *state.resources;
-    resources.gpu.gpu1810.gp0.clear();
+    while resources.gpu.gpu1810.gp0.read_one().is_ok() {}
 }
 
 unsafe fn command_02(state: &State, _command: u32) {
