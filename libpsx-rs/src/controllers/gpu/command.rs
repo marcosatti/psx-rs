@@ -1,14 +1,14 @@
 use crate::State;
 use crate::resources::gpu::*;
+use crate::controllers::gpu::command_gp0::handle_command as handle_command_gp0;
+use crate::controllers::gpu::command_gp1::handle_command as handle_command_gp1;
 
 pub unsafe fn handle_command(state: &State) {
-    // TODO: what's the proper ordering of command handling?
+    // TODO: what's the priority of command handling?
+    // Doesn't really mention what happens if there is a command waiting in GP0 queue then a command gets written to GP1.
     
-    if !gp1.fifo.is_empty() {
-        handle_command_gp1();
-    } else if !gp0.fifo.is_empty() {
-        handle_command_gp0();
-    }
+    handle_command_gp1(state);
+    handle_command_gp0(state);
 
     handle_stat_dma_request(state);
     handle_stat_recv_cmd(state);

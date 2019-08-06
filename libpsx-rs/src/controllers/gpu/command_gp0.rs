@@ -13,6 +13,7 @@ pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
 
     let fifo = &mut resources.gpu.gpu1810.gp0;
+    let command_queue = &mut resources.gpu.command_buffer;
     
     let command = fifo.peek_front();
 

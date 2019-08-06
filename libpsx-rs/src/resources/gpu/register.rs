@@ -41,7 +41,7 @@ pub struct Gpu1814 {
 impl Gpu1814 {
     pub fn new() -> Gpu1814 {
         Gpu1814 {
-            gp1: Queue::new(), // Not really a FIFO? But emulator needs to buffer commands.
+            gp1: Queue::new(), // Not really a FIFO(?), but emulator needs to buffer commands.
             stat: B32Register::new(),
         }
     }

@@ -1,63 +1,60 @@
 use crate::State;
 use crate::types::bitfield::Bitfield;
 use crate::resources::gpu::*;
-use crate::controllers::gpu::gp0;
+use crate::controllers::gpu::command_gp0;
 
 pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
     let fifo = &mut resources.gpu.gpu1814.gp1;
 
-    let command = fifo.peek_front();
-    if let Some(value) = command {
-        let cmd = GP_CMD.extract_from(value) as u8;
+    // Commands (GP1) are always of length 1.
 
-        match cmd {
-            0x00 => {
-                fifo.read_one().unwrap();
-                command_00(state);
-            },
-            0x01 => {
-                fifo.read_one().unwrap();
-                command_01(state);
-            },
-            0x02 => {
-                fifo.read_one().unwrap();
-                command_02(state);
-            },
-            0x03 => command_03(state, fifo.read_one().unwrap()),
-            0x04 => command_04(state, fifo.read_one().unwrap()),
-            0x05 => command_05(state, fifo.read_one().unwrap()),
-            0x06 => command_06(state, fifo.read_one().unwrap()),
-            0x07 => command_07(state, fifo.read_one().unwrap()),
-            0x08 => command_08(state, fifo.read_one().unwrap()),
-            _ => unimplemented!("Unknown GP1 command: 0x{:0X}", value),
-        }
-    }
+    let command = match fifo.read_one() {
+        Ok(v) => v,
+        Err(_) => return,
+    };
+
+    let command_index = GP_CMD.extract_from(command) as u8;
+
+    let command_fn = match command_index {
+        0x00 => command_00,
+        0x01 => command_01,
+        0x02 => command_02,
+        0x03 => command_03,
+        0x04 => command_04,
+        0x05 => command_05,
+        0x06 => command_06,
+        0x07 => command_07,
+        0x08 => command_08,
+        _ => unimplemented!("Unknown GP1 command: 0x{:0X}", command_index),
+    };
+
+    command_fn(state, command);
 }
 
-unsafe fn command_00(state: &State) {
-    command_01(state);
-    command_02(state);
+unsafe fn command_00(state: &State, _command: u32) {
+    command_01(state, 0);
+    command_02(state, 0);
     command_03(state, 1);
     command_04(state, 0);
     command_05(state, 0);
     command_06(state, 0);
     command_07(state, 0);
     command_08(state, 0);
-    gp0::command_e1(state, 0);
-    gp0::command_e2(state, 0);
-    gp0::command_e3(state, 0);
-    gp0::command_e4(state, 0);
-    gp0::command_e5(state, 0);
-    gp0::command_e6(state, 0);
+    command_gp0::command_e1(state, 0);
+    command_gp0::command_e2(state, 0);
+    command_gp0::command_e3(state, 0);
+    command_gp0::command_e4(state, 0);
+    command_gp0::command_e5(state, 0);
+    command_gp0::command_e6(state, 0);
 }
 
-unsafe fn command_01(state: &State) {
+unsafe fn command_01(state: &State, _command: u32) {
     let resources = &mut *state.resources;
     resources.gpu.gpu1810.gp0.clear();
 }
 
-unsafe fn command_02(state: &State) {
+unsafe fn command_02(state: &State, _command: u32) {
     let resources = &mut *state.resources;
     resources.gpu.gpu1814.stat.write_bitfield(STAT_IRQ_REQUEST, 0);
 }

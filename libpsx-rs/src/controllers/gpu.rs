@@ -9,7 +9,7 @@ use std::time::Duration;
 use crate::State;
 use crate::constants::gpu::*;
 use crate::controllers::Event;
-use crate::resources::gpu::command::*;
+use crate::controllers::gpu::command::*;
 
 pub fn run(state: &State, event: Event) {
     match event {
