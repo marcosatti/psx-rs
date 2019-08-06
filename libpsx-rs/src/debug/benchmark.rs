@@ -11,7 +11,6 @@ pub struct Benchmark {
     pub gpu: UnsafeCell<Duration>,
     pub spu: UnsafeCell<Duration>,
     pub gpu_crtc: UnsafeCell<Duration>,
-    pub spu_dac: UnsafeCell<Duration>,
     pub intc: UnsafeCell<Duration>,
 }
 
@@ -23,7 +22,6 @@ impl Benchmark {
             gpu: UnsafeCell::new(Duration::from_secs(0)),
             spu: UnsafeCell::new(Duration::from_secs(0)),
             gpu_crtc: UnsafeCell::new(Duration::from_secs(0)),
-            spu_dac: UnsafeCell::new(Duration::from_secs(0)),
             intc: UnsafeCell::new(Duration::from_secs(0)),
         }
     }
@@ -89,7 +87,6 @@ pub fn trace_performance(host_time_elapsed: &Duration, guest_time_elapsed: &Dura
         state.gpu.add((*benchmark.gpu.get()).as_secs_f64());
         state.spu.add((*benchmark.spu.get()).as_secs_f64());
         state.gpu_crtc.add((*benchmark.gpu_crtc.get()).as_secs_f64());
-        state.spu_dac.add((*benchmark.spu_dac.get()).as_secs_f64());
         state.intc.add((*benchmark.intc.get()).as_secs_f64());
 
         if state.last_reported.elapsed() > REPORTING_PERIOD {
@@ -101,15 +98,14 @@ pub fn trace_performance(host_time_elapsed: &Duration, guest_time_elapsed: &Dura
             let average_gpu_time_elapsed = Duration::from_secs_f64(state.gpu.estimate()).as_micros();
             let average_spu_time_elapsed = Duration::from_secs_f64(state.spu.estimate()).as_micros();
             let average_gpu_crtc_time_elapsed = Duration::from_secs_f64(state.gpu_crtc.estimate()).as_micros();
-            let average_spu_dac_time_elapsed = Duration::from_secs_f64(state.spu_dac.estimate()).as_micros();
             let average_intc_time_elapsed = Duration::from_secs_f64(state.intc.estimate()).as_micros();
 
             debug!(
-                "Perf overall {:.2}% (avg {} / {}): r3000 = {}, dmac = {}, gpu = {}, spu = {}, gpu_crtc = {}, spu_dac = {}, intc = {} (units: us)", 
+                "Perf overall {:.2}% (avg {} / {}): r3000 = {}, dmac = {}, gpu = {}, spu = {}, gpu_crtc = {}, intc = {} (units: us)", 
                 overall_time_elapsed_percent,
                 average_host_time_elapsed,
                 average_guest_time_elapsed,
-                average_r3000_time_elapsed, average_dmac_time_elapsed, average_gpu_time_elapsed, average_spu_time_elapsed, average_gpu_crtc_time_elapsed, average_spu_dac_time_elapsed, average_intc_time_elapsed
+                average_r3000_time_elapsed, average_dmac_time_elapsed, average_gpu_time_elapsed, average_spu_time_elapsed, average_gpu_crtc_time_elapsed, average_intc_time_elapsed
             );
 
             BENCHMARK_STATE = None;

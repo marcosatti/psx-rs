@@ -3,7 +3,30 @@ use crate::controllers::spu::voice::*;
 use crate::resources::spu::*;
 use crate::resources::spu::register::*;
 
-pub unsafe fn handle_current_transfer_address(state: &State) {
+pub unsafe fn handle_transfer(state: &State) {
+    let resources = &mut *state.resources;
+
+    let current_transfer_mode = &mut resources.spu.current_transfer_mode;
+
+    handle_current_transfer_address(state);
+
+    match *current_transfer_mode {
+        TransferMode::Stop => {
+            handle_new_transfer_initialization(state);
+        },
+        TransferMode::ManualWrite => {
+            handle_manual_write_transfer(state);
+        },
+        TransferMode::DmaWrite => {
+            handle_dma_write_transfer(state);
+        }, 
+        TransferMode::DmaRead => {
+            handle_dma_read_transfer(state);
+        }, 
+    } 
+}
+
+unsafe fn handle_current_transfer_address(state: &State) {
     let resources = &mut *state.resources;
     let control = &resources.spu.control;
     let data_transfer_address = &mut resources.spu.data_transfer_address;
@@ -19,7 +42,7 @@ pub unsafe fn handle_current_transfer_address(state: &State) {
     }
 }
 
-pub unsafe fn handle_new_transfer_initialization(state: &State) {
+unsafe fn handle_new_transfer_initialization(state: &State) {
     let resources = &mut *state.resources;
     let control = &resources.spu.control;
     let stat = &mut resources.spu.stat;
@@ -35,7 +58,7 @@ pub unsafe fn handle_new_transfer_initialization(state: &State) {
     stat.write_bitfield(STAT_TRANSFER_MODE, transfer_mode_raw);
 }
 
-pub unsafe fn handle_manual_write_transfer(state: &State) {
+unsafe fn handle_manual_write_transfer(state: &State) {
     let resources = &mut *state.resources;
     let control = &mut resources.spu.control;
     let stat = &mut resources.spu.stat;
@@ -65,7 +88,7 @@ pub unsafe fn handle_manual_write_transfer(state: &State) {
     }
 }
 
-pub unsafe fn handle_dma_write_transfer(state: &State) {
+unsafe fn handle_dma_write_transfer(state: &State) {
     let resources = &mut *state.resources;
     let data_transfer_control = &resources.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {
@@ -75,7 +98,7 @@ pub unsafe fn handle_dma_write_transfer(state: &State) {
     unimplemented!("DmaWrite transfer mode not implemented");
 }
 
-pub unsafe fn handle_dma_read_transfer(state: &State) {
+unsafe fn handle_dma_read_transfer(state: &State) {
     let resources = &mut *state.resources;
     let data_transfer_control = &resources.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {

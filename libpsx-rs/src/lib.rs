@@ -33,7 +33,6 @@ use crate::controllers::intc::run as run_intc;
 use crate::controllers::gpu::run as run_gpu;
 use crate::controllers::dmac::run as run_dmac;
 use crate::controllers::spu::run as run_spu;
-use crate::controllers::spu::dac::run as run_spu_dac;
 
 pub struct State<'b, 'a: 'b> {
     pub resources: *mut Resources,
@@ -126,11 +125,6 @@ impl<'a> Core<'a> {
                 let timer = Instant::now();
                 run_gpu_crtc(&state, Event::Time(time));
                 unsafe { *benchmark.gpu_crtc.get() = timer.elapsed(); }
-            });
-            scope.spawn(|_| {
-                let timer = Instant::now();
-                run_spu_dac(&state, Event::Time(time));
-                unsafe { *benchmark.spu_dac.get() = timer.elapsed(); }
             });
             scope.spawn(|_| { 
                 let timer = Instant::now();

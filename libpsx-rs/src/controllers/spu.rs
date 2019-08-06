@@ -7,14 +7,18 @@ pub mod dac;
 pub mod volume;
 pub mod adsr;
 pub mod interpolation;
+pub mod interrupt;
 
 use std::time::Duration;
 use crate::State;
-use crate::constants::spu::CLOCK_SPEED;
+use crate::constants::spu::*;
+use crate::constants::spu::dac::*;
 use crate::controllers::Event;
 use crate::controllers::spu::transfer::*;
+use crate::controllers::spu::interrupt::*;
+use crate::controllers::spu::dac::*;
+use crate::controllers::spu::sound::*;
 use crate::resources::spu::*;
-use crate::resources::spu::register::*;
 
 pub fn run(state: &State, event: Event) {
     match event {
@@ -23,13 +27,6 @@ pub fn run(state: &State, event: Event) {
 }
 
 fn run_time(state: &State, duration: Duration) {
-    let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
-    for _ in 0..ticks {
-        unsafe { tick(state) };
-    }
-}
-
-unsafe fn tick(state: &State) {
     let resources = &mut *state.resources;
     let control = &resources.spu.control;
 
@@ -37,33 +34,27 @@ unsafe fn tick(state: &State) {
         return;
     }
 
-    handle_transfer(state);
-    handle_interrupt_check(state);
+    let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    for _ in 0..ticks {
+        tick(state);
+    }
+
+    let current_duration = &mut resources.spu.dac.current_duration;
+
+    *current_duration += duration;
+    while *current_duration >= SAMPLE_RATE_PERIOD {
+        *current_duration -= SAMPLE_RATE_PERIOD;
+
+        unsafe {
+            generate_sound(state);
+        }
+    }
 }
 
-unsafe fn handle_transfer(state: &State) {
-    let resources = &mut *state.resources;
-
-    let current_transfer_mode = &mut resources.spu.current_transfer_mode;
-
-    handle_current_transfer_address(state);
-
-    match *current_transfer_mode {
-        TransferMode::Stop => {
-            handle_new_transfer_initialization(state);
-        },
-        TransferMode::ManualWrite => {
-            handle_manual_write_transfer(state);
-        },
-        TransferMode::DmaWrite => {
-            handle_dma_write_transfer(state);
-        }, 
-        TransferMode::DmaRead => {
-            handle_dma_read_transfer(state);
-        }, 
-    } 
-}
-
-unsafe fn handle_interrupt_check(_state: &State) {
-    // TODO: implement.
+fn tick(state: &State) {
+    unsafe {
+        handle_current_volume(state);
+        handle_transfer(state);
+        handle_interrupt_check(state);
+    }
 }

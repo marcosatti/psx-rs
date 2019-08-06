@@ -9,8 +9,6 @@ use crate::controllers::gpu::data::*;
 use crate::controllers::gpu::opengl;
 use crate::resources::gpu::*;
 
-// TODO: Really needs const generics for FIFO operations... :(
-
 pub unsafe fn handle_command(state: &State) {
     let resources = &mut *state.resources;
 
