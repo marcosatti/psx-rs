@@ -4,15 +4,15 @@ use crate::types::b8_memory_mapper::*;
 use crate::types::queue::Queue;
 
 pub struct Gpu1810 {
-    pub gp0: Queue<u32, 16>,
-    pub read: Queue<u32, 16>, 
+    pub gp0: Queue<u32>,
+    pub read: Queue<u32>, 
 }
 
 impl Gpu1810 {
     pub fn new() -> Gpu1810 {
         Gpu1810 {
-            gp0: Queue::new(),
-            read: Queue::new(),
+            gp0: Queue::new(64, "GPU GP0", true),
+            read: Queue::new(64, "GPU READ", false),
         }
     }
 }
@@ -34,14 +34,14 @@ impl B8MemoryMap for Gpu1810 {
 }
 
 pub struct Gpu1814 {
-    pub gp1: Queue<u32, 16>, 
+    pub gp1: Queue<u32>, 
     pub stat: B32Register,
 }
 
 impl Gpu1814 {
     pub fn new() -> Gpu1814 {
         Gpu1814 {
-            gp1: Queue::new(), // Not really a FIFO(?), but emulator needs to buffer commands.
+            gp1: Queue::new(64, "GPU GP1", true), // Not really a FIFO(?), but emulator needs to buffer commands.
             stat: B32Register::new(),
         }
     }

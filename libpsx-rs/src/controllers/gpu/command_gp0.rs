@@ -58,7 +58,7 @@ pub unsafe fn handle_command(state: &State) {
     (command_handler.handler_fn)(state, &command_buffer);
     
     // Setup for the next one.
-    command_buffer.clear();
+    command_buffer.drain(0..required_length_value);
     *required_length = None;
 }
 

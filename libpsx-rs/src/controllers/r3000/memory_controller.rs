@@ -31,58 +31,58 @@ pub unsafe fn read_u8(state: &State, physical_address: u32) -> Result<u8, Hazard
     let resources = &mut *state.resources;
 
     if resources.bus_locked {
-        return Err(Hazard::MemoryRead);
+        return Err(Hazard::BusLockedMemoryRead(physical_address));
     }
 
-    resources.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead)
+    resources.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
 }
 
 pub unsafe fn write_u8(state: &State, physical_address: u32, value: u8) -> Result<(), Hazard> {
     let resources = &mut *state.resources;
 
     if resources.bus_locked {
-        return Err(Hazard::MemoryWrite);
+        return Err(Hazard::BusLockedMemoryWrite(physical_address));
     }
 
-    resources.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite)
+    resources.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
 }
 
 pub unsafe fn read_u16(state: &State, physical_address: u32) -> Result<u16, Hazard> {
     let resources = &mut *state.resources;
     
     if resources.bus_locked {
-        return Err(Hazard::MemoryRead);
+        return Err(Hazard::BusLockedMemoryRead(physical_address));
     }
 
-    resources.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead)
+    resources.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
 }
 
 pub unsafe fn write_u16(state: &State, physical_address: u32, value: u16) -> Result<(), Hazard> {
     let resources = &mut *state.resources;
 
     if resources.bus_locked {
-        return Err(Hazard::MemoryWrite);
+        return Err(Hazard::BusLockedMemoryWrite(physical_address));
     }
 
-    resources.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite)
+    resources.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
 }
 
 pub unsafe fn read_u32(state: &State, physical_address: u32) -> Result<u32, Hazard> {
     let resources = &mut *state.resources;
     
     if resources.bus_locked {
-        return Err(Hazard::MemoryRead);
+        return Err(Hazard::BusLockedMemoryRead(physical_address));
     }
 
-    resources.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead)
+    resources.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
 }
 
 pub unsafe fn write_u32(state: &State, physical_address: u32, value: u32) -> Result<(), Hazard> {
     let resources = &mut *state.resources;
 
     if resources.bus_locked {
-        return Err(Hazard::MemoryWrite);
+        return Err(Hazard::BusLockedMemoryWrite(physical_address));
     }
 
-    resources.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite)
+    resources.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
 }

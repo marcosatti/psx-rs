@@ -34,7 +34,7 @@ impl B8MemoryMap for Command {
 pub struct Cdrom1801 {
     pub status: Option<NonNull<B8Register>>,
     pub command: Option<NonNull<Command>>,
-    pub response: Option<NonNull<Queue<u8, {16}>>>,
+    pub response: Option<NonNull<Queue<u8>>>,
 }
 
 impl Cdrom1801 {
@@ -82,8 +82,8 @@ impl B8MemoryMap for Cdrom1801 {
 
 pub struct Cdrom1802 {
     pub status: Option<NonNull<B8Register>>,
-    pub parameter: Option<NonNull<Queue<u8, {16}>>>,
-    pub data: Option<NonNull<Queue<u8, {16}>>>,
+    pub parameter: Option<NonNull<Queue<u8>>>,
+    pub data: Option<NonNull<Queue<u8>>>,
     pub int_enable: Option<NonNull<B8Register>>,
 }
 

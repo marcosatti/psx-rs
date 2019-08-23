@@ -1,11 +1,11 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-use log::debug;
+use log::{trace, warn};
 use crate::State;
 use crate::controllers::dmac::channel::*;
 use crate::resources::dmac::*;
 use crate::resources::dmac::channel::*;
+use crate::debug::ENABLE_DMAC_CHANNEL_TRACE;
 
-static ENABLE_TRACE: bool = false;
 static mut TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
 
 pub unsafe fn transfer_start(state: &State, channel: usize) {
@@ -19,8 +19,8 @@ pub unsafe fn transfer_start(state: &State, channel: usize) {
     
     transfer_state.debug_state = Some(DebugState { transfer_id });
     
-    if ENABLE_TRACE {
-        debug!(
+    if ENABLE_DMAC_CHANNEL_TRACE {
+        trace!(
             "Starting transfer [{}] on channel {}, sync_mode = {:?}, direction = {:?}, bs (raw) = {}, ba (raw) = {}, madr (raw) = 0x{:0X}", 
             transfer_id, channel, sync_mode, transfer_direction, bcr.read_bitfield(BCR_BLOCKSIZE), bcr.read_bitfield(BCR_BLOCKAMOUNT), madr.read_u32()
         );
@@ -34,10 +34,18 @@ pub unsafe fn transfer_end(state: &State, channel: usize) {
 
     let transfer_id = transfer_state.debug_state.unwrap().transfer_id;
 
-    if ENABLE_TRACE {
-        debug!(
+    if ENABLE_DMAC_CHANNEL_TRACE {
+        trace!(
             "Finished transfer [{}] on channel {}, bs (raw) = {}, ba (raw) = {}, madr (raw) = 0x{:0X}", 
             transfer_id, channel, bcr.read_bitfield(BCR_BLOCKSIZE), bcr.read_bitfield(BCR_BLOCKAMOUNT), madr.read_u32()
         );
     }
+}
+
+pub fn _log_hazard_empty(fifo_identifier: &str) {
+    warn!("DMAC: reading from {} but empty, trying again later", fifo_identifier);
+}
+
+pub fn log_hazard_full(fifo_identifier: &str) {
+    warn!("DMAC: writing to {} but full, trying again later", fifo_identifier);
 }

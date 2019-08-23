@@ -26,6 +26,12 @@ impl BranchDelaySlot {
         None
     }
 
+    pub fn back(&mut self) {
+        if self.target.is_some() {
+            self.slots += 1;
+        }
+    }
+
     pub fn set(&mut self, target: u32, slots: u32) {
         debug_assert!(slots > 0);
         self.target = Some(target);

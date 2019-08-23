@@ -135,7 +135,7 @@ fn setup_logger(log_file_path: &Path) {
                 message
             ))
         })
-        .level(log::LevelFilter::Debug)
+        .level(log::LevelFilter::Trace)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file_path).unwrap())
         .apply()

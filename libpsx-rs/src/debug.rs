@@ -9,6 +9,9 @@ use log::debug;
 use crate::Core;
 use crate::resources::{self, Resources};
 
+pub static ENABLE_DMAC_CHANNEL_TRACE: bool = false;
+pub static ENABLE_FIFO_TRACE: bool = true;
+
 pub static mut DEBUG_CORE_EXIT: bool = false;
 
 pub fn analysis(core: &Core) {

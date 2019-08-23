@@ -3,7 +3,9 @@ mod memory_controller;
 mod instruction_impl;
 
 use std::time::Duration;
+use std::fmt;
 use log::debug;
+use log::warn;
 use crate::State;
 use crate::constants::r3000::{CLOCK_SPEED, INSTRUCTION_SIZE};
 use crate::controllers::Event;
@@ -14,14 +16,26 @@ use crate::utilities::mips1::status_push_exception;
 use crate::resources::r3000::cp0::{STATUS_BEV, STATUS_IM, CAUSE_IP, CAUSE_BD, STATUS_IEC, CAUSE_EXCCODE, CAUSE_EXCCODE_INT, CAUSE_EXCCODE_SYSCALL};
 use crate::debug::{DEBUG_CORE_EXIT, trace_intc};
 
+#[derive(PartialEq)]
 pub enum Hazard {
-    MemoryRead,
-    MemoryWrite
+    BusLockedMemoryRead(u32),
+    BusLockedMemoryWrite(u32),
+    MemoryRead(u32),
+    MemoryWrite(u32),
+}
+
+impl fmt::Display for Hazard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Hazard::BusLockedMemoryRead(a) => write!(f, "BusLockedMemoryRead(0x{:08X})", a),
+            Hazard::BusLockedMemoryWrite(a) => write!(f, "BusLockedMemoryWrite(0x{:08X})", a),
+            Hazard::MemoryRead(a) => write!(f, "MemoryRead(0x{:08X})", a),
+            Hazard::MemoryWrite(a) => write!(f, "MemoryWrite(0x{:08X})", a),
+        }
+    }
 }
 
 pub type InstResult = Result<(), Hazard>;
-
-static mut ENABLE_DEBUG: bool = false;
 
 pub fn run(state: &State, event: Event) {
     match event {
@@ -36,6 +50,7 @@ fn run_time(state: &State, duration: Duration) {
     }
 }
 
+static mut ENABLE_DEBUG: bool = false;
 pub static mut DEBUG_TICK_COUNT: usize = 0;
 pub static mut DEBUG_BREAK_REACHED: bool = false;
 pub static mut DEBUG_LOG_INSTRUCTION: bool = false;
@@ -81,7 +96,14 @@ unsafe fn tick(state: &State) -> i64 {
     let result = fn_ptr(state, inst);
 
     if result.is_err() {
-        // Pipeline hazard, go back to previous state, instruction was not performed.
+        // "Pipeline" hazard, go back to previous state, instruction was not performed.
+        let hazard = result.unwrap_err();
+        match hazard {
+            Hazard::MemoryRead(_) | Hazard::MemoryWrite(_) => warn!("R3000 Hazard {}", hazard),
+            _ => {},
+        }
+
+        resources.r3000.branch_delay.back();
         resources.r3000.pc.write_u32(pc_va);
     }
     

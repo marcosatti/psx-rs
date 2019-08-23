@@ -14,13 +14,13 @@ pub enum TransferMode {
 }
 
 pub struct Fifo {
-    pub fifo: Queue<u16, 32>, 
+    pub fifo: Queue<u16>, 
 }
 
 impl Fifo {
     pub fn new() -> Fifo {
         Fifo {
-            fifo: Queue::new(),
+            fifo: Queue::new(64, "SPU FIFO", false),
         }
     }
 }

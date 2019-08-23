@@ -3,6 +3,7 @@ use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 use crate::resources::dmac::channel::*;
 use crate::resources::dmac::*;
+use crate::controllers::dmac::debug::*;
     
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TransferDirection {
@@ -98,7 +99,15 @@ pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) -> Re
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
-        2 => resources.gpu.gpu1810.gp0.write_one(value),
+        2 => {
+            let result = resources.gpu.gpu1810.gp0.write_one(value);
+            
+            if result.is_err() {
+                log_hazard_full(resources.gpu.gpu1810.gp0.identifier());
+            }
+
+            result
+        }
         3 => unimplemented!("Unhandled DMAC channel 3"),
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
