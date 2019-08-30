@@ -39,10 +39,8 @@ pub unsafe fn read_u8(state: &State, physical_address: u32) -> Result<u8, Hazard
         resources.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
-    if cfg!(feature = "debug_tracing") {
-        if ENABLE_IO_SPIN_LOOP_DETECTION_READ && result.is_ok() {
-            trace_io_spin_loop_detection_read(state, physical_address);
-        }
+    if ENABLE_IO_SPIN_LOOP_DETECTION_READ && result.is_ok() {
+        trace_io_spin_loop_detection_read(state, physical_address);
     }
 
     result
@@ -59,10 +57,8 @@ pub unsafe fn write_u8(state: &State, physical_address: u32, value: u8) -> Resul
         resources.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
-    if cfg!(feature = "debug_tracing") {
-        if ENABLE_IO_SPIN_LOOP_DETECTION_WRITE && result.is_ok() {
-            trace_io_spin_loop_detection_write(state, physical_address);
-        }
+    if ENABLE_IO_SPIN_LOOP_DETECTION_WRITE && result.is_ok() {
+        trace_io_spin_loop_detection_write(state, physical_address);
     }
 
     result
