@@ -1,4 +1,4 @@
-use spin::Mutex;
+use parking_lot::Mutex;
 use crate::types::queue::Queue;
 use crate::types::register::b16_register::B16Register;
 use crate::types::register::b32_register::B32Register;
@@ -20,7 +20,7 @@ pub struct Fifo {
 impl Fifo {
     pub fn new() -> Fifo {
         Fifo {
-            fifo: Queue::new(64, "SPU FIFO", false),
+            fifo: Queue::new(64, "SPU FIFO", false, false),
         }
     }
 }

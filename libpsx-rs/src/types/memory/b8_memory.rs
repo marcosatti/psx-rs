@@ -1,7 +1,7 @@
 use crate::types::b8_memory_mapper::*;
 
 pub struct B8Memory {
-    memory: Vec<u8>,
+    pub memory: Vec<u8>,
 }
 
 impl B8Memory {

@@ -1,4 +1,4 @@
-use spin::{Mutex, MutexGuard};
+use parking_lot::{Mutex, MutexGuard};
 
 pub struct BackendContext<'a, T> {
     acquire_release: Mutex<(&'a (dyn Fn() -> &'a T), &'a dyn Fn())>,

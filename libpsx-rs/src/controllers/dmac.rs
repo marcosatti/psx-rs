@@ -74,6 +74,7 @@ unsafe fn handle_transfer(state: &State, channel: usize) -> i32 {
             resources.bus_locked = true;
 
             initialize_transfer(transfer_state, sync_mode, madr, bcr);
+
             debug::transfer_start(state, channel);
 
             if sync_mode == SyncMode::Blocks {
@@ -134,7 +135,9 @@ unsafe fn handle_continuous_transfer(state: &State, channel: usize) -> i32 {
         transfer_state.started = false;
         chcr.write_bitfield(CHCR_STARTBUSY, 0);
         set_interrupt_flag(state, channel);
+
         debug::transfer_end(state, channel);
+        
         resources.bus_locked = false;
     }
 
@@ -200,7 +203,9 @@ unsafe fn handle_blocks_transfer(state: &State, channel: usize) -> i32 {
         bcr.write_bitfield(BCR_BLOCKAMOUNT, 0);
         chcr.write_bitfield(CHCR_STARTBUSY, 0);
         set_interrupt_flag(state, channel);
+
         debug::transfer_end(state, channel);
+
         resources.bus_locked = false;
     }
 
@@ -227,7 +232,9 @@ unsafe fn handle_linked_list_transfer(state: &State, channel: usize) -> i32 {
             chcr.write_bitfield(CHCR_STARTBUSY, 0);
             madr.write_u32(0x00FFFFFF);
             set_interrupt_flag(state, channel);
+            
             debug::transfer_end(state, channel);
+
             resources.bus_locked = false;
             return 1;
         }

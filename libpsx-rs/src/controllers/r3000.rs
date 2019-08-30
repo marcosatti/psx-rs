@@ -1,6 +1,7 @@
-mod instruction;
-mod memory_controller;
-mod instruction_impl;
+pub mod instruction;
+pub mod memory_controller;
+pub mod instruction_impl;
+pub mod debug;
 
 use std::time::Duration;
 use std::fmt;
@@ -14,7 +15,8 @@ use crate::controllers::r3000::instruction::lookup as instruction_lookup;
 use crate::types::mips1::instruction::Instruction;
 use crate::utilities::mips1::status_push_exception;
 use crate::resources::r3000::cp0::{STATUS_BEV, STATUS_IM, CAUSE_IP, CAUSE_BD, STATUS_IEC, CAUSE_EXCCODE, CAUSE_EXCCODE_INT, CAUSE_EXCCODE_SYSCALL};
-use crate::debug::{DEBUG_CORE_EXIT, trace_intc};
+use crate::debug::DEBUG_CORE_EXIT;
+use crate::debug::trace_intc;
 
 #[derive(PartialEq)]
 pub enum Hazard {
@@ -99,7 +101,7 @@ unsafe fn tick(state: &State) -> i64 {
         // "Pipeline" hazard, go back to previous state, instruction was not performed.
         let hazard = result.unwrap_err();
         match hazard {
-            Hazard::MemoryRead(_) | Hazard::MemoryWrite(_) => warn!("R3000 Hazard {}", hazard),
+            Hazard::MemoryRead(address) | Hazard::MemoryWrite(address) => warn!("R3000 Hazard {} at address 0x{:08X}", hazard, address),
             _ => {},
         }
 

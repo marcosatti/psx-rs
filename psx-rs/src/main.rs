@@ -11,6 +11,7 @@ use libpsx_rs::backends::context::*;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
 use libpsx_rs::debug::DEBUG_CORE_EXIT;
+use libpsx_rs::debug::analysis as debug_analysis;
 
 fn main() {
     // Signal handlers
@@ -103,7 +104,7 @@ fn main() {
     }
 
     // Post mortem
-    core.debug_analysis();
+    debug_analysis(&core);
 
     // Audio teardown
     unsafe { alcDestroyContext(openal_context) };

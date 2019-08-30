@@ -1,5 +1,5 @@
 use std::ptr::NonNull;
-use spin::Mutex;
+use parking_lot::Mutex;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::bitfield::Bitfield;

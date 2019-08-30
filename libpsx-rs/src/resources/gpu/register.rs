@@ -11,8 +11,8 @@ pub struct Gpu1810 {
 impl Gpu1810 {
     pub fn new() -> Gpu1810 {
         Gpu1810 {
-            gp0: Queue::new(64, "GPU GP0", true),
-            read: Queue::new(64, "GPU READ", false),
+            gp0: Queue::new(64, "GPU GP0", true, true),
+            read: Queue::new(64, "GPU READ", false, false),
         }
     }
 }
@@ -41,7 +41,7 @@ pub struct Gpu1814 {
 impl Gpu1814 {
     pub fn new() -> Gpu1814 {
         Gpu1814 {
-            gp1: Queue::new(64, "GPU GP1", true), // Not really a FIFO(?), but emulator needs to buffer commands.
+            gp1: Queue::new(64, "GPU GP1", true, true), // Not really a FIFO(?), but emulator needs to buffer commands.
             stat: B32Register::new(),
         }
     }

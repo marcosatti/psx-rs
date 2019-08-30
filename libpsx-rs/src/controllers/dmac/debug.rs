@@ -4,7 +4,8 @@ use crate::State;
 use crate::controllers::dmac::channel::*;
 use crate::resources::dmac::*;
 use crate::resources::dmac::channel::*;
-use crate::debug::ENABLE_DMAC_CHANNEL_TRACE;
+
+pub static ENABLE_DMAC_CHANNEL_TRACE: bool = false;
 
 static mut TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
 

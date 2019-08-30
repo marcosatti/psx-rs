@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use std::ffi::CString;
-use opengl_sys::*;
+use hashbrown::HashMap;
 use lazy_static::lazy_static;
-use spin::Mutex;
+use parking_lot::Mutex;
+use opengl_sys::*;
 
 pub mod vertex {
     pub const SOLID_POLYGON: &'static str = include_str!("./shaders/vertex/solid_polygon.glsl");

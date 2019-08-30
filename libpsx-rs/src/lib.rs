@@ -94,10 +94,9 @@ impl<'a> Core<'a> {
         };
 
         let benchmark = Benchmark::empty();
+        let now = Instant::now();
 
         let time = self.config.time_delta;
-
-        let now = Instant::now();
         self.task_executor.scope(|scope| {
             scope.spawn(|_| {
                 let timer = Instant::now();
@@ -130,13 +129,9 @@ impl<'a> Core<'a> {
                 unsafe { *benchmark.intc.get() = timer.elapsed(); }
             });
         });
+
         let scope_duration = now.elapsed();
-
         debug::benchmark::trace_performance(&time, &scope_duration, &benchmark);
-    }
-
-    pub fn debug_analysis(&self) {
-        debug::analysis(self);
     }
 }
 

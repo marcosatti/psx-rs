@@ -102,8 +102,10 @@ pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) -> Re
         2 => {
             let result = resources.gpu.gpu1810.gp0.write_one(value);
             
-            if result.is_err() {
-                log_hazard_full(resources.gpu.gpu1810.gp0.identifier());
+            if cfg!(feature = "debug_tracing") {
+                if result.is_err() {
+                    log_hazard_full(resources.gpu.gpu1810.gp0.identifier());
+                }
             }
 
             result
