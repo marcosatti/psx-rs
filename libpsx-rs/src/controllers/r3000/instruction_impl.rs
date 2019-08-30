@@ -1,11 +1,11 @@
-use log::debug;
 use crate::State;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
-use crate::controllers::r3000::*;
+use crate::controllers::r3000::{InstResult, set_exception};
 use crate::controllers::r3000::memory_controller::*;
 use crate::resources::r3000::cp0::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
 use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
+use crate::controllers::r3000::debug;
 
 pub unsafe fn sll(state: &State, instruction: Instruction) -> InstResult {
     let resources = &mut *state.resources;
@@ -87,8 +87,7 @@ pub unsafe fn jalr(state: &State, instruction: Instruction) -> InstResult {
 }
 
 pub unsafe fn syscall(state: &State, _instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
-    debug!("[{:X}] syscall, pc = 0x{:X}", DEBUG_TICK_COUNT, resources.r3000.pc.read_u32());
+    debug::trace_syscall(state);
     set_exception(state, CAUSE_EXCCODE_SYSCALL);
     Ok(())
 }
@@ -573,7 +572,7 @@ pub unsafe fn tlbp(_state: &State, _instruction: Instruction) -> InstResult {
 pub unsafe fn rfe(state: &State, _instruction: Instruction) -> InstResult {
     let resources = &mut *state.resources;
     let _lock = resources.r3000.cp0.mutex.lock();
-    debug!("[{:X}] rfe, pc = 0x{:X}", DEBUG_TICK_COUNT, resources.r3000.pc.read_u32());
+    debug::trace_rfe(state);
     let status = &mut resources.r3000.cp0.status;
     let status_value = status_pop_exception(status.read_u32());
     status.write_u32(status_value);
@@ -593,8 +592,6 @@ pub unsafe fn lb(state: &State, instruction: Instruction) -> InstResult {
         0 
     };
     
-    //debug!("lb (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
-
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
     Ok(())
@@ -612,8 +609,6 @@ pub unsafe fn lh(state: &State, instruction: Instruction) -> InstResult {
     } else { 
         0 
     };
-
-    //debug!("lh (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
@@ -643,8 +638,6 @@ pub unsafe fn lwl(state: &State, instruction: Instruction) -> InstResult {
     let rt_value = rt.read_u32();
     let value = (rt_value & MASK[shift]) | (value << SHIFT[shift]);
 
-    //debug!("lwl (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
-
     rt.write_u32(value);
 
     Ok(())
@@ -662,8 +655,6 @@ pub unsafe fn lw(state: &State, instruction: Instruction) -> InstResult {
     } else { 
         0
     };
-
-    //debug!("lw (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
@@ -683,8 +674,6 @@ pub unsafe fn lbu(state: &State, instruction: Instruction) -> InstResult {
         0 
     };
 
-    //debug!("lb (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
-
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
     Ok(())
@@ -702,8 +691,6 @@ pub unsafe fn lhu(state: &State, instruction: Instruction) -> InstResult {
     } else { 
         0 
     };
-
-    //debug!("lhu (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
@@ -733,8 +720,6 @@ pub unsafe fn lwr(state: &State, instruction: Instruction) -> InstResult {
     let rt_value = rt.read_u32();
     let value = (rt_value & MASK[shift]) | (value >> SHIFT[shift]);
 
-    //debug!("lwr (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
-
     rt.write_u32(value);
 
     Ok(())
@@ -748,8 +733,6 @@ pub unsafe fn sb(state: &State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-
-    //debug!("sb (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
         write_u8(state, addr, value)?
@@ -766,8 +749,6 @@ pub unsafe fn sh(state: &State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
         
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-
-    //debug!("sh (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
         write_u16(state, addr, value)?
@@ -800,8 +781,6 @@ pub unsafe fn swl(state: &State, instruction: Instruction) -> InstResult {
 
     let value = (rt_value >> SHIFT[shift]) | (mem_value & MASK[shift]);
 
-    //debug!("swl (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
-
     if !isc { 
         write_u32(state, addr, value)?
     }
@@ -817,8 +796,6 @@ pub unsafe fn sw(state: &State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-
-    //debug!("sw (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
         write_u32(state, addr, value)?
@@ -850,8 +827,6 @@ pub unsafe fn swr(state: &State, instruction: Instruction) -> InstResult {
     let rt_value = resources.r3000.gpr[instruction.rt()].read_u32();
 
     let value = (rt_value << SHIFT[shift]) | (mem_value & MASK[shift]);
-
-    //debug!("swl (isc {}): address = 0x{:0X}, value = {} (0x{:0X})", isc, addr, value, value);
 
     if !isc { 
         write_u32(state, addr, value)?

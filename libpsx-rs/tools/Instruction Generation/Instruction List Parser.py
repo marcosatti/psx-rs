@@ -3,23 +3,23 @@ import os
 
 MATCH = "match inst.{}() {{"
 VALUE_MATCH = "{} => {{"
-SOME = "Some(({}, \"{}\", {}))"
+SOME = "Some(({}, {}))"
 NONE = "None"
 BRACE_CLOSE = "},"
 BRACE_CLOSE_NC = "}"
 INSTRUCTION_FN_DECL = "type InstructionFn = unsafe fn(&State, Instruction);"
-HEADER = "pub fn lookup(inst: Instruction) -> Option<(InstructionFn, &'static str, usize)> {"
+HEADER = "pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {"
 INST_HEADER = "pub unsafe fn {}(_state: &State, _instruction: Instruction) {{"
 UNIMPLEMENTED = "unimplemented!(\"Instruction {} not implemented\");"
 
 START_KEY_COLUMN = 3 # opcode column
 END_KEY_COLUMN = 7
 
-BASE_DIR = './tools/Instruction Generation/'
+BASE_DIR = './libpsx-rs/tools/Instruction Generation/'
 
 #################################
 
-def write_line(f, indent, lines, string, ):
+def write_line(f, indent, lines, string):
     f.write('    ' * indent)
     f.write(string)
     f.write('\n' * lines)
@@ -113,7 +113,7 @@ def write_lookup_level(f, level, indent):
                 write_line(f, indent + 1, 1, BRACE_CLOSE)
             else:
                 write_line(f, indent + 1, 1, VALUE_MATCH.format(k))
-                write_line(f, indent + 2, 1, SOME.format(v[0], v[0], v[1]))
+                write_line(f, indent + 2, 1, SOME.format(v[0], v[1]))
                 sorted_list.append(v)
                 write_line(f, indent + 1, 1, BRACE_CLOSE)
     

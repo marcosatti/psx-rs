@@ -1,5 +1,5 @@
 use crate::controllers::r3000::*;
-use crate::controllers::r3000::debug::*;
+use crate::controllers::r3000::debug;
 
 pub fn translate_address(va: u32) -> u32 {
     match va {
@@ -39,8 +39,8 @@ pub unsafe fn read_u8(state: &State, physical_address: u32) -> Result<u8, Hazard
         resources.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
-    if ENABLE_IO_SPIN_LOOP_DETECTION_READ && result.is_ok() {
-        trace_io_spin_loop_detection_read(state, physical_address);
+    if result.is_ok() {
+        debug::trace_io_spin_loop_detection_read(state, physical_address);
     }
 
     result
@@ -57,8 +57,8 @@ pub unsafe fn write_u8(state: &State, physical_address: u32, value: u8) -> Resul
         resources.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
-    if ENABLE_IO_SPIN_LOOP_DETECTION_WRITE && result.is_ok() {
-        trace_io_spin_loop_detection_write(state, physical_address);
+    if result.is_ok() {
+        debug::trace_io_spin_loop_detection_write(state, physical_address);
     }
 
     result
@@ -75,8 +75,8 @@ pub unsafe fn read_u16(state: &State, physical_address: u32) -> Result<u16, Haza
         resources.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
-    if ENABLE_IO_SPIN_LOOP_DETECTION_READ && result.is_ok() {
-        trace_io_spin_loop_detection_read(state, physical_address);
+    if result.is_ok() {
+        debug::trace_io_spin_loop_detection_read(state, physical_address);
     }
 
     result
@@ -93,8 +93,8 @@ pub unsafe fn write_u16(state: &State, physical_address: u32, value: u16) -> Res
         resources.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
     
-    if ENABLE_IO_SPIN_LOOP_DETECTION_WRITE && result.is_ok() {
-        trace_io_spin_loop_detection_write(state, physical_address);
+    if result.is_ok() {
+        debug::trace_io_spin_loop_detection_write(state, physical_address);
     }
 
     result
@@ -111,8 +111,8 @@ pub unsafe fn read_u32(state: &State, physical_address: u32) -> Result<u32, Haza
         resources.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
-    if ENABLE_IO_SPIN_LOOP_DETECTION_READ && result.is_ok() {
-        trace_io_spin_loop_detection_read(state, physical_address);
+    if result.is_ok() {
+        debug::trace_io_spin_loop_detection_read(state, physical_address);
     }
 
     result
@@ -129,8 +129,8 @@ pub unsafe fn write_u32(state: &State, physical_address: u32, value: u32) -> Res
         resources.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))    
     };
 
-    if ENABLE_IO_SPIN_LOOP_DETECTION_WRITE && result.is_ok() {
-        trace_io_spin_loop_detection_write(state, physical_address);
+    if result.is_ok() {
+        debug::trace_io_spin_loop_detection_write(state, physical_address);
     }
 
     result
