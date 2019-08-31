@@ -20,7 +20,7 @@ pub unsafe fn trace_instructions_at_pc(state: &State, instruction_count: Option<
     let instruction_count = instruction_count.unwrap_or(DEFAULT_TRACE_INSTRUCTIONS_LENGTH);
     let u8_length2 = (instruction_count as u32 / 2) * INSTRUCTION_SIZE;
     let u8_start = pc.checked_sub(u8_length2).unwrap() as usize;
-    let u8_end = pc.checked_add(u8_length2).unwrap() as usize;
+    let u8_end = (pc.checked_add(u8_length2).unwrap() + INSTRUCTION_SIZE) as usize;
     let slice = &main_memory.memory[u8_start..u8_end];
     let trace_info = dump_instructions(u8_start as u32, slice, instruction_count);
     trace!("Instruction dump at 0x{:08X}:\n{}", pc, &trace_info);

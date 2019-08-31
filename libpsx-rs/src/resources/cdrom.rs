@@ -5,6 +5,7 @@ use crate::types::bitfield::Bitfield;
 use crate::types::register::b8_register::B8Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::queue::Queue;
+use crate::types::queue::debug::DebugState;
 use crate::resources::Resources;
 use crate::resources::cdrom::register::*;
 
@@ -35,9 +36,9 @@ impl Cdrom {
         Cdrom {
             status: B8Register::new(),
             command: Command::new(),
-            response: Queue::new(16, "CDROM RESPONSE", true, true),
-            parameter: Queue::new(16, "CDROM PARAMETER", true, true),
-            data: Queue::new(16, "CDROM DATA", true, true),
+            response: Queue::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),
+            parameter: Queue::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),
+            data: Queue::new(16, Some(DebugState::new("CDROM DATA", true, true))),
             int_enable: B8Register::new(),
             int_flag: B8Register::new(),
             request: B8Register::new(),

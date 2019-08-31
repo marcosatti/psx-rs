@@ -1,5 +1,6 @@
 pub mod register;
 pub mod channel;
+pub mod debug;
 
 use std::ptr::NonNull;
 use crate::types::register::b32_register::B32Register;

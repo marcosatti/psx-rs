@@ -1,3 +1,5 @@
+use crate::resources::dmac::debug::*;
+
 #[derive(Debug, Copy, Clone)]
 pub struct TransferState {
     pub started: bool,
@@ -45,9 +47,4 @@ pub struct LinkedListState {
     pub next_address: u32,
     pub target_count: usize,
     pub current_count: usize,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct DebugState {
-    pub transfer_id: usize,
 }

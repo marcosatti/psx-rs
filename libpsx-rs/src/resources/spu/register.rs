@@ -1,5 +1,6 @@
 use parking_lot::Mutex;
 use crate::types::queue::Queue;
+use crate::types::queue::debug::DebugState;
 use crate::types::register::b16_register::B16Register;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
@@ -20,7 +21,7 @@ pub struct Fifo {
 impl Fifo {
     pub fn new() -> Fifo {
         Fifo {
-            fifo: Queue::new(64, "SPU FIFO", false, false),
+            fifo: Queue::new(64, Some(DebugState::new("SPU FIFO", false, false))),
         }
     }
 }

@@ -2,6 +2,7 @@ use log::debug;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::queue::Queue;
+use crate::types::queue::debug::DebugState;
 
 pub struct Gpu1810 {
     pub gp0: Queue<u32>,
@@ -11,8 +12,8 @@ pub struct Gpu1810 {
 impl Gpu1810 {
     pub fn new() -> Gpu1810 {
         Gpu1810 {
-            gp0: Queue::new(64, "GPU GP0", true, true),
-            read: Queue::new(64, "GPU READ", false, false),
+            gp0: Queue::new(64, Some(DebugState::new("GPU GP0", true, true))),
+            read: Queue::new(64, Some(DebugState::new("GPU READ", false, false))),
         }
     }
 }
@@ -41,7 +42,7 @@ pub struct Gpu1814 {
 impl Gpu1814 {
     pub fn new() -> Gpu1814 {
         Gpu1814 {
-            gp1: Queue::new(64, "GPU GP1", true, true), // Not really a FIFO(?), but emulator needs to buffer commands.
+            gp1: Queue::new(64, Some(DebugState::new("GPU GP1", true, true))), // Not really a FIFO(?), but emulator needs to buffer commands.
             stat: B32Register::new(),
         }
     }
