@@ -89,7 +89,7 @@ fn get_command_handler(command_index: u8) -> &'static CommandHandler {
     }
 }
 
-static COMMAND_00: CommandHandler = CommandHandler {
+const COMMAND_00: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -98,7 +98,7 @@ static COMMAND_00: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_01: CommandHandler = CommandHandler {
+const COMMAND_01: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -107,7 +107,7 @@ static COMMAND_01: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_05: CommandHandler = CommandHandler {
+const COMMAND_05: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -116,7 +116,7 @@ static COMMAND_05: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_06: CommandHandler = CommandHandler {
+const COMMAND_06: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -125,7 +125,7 @@ static COMMAND_06: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_0C: CommandHandler = CommandHandler {
+const COMMAND_0C: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -134,7 +134,7 @@ static COMMAND_0C: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_28: CommandHandler = CommandHandler {
+const COMMAND_28: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(5)
     },
@@ -152,7 +152,7 @@ static COMMAND_28: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_2C: CommandHandler = CommandHandler {
+const COMMAND_2C: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(9)
     },
@@ -177,7 +177,7 @@ static COMMAND_2C: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_30: CommandHandler = CommandHandler {
+const COMMAND_30: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(6)
     },
@@ -195,7 +195,7 @@ static COMMAND_30: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_38: CommandHandler = CommandHandler {
+const COMMAND_38: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(8)
     },
@@ -213,7 +213,7 @@ static COMMAND_38: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_3C: CommandHandler = CommandHandler {
+const COMMAND_3C: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(12)
     },
@@ -222,7 +222,7 @@ static COMMAND_3C: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_50: CommandHandler = CommandHandler {
+const COMMAND_50: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(4)
     },
@@ -231,7 +231,7 @@ static COMMAND_50: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_6F: CommandHandler = CommandHandler {
+const COMMAND_6F: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(3)
     },
@@ -240,7 +240,7 @@ static COMMAND_6F: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_80: CommandHandler = CommandHandler {
+const COMMAND_80: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(4)
     },
@@ -249,7 +249,7 @@ static COMMAND_80: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_A0: CommandHandler = CommandHandler {
+const COMMAND_A0: CommandHandler = CommandHandler {
     length_fn: |data: &[u32]| -> Option<usize> {
         if data.len() < 3 { 
             return None; 
@@ -310,26 +310,62 @@ static COMMAND_A0: CommandHandler = CommandHandler {
     }
 };
 
-static COMMAND_C0: CommandHandler = CommandHandler {
+const COMMAND_C0: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(3)
     },
-    handler_fn: |_state: &State, data: &[u32]| {
-        //debug!("Copy Rectangle (VRAM to CPU), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
-        let width = Bitfield::new(0, 16).extract_from(data[2]) as usize;
-        let height = Bitfield::new(16, 16).extract_from(data[2]) as usize;
-        let count = width * height;
-        let fifo_words = (count + 1) / 2;
+    handler_fn: |state: &State, data: &[u32]| {
+        unsafe {
+            //debug!("Copy Rectangle (VRAM to CPU), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
 
-        debug!("Pushing {} words of 0xFFFF_FFFF to GPUREAD [not implemented properly]", fifo_words);
+            let origin = Point2D::new(
+                Bitfield::new(0, 16).extract_from(data[1]) as usize,
+                Bitfield::new(16, 16).extract_from(data[1]) as usize,
+            );
 
-        // let resources = &mut *state.resources;
-        // let read = &mut resources.gpu.gpu1810.read;
-        // read.write(iter::repeat(0xFFFF_FFFF).take(fifo_words));
+            let size = Size2D::new(
+                Bitfield::new(0, 16).extract_from(data[2]) as usize,
+                Bitfield::new(16, 16).extract_from(data[2]) as usize,
+            );
+
+            let count = size.width * size.height;
+
+            if count == 0 {
+                panic!("Empty size - what happens? ({:?})", size);
+            }
+
+            let fifo_words = (count + 1) / 2;
+
+            let resources = &mut *state.resources;
+            
+            let mut data = match state.video_backend {
+                VideoBackend::Opengl(ref backend_params) => {
+                    opengl::read_framebuffer_5551(backend_params, origin, size)
+                },
+            };
+
+            // Data is to be packed from 2 x u16 into u32.
+            // Pad the last u16 if its an odd amount.
+            if data.len() % 2 != 0 {
+                data.push(0);
+            }
+
+            let read_buffer = &mut resources.gpu.gp0_read_buffer;
+            for i in 0..fifo_words {
+                let word: u32 = 0;
+                Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
+                Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
+                read_buffer.push(word)
+            }
+
+            if size.height > 1 {
+                unimplemented!("Verify function works properly for multiple lines");
+            }
+        }
     }
 };
 
-pub static COMMAND_E1: CommandHandler = CommandHandler {
+pub const COMMAND_E1: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -350,7 +386,7 @@ pub static COMMAND_E1: CommandHandler = CommandHandler {
     }
 };
 
-pub static COMMAND_E2: CommandHandler = CommandHandler {
+pub const COMMAND_E2: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -365,7 +401,7 @@ pub static COMMAND_E2: CommandHandler = CommandHandler {
     }
 };
 
-pub static COMMAND_E3: CommandHandler = CommandHandler {
+pub const COMMAND_E3: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -378,7 +414,7 @@ pub static COMMAND_E3: CommandHandler = CommandHandler {
     }
 };
 
-pub static COMMAND_E4: CommandHandler = CommandHandler {
+pub const COMMAND_E4: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -391,7 +427,7 @@ pub static COMMAND_E4: CommandHandler = CommandHandler {
     }
 };
 
-pub static COMMAND_E5: CommandHandler = CommandHandler {
+pub const COMMAND_E5: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },
@@ -404,7 +440,7 @@ pub static COMMAND_E5: CommandHandler = CommandHandler {
     }
 };
 
-pub static COMMAND_E6: CommandHandler = CommandHandler {
+pub const COMMAND_E6: CommandHandler = CommandHandler {
     length_fn: |_data: &[u32]| -> Option<usize> {
         Some(1)
     },

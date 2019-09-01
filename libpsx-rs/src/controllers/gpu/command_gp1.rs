@@ -66,7 +66,11 @@ unsafe fn command_03(state: &State, command: u32) {
 
 unsafe fn command_04(state: &State, command: u32) {
     let resources = &mut *state.resources;
-    resources.gpu.gpu1814.stat.write_bitfield(STAT_DMA_DIRECTION, Bitfield::new(0, 2).extract_from(command));
+    let dma_direction = Bitfield::new(0, 2).extract_from(command);
+    if dma_direction == 3 {
+        unimplemented!("DMA direction set to 3 (GPUREAD to CPU)");
+    }
+    resources.gpu.gpu1814.stat.write_bitfield(STAT_DMA_DIRECTION, dma_direction);
 }
 
 unsafe fn command_05(state: &State, command: u32) {

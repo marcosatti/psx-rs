@@ -58,6 +58,7 @@ pub struct Gpu {
     pub drawing_offset_y: usize,
     pub gp0_command_buffer: Vec<u32>,
     pub gp0_command_required_length: Option<usize>,
+    pub gp0_read_buffer: Vec<u32>,
 
     pub crtc: Crtc,
 }
@@ -87,6 +88,7 @@ impl Gpu {
             drawing_offset_y: 0,
             gp0_command_buffer: Vec::new(),
             gp0_command_required_length: None,
+            gp0_read_buffer: Vec::new(),
             crtc: Crtc::new(),
         }
     }

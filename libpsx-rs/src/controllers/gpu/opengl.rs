@@ -3,6 +3,8 @@ use crate::backends::video::opengl::*;
 use crate::backends::video::opengl::rendering::*;
 use crate::types::geometry::*;
 use crate::types::color::*;
+use crate::types::bitfield::*;
+use crate::constants::gpu::VRAM_HEIGHT_LINES;
 
 pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
@@ -329,8 +331,6 @@ pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, posit
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
         glUseProgram(program_context.program_id);
 
-        let mut fbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mut fbo);
         let mut texture = 0;
         glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);
         glActiveTexture(GL_TEXTURE0);
@@ -349,4 +349,53 @@ pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, posit
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
+}
+
+pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<usize, Pixel>, size: Size2D<usize, Pixel>) -> Vec<u16> {
+    let (_context_guard, _context) = backend_params.context.guard();
+    
+    let opengl_origin: Point2D<usize, Pixel> = Point2D::new(
+        origin.x,
+        VRAM_HEIGHT_LINES - origin.y - size.height,
+    );
+    
+    let mut buffer: Vec<u8> = Vec::new();
+    let buffer_size = size.width * size.height * std::mem::size_of::<u16>();
+    buffer.resize_with(buffer_size, Default::default);
+
+    unsafe {
+        let mut draw_fbo = 0;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut draw_fbo);
+
+        let mut read_fbo = 0;
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &mut read_fbo);
+
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, draw_fbo as GLuint);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        
+        glFinish();
+
+        glReadPixels(opengl_origin.x as GLint, opengl_origin.y as GLint, size.width as GLint, size.height as GLint, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, buffer.as_mut_ptr() as *mut std::ffi::c_void);
+    
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, read_fbo as GLuint);
+    }
+    
+    // Pixel arrangement needs to be from top to bottom, left to right.
+    // This means top left corner is (0, 0), and bottom right is (texture_width, texture_height).
+    
+    let mut fixed_buffer: Vec<u16> = Vec::new();
+    let fixed_buffer_size = size.width * size.height;
+    fixed_buffer.resize_with(fixed_buffer_size, Default::default);
+
+    for i in 0..fixed_buffer_size {
+        let index = (size.width * size.height) - (size.width * (1 + (i / size.width))) + i;
+        let data: u16 = 0;
+        Bitfield::new(0, 8).insert_into(data, buffer[index] as u16);
+        Bitfield::new(8, 8).insert_into(data, buffer[index + 1] as u16);
+        fixed_buffer[i] = data;
+    }
+
+    fixed_buffer
 }

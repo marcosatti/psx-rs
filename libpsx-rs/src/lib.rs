@@ -31,6 +31,7 @@ use crate::controllers::intc::run as run_intc;
 use crate::controllers::gpu::run as run_gpu;
 use crate::controllers::dmac::run as run_dmac;
 use crate::controllers::spu::run as run_spu;
+use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
 pub struct State<'b, 'a: 'b> {
     pub resources: *mut Resources,
@@ -149,7 +150,7 @@ fn video_setup_opengl(backend_params: &opengl::BackendParams) {
         glDebugMessageCallbackARB(Some(debug_opengl_trace), std::ptr::null());
 
         let mut window_fbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mut window_fbo);
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut window_fbo);
         opengl::rendering::WINDOW_FBO = window_fbo as GLuint;
 
         let mut fbo = 0;
@@ -159,7 +160,7 @@ fn video_setup_opengl(backend_params: &opengl::BackendParams) {
         let mut texture = 0;
         glGenTextures(1, &mut texture);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, 1024, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
@@ -168,7 +169,7 @@ fn video_setup_opengl(backend_params: &opengl::BackendParams) {
         let mut rbo = 0;
         glGenRenderbuffers(1, &mut rbo);
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1024, 512);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint);
         
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
         glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); 

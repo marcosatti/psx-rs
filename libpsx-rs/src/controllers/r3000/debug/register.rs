@@ -1,7 +1,7 @@
 use log::trace;
 use crate::State;
 
-static REGISTER_NAMES: [&str; 32] = [
+const REGISTER_NAMES: [&str; 32] = [
     "zero",
     "at",
     "v0",

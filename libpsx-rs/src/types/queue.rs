@@ -42,16 +42,24 @@ where
         }
         
         result
-    } 
-    
-    pub fn len(&self) -> usize {
-        self.queue.len()
     }
 
+    /// For readers only.
+    pub fn read_available(&self) -> usize {
+        self.queue.read_available()
+    }
+
+    /// For writers only.
+    pub fn write_available(&self) -> usize {
+        self.queue.write_available()
+    }
+
+    /// For readers only.
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
     
+    /// For writers only.
     pub fn is_full(&self) -> bool {
         self.queue.is_full()
     }

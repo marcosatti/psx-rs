@@ -15,17 +15,17 @@ use crate::controllers::r3000::debug::disassembler::*;
 use crate::controllers::r3000::debug::memory::*;
 use crate::controllers::r3000::debug::register::*;
 
-static ENABLE_STATE_TRACING: bool = false;
-static ENABLE_HAZARD_TRACING: bool = true;
-static ENABLE_INTERRUPT_TRACING: bool = false;
-static ENABLE_SYSCALL_TRACING: bool = false;
-static ENABLE_RFE_TRACING: bool = false;
-static ENABLE_IO_SPIN_LOOP_DETECTION_READ: bool = true;
-static ENABLE_IO_SPIN_LOOP_DETECTION_WRITE: bool = false;
+const ENABLE_STATE_TRACING: bool = false;
+const ENABLE_HAZARD_TRACING: bool = true;
+const ENABLE_INTERRUPT_TRACING: bool = false;
+const ENABLE_SYSCALL_TRACING: bool = false;
+const ENABLE_RFE_TRACING: bool = false;
+const ENABLE_IO_SPIN_LOOP_DETECTION_READ: bool = false;
+const ENABLE_IO_SPIN_LOOP_DETECTION_WRITE: bool = false;
 
 static mut DEBUG_TICK_COUNT: usize = 0;
 
-static MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 1024 * 16;
+const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 1024 * 16;
 
 pub unsafe fn trace_state(state: &State) {
     if !ENABLE_STATE_TRACING {

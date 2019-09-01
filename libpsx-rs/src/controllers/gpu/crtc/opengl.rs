@@ -58,7 +58,7 @@ pub fn render_opengl(backend_params: &opengl::BackendParams) {
         glBindVertexArray(program_context.vao_id);
 
         let mut fbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mut fbo);
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo);
 
         let mut texture = 0;
         glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);

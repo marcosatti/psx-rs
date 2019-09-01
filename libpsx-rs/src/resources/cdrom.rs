@@ -9,13 +9,13 @@ use crate::types::queue::debug::DebugState;
 use crate::resources::Resources;
 use crate::resources::cdrom::register::*;
 
-static STATUS_INDEX: Bitfield = Bitfield::new(0, 2);
-static _STATUS_ADPBUSY: Bitfield = Bitfield::new(2, 1);
-static _STATUS_PRMEMPT: Bitfield = Bitfield::new(3, 1);
-static _STATUS_PRMWRDY: Bitfield = Bitfield::new(4, 1);
-static _STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
-static _STATUS_DRQSTS: Bitfield = Bitfield::new(6, 1);
-static _STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
+const STATUS_INDEX: Bitfield = Bitfield::new(0, 2);
+const _STATUS_ADPBUSY: Bitfield = Bitfield::new(2, 1);
+const _STATUS_PRMEMPT: Bitfield = Bitfield::new(3, 1);
+const _STATUS_PRMWRDY: Bitfield = Bitfield::new(4, 1);
+const _STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
+const _STATUS_DRQSTS: Bitfield = Bitfield::new(6, 1);
+const _STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
 
 pub struct Cdrom {
     pub status: B8Register,

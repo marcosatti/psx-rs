@@ -3,7 +3,9 @@ use std::time::{Duration, Instant};
 use log::debug;
 use average::{Mean, Estimate};
 
-static REPORTING_PERIOD: Duration = Duration::from_secs(3);
+const ENABLE_BENCHMARK_TRACING: bool = true;
+
+const REPORTING_PERIOD: Duration = Duration::from_secs(3);
 
 pub struct Benchmark {
     pub r3000: UnsafeCell<Duration>,
@@ -69,6 +71,10 @@ impl State {
 static mut BENCHMARK_STATE: Option<State> = None;
 
 pub fn trace_performance(host_time_elapsed: &Duration, guest_time_elapsed: &Duration, benchmark: &Benchmark) {
+    if !ENABLE_BENCHMARK_TRACING {
+        return;
+    }
+
     unsafe {
         if BENCHMARK_STATE.is_none() {
             BENCHMARK_STATE = Some(State::new());

@@ -6,7 +6,7 @@ use crate::State;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::controllers::r3000::memory_controller::translate_address;
 
-static DEFAULT_TRACE_INSTRUCTIONS_LENGTH: usize = 10;
+const DEFAULT_TRACE_INSTRUCTIONS_LENGTH: usize = 10;
 
 pub unsafe fn trace_instructions_at_pc(state: &State, instruction_count: Option<usize>) {
     let resources = &mut *state.resources;
