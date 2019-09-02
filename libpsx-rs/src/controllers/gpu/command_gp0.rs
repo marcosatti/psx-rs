@@ -355,7 +355,7 @@ const COMMAND_C0: CommandHandler = CommandHandler {
                 let word: u32 = 0;
                 Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
                 Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
-                read_buffer.push(word)
+                read_buffer.push_back(word)
             }
 
             if size.height > 1 {

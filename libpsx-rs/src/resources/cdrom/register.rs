@@ -113,13 +113,13 @@ impl B8MemoryMap for Cdrom1802 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, _value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
-                1 => unimplemented!(),
+                1 => Ok(self.int_enable.as_mut().unwrap().as_mut().write_u8(value)),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
@@ -173,13 +173,13 @@ impl B8MemoryMap for Cdrom1803 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, _value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
-                1 => unimplemented!(),
+                1 => Ok(self.int_flag.as_mut().unwrap().as_mut().write_u8(value)),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),

@@ -15,7 +15,7 @@ use crate::types::mips1::instruction::Instruction;
 use crate::utilities::mips1::status_push_exception;
 use crate::resources::r3000::cp0::{STATUS_BEV, STATUS_IM, CAUSE_IP, CAUSE_BD, STATUS_IEC, CAUSE_EXCCODE, CAUSE_EXCCODE_INT, CAUSE_EXCCODE_SYSCALL};
 
-#[derive(PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Hazard {
     BusLockedMemoryRead(u32),
     BusLockedMemoryWrite(u32),
@@ -31,6 +31,12 @@ impl fmt::Display for Hazard {
             Hazard::MemoryRead(a) => write!(f, "MemoryRead(0x{:08X})", a),
             Hazard::MemoryWrite(a) => write!(f, "MemoryWrite(0x{:08X})", a),
         }
+    }
+}
+
+impl fmt::Debug for Hazard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
     }
 }
 

@@ -14,19 +14,19 @@ pub enum TransferMode {
     DmaRead,
 }
 
-pub struct Fifo {
+pub struct DataFifo {
     pub fifo: Queue<u16>, 
 }
 
-impl Fifo {
-    pub fn new() -> Fifo {
-        Fifo {
+impl DataFifo {
+    pub fn new() -> DataFifo {
+        DataFifo {
             fifo: Queue::new(64, Some(DebugState::new("SPU FIFO", false, false))),
         }
     }
 }
 
-impl B8MemoryMap for Fifo {
+impl B8MemoryMap for DataFifo {
     fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         self.fifo.write_one(value).map_err(|_| WriteError::Full)

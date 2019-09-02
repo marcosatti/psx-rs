@@ -270,7 +270,7 @@ pub struct Spu {
     pub voice23_cvol: B16Register,
     pub voice23_raddr: B16Register,
     
-    pub data_fifo: Fifo,
+    pub data_fifo: DataFifo,
 
     pub memory: B8Memory,
 
@@ -493,7 +493,7 @@ impl Spu {
             voice23_adsr: B32Register::new(),
             voice23_cvol: B16Register::new(),
             voice23_raddr: B16Register::new(),
-            data_fifo: Fifo::new(),
+            data_fifo: DataFifo::new(),
             memory: B8Memory::new(0x80_000),
             current_transfer_mode: TransferMode::Stop,
             current_transfer_address: 0,

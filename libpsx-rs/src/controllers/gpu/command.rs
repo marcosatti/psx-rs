@@ -22,13 +22,15 @@ unsafe fn handle_read(state: &State) {
     let read_buffer = &mut resources.gpu.gp0_read_buffer;
     let read = &mut resources.gpu.gpu1810.read;
 
-    let space_available = read.write_available();
-    let data_available = read_buffer.len();
-    let length = space_available.min(data_available);
-    let data: Vec<u32> = read_buffer.drain(0..length).collect();
-
-    for i in 0..data.len() {
-        read.write_one(data[i]).unwrap();
+    loop {
+        let data = match read_buffer.pop_front() {
+            None => break,
+            Some(v) => v,
+        };
+        match read.write_one(data) {
+            Ok(_) => {},
+            Err(_) => break,
+        }
     }
 }
 
@@ -56,14 +58,17 @@ unsafe fn handle_stat_send_vram(state: &State) {
     let stat = &mut resources.gpu.gpu1814.stat;
     let read_buffer = &resources.gpu.gp0_read_buffer;
     let read_fifo = &resources.gpu.gpu1810.read;
+
+    let buffer_data_available = !read_buffer.is_empty();
+    let fifo_data_available = !read_fifo.is_empty();
     
-    let ready = if read_buffer.is_empty() && read_fifo.is_empty() { 
-        0 
+    let data_available = if buffer_data_available || fifo_data_available { 
+        1 
     } else { 
-        1
+        0
     };
 
-    stat.write_bitfield(STAT_SEND_VRAM, ready);
+    stat.write_bitfield(STAT_SEND_VRAM, data_available);
 }
 
 unsafe fn handle_stat_recv_dma(state: &State) {

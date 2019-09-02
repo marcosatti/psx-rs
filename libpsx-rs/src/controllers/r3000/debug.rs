@@ -20,12 +20,14 @@ const ENABLE_HAZARD_TRACING: bool = true;
 const ENABLE_INTERRUPT_TRACING: bool = false;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
-const ENABLE_IO_SPIN_LOOP_DETECTION_READ: bool = false;
+const ENABLE_IO_SPIN_LOOP_DETECTION_READ: bool = true;
 const ENABLE_IO_SPIN_LOOP_DETECTION_WRITE: bool = false;
 
 static mut DEBUG_TICK_COUNT: usize = 0;
 
-const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 1024 * 16;
+const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
+const MEMORY_SPIN_LOOP_DETECTION_ADDRESS_START: u32 = 0x1F80_1800;
+const MEMORY_SPIN_LOOP_DETECTION_ADDRESS_END: u32 = 0x1F80_1810;
 
 pub unsafe fn trace_state(state: &State) {
     if !ENABLE_STATE_TRACING {
@@ -91,7 +93,7 @@ pub unsafe fn trace_io_spin_loop_detection_read(state: &State, physical_address:
         return;
     }
 
-    if physical_address < 0x1F00_0000 {
+    if !(physical_address >= MEMORY_SPIN_LOOP_DETECTION_ADDRESS_START && physical_address < MEMORY_SPIN_LOOP_DETECTION_ADDRESS_END) {
         return;
     }
 
@@ -110,7 +112,7 @@ pub unsafe fn trace_io_spin_loop_detection_write(state: &State, physical_address
         return;
     }
 
-    if physical_address < 0x1F00_0000 {
+    if !(physical_address >= MEMORY_SPIN_LOOP_DETECTION_ADDRESS_START && physical_address < MEMORY_SPIN_LOOP_DETECTION_ADDRESS_END) {
         return;
     }
 
