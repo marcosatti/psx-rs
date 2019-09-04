@@ -22,8 +22,11 @@ fn run_time(state: &State, duration: Duration) {
 
 unsafe fn handle_tick(state: &State) {
     handle_parameter_fifo(state);
+    handle_response_fifo(state);
 
     handle_command(state);
+
+    handle_interrupt_check(state);
 }
 
 unsafe fn handle_parameter_fifo(state: &State) {
@@ -46,4 +49,36 @@ unsafe fn handle_parameter_fifo(state: &State) {
     };
 
     status.write_bitfield(STATUS_PRMWRDY, ready_bit);
+}
+
+unsafe fn handle_response_fifo(state: &State) {
+    let resources = &mut *state.resources;
+    let status = &mut resources.cdrom.status;
+    let fifo = &mut resources.cdrom.response;
+
+    let ready_bit = if !fifo.is_empty() {
+        1
+    } else {
+        0
+    };
+
+    status.write_bitfield(STATUS_RSLRRDY, ready_bit);
+}
+
+
+unsafe fn handle_interrupt_check(state: &State) {
+    let resources = &mut *state.resources;
+
+    let int_enable = &resources.cdrom.int_enable;
+    let int_flag = &resources.cdrom.int_flag;
+
+    let int_enable_value = int_enable.read_u8();
+    let int_flag_value = int_flag.register.read_u8();
+    
+    if (int_enable_value & int_flag_value) > 0 {
+        use crate::resources::intc::CDROM;
+        let stat = &mut resources.intc.stat;
+        let _stat_lock = stat.mutex.lock();
+        stat.register.write_bitfield(CDROM, 1);
+    }
 }

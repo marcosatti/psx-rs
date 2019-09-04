@@ -13,7 +13,7 @@ pub const STATUS_INDEX: Bitfield = Bitfield::new(0, 2);
 pub const _STATUS_ADPBUSY: Bitfield = Bitfield::new(2, 1);
 pub const STATUS_PRMEMPT: Bitfield = Bitfield::new(3, 1);
 pub const STATUS_PRMWRDY: Bitfield = Bitfield::new(4, 1);
-pub const _STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
+pub const STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
 pub const _STATUS_DRQSTS: Bitfield = Bitfield::new(6, 1);
 pub const STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
 
@@ -24,7 +24,7 @@ pub struct Cdrom {
     pub parameter: Fifo<u8>,
     pub data: Fifo<u8>,
     pub int_enable: B8Register,
-    pub int_flag: B8Register,
+    pub int_flag: IntFlag,
     pub request: B8Register,
     pub cdrom1801: Cdrom1801,
     pub cdrom1802: Cdrom1802,
@@ -40,7 +40,7 @@ impl Cdrom {
             parameter: Fifo::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),
             data: Fifo::new(16, Some(DebugState::new("CDROM DATA", true, true))),
             int_enable: B8Register::new(),
-            int_flag: B8Register::new(),
+            int_flag: IntFlag::new(),
             request: B8Register::new(),
             cdrom1801: Cdrom1801::new(),
             cdrom1802: Cdrom1802::new(),
@@ -60,7 +60,7 @@ pub fn initialize(resources: &mut Resources) {
     resources.cdrom.cdrom1802.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut B8Register);
 
     resources.cdrom.cdrom1803.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
-    resources.cdrom.cdrom1803.int_flag = NonNull::new(&mut resources.cdrom.int_flag as *mut B8Register);
+    resources.cdrom.cdrom1803.int_flag = NonNull::new(&mut resources.cdrom.int_flag as *mut IntFlag);
     resources.cdrom.cdrom1803.request = NonNull::new(&mut resources.cdrom.request as *mut B8Register);
 
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1800, 1, &mut resources.cdrom.status as *mut dyn B8MemoryMap);

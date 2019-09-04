@@ -30,10 +30,23 @@ unsafe fn handle_command_19(state: &State) {
 
     let resources = &mut *state.resources;
     let parameter = &resources.cdrom.parameter;
+    let response = &resources.cdrom.response;
 
     let sub_function = parameter.read_one().unwrap();
 
     debug!("Sub function = 0x{:X}", sub_function);
 
-    unimplemented!();
+    match sub_function {
+        0x20 => {
+            response.write_one(0x94).unwrap();
+            response.write_one(0x09).unwrap();
+            response.write_one(0x19).unwrap();
+            response.write_one(0x19).unwrap();
+        },
+        _ => unimplemented!(),
+    }
+
+    let int_flag = &mut resources.cdrom.int_flag;
+    let int_flag_value = int_flag.register.read_u8() | 0x2;
+    int_flag.register.write_u8(int_flag_value);
 }

@@ -31,6 +31,29 @@ impl B8MemoryMap for Command {
     }
 }
 
+pub struct IntFlag {
+    pub register: B8Register,
+}
+
+impl IntFlag {
+    pub fn new() -> IntFlag {
+        IntFlag {
+            register: B8Register::new(),
+        }
+    }
+}
+
+impl B8MemoryMap for IntFlag {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+        B8MemoryMap::read_u8(&mut self.register, offset)
+    }
+
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+        let value = !value & self.register.read_u8(); 
+        B8MemoryMap::write_u8(&mut self.register, offset, value)
+    }
+}
+
 pub struct Cdrom1801 {
     pub status: Option<NonNull<B8Register>>,
     pub command: Option<NonNull<Command>>,
@@ -54,7 +77,7 @@ impl B8MemoryMap for Cdrom1801 {
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
-                1 => unimplemented!(),
+                1 => self.response.as_ref().unwrap().as_ref().read_one().map_err(|_| ReadError::Empty),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
@@ -67,10 +90,7 @@ impl B8MemoryMap for Cdrom1801 {
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
-                0 => {
-                    let command = self.command.as_mut().unwrap().as_mut();
-                    B8MemoryMap::write_u8(command, offset, value)
-                },
+                0 => B8MemoryMap::write_u8(self.command.as_mut().unwrap().as_mut(), offset, value),
                 1 => unimplemented!(),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
@@ -119,21 +139,7 @@ impl B8MemoryMap for Cdrom1802 {
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => self.parameter.as_mut().unwrap().as_mut().write_one(value).map_err(|_| WriteError::Full),
-                1 => Ok(self.int_enable.as_mut().unwrap().as_mut().write_u8(value)),
-                2 => unimplemented!(),
-                3 => unimplemented!(),
-                _ => panic!("Index {} does not exist", index),
-            }
-        }
-    }
-
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
-        unsafe { 
-            if offset != 0 { panic!("Invalid offset"); }
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
-            match index {
-                0 => unimplemented!(),
-                1 => unimplemented!(),
+                1 => B8MemoryMap::write_u8(self.int_enable.as_mut().unwrap().as_mut(), offset, value),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
@@ -144,7 +150,7 @@ impl B8MemoryMap for Cdrom1802 {
 
 pub struct Cdrom1803 {
     pub status: Option<NonNull<B8Register>>,
-    pub int_flag: Option<NonNull<B8Register>>,
+    pub int_flag: Option<NonNull<IntFlag>>,
     pub request: Option<NonNull<B8Register>>,
 }
 
@@ -165,7 +171,7 @@ impl B8MemoryMap for Cdrom1803 {
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
-                1 => unimplemented!(),
+                1 => B8MemoryMap::read_u8(self.int_flag.as_mut().unwrap().as_mut(), offset),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
@@ -179,7 +185,7 @@ impl B8MemoryMap for Cdrom1803 {
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
-                1 => Ok(self.int_flag.as_mut().unwrap().as_mut().write_u8(value)),
+                1 => B8MemoryMap::write_u8(self.int_flag.as_mut().unwrap().as_mut(), offset, value),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
