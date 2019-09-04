@@ -1,6 +1,6 @@
 use parking_lot::Mutex;
-use crate::types::queue::Queue;
-use crate::types::queue::debug::DebugState;
+use crate::types::fifo::Fifo;
+use crate::types::fifo::debug::DebugState;
 use crate::types::register::b16_register::B16Register;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
@@ -15,13 +15,13 @@ pub enum TransferMode {
 }
 
 pub struct DataFifo {
-    pub fifo: Queue<u16>, 
+    pub fifo: Fifo<u16>, 
 }
 
 impl DataFifo {
     pub fn new() -> DataFifo {
         DataFifo {
-            fifo: Queue::new(64, Some(DebugState::new("SPU FIFO", false, false))),
+            fifo: Fifo::new(64, Some(DebugState::new("SPU FIFO", false, false))),
         }
     }
 }

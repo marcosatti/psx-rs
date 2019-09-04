@@ -1,7 +1,7 @@
 use std::ptr::NonNull;
 use crate::types::register::b8_register::B8Register;
 use crate::types::b8_memory_mapper::*;
-use crate::types::queue::Queue;
+use crate::types::fifo::Fifo;
 use crate::resources::cdrom::*;
 
 pub struct Command {
@@ -34,7 +34,7 @@ impl B8MemoryMap for Command {
 pub struct Cdrom1801 {
     pub status: Option<NonNull<B8Register>>,
     pub command: Option<NonNull<Command>>,
-    pub response: Option<NonNull<Queue<u8>>>,
+    pub response: Option<NonNull<Fifo<u8>>>,
 }
 
 impl Cdrom1801 {
@@ -82,8 +82,8 @@ impl B8MemoryMap for Cdrom1801 {
 
 pub struct Cdrom1802 {
     pub status: Option<NonNull<B8Register>>,
-    pub parameter: Option<NonNull<Queue<u8>>>,
-    pub data: Option<NonNull<Queue<u8>>>,
+    pub parameter: Option<NonNull<Fifo<u8>>>,
+    pub data: Option<NonNull<Fifo<u8>>>,
     pub int_enable: Option<NonNull<B8Register>>,
 }
 
@@ -118,7 +118,7 @@ impl B8MemoryMap for Cdrom1802 {
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
-                0 => unimplemented!(),
+                0 => self.parameter.as_mut().unwrap().as_mut().write_one(value).map_err(|_| WriteError::Full),
                 1 => Ok(self.int_enable.as_mut().unwrap().as_mut().write_u8(value)),
                 2 => unimplemented!(),
                 3 => unimplemented!(),

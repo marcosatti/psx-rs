@@ -4,25 +4,25 @@ use std::ptr::NonNull;
 use crate::types::bitfield::Bitfield;
 use crate::types::register::b8_register::B8Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::queue::Queue;
-use crate::types::queue::debug::DebugState;
+use crate::types::fifo::Fifo;
+use crate::types::fifo::debug::DebugState;
 use crate::resources::Resources;
 use crate::resources::cdrom::register::*;
 
-const STATUS_INDEX: Bitfield = Bitfield::new(0, 2);
-const _STATUS_ADPBUSY: Bitfield = Bitfield::new(2, 1);
-const _STATUS_PRMEMPT: Bitfield = Bitfield::new(3, 1);
-const _STATUS_PRMWRDY: Bitfield = Bitfield::new(4, 1);
-const _STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
-const _STATUS_DRQSTS: Bitfield = Bitfield::new(6, 1);
-const _STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
+pub const STATUS_INDEX: Bitfield = Bitfield::new(0, 2);
+pub const _STATUS_ADPBUSY: Bitfield = Bitfield::new(2, 1);
+pub const STATUS_PRMEMPT: Bitfield = Bitfield::new(3, 1);
+pub const STATUS_PRMWRDY: Bitfield = Bitfield::new(4, 1);
+pub const _STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
+pub const _STATUS_DRQSTS: Bitfield = Bitfield::new(6, 1);
+pub const STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
 
 pub struct Cdrom {
     pub status: B8Register,
     pub command: Command,
-    pub response: Queue<u8>,
-    pub parameter: Queue<u8>,
-    pub data: Queue<u8>,
+    pub response: Fifo<u8>,
+    pub parameter: Fifo<u8>,
+    pub data: Fifo<u8>,
     pub int_enable: B8Register,
     pub int_flag: B8Register,
     pub request: B8Register,
@@ -36,9 +36,9 @@ impl Cdrom {
         Cdrom {
             status: B8Register::new(),
             command: Command::new(),
-            response: Queue::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),
-            parameter: Queue::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),
-            data: Queue::new(16, Some(DebugState::new("CDROM DATA", true, true))),
+            response: Fifo::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),
+            parameter: Fifo::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),
+            data: Fifo::new(16, Some(DebugState::new("CDROM DATA", true, true))),
             int_enable: B8Register::new(),
             int_flag: B8Register::new(),
             request: B8Register::new(),
@@ -52,11 +52,11 @@ impl Cdrom {
 pub fn initialize(resources: &mut Resources) {
     resources.cdrom.cdrom1801.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
     resources.cdrom.cdrom1801.command = NonNull::new(&mut resources.cdrom.command as *mut Command);
-    resources.cdrom.cdrom1801.response = NonNull::new(&mut resources.cdrom.response as *mut Queue<u8>);
+    resources.cdrom.cdrom1801.response = NonNull::new(&mut resources.cdrom.response as *mut Fifo<u8>);
 
     resources.cdrom.cdrom1802.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
-    resources.cdrom.cdrom1802.parameter = NonNull::new(&mut resources.cdrom.parameter as *mut Queue<u8>);
-    resources.cdrom.cdrom1802.data = NonNull::new(&mut resources.cdrom.data as *mut Queue<u8>);
+    resources.cdrom.cdrom1802.parameter = NonNull::new(&mut resources.cdrom.parameter as *mut Fifo<u8>);
+    resources.cdrom.cdrom1802.data = NonNull::new(&mut resources.cdrom.data as *mut Fifo<u8>);
     resources.cdrom.cdrom1802.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut B8Register);
 
     resources.cdrom.cdrom1803.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);

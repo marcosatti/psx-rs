@@ -1,7 +1,7 @@
 use std::fmt::{Display, UpperHex};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use log::trace;
-use crate::types::queue::*;
+use crate::types::fifo::*;
 
 pub static ENABLE_READ_TRACE: bool = false;
 pub static ENABLE_WRITE_TRACE: bool = false;
@@ -26,7 +26,7 @@ impl DebugState {
     }
 }
 
-pub fn trace_read<T>(queue: &Queue<T>, data: T) 
+pub fn trace_read<T>(fifo: &Fifo<T>, data: T) 
 where
     T: Copy + Default + Display + UpperHex
 {
@@ -34,7 +34,7 @@ where
         return;
     } 
 
-    let debug_state = match queue.debug_state {
+    let debug_state = match fifo.debug_state {
         None => return,
         Some(ref d) => d,
     };
@@ -46,7 +46,7 @@ where
 }
 
 
-pub fn trace_write<T>(queue: &Queue<T>, data: T)
+pub fn trace_write<T>(fifo: &Fifo<T>, data: T)
 where
     T: Copy + Default + Display + UpperHex
 {
@@ -54,7 +54,7 @@ where
         return;
     } 
 
-    let debug_state = match queue.debug_state {
+    let debug_state = match fifo.debug_state {
         None => return,
         Some(ref d) => d,
     };

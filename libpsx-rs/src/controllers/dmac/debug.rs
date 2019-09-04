@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use log::{trace, warn};
 use crate::State;
-use crate::types::queue::Queue;
+use crate::types::fifo::Fifo;
 use crate::controllers::dmac::channel::*;
 use crate::resources::dmac::*;
 use crate::resources::dmac::debug::*;
@@ -50,26 +50,26 @@ pub unsafe fn transfer_end(state: &State, channel: usize) {
     );
 }
 
-pub fn trace_hazard_empty(fifo: &Queue<u32>) {
+pub fn trace_hazard_empty(fifo: &Fifo<u32>) {
     if !ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE {
         return;
     }
 
     let debug_state = match fifo.debug_state {
-        None => panic!("Queue debug state is required to trace hazards"),
+        None => panic!("Fifo debug state is required to trace hazards"),
         Some(ref d) => d,
     };
 
     warn!("DMAC: reading from {} but empty, trying again later", debug_state.identifier);
 }
 
-pub fn trace_hazard_full(fifo: &Queue<u32>) {
+pub fn trace_hazard_full(fifo: &Fifo<u32>) {
     if !ENABLE_CHANNEL_FIFO_HAZARD_WRITE_TRACE {
         return;
     }
 
     let debug_state = match fifo.debug_state {
-        None => panic!("Queue debug state is required to trace hazards"),
+        None => panic!("Fifo debug state is required to trace hazards"),
         Some(ref d) => d,
     };
 

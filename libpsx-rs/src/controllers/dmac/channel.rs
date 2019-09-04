@@ -1,7 +1,7 @@
 use crate::State;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
-use crate::types::queue::Queue;
+use crate::types::fifo::Fifo;
 use crate::resources::dmac::channel::*;
 use crate::resources::dmac::*;
 use crate::controllers::dmac::debug;
@@ -81,7 +81,7 @@ pub unsafe fn get_transfer_state(state: &State, channel: usize) -> *mut Transfer
     }
 }
 
-pub unsafe fn get_fifo<'a>(state: &'a State, channel: usize) -> &'a Queue<u32> {
+pub unsafe fn get_fifo<'a>(state: &'a State, channel: usize) -> &'a Fifo<u32> {
     let resources = &mut *state.resources;
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
