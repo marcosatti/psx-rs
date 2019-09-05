@@ -7,7 +7,7 @@ use std::ffi::CStr;
 use opengl_sys::*;
 use log::debug;
 use crate::Core;
-use crate::resources::{self, Resources};
+use crate::resources::Resources;
 
 pub static mut DEBUG_CORE_EXIT: bool = false;
 
@@ -45,60 +45,17 @@ pub fn trace(resources: &Resources) {
 }
 
 pub fn trace_r3000(resources: &Resources) {
-    let pc = resources.r3000.pc.read_u32();
-    let kuc = resources.r3000.cp0.status.read_bitfield(resources::r3000::cp0::STATUS_KUC);
-    let iec = resources.r3000.cp0.status.read_bitfield(resources::r3000::cp0::STATUS_IEC);
-    debug!("R3000 at pc = 0x{:0X}, kuc = {}, iec = {}", pc, kuc, iec);
+    crate::controllers::r3000::debug::trace_pc(resources);
+    crate::controllers::r3000::debug::disassembler::trace_instructions_at_pc(resources, None);
+    crate::controllers::r3000::debug::register::trace_registers(resources);
 }
 
 pub fn trace_intc(resources: &Resources, only_enabled: bool) {
-    use crate::resources::intc::*;
-    let stat = unsafe { resources.intc.stat.register.value.v32 };
-    let mask = unsafe { resources.intc.mask.value.v32 };
-    for (name, bitfield) in IRQ_NAMES.iter().zip(IRQ_BITFIELDS.iter()) {
-        let stat_value = bitfield.extract_from(stat) != 0;
-        let mask_value = bitfield.extract_from(mask) != 0;
-        let pending = stat_value && mask_value;
-
-        if only_enabled && !mask_value {
-            continue;
-        }
-
-        debug!("INTC [{}]: stat = {}, mask = {} (pending = {})", name, stat_value, mask_value, pending);
-    }
+    crate::controllers::intc::debug::trace_intc(resources, only_enabled);
 }
 
 pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
-    use crate::resources::dmac::*;
-
-    let dpcr = unsafe { resources.dmac.dpcr.value.v32 };
-    for (name, bitfield) in DMA_CHANNEL_NAMES.iter().zip(DPCR_CHANNEL_ENABLE_BITFIELDS.iter()) {
-        let dpcr_value = bitfield.extract_from(dpcr) != 0;
-
-        if only_enabled && !dpcr_value {
-            continue;
-        }
-
-        debug!("DMAC DPCR [{}]: dma enabled = {}", name, dpcr_value);
-    }
-
-    let dicr = unsafe { resources.dmac.dicr.register.value.v32 };
-    let dicr_irq_master_enable_value = DICR_IRQ_MASTER_ENABLE.extract_from(dicr) != 0;
-    debug!("DMAC DICR: master enable = {}", dicr_irq_master_enable_value);
-    let dicr_irq_force_value = DICR_IRQ_FORCE.extract_from(dicr) != 0;
-    debug!("DMAC DICR: irq force = {}", dicr_irq_force_value);
-    for (name, (enable_bitfield, flag_bitfield)) in DMA_CHANNEL_NAMES.iter().zip(DICR_IRQ_ENABLE_BITFIELDS.iter().zip(DICR_IRQ_FLAG_BITFIELDS.iter())) {
-        let dicr_enable_value = enable_bitfield.extract_from(dicr) != 0; 
-        let dicr_flag_value = flag_bitfield.extract_from(dicr) != 0; 
-
-        if only_enabled && !dicr_enable_value {
-            continue;
-        }
-
-        debug!("DMAC DICR [{}]: irq enabled = {}, irq flag = {}", name, dicr_enable_value, dicr_flag_value);
-    }
-    let dicr_irq_master_flag_value = DICR_IRQ_MASTER_FLAG.extract_from(dicr) != 0;
-    debug!("DMAC DICR: master flag = {}", dicr_irq_master_flag_value);
+    crate::controllers::dmac::debug::trace_dmac(resources, only_enabled);
 }
 
 pub extern "C" fn debug_opengl_trace(_source: GLenum, type_: GLenum, _id: GLuint, severity: GLenum, _length: GLsizei, message: *const GLchar, _user_param: *const std::ffi::c_void) {

@@ -40,8 +40,15 @@ impl Bitfield {
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + One + Shr<usize, Output=T> + BitAnd<T, Output=T> + BitOr<T, Output=T> + Not<Output=T>
     {
-        let dest_masked =  dest & (!Self::shifted_mask::<T>(self));
+        let dest_masked =  dest & (!self.shifted_mask::<T>());
         let source_masked = (source & self.unshifted_mask()) << self.start;
         dest_masked | source_masked
+    }
+
+    pub fn acknowledge_mask<T>(&self, value: T) -> T 
+    where 
+        T: Shl<usize, Output=T> + Sub<T, Output=T> + BitAnd<T, Output=T> + Not<Output=T> + One 
+    {
+        !(value & self.shifted_mask())
     }
 }

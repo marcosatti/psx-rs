@@ -4,6 +4,7 @@ pub mod debug;
 use std::time::Duration;
 use log::warn;
 use crate::State;
+use crate::resources::Resources;
 use crate::constants::dmac::*;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::Event;
@@ -19,13 +20,14 @@ pub fn run(state: &State, event: Event) {
 
 fn run_time(state: &State, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    let resources = unsafe { &mut *state.resources };
 
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 
     let mut channel_id: isize = 6;
 
     while ticks > 0 {
-        let channel_ticks = unsafe { tick(state, channel_id as usize) };
+        let channel_ticks = unsafe { tick(resources, channel_id as usize) };
 
         if channel_ticks == 0 {
             ticks -= 1;
@@ -35,34 +37,32 @@ fn run_time(state: &State, duration: Duration) {
                 channel_id = 6;
             }
 
-            unsafe { handle_irq_check(state); }
+            handle_irq_check(resources);
         } else {
             ticks -= channel_ticks as i64;
         }
     }
     
-    unsafe { handle_irq_check(state); }
+    handle_irq_check(resources);
 }
 
-unsafe fn tick(state: &State, channel: usize) -> i32 {
-    let resources = &mut *state.resources;
+unsafe fn tick(resources: &mut Resources, channel: usize) -> i32 {
     let dpcr = &resources.dmac.dpcr;
 
     let enable = DPCR_CHANNEL_ENABLE_BITFIELDS[channel];
 
     if dpcr.read_bitfield(enable) != 0 {
-        handle_transfer(state, channel)
+        handle_transfer(resources, channel)
     } else {
         0
     }
 }
 
-unsafe fn handle_transfer(state: &State, channel: usize) -> i32 {
-    let resources = &mut *state.resources;
-    let transfer_state = &mut *get_transfer_state(state, channel);
-    let chcr = &mut *get_chcr(state, channel);
-    let madr = &mut *get_madr(state, channel);
-    let bcr = &mut *get_bcr(state, channel);
+unsafe fn handle_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let transfer_state = &mut *get_transfer_state(resources, channel);
+    let chcr = &mut *get_chcr(resources, channel);
+    let madr = &mut *get_madr(resources, channel);
+    let bcr = &mut *get_bcr(resources, channel);
     let sync_mode = get_sync_mode(chcr);
 
     if chcr.read_bitfield(CHCR_CHOPPING) != 0 {
@@ -75,7 +75,7 @@ unsafe fn handle_transfer(state: &State, channel: usize) -> i32 {
 
             initialize_transfer(transfer_state, sync_mode, madr, bcr);
 
-            debug::transfer_start(state, channel);
+            debug::transfer_start(resources, channel);
 
             if sync_mode == SyncMode::Blocks {
                 warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending next block");
@@ -83,20 +83,18 @@ unsafe fn handle_transfer(state: &State, channel: usize) -> i32 {
         }
 
         match sync_mode {
-            SyncMode::Continuous => handle_continuous_transfer(state, channel),
-            SyncMode::Blocks => handle_blocks_transfer(state, channel),
-            SyncMode::LinkedList => handle_linked_list_transfer(state, channel),
+            SyncMode::Continuous => handle_continuous_transfer(resources, channel),
+            SyncMode::Blocks => handle_blocks_transfer(resources, channel),
+            SyncMode::LinkedList => handle_linked_list_transfer(resources, channel),
         }
     } else {
         0
     }
 }
 
-unsafe fn handle_continuous_transfer(state: &State, channel: usize) -> i32 {
-    let resources = &mut *state.resources;
-    let main_memory = &mut resources.main_memory;
-    let chcr = &mut *get_chcr(state, channel);
-    let transfer_state = &mut *get_transfer_state(state, channel);
+unsafe fn handle_continuous_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let chcr = &mut *get_chcr(resources, channel);
+    let transfer_state = &mut *get_transfer_state(resources, channel);
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
 
@@ -106,16 +104,16 @@ unsafe fn handle_continuous_transfer(state: &State, channel: usize) -> i32 {
 
     match transfer_direction {
         TransferDirection::FromChannel => {
-            let result = pop_channel_data(state, channel, continuous_state.current_address, last_transfer);
+            let result = pop_channel_data(resources, channel, continuous_state.current_address, last_transfer);
             if result.is_err() {
                 return 0;
             }
             let value = result.unwrap();
-            main_memory.write_u32(continuous_state.current_address as usize, value);
+            resources.main_memory.write_u32(continuous_state.current_address as usize, value);
         },
         TransferDirection::ToChannel => {
-            let value = main_memory.read_u32(continuous_state.current_address as usize);
-            let result = push_channel_data(state, channel, value);
+            let value = resources.main_memory.read_u32(continuous_state.current_address as usize);
+            let result = push_channel_data(resources, channel, value);
             if result.is_err() {
                 return 0;
             }
@@ -134,9 +132,9 @@ unsafe fn handle_continuous_transfer(state: &State, channel: usize) -> i32 {
     if finished {
         transfer_state.started = false;
         chcr.write_bitfield(CHCR_STARTBUSY, 0);
-        set_interrupt_flag(state, channel);
+        set_interrupt_flag(resources, channel);
 
-        debug::transfer_end(state, channel);
+        debug::transfer_end(resources, channel);
         
         resources.bus_locked = false;
     }
@@ -144,15 +142,13 @@ unsafe fn handle_continuous_transfer(state: &State, channel: usize) -> i32 {
     return 1;
 }
 
-unsafe fn handle_blocks_transfer(state: &State, channel: usize) -> i32 {
-    let resources = &mut *state.resources;
-    let main_memory = &mut resources.main_memory;
-    let chcr = &mut *get_chcr(state, channel);
-    let transfer_state = &mut *get_transfer_state(state, channel);
+unsafe fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let chcr = &mut *get_chcr(resources, channel);
+    let transfer_state = &mut *get_transfer_state(resources, channel);
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
-    let bcr = &mut *get_bcr(state, channel);
-    let madr = &mut *get_madr(state, channel);
+    let bcr = &mut *get_bcr(resources, channel);
+    let madr = &mut *get_madr(resources, channel);
 
     let blocks_state = if let SyncModeState::Blocks(s) = &mut transfer_state.sync_mode_state { s } else { panic!("Unexpected transfer sync mode state"); };
 
@@ -164,16 +160,16 @@ unsafe fn handle_blocks_transfer(state: &State, channel: usize) -> i32 {
 
     match transfer_direction {
         TransferDirection::FromChannel => {
-            let result = pop_channel_data(state, channel, blocks_state.current_address, last_transfer);
+            let result = pop_channel_data(resources, channel, blocks_state.current_address, last_transfer);
             if result.is_err() {
                 return 0;
             }
             let value = result.unwrap();
-            main_memory.write_u32(blocks_state.current_address as usize, value);
+            resources.main_memory.write_u32(blocks_state.current_address as usize, value);
         },
         TransferDirection::ToChannel => {
-            let value = main_memory.read_u32(blocks_state.current_address as usize);
-            let result = push_channel_data(state, channel, value);
+            let value = resources.main_memory.read_u32(blocks_state.current_address as usize);
+            let result = push_channel_data(resources, channel, value);
             if result.is_err() {
                 return 0;
             }
@@ -202,9 +198,9 @@ unsafe fn handle_blocks_transfer(state: &State, channel: usize) -> i32 {
         madr.write_u32(blocks_state.current_address as u32);
         bcr.write_bitfield(BCR_BLOCKAMOUNT, 0);
         chcr.write_bitfield(CHCR_STARTBUSY, 0);
-        set_interrupt_flag(state, channel);
+        set_interrupt_flag(resources, channel);
 
-        debug::transfer_end(state, channel);
+        debug::transfer_end(resources, channel);
 
         resources.bus_locked = false;
     }
@@ -212,13 +208,11 @@ unsafe fn handle_blocks_transfer(state: &State, channel: usize) -> i32 {
     return 1;
 }
 
-unsafe fn handle_linked_list_transfer(state: &State, channel: usize) -> i32 {
-    let resources = &mut *state.resources;
-    let main_memory = &mut resources.main_memory;
-    let chcr = &mut *get_chcr(state, channel);
-    let transfer_state = &mut *get_transfer_state(state, channel);
+unsafe fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let chcr = &mut *get_chcr(resources, channel);
+    let transfer_state = &mut *get_transfer_state(resources, channel);
     let transfer_direction = get_transfer_direction(chcr);
-    let madr = &mut *get_madr(state, channel);
+    let madr = &mut *get_madr(resources, channel);
 
     if transfer_direction != TransferDirection::ToChannel {
         panic!("Linked list transfers are ToChannel only");
@@ -231,15 +225,15 @@ unsafe fn handle_linked_list_transfer(state: &State, channel: usize) -> i32 {
             transfer_state.started = false;
             chcr.write_bitfield(CHCR_STARTBUSY, 0);
             madr.write_u32(0x00FFFFFF);
-            set_interrupt_flag(state, channel);
+            set_interrupt_flag(resources, channel);
             
-            debug::transfer_end(state, channel);
+            debug::transfer_end(resources, channel);
 
             resources.bus_locked = false;
             return 1;
         }
 
-        let header_value = main_memory.read_u32(linked_list_state.next_address as usize);
+        let header_value = resources.main_memory.read_u32(linked_list_state.next_address as usize);
         let next_address = Bitfield::new(0, 24).extract_from(header_value);
         let target_count = Bitfield::new(24, 8).extract_from(header_value) as usize;
 
@@ -251,8 +245,8 @@ unsafe fn handle_linked_list_transfer(state: &State, channel: usize) -> i32 {
         return 1;
     } else {
         let address = (linked_list_state.current_address + DATA_SIZE) + ((linked_list_state.current_count as u32) * DATA_SIZE);
-        let value = main_memory.read_u32(address as usize);
-        let result = push_channel_data(state, channel, value);
+        let value = resources.main_memory.read_u32(address as usize);
+        let result = push_channel_data(resources, channel, value);
         if result.is_err() {
             return 0;
         }
@@ -262,8 +256,7 @@ unsafe fn handle_linked_list_transfer(state: &State, channel: usize) -> i32 {
     }
 }
 
-unsafe fn set_interrupt_flag(state: &State, channel: usize) {
-    let resources = &mut *state.resources;
+fn set_interrupt_flag(resources: &mut Resources, channel: usize) {
     let dicr = &mut resources.dmac.dicr;
 
     let _lock = dicr.mutex.lock();
@@ -273,8 +266,7 @@ unsafe fn set_interrupt_flag(state: &State, channel: usize) {
     }
 }
 
-unsafe fn handle_irq_check(state: &State) {
-    let resources = &mut *state.resources;
+fn handle_irq_check(resources: &mut Resources) {
     let dicr = &mut resources.dmac.dicr;
     let _icr_lock = dicr.mutex.lock();
 

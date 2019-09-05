@@ -1,4 +1,4 @@
-use crate::State;
+use crate::resources::Resources;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 use crate::types::fifo::Fifo;
@@ -25,8 +25,7 @@ pub enum SyncMode {
     LinkedList,
 }
 
-pub unsafe fn get_madr(state: &State, channel: usize) -> *mut B32Register {
-    let resources = &mut *state.resources;
+pub unsafe fn get_madr(resources: &mut Resources, channel: usize) -> *mut B32Register {
     match channel {
         0 => &mut resources.dmac.mdecin_madr,
         1 => &mut resources.dmac.mdecout_madr,
@@ -39,8 +38,7 @@ pub unsafe fn get_madr(state: &State, channel: usize) -> *mut B32Register {
     }
 }
 
-pub unsafe fn get_bcr(state: &State, channel: usize) -> *mut B32Register {
-    let resources = &mut *state.resources;
+pub unsafe fn get_bcr(resources: &mut Resources, channel: usize) -> *mut B32Register {
     match channel {
         0 => &mut resources.dmac.mdecin_bcr,
         1 => &mut resources.dmac.mdecout_bcr,
@@ -53,8 +51,7 @@ pub unsafe fn get_bcr(state: &State, channel: usize) -> *mut B32Register {
     }
 }
 
-pub unsafe fn get_chcr(state: &State, channel: usize) -> *mut B32Register {
-    let resources = &mut *state.resources;
+pub unsafe fn get_chcr(resources: &mut Resources, channel: usize) -> *mut B32Register {
     match channel {
         0 => &mut resources.dmac.mdecin_chcr.register,
         1 => &mut resources.dmac.mdecout_chcr.register,
@@ -67,8 +64,7 @@ pub unsafe fn get_chcr(state: &State, channel: usize) -> *mut B32Register {
     }
 }
 
-pub unsafe fn get_transfer_state(state: &State, channel: usize) -> *mut TransferState {
-    let resources = &mut *state.resources;
+pub unsafe fn get_transfer_state(resources: &mut Resources, channel: usize) -> *mut TransferState {
     match channel {
         0 => &mut resources.dmac.mdecin_transfer_state,
         1 => &mut resources.dmac.mdecout_transfer_state,
@@ -81,8 +77,7 @@ pub unsafe fn get_transfer_state(state: &State, channel: usize) -> *mut Transfer
     }
 }
 
-pub unsafe fn get_fifo<'a>(state: &'a State, channel: usize) -> &'a Fifo<u32> {
-    let resources = &mut *state.resources;
+pub unsafe fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo<u32> {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
@@ -95,11 +90,10 @@ pub unsafe fn get_fifo<'a>(state: &'a State, channel: usize) -> &'a Fifo<u32> {
     }
 }
 
-pub unsafe fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
-    let _resources = &mut *state.resources;
+pub unsafe fn pop_channel_data(resources: &mut Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
         0..=5 => {
-            let fifo = get_fifo(state, channel);
+            let fifo = get_fifo(resources, channel);
             let result = fifo.read_one();
 
             if result.is_err() {
@@ -115,10 +109,10 @@ pub unsafe fn pop_channel_data(state: &State, channel: usize, madr: u32, last_tr
     }
 }
 
-pub unsafe fn push_channel_data(state: &State, channel: usize, value: u32) -> Result<(), ()> {
+pub unsafe fn push_channel_data(resources: &mut Resources, channel: usize, value: u32) -> Result<(), ()> {
     match channel {
         0..=5 => {
-            let fifo = get_fifo(state, channel);
+            let fifo = get_fifo(resources, channel);
             let result = fifo.write_one(value);
             
             if result.is_err() {

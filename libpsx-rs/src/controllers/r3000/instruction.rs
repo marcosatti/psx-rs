@@ -1,9 +1,9 @@
-use crate::State;
 use crate::types::mips1::instruction::Instruction;
+use crate::resources::Resources;
 use crate::controllers::r3000::*;
 use crate::controllers::r3000::instruction_impl::*;
 
-type InstructionFn = unsafe fn(&State, Instruction) -> InstResult;
+type InstructionFn = fn(&mut Resources, Instruction) -> InstResult;
 
 pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {
     match inst.opcode() {

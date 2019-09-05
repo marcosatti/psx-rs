@@ -2,11 +2,11 @@
 #![feature(nll)]
 #![feature(box_syntax)]
 
-mod constants;
-mod types;
-mod utilities;
-mod resources;
-mod controllers;
+pub mod constants;
+pub mod types;
+pub mod utilities;
+pub mod resources;
+pub mod controllers;
 pub mod debug;
 pub mod backends;
 
@@ -31,7 +31,6 @@ use crate::controllers::intc::run as run_intc;
 use crate::controllers::gpu::run as run_gpu;
 use crate::controllers::dmac::run as run_dmac;
 use crate::controllers::spu::run as run_spu;
-use crate::controllers::cdrom::run as run_cdrom;
 use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
 pub struct State<'b, 'a: 'b> {
@@ -124,11 +123,6 @@ impl<'a> Core<'a> {
                 let timer = Instant::now();
                 run_gpu_crtc(&state, Event::Time(time));
                 unsafe { *benchmark.gpu_crtc.get() = timer.elapsed(); }
-            });
-            scope.spawn(|_| { 
-                let timer = Instant::now();
-                run_cdrom(&state, Event::Time(time));
-                unsafe { *benchmark.cdrom.get() = timer.elapsed(); }
             });
             scope.spawn(|_| { 
                 let timer = Instant::now();

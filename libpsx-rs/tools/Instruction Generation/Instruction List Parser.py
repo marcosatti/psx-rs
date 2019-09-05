@@ -7,9 +7,9 @@ SOME = "Some(({}, {}))"
 NONE = "None"
 BRACE_CLOSE = "},"
 BRACE_CLOSE_NC = "}"
-INSTRUCTION_FN_DECL = "type InstructionFn = unsafe fn(&State, Instruction);"
+INSTRUCTION_FN_DECL = "type InstructionFn = fn(&mut Resources, Instruction);"
 HEADER = "pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {"
-INST_HEADER = "pub unsafe fn {}(_state: &State, _instruction: Instruction) {{"
+INST_HEADER = "pub unsafe fn {}(_resources: &mut Resources, _instruction: Instruction) {{"
 UNIMPLEMENTED = "unimplemented!(\"Instruction {} not implemented\");"
 
 START_KEY_COLUMN = 3 # opcode column

@@ -51,7 +51,7 @@ unsafe fn command_00(state: &State, _command: u32) {
 
 unsafe fn command_01(state: &State, _command: u32) {
     let resources = &mut *state.resources;
-    while resources.gpu.gpu1810.gp0.read_one().is_ok() {}
+    resources.gpu.gpu1810.gp0.clear();
 }
 
 unsafe fn command_02(state: &State, _command: u32) {

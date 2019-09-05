@@ -1,3 +1,4 @@
+use crate::resources::Resources;
 use crate::controllers::r3000::*;
 use crate::controllers::r3000::debug;
 
@@ -28,10 +29,8 @@ pub fn translate_address(va: u32) -> u32 {
     }
 }
 
-pub unsafe fn read_u8(state: &State, physical_address: u32) -> Result<u8, Hazard> {
+pub fn read_u8(resources: &mut Resources, physical_address: u32) -> Result<u8, Hazard> {
     let result = {
-        let resources = &mut *state.resources;
-
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
@@ -40,16 +39,18 @@ pub unsafe fn read_u8(state: &State, physical_address: u32) -> Result<u8, Hazard
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_read(state, physical_address);
+        debug::trace_io_spin_loop_detection_read(resources, physical_address);
     }
 
     result
 }
 
-pub unsafe fn write_u8(state: &State, physical_address: u32, value: u8) -> Result<(), Hazard> {
-    let result = {
-        let resources = &mut *state.resources;
+pub fn write_u8(resources: &mut Resources, physical_address: u32, value: u8) -> Result<(), Hazard> {
+    if physical_address >= 0x1F80_1800 && physical_address <= 0x1F80_1810 {
+        debug!("write u8, address = 0x{:08X}, value = 0x{:X}", physical_address, value);
+    }
 
+    let result = {
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
@@ -58,16 +59,14 @@ pub unsafe fn write_u8(state: &State, physical_address: u32, value: u8) -> Resul
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_write(state, physical_address);
+        debug::trace_io_spin_loop_detection_write(resources, physical_address);
     }
 
     result
 }
 
-pub unsafe fn read_u16(state: &State, physical_address: u32) -> Result<u16, Hazard> {
+pub fn read_u16(resources: &mut Resources, physical_address: u32) -> Result<u16, Hazard> {
     let result = {
-        let resources = &mut *state.resources;
-        
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
@@ -76,16 +75,14 @@ pub unsafe fn read_u16(state: &State, physical_address: u32) -> Result<u16, Haza
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_read(state, physical_address);
+        debug::trace_io_spin_loop_detection_read(resources, physical_address);
     }
 
     result
 }
 
-pub unsafe fn write_u16(state: &State, physical_address: u32, value: u16) -> Result<(), Hazard> {
+pub fn write_u16(resources: &mut Resources, physical_address: u32, value: u16) -> Result<(), Hazard> {
     let result = {
-        let resources = &mut *state.resources;
-
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
@@ -94,16 +91,14 @@ pub unsafe fn write_u16(state: &State, physical_address: u32, value: u16) -> Res
     };
     
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_write(state, physical_address);
+        debug::trace_io_spin_loop_detection_write(resources, physical_address);
     }
 
     result
 }
 
-pub unsafe fn read_u32(state: &State, physical_address: u32) -> Result<u32, Hazard> {
+pub fn read_u32(resources: &mut Resources, physical_address: u32) -> Result<u32, Hazard> {
     let result = {
-        let resources = &mut *state.resources;
-        
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
@@ -112,16 +107,14 @@ pub unsafe fn read_u32(state: &State, physical_address: u32) -> Result<u32, Haza
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_read(state, physical_address);
+        debug::trace_io_spin_loop_detection_read(resources, physical_address);
     }
 
     result
 }
 
-pub unsafe fn write_u32(state: &State, physical_address: u32, value: u32) -> Result<(), Hazard> {
+pub fn write_u32(resources: &mut Resources, physical_address: u32, value: u32) -> Result<(), Hazard> {
     let result = {
-        let resources = &mut *state.resources;
-
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
@@ -130,7 +123,7 @@ pub unsafe fn write_u32(state: &State, physical_address: u32, value: u32) -> Res
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_write(state, physical_address);
+        debug::trace_io_spin_loop_detection_write(resources, physical_address);
     }
 
     result

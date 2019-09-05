@@ -59,4 +59,8 @@ where
     pub fn is_full(&self) -> bool {
         self.fifo.is_full()
     }
+
+    pub fn clear(&self) {
+        self.fifo.clear();
+    }
 }

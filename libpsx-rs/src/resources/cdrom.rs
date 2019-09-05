@@ -17,13 +17,17 @@ pub const STATUS_RSLRRDY: Bitfield = Bitfield::new(5, 1);
 pub const _STATUS_DRQSTS: Bitfield = Bitfield::new(6, 1);
 pub const STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
 
+pub const INT_FLAG_CLRPRM: Bitfield = Bitfield::new(6, 1);
+
+pub const INTERRUPT_FLAGS: Bitfield = Bitfield::new(0, 5);
+
 pub struct Cdrom {
     pub status: B8Register,
     pub command: Command,
     pub response: Fifo<u8>,
     pub parameter: Fifo<u8>,
     pub data: Fifo<u8>,
-    pub int_enable: B8Register,
+    pub int_enable: IntEnable,
     pub int_flag: IntFlag,
     pub request: B8Register,
     pub cdrom1801: Cdrom1801,
@@ -39,7 +43,7 @@ impl Cdrom {
             response: Fifo::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),
             parameter: Fifo::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),
             data: Fifo::new(16, Some(DebugState::new("CDROM DATA", true, true))),
-            int_enable: B8Register::new(),
+            int_enable: IntEnable::new(),
             int_flag: IntFlag::new(),
             request: B8Register::new(),
             cdrom1801: Cdrom1801::new(),
@@ -57,7 +61,7 @@ pub fn initialize(resources: &mut Resources) {
     resources.cdrom.cdrom1802.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
     resources.cdrom.cdrom1802.parameter = NonNull::new(&mut resources.cdrom.parameter as *mut Fifo<u8>);
     resources.cdrom.cdrom1802.data = NonNull::new(&mut resources.cdrom.data as *mut Fifo<u8>);
-    resources.cdrom.cdrom1802.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut B8Register);
+    resources.cdrom.cdrom1802.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut IntEnable);
 
     resources.cdrom.cdrom1803.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
     resources.cdrom.cdrom1803.int_flag = NonNull::new(&mut resources.cdrom.int_flag as *mut IntFlag);

@@ -1,3 +1,5 @@
+pub mod debug;
+
 use std::time::Duration;
 use crate::State;
 use crate::constants::intc::CLOCK_SPEED;

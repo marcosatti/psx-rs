@@ -1,5 +1,5 @@
 use log::trace;
-use crate::State;
+use crate::resources::Resources;
 
 const REGISTER_NAMES: [&str; 32] = [
     "zero",
@@ -36,9 +36,7 @@ const REGISTER_NAMES: [&str; 32] = [
     "ra",
 ];
 
-pub unsafe fn trace_registers(state: &State) {
-    let resources = &mut *state.resources;
-
+pub fn trace_registers(resources: &Resources) {
     let mut string = String::new();
     string.push_str("Register dump:\n");
     for (index, (ref register, name)) in resources.r3000.gpr.iter().zip(REGISTER_NAMES.iter()).enumerate() {

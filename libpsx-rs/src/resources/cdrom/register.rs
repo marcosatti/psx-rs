@@ -31,14 +31,39 @@ impl B8MemoryMap for Command {
     }
 }
 
+pub struct IntEnable {
+    pub register: B8Register,
+}
+
+impl IntEnable {
+    pub fn new() -> IntEnable {
+        IntEnable {
+            register: B8Register::with_value(0xE0),
+        }
+    }
+}
+
+impl B8MemoryMap for IntEnable {
+    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+        B8MemoryMap::read_u8(&mut self.register, offset)
+    }
+
+    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+        let value = INTERRUPT_FLAGS.insert_into(self.register.read_u8(), value);
+        B8MemoryMap::write_u8(&mut self.register, offset, value)
+    }
+}
+
 pub struct IntFlag {
     pub register: B8Register,
+    pub parameter_reset: bool,
 }
 
 impl IntFlag {
     pub fn new() -> IntFlag {
         IntFlag {
-            register: B8Register::new(),
+            register: B8Register::with_value(0xE0),
+            parameter_reset: false,
         }
     }
 }
@@ -49,8 +74,17 @@ impl B8MemoryMap for IntFlag {
     }
 
     fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
-        let value = !value & self.register.read_u8(); 
-        B8MemoryMap::write_u8(&mut self.register, offset, value)
+        if self.parameter_reset { panic!("Parameter FIFO reset still pending"); }
+
+        if INT_FLAG_CLRPRM.extract_from(value) != 0 {
+            self.parameter_reset = true;
+        }
+
+        let register_value = self.register.read_u8();
+        let value = register_value & INTERRUPT_FLAGS.acknowledge_mask(value);
+        B8MemoryMap::write_u8(&mut self.register, offset, value).unwrap();
+
+        Ok(())
     }
 }
 
@@ -104,7 +138,7 @@ pub struct Cdrom1802 {
     pub status: Option<NonNull<B8Register>>,
     pub parameter: Option<NonNull<Fifo<u8>>>,
     pub data: Option<NonNull<Fifo<u8>>>,
-    pub int_enable: Option<NonNull<B8Register>>,
+    pub int_enable: Option<NonNull<IntEnable>>,
 }
 
 impl Cdrom1802 {

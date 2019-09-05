@@ -1,4 +1,4 @@
-use crate::State;
+use crate::resources::Resources;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
 use crate::controllers::r3000::{InstResult, set_exception};
@@ -7,8 +7,7 @@ use crate::resources::r3000::cp0::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
 use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
 use crate::controllers::r3000::debug;
 
-pub unsafe fn sll(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sll(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
     let shamt = instruction.shamt();
@@ -17,8 +16,7 @@ pub unsafe fn sll(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn srl(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn srl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
     let shamt = instruction.shamt();
@@ -27,8 +25,7 @@ pub unsafe fn srl(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn sra(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sra(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32() as i32;
     let shamt = instruction.shamt();
@@ -37,8 +34,7 @@ pub unsafe fn sra(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn sllv(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sllv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -48,8 +44,7 @@ pub unsafe fn sllv(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn srlv(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn srlv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -59,8 +54,7 @@ pub unsafe fn srlv(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn srav(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn srav(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -70,15 +64,13 @@ pub unsafe fn srav(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn jr(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn jr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let target = resources.r3000.gpr[instruction.rs()].read_u32();
     resources.r3000.branch_delay.set(target, 1);
     Ok(())
 }
 
-pub unsafe fn jalr(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn jalr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let target = resources.r3000.gpr[instruction.rs()].read_u32();
     resources.r3000.branch_delay.set(target, 1);
     let pc = resources.r3000.pc.read_u32();
@@ -86,50 +78,45 @@ pub unsafe fn jalr(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn syscall(state: &State, _instruction: Instruction) -> InstResult {
-    debug::trace_syscall(state);
-    set_exception(state, CAUSE_EXCCODE_SYSCALL);
+pub fn syscall(resources: &mut Resources, _instruction: Instruction) -> InstResult {
+    debug::trace_syscall(resources);
+    set_exception(resources, CAUSE_EXCCODE_SYSCALL);
     Ok(())
 }
 
-pub unsafe fn break_(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn break_(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction break not implemented");
 }
 
-pub unsafe fn mfhi(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn mfhi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.hi.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value);
     Ok(())
 }
 
-pub unsafe fn mthi(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn mthi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     resources.r3000.hi.write_u32(value);
     Ok(())
 }
 
-pub unsafe fn mflo(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn mflo(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.lo.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value);
     Ok(())
 }
 
-pub unsafe fn mtlo(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn mtlo(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     resources.r3000.lo.write_u32(value);
     Ok(())
 }
 
-pub unsafe fn mult(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn mult(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32 as i64;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -146,8 +133,7 @@ pub unsafe fn mult(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn multu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn multu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as u64;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -164,8 +150,7 @@ pub unsafe fn multu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn div(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn div(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -184,8 +169,7 @@ pub unsafe fn div(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn divu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn divu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -204,8 +188,7 @@ pub unsafe fn divu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn add(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn add(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -221,8 +204,7 @@ pub unsafe fn add(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn addu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn addu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -232,12 +214,11 @@ pub unsafe fn addu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn sub(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn sub(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction sub not implemented");
 }
 
-pub unsafe fn subu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn subu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -247,8 +228,7 @@ pub unsafe fn subu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn and(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn and(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -258,8 +238,7 @@ pub unsafe fn and(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn or(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn or(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -269,8 +248,7 @@ pub unsafe fn or(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn xor(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn xor(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -280,8 +258,7 @@ pub unsafe fn xor(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn nor(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn nor(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -291,8 +268,7 @@ pub unsafe fn nor(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn slt(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn slt(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -308,8 +284,7 @@ pub unsafe fn slt(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn sltu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sltu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -325,8 +300,7 @@ pub unsafe fn sltu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn bltz(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn bltz(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -339,8 +313,7 @@ pub unsafe fn bltz(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn bgez(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn bgez(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -353,23 +326,21 @@ pub unsafe fn bgez(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn bltzal(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn bltzal(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bltzal not implemented");
 }
 
-pub unsafe fn bgezal(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn bgezal(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bgezal not implemented");
 }
 
-pub unsafe fn j(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn j(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let target = pc_calc_jump_target(resources.r3000.pc.read_u32(), instruction.addr());
     resources.r3000.branch_delay.set(target, 1);
     Ok(())
 }
 
-pub unsafe fn jal(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn jal(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let target = pc_calc_jump_target(resources.r3000.pc.read_u32(), instruction.addr());
     resources.r3000.branch_delay.set(target, 1);
 
@@ -379,8 +350,7 @@ pub unsafe fn jal(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn beq(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn beq(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = resources.r3000.gpr[instruction.rs()].read_u32();
     let value2 = resources.r3000.gpr[instruction.rt()].read_u32();
@@ -394,8 +364,7 @@ pub unsafe fn beq(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn bne(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn bne(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = resources.r3000.gpr[instruction.rs()].read_u32();
     let value2 = resources.r3000.gpr[instruction.rt()].read_u32();
@@ -409,8 +378,7 @@ pub unsafe fn bne(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn blez(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn blez(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -423,8 +391,7 @@ pub unsafe fn blez(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn bgtz(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn bgtz(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -437,8 +404,7 @@ pub unsafe fn bgtz(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn addi(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn addi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let imm = instruction.i_imm() as i32;
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value: u32 = rs.read_u32();
@@ -454,8 +420,7 @@ pub unsafe fn addi(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn addiu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn addiu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let imm = instruction.i_imm() as i32 as u32;
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
@@ -464,8 +429,7 @@ pub unsafe fn addiu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn slti(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn slti(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32() as i32;
     let imm = instruction.i_imm() as i32;
@@ -480,8 +444,7 @@ pub unsafe fn slti(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn sltiu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sltiu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let imm = instruction.i_imm() as i32 as u32;
@@ -496,8 +459,7 @@ pub unsafe fn sltiu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn andi(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn andi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -505,8 +467,7 @@ pub unsafe fn andi(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn ori(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn ori(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -514,80 +475,75 @@ pub unsafe fn ori(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn xori(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn xori(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction xori not implemented");
 }
 
-pub unsafe fn lui(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn lui(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = instruction.rt();
     let imm = (instruction.u_imm() as u32) << 16;
     resources.r3000.gpr[rt].write_u32(imm);
     Ok(())
 }
 
-pub unsafe fn mfc0(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
-    let rd = resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut();
+pub fn mfc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
+    let rd = unsafe { resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
     let value = rd.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     rt.write_u32(value);
     Ok(())
 }
 
-pub unsafe fn mtc0(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn mtc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let _lock = resources.r3000.cp0.mutex.lock();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
-    let rd = resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut();
+    let rd = unsafe { resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
     rd.write_u32(value);
     Ok(())
 }
 
-pub unsafe fn bc0f(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn bc0f(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bc0f not implemented");
 }
 
-pub unsafe fn bc0t(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn bc0t(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bc0t not implemented");
 }
 
-pub unsafe fn tlbr(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn tlbr(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbr not implemented");
 }
 
-pub unsafe fn tlbwi(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn tlbwi(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbwi not implemented");
 }
 
-pub unsafe fn tlbwr(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn tlbwr(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbwr not implemented");
 }
 
-pub unsafe fn tlbp(_state: &State, _instruction: Instruction) -> InstResult {
+pub fn tlbp(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbp not implemented");
 }
 
-pub unsafe fn rfe(state: &State, _instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
     let _lock = resources.r3000.cp0.mutex.lock();
-    debug::trace_rfe(state);
+    debug::trace_rfe(resources);
     let status = &mut resources.r3000.cp0.status;
     let status_value = status_pop_exception(status.read_u32());
     status.write_u32(status_value);
     Ok(())
 }
 
-pub unsafe fn lb(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn lb(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u8(state, addr).map(|v| v as i8 as i32 as u32)?
+        read_u8(resources, addr).map(|v| v as i8 as i32 as u32)?
     } else { 
         0 
     };
@@ -597,15 +553,14 @@ pub unsafe fn lb(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn lh(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn lh(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u16(state, addr).map(|v| v as i16 as i32 as u32)?
+        read_u16(resources, addr).map(|v| v as i16 as i32 as u32)?
     } else { 
         0 
     };
@@ -615,11 +570,10 @@ pub unsafe fn lh(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn lwl(state: &State, instruction: Instruction) -> InstResult {
+pub fn lwl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0x00FF_FFFF, 0x0000_FFFF, 0x0000_00FF, 0x0000_0000];
     const SHIFT: [usize; 4] = [24, 16, 8, 0];
 
-    let resources = &mut *state.resources;
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -629,7 +583,7 @@ pub unsafe fn lwl(state: &State, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u32(state, addr)?
+        read_u32(resources, addr)?
     } else { 
         0
     };
@@ -643,15 +597,14 @@ pub unsafe fn lwl(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn lw(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn lw(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u32(state, addr)?
+        read_u32(resources, addr)?
     } else { 
         0
     };
@@ -661,15 +614,14 @@ pub unsafe fn lw(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn lbu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn lbu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u8(state, addr).map(|v| v as u32)?
+        read_u8(resources, addr).map(|v| v as u32)?
     } else { 
         0 
     };
@@ -679,15 +631,14 @@ pub unsafe fn lbu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn lhu(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn lhu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u16(state, addr).map(|v| v as u32)?
+        read_u16(resources, addr).map(|v| v as u32)?
     } else { 
         0 
     };
@@ -697,11 +648,10 @@ pub unsafe fn lhu(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn lwr(state: &State, instruction: Instruction) -> InstResult {
+pub fn lwr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0x0000_0000, 0xFF00_0000, 0xFFFF_0000, 0xFFFF_FF00];
     const SHIFT: [usize; 4] = [0, 8, 16, 24];
 
-    let resources = &mut *state.resources;
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -711,7 +661,7 @@ pub unsafe fn lwr(state: &State, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
     let value = if !isc { 
-        read_u32(state, addr)?
+        read_u32(resources, addr)?
     } else { 
         0
     };
@@ -725,8 +675,7 @@ pub unsafe fn lwr(state: &State, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub unsafe fn sb(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sb(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u8(0);
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -735,14 +684,13 @@ pub unsafe fn sb(state: &State, instruction: Instruction) -> InstResult {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     if !isc { 
-        write_u8(state, addr, value)?
+        write_u8(resources, addr, value)?
     }
 
     Ok(())
 }
 
-pub unsafe fn sh(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sh(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u16(0);
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -751,17 +699,16 @@ pub unsafe fn sh(state: &State, instruction: Instruction) -> InstResult {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     if !isc { 
-        write_u16(state, addr, value)?
+        write_u16(resources, addr, value)?
     }
 
     Ok(())
 }
 
-pub unsafe fn swl(state: &State, instruction: Instruction) -> InstResult {
+pub fn swl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0xFFFF_FF00, 0xFFFF_0000, 0xFF00_0000, 0x0000_0000];
     const SHIFT: [usize; 4] = [24, 16, 8, 0];
 
-    let resources = &mut *state.resources;
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -772,7 +719,7 @@ pub unsafe fn swl(state: &State, instruction: Instruction) -> InstResult {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     let mem_value = if !isc { 
-        read_u32(state, addr)?
+        read_u32(resources, addr)?
     } else { 
         0
     };
@@ -782,14 +729,13 @@ pub unsafe fn swl(state: &State, instruction: Instruction) -> InstResult {
     let value = (rt_value >> SHIFT[shift]) | (mem_value & MASK[shift]);
 
     if !isc { 
-        write_u32(state, addr, value)?
+        write_u32(resources, addr, value)?
     }
 
     Ok(())
 }
 
-pub unsafe fn sw(state: &State, instruction: Instruction) -> InstResult {
-    let resources = &mut *state.resources;
+pub fn sw(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u32();
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -798,17 +744,16 @@ pub unsafe fn sw(state: &State, instruction: Instruction) -> InstResult {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     if !isc { 
-        write_u32(state, addr, value)?
+        write_u32(resources, addr, value)?
     }
 
     Ok(())
 }
 
-pub unsafe fn swr(state: &State, instruction: Instruction) -> InstResult {
+pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0x0000_0000, 0x0000_00FF, 0x0000_FFFF, 0x00FF_FFFF];
     const SHIFT: [usize; 4] = [0, 8, 16, 24];
 
-    let resources = &mut *state.resources;
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -819,7 +764,7 @@ pub unsafe fn swr(state: &State, instruction: Instruction) -> InstResult {
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     let mem_value = if !isc { 
-        read_u32(state, addr)?
+        read_u32(resources, addr)?
     } else { 
         0
     };
@@ -829,7 +774,7 @@ pub unsafe fn swr(state: &State, instruction: Instruction) -> InstResult {
     let value = (rt_value << SHIFT[shift]) | (mem_value & MASK[shift]);
 
     if !isc { 
-        write_u32(state, addr, value)?
+        write_u32(resources, addr, value)?
     }
 
     Ok(())

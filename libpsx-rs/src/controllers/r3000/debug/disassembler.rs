@@ -2,14 +2,13 @@ use capstone::prelude::*;
 use capstone::Endian;
 use log::trace;
 use ansi_term::Colour::Red;
-use crate::State;
+use crate::resources::Resources;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::controllers::r3000::memory_controller::translate_address;
 
 const DEFAULT_TRACE_INSTRUCTIONS_LENGTH: usize = 10;
 
-pub unsafe fn trace_instructions_at_pc(state: &State, instruction_count: Option<usize>) {
-    let resources = &mut *state.resources;
+pub fn trace_instructions_at_pc(resources: &Resources, instruction_count: Option<usize>) {
     let main_memory = &resources.main_memory;
 
     let pc = translate_address(resources.r3000.pc.read_u32() - INSTRUCTION_SIZE);

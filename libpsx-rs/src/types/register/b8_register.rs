@@ -19,6 +19,13 @@ impl B8Register {
         }
     }
 
+    pub fn with_value(value: u8) -> B8Register {
+        B8Register { 
+            value: B8Register_ { v8: value },
+            read_only: false,
+        }
+    }
+
     pub fn read_only(value: u8) -> B8Register {
         B8Register { 
             value: B8Register_ { v8: value },
