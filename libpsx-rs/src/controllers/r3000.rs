@@ -28,8 +28,8 @@ pub fn run(state: &State, event: Event) {
 
 fn run_time(state: &State, duration: Duration) {
     let resources = unsafe { &mut *state.resources };
-
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    
     while ticks > 0 {
         ticks -= tick(resources); 
         // Synchronous controllers - timing is way off when done asynchronously, causing problems.
@@ -38,7 +38,6 @@ fn run_time(state: &State, duration: Duration) {
 }
 
 fn tick(resources: &mut Resources) -> i64 {
-
     handle_interrupts(resources);
 
     if let Some(target) = resources.r3000.branch_delay.advance() {

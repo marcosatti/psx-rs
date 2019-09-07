@@ -15,48 +15,72 @@ type LengthFn = fn(&[u32]) -> Option<usize>;
 type HandlerFn = for<'a> fn(&mut Resources, video_backend: &VideoBackend<'a>, &[u32]);
 
 pub fn handle_command<'a>(resources: &mut Resources, video_backend: &VideoBackend<'a>) {
-    let fifo = &mut resources.gpu.gpu1810.gp0;
-    let command_buffer = &mut resources.gpu.gp0_command_buffer;
-
     // Update the command buffer with any new incoming data.
-    loop {
-        match fifo.read_one() {
-            Ok(v) => command_buffer.push(v),
-            Err(_) => break,
-        }
-    }
+    {
+        let fifo = &mut resources.gpu.gpu1810.gp0;
+        let command_buffer = &mut resources.gpu.gp0_command_buffer;
 
-    // We cannot do anything yet.
-    if command_buffer.is_empty() {
-        return;
+        loop {
+            match fifo.read_one() {
+                Ok(v) => command_buffer.push(v),
+                Err(_) => break,
+            }
+        }
+
+        // We cannot do anything yet.
+        if command_buffer.is_empty() {
+            return;
+        }
     }
 
     // Get the associated command handler.
-    let command = command_buffer[0];
-    let command_index = GP_CMD.extract_from(command) as u8;
-    let command_handler = get_command_handler(command_index);
+    let command_handler = {
+        let command_buffer = &mut resources.gpu.gp0_command_buffer;
+        let command = command_buffer[0];
+        let command_index = GP_CMD.extract_from(command) as u8;
+        get_command_handler(command_index)
+    };
 
     // Try and get the required data length.
-    let required_length = &mut resources.gpu.gp0_command_required_length;
-    if required_length.is_none() {
-        match (command_handler.0)(&command_buffer) {
-            Some(command_length) => *required_length = Some(command_length),
-            None => return,
+    let required_length_value = {
+        let command_buffer = &mut resources.gpu.gp0_command_buffer;
+        let required_length = &mut resources.gpu.gp0_command_required_length;
+
+        if required_length.is_none() {
+            match (command_handler.0)(&command_buffer) {
+                Some(command_length) => *required_length = Some(command_length),
+                // We don't have enough data yet so try again later.
+                None => return,
+            }
+        }
+
+        required_length.unwrap()
+    };
+
+
+    // Check if we can execute the command.
+    {
+        let command_buffer = &mut resources.gpu.gp0_command_buffer;
+        if command_buffer.len() < required_length_value {
+            return;
         }
     }
 
-    // Check if we can execute the command.
-    let required_length_value = required_length.unwrap();
-    if command_buffer.len() < required_length_value {
-        return;
-    }
-
     // Execute it.
-    (command_handler.1)(resources, video_backend, &command_buffer);
+    {
+        let command_buffer_slice: &[u32] = &resources.gpu.gp0_command_buffer;
+        let command_buffer_slice_ptr = command_buffer_slice as *const _;
+        (command_handler.1)(resources, video_backend, unsafe { &*command_buffer_slice_ptr });
+    }
     
     // Setup for the next one.
-    command_buffer.drain(0..required_length_value);
-    *required_length = None;
+    {
+        let command_buffer = &mut resources.gpu.gp0_command_buffer;
+        command_buffer.drain(0..required_length_value);
+        
+        let required_length = &mut resources.gpu.gp0_command_required_length;
+        *required_length = None;
+    }
 }
 
 fn get_command_handler(command_index: u8) -> (LengthFn, HandlerFn) {

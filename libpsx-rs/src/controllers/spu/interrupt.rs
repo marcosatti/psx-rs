@@ -1,5 +1,5 @@
-use crate::State;
+use crate::resources::Resources;
 
-pub unsafe fn handle_interrupt_check(_state: &State) {
+pub fn handle_interrupt_check(_resources: &mut Resources) {
     // TODO: implement.
 }

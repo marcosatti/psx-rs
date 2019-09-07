@@ -103,4 +103,17 @@ impl PlayState {
             adsr_current_volume: 0.0,
         }
     }
+
+    pub fn reset(&mut self, current_address: usize) {
+        self.current_address = current_address;
+        self.adpcm_state = AdpcmState::new();
+        self.pitch_counter_base = 0;
+        self.pitch_counter_interp = 0;
+        self.old_sample = 0;
+        self.older_sample = 0;
+        self.oldest_sample = 0;
+        self.sample_buffer.clear();
+        self.adsr_mode = AdsrMode::Attack;
+        self.adsr_current_volume = 0.0;
+    }
 }

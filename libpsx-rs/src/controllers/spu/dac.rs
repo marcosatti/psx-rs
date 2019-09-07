@@ -1,7 +1,6 @@
-use crate::State;
+use crate::resources::Resources;
 
-pub unsafe fn handle_current_volume(state: &State) {
-    let resources = &mut *state.resources;
+pub fn handle_current_volume(resources: &mut Resources) {
     let main_volume_left = &mut resources.spu.main_volume_left;
     let main_volume_right = &mut resources.spu.main_volume_right;
     let current_volume_left = &mut resources.spu.current_volume_left;
