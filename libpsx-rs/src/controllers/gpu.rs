@@ -25,7 +25,7 @@ fn run_time(state: &State, duration: Duration) {
 }
 
 fn tick(state: &State) {
-    unsafe {
-        handle_command(state);
-    }
+    let resources = unsafe { &mut *state.resources };
+    let video_backend = state.video_backend;
+    handle_command(resources, video_backend);
 }

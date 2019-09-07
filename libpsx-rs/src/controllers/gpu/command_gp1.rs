@@ -1,10 +1,10 @@
-use crate::State;
+use crate::backends::video::VideoBackend;
+use crate::resources::Resources;
 use crate::types::bitfield::Bitfield;
 use crate::resources::gpu::*;
 use crate::controllers::gpu::command_gp0;
 
-pub unsafe fn handle_command(state: &State) {
-    let resources = &mut *state.resources;
+pub fn handle_command<'a>(resources: &mut Resources, video_backend: &VideoBackend<'a>) {
     let fifo = &mut resources.gpu.gpu1814.gp1;
 
     // Commands (GP1) are always of length 1.
@@ -29,43 +29,39 @@ pub unsafe fn handle_command(state: &State) {
         _ => unimplemented!("Unknown GP1 command: 0x{:0X}", command_index),
     };
 
-    command_fn(state, command);
+    command_fn(resources, video_backend, command);
 }
 
-unsafe fn command_00(state: &State, _command: u32) {
-    command_01(state, 0);
-    command_02(state, 0);
-    command_03(state, 1);
-    command_04(state, 0);
-    command_05(state, 0);
-    command_06(state, 0);
-    command_07(state, 0);
-    command_08(state, 0);
-    (command_gp0::COMMAND_E1.handler_fn)(state, &[0]);
-    (command_gp0::COMMAND_E2.handler_fn)(state, &[0]);
-    (command_gp0::COMMAND_E3.handler_fn)(state, &[0]);
-    (command_gp0::COMMAND_E4.handler_fn)(state, &[0]);
-    (command_gp0::COMMAND_E5.handler_fn)(state, &[0]);
-    (command_gp0::COMMAND_E6.handler_fn)(state, &[0]);
+fn command_00<'a>(resources: &mut Resources, video_backend: &VideoBackend<'a>,_command: u32) {
+    command_01(resources, video_backend, 0);
+    command_02(resources, video_backend, 0);
+    command_03(resources, video_backend, 1);
+    command_04(resources, video_backend, 0);
+    command_05(resources, video_backend, 0);
+    command_06(resources, video_backend, 0);
+    command_07(resources, video_backend, 0);
+    command_08(resources, video_backend, 0);
+    command_gp0::command_e1_handler(resources, video_backend, &[0]);
+    command_gp0::command_e2_handler(resources, video_backend, &[0]);
+    command_gp0::command_e3_handler(resources, video_backend, &[0]);
+    command_gp0::command_e4_handler(resources, video_backend, &[0]);
+    command_gp0::command_e5_handler(resources, video_backend, &[0]);
+    command_gp0::command_e6_handler(resources, video_backend, &[0]);
 }
 
-unsafe fn command_01(state: &State, _command: u32) {
-    let resources = &mut *state.resources;
+fn command_01<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,_command: u32) {
     resources.gpu.gpu1810.gp0.clear();
 }
 
-unsafe fn command_02(state: &State, _command: u32) {
-    let resources = &mut *state.resources;
+fn command_02<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,_command: u32) {
     resources.gpu.gpu1814.stat.write_bitfield(STAT_IRQ_REQUEST, 0);
 }
 
-unsafe fn command_03(state: &State, command: u32) {
-    let resources = &mut *state.resources;
+fn command_03<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,command: u32) {
     resources.gpu.gpu1814.stat.write_bitfield(STAT_DISPLAY_ENABLE, Bitfield::new(0, 1).extract_from(command));
 }
 
-unsafe fn command_04(state: &State, command: u32) {
-    let resources = &mut *state.resources;
+fn command_04<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,command: u32) {
     let dma_direction = Bitfield::new(0, 2).extract_from(command);
     if dma_direction == 3 {
         unimplemented!("DMA direction set to 3 (GPUREAD to CPU)");
@@ -73,26 +69,22 @@ unsafe fn command_04(state: &State, command: u32) {
     resources.gpu.gpu1814.stat.write_bitfield(STAT_DMA_DIRECTION, dma_direction);
 }
 
-unsafe fn command_05(state: &State, command: u32) {
-    let resources = &mut *state.resources;
+fn command_05<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,command: u32) {
     resources.gpu.display_area_start_x = Bitfield::new(0, 10).extract_from(command) as usize;
     resources.gpu.display_area_start_y = Bitfield::new(10, 9).extract_from(command) as usize;
 }
 
-unsafe fn command_06(state: &State, command: u32) {
-    let resources = &mut *state.resources;
+fn command_06<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,command: u32) {
     resources.gpu.horizontal_display_range_x1 = Bitfield::new(0, 12).extract_from(command) as usize;
     resources.gpu.horizontal_display_range_x2 = Bitfield::new(12, 12).extract_from(command) as usize;
 }
 
-unsafe fn command_07(state: &State, command: u32) {
-    let resources = &mut *state.resources;
+fn command_07<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,command: u32) {
     resources.gpu.vertical_display_range_y1 = Bitfield::new(0, 10).extract_from(command) as usize;
     resources.gpu.vertical_display_range_y2 = Bitfield::new(10, 10).extract_from(command) as usize;
 }
 
-unsafe fn command_08(state: &State, command: u32) {
-    let resources = &mut *state.resources;
+fn command_08<'a>(resources: &mut Resources, _video_backend: &VideoBackend<'a>,command: u32) {
     let stat = &mut resources.gpu.gpu1814.stat;
     stat.write_bitfield(STAT_HORIZONTAL_RES_1, Bitfield::new(0, 2).extract_from(command));
     stat.write_bitfield(STAT_VERTICAL_RES, Bitfield::new(2, 1).extract_from(command));

@@ -3,25 +3,34 @@ use crate::constants::cdrom::*;
 use crate::resources::cdrom::*;
 
 pub fn handle_command(resources: &mut Resources) {
-    let status = &mut resources.cdrom.status;
-    let command = &mut resources.cdrom.command;
-    
-    if !command.write_latch {
-        return;
+    {
+        let status = &mut resources.cdrom.status;
+        let command = &mut resources.cdrom.command;
+        
+        if !command.write_latch {
+            return;
+        }
+
+        status.write_bitfield(STATUS_BUSYSTS, 1);
     }
 
-    status.write_bitfield(STATUS_BUSYSTS, 1);
 
-    let command_value = command.register.read_u8();
+    let command_value = {
+        let command = &mut resources.cdrom.command;
+        command.register.read_u8()
+    };
 
     match command_value {
         0x19 => handle_command_19(resources),
         _ => unimplemented!("Command not implemented: 0x{:X}", command_value),
     }
 
-    command.write_latch = false;
-
-    status.write_bitfield(STATUS_BUSYSTS, 0);
+    {
+        let status = &mut resources.cdrom.status;
+        let command = &mut resources.cdrom.command;
+        command.write_latch = false;
+        status.write_bitfield(STATUS_BUSYSTS, 0);
+    }
 }
 
 fn handle_command_19(resources: &mut Resources) {
