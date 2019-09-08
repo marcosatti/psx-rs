@@ -66,6 +66,15 @@ impl IntFlag {
             parameter_reset: false,
         }
     }
+
+    pub fn set_interrupt(&mut self, index: u8) {
+        if index > 10 {
+            panic!("Invalid interrupt index");
+        }
+
+        let value = self.register.read_u8() | index;
+        self.register.write_u8(value);
+    }
 }
 
 impl B8MemoryMap for IntFlag {

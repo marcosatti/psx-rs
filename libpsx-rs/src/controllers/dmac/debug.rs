@@ -13,18 +13,18 @@ const ENABLE_CHANNEL_FIFO_HAZARD_WRITE_TRACE: bool = false;
 
 static mut TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
 
-pub unsafe fn transfer_start(resources: &mut Resources, channel: usize) {
+pub fn transfer_start(resources: &mut Resources, channel: usize) {
     if !ENABLE_CHANNEL_STATE_CHANGE_TRACE {
         return;
     }
 
-    let transfer_id = TRANSFER_ID.fetch_add(1, Ordering::SeqCst);
-    let chcr = &mut *get_chcr(resources, channel);
-    let madr = &mut *get_madr(resources, channel);
-    let bcr = &mut *get_bcr(resources, channel);
+    let transfer_id = unsafe { TRANSFER_ID.fetch_add(1, Ordering::SeqCst) };
+    let chcr = unsafe { &mut *get_chcr(resources, channel) };
+    let madr = unsafe { &mut *get_madr(resources, channel) };
+    let bcr = unsafe { &mut *get_bcr(resources, channel) };
     let sync_mode = get_sync_mode(chcr);
     let transfer_direction = get_transfer_direction(chcr);
-    let transfer_state = &mut *get_transfer_state(resources, channel);
+    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
     
     transfer_state.debug_state = Some(DebugState { transfer_id });
 
@@ -34,14 +34,14 @@ pub unsafe fn transfer_start(resources: &mut Resources, channel: usize) {
     );
 }
 
-pub unsafe fn transfer_end(resources: &mut Resources, channel: usize) {
+pub fn transfer_end(resources: &mut Resources, channel: usize) {
     if !ENABLE_CHANNEL_STATE_CHANGE_TRACE {
         return;
     }
 
-    let madr = &mut *get_madr(resources, channel);
-    let bcr = &mut *get_bcr(resources, channel);
-    let transfer_state = &mut *get_transfer_state(resources, channel);
+    let madr = unsafe { &mut *get_madr(resources, channel) };
+    let bcr = unsafe { &mut *get_bcr(resources, channel) };
+    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
 
     let transfer_id = transfer_state.debug_state.unwrap().transfer_id;
 

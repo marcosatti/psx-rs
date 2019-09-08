@@ -1,58 +1,59 @@
+use std::cell::UnsafeCell;
 use hashbrown::hash_map::DefaultHashBuilder;
-use parking_lot::Mutex;
-use lazy_static::lazy_static;
 use lru::LruCache;
+use lazy_static::*;
 
-struct MemoryAccessCache(LruCache<u32, usize, DefaultHashBuilder>);
+struct AccessState(UnsafeCell<LruCache<u32, usize, DefaultHashBuilder>>);
 
-unsafe impl Send for MemoryAccessCache {}
+impl AccessState {
+    fn new() -> AccessState {
+        let hasher = DefaultHashBuilder::default();
+        AccessState(UnsafeCell::new(LruCache::with_hasher(32, hasher)))
+    }
 
-fn make_cache() -> Mutex<MemoryAccessCache> {
-    let hasher = DefaultHashBuilder::default();
-    Mutex::new(MemoryAccessCache(LruCache::with_hasher(32, hasher)))
-}
-
-lazy_static! {
-    static ref MEMORY_READS_CACHE: Mutex<MemoryAccessCache> = make_cache();
-}
-
-lazy_static! {
-    static ref MEMORY_WRITES_CACHE: Mutex<MemoryAccessCache> = make_cache();
-}
-
-fn update_memory_access(cache: &mut MemoryAccessCache, address: u32) -> usize {
-    match cache.0.get_mut(&address) {
-        None => {
-            cache.0.put(address, 1);
-            1
-        },
-        Some(count) => {
-            *count += 1;
-            *count
+    fn update(&self, address: u32) -> usize {
+        let cache = unsafe { &mut *self.0.get() };
+        match cache.get_mut(&address) {
+            None => {
+                cache.put(address, 1);
+                1
+            },
+            Some(count) => {
+                *count += 1;
+                *count
+            }
         }
+    }
+
+    fn clear(&self, address: u32) {        
+        let cache = unsafe { &mut *self.0.get() };
+        cache.pop(&address).unwrap();
     }
 }
 
-fn remove_memory_address(cache: &mut MemoryAccessCache, address: u32) {
-    cache.0.pop(&address).unwrap();
+// Only ever accessed in a single threaded environment.
+unsafe impl Sync for AccessState {}
+
+lazy_static! {
+    static ref READS_STATE: AccessState = AccessState::new();
 }
 
-pub fn track_memory_read(address: u32) -> usize {
-    let cache = &mut MEMORY_READS_CACHE.lock();
-    update_memory_access(cache, address)
+lazy_static! {
+    static ref WRITES_STATE: AccessState = AccessState::new();
 }
 
-pub fn track_memory_write(address: u32) -> usize {
-    let cache = &mut MEMORY_WRITES_CACHE.lock();
-    update_memory_access(cache, address)
+pub fn update_state_read(address: u32) -> usize {
+    READS_STATE.update(address) 
 }
 
-pub fn track_memory_read_clear(address: u32) {
-    let cache = &mut MEMORY_READS_CACHE.lock();
-    remove_memory_address(cache, address);
+pub fn update_state_write(address: u32) -> usize {
+    WRITES_STATE.update(address) 
 }
 
-pub fn track_memory_write_clear(address: u32) {
-    let cache = &mut MEMORY_WRITES_CACHE.lock();
-    remove_memory_address(cache, address);
+pub fn clear_state_read(address: u32) {
+    READS_STATE.clear(address);
+}
+
+pub fn clear_state_write(address: u32) {
+    WRITES_STATE.clear(address);
 }

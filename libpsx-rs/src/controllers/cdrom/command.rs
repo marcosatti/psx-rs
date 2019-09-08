@@ -1,6 +1,6 @@
 use crate::resources::Resources;
-use crate::constants::cdrom::*;
 use crate::resources::cdrom::*;
+use crate::controllers::cdrom::command_impl;
 
 pub fn handle_command(resources: &mut Resources) {
     {
@@ -21,7 +21,8 @@ pub fn handle_command(resources: &mut Resources) {
     };
 
     match command_value {
-        0x19 => handle_command_19(resources),
+        0x01 => command_impl::command_01(resources),
+        0x19 => command_impl::command_19(resources),
         _ => unimplemented!("Command not implemented: 0x{:X}", command_value),
     }
 
@@ -31,24 +32,4 @@ pub fn handle_command(resources: &mut Resources) {
         command.write_latch = false;
         status.write_bitfield(STATUS_BUSYSTS, 0);
     }
-}
-
-fn handle_command_19(resources: &mut Resources) {
-    let parameter = &resources.cdrom.parameter;
-    let response = &resources.cdrom.response;
-
-    let sub_function = parameter.read_one().unwrap();
-
-    match sub_function {
-        0x20 => {
-            for i in VERSION.iter() {
-                response.write_one(*i).unwrap();
-            }
-        },
-        _ => unimplemented!(),
-    }
-
-    let int_flag = &mut resources.cdrom.int_flag;
-    let int_flag_value = int_flag.register.read_u8() | 0x2;
-    int_flag.register.write_u8(int_flag_value);
 }

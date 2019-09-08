@@ -39,17 +39,13 @@ pub fn read_u8(resources: &mut Resources, physical_address: u32) -> Result<u8, H
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_read(resources, physical_address);
+        debug::track_memory_read(resources, physical_address, result.unwrap());
     }
 
     result
 }
 
 pub fn write_u8(resources: &mut Resources, physical_address: u32, value: u8) -> Result<(), Hazard> {
-    if physical_address >= 0x1F80_1800 && physical_address <= 0x1F80_1810 {
-        debug!("write u8, address = 0x{:08X}, value = 0x{:X}", physical_address, value);
-    }
-
     let result = {
         if resources.bus_locked {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
@@ -59,7 +55,7 @@ pub fn write_u8(resources: &mut Resources, physical_address: u32, value: u8) -> 
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_write(resources, physical_address);
+        debug::track_memory_write(resources, physical_address, value);
     }
 
     result
@@ -75,7 +71,7 @@ pub fn read_u16(resources: &mut Resources, physical_address: u32) -> Result<u16,
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_read(resources, physical_address);
+        debug::track_memory_read(resources, physical_address, result.unwrap());
     }
 
     result
@@ -91,7 +87,7 @@ pub fn write_u16(resources: &mut Resources, physical_address: u32, value: u16) -
     };
     
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_write(resources, physical_address);
+        debug::track_memory_write(resources, physical_address, value);
     }
 
     result
@@ -107,7 +103,7 @@ pub fn read_u32(resources: &mut Resources, physical_address: u32) -> Result<u32,
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_read(resources, physical_address);
+        debug::track_memory_read(resources, physical_address, result.unwrap());
     }
 
     result
@@ -123,7 +119,7 @@ pub fn write_u32(resources: &mut Resources, physical_address: u32, value: u32) -
     };
 
     if result.is_ok() {
-        debug::trace_io_spin_loop_detection_write(resources, physical_address);
+        debug::track_memory_write(resources, physical_address, value);
     }
 
     result

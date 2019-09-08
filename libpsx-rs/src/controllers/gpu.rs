@@ -1,7 +1,9 @@
 pub mod crtc;
 pub mod command;
 pub mod command_gp0;
+pub mod command_gp0_impl;
 pub mod command_gp1;
+pub mod command_gp1_impl;
 pub mod data;
 pub mod opengl;
 

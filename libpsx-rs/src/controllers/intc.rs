@@ -1,5 +1,6 @@
 pub mod debug;
 
+use log::debug;
 use std::time::Duration;
 use crate::State;
 use crate::resources::Resources;
@@ -32,8 +33,9 @@ fn handle_interrupt_check(resources: &mut Resources) {
 
     let stat_value = stat.register.read_u32();
     let mask_value = mask.read_u32();
+    let int_value = stat_value & mask_value;
 
-    let value = if (stat_value & mask_value) != 0 {
+    let value = if int_value != 0 {
         1
     } else {
         0
@@ -41,6 +43,9 @@ fn handle_interrupt_check(resources: &mut Resources) {
 
     let cause = &mut resources.r3000.cp0.cause;
     if cause.read_bitfield(CAUSE_IP_INTC) != value {
+        if value != 0 {
+            debug!("INTC interrupt, value = 0x{:08X}", int_value);
+        }
         let _cp0_lock = resources.r3000.cp0.mutex.lock();
         cause.write_bitfield(CAUSE_IP_INTC, value);
     }

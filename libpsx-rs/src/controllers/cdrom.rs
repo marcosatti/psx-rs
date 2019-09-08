@@ -1,4 +1,5 @@
 pub mod command;
+pub mod command_impl;
 
 use log::debug;
 use crate::resources::Resources;
@@ -54,7 +55,6 @@ fn handle_response_fifo(resources: &mut Resources) {
 
     status.write_bitfield(STATUS_RSLRRDY, ready_bit);
 }
-
 
 fn handle_interrupt_check(resources: &mut Resources) {
     let int_enable = &resources.cdrom.int_enable;

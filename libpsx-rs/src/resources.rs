@@ -6,6 +6,7 @@ pub mod spu;
 pub mod dmac;
 pub mod gpu;
 pub mod cdrom;
+pub mod joystick;
 
 use std::pin::Pin;
 use std::marker::PhantomPinned;
@@ -33,6 +34,8 @@ use crate::resources::gpu::Gpu;
 use crate::resources::gpu::initialize as gpu_initialize;
 use crate::resources::cdrom::Cdrom;
 use crate::resources::cdrom::initialize as cdrom_initialize;
+use crate::resources::joystick::Joystick;
+use crate::resources::joystick::initialize as joystick_initialize;
 
 pub struct Resources {
     _pin: PhantomPinned,
@@ -51,6 +54,7 @@ pub struct Resources {
     pub memory_control: MemoryControl,
     pub gpu: Gpu,
     pub cdrom: Cdrom,
+    pub joystick: Joystick,
     pub bios: B8Memory,
     pub main_memory: B8Memory,
     pub post_display: B8Register,
@@ -70,6 +74,7 @@ impl Resources {
             memory_control: MemoryControl::new(),
             gpu: Gpu::new(),
             cdrom: Cdrom::new(),
+            joystick: Joystick::new(),
             bios: B8Memory::new(BIOS_SIZE),
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
             post_display: B8Register::new(),
@@ -92,6 +97,7 @@ impl Resources {
         dmac_initialize(resources);
         gpu_initialize(resources);
         cdrom_initialize(resources);
+        joystick_initialize(resources);
 
         resources.r3000.memory_mapper.map::<u32>(0x1F80_2041, 1, &mut resources.post_display as *mut dyn B8MemoryMap);
         resources.r3000.memory_mapper.map::<u32>(0x1F00_0000, 0x100, &mut resources.pio as *mut dyn B8MemoryMap);

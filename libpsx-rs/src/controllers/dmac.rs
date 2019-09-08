@@ -27,7 +27,7 @@ fn run_time(state: &State, duration: Duration) {
     let mut channel_id: isize = 6;
 
     while ticks > 0 {
-        let channel_ticks = unsafe { tick(resources, channel_id as usize) };
+        let channel_ticks = tick(resources, channel_id as usize);
 
         if channel_ticks == 0 {
             ticks -= 1;
@@ -46,7 +46,7 @@ fn run_time(state: &State, duration: Duration) {
     handle_irq_check(resources);
 }
 
-unsafe fn tick(resources: &mut Resources, channel: usize) -> i32 {
+fn tick(resources: &mut Resources, channel: usize) -> i32 {
     let dpcr = &resources.dmac.dpcr;
 
     let enable = DPCR_CHANNEL_ENABLE_BITFIELDS[channel];
@@ -58,11 +58,11 @@ unsafe fn tick(resources: &mut Resources, channel: usize) -> i32 {
     }
 }
 
-unsafe fn handle_transfer(resources: &mut Resources, channel: usize) -> i32 {
-    let transfer_state = &mut *get_transfer_state(resources, channel);
-    let chcr = &mut *get_chcr(resources, channel);
-    let madr = &mut *get_madr(resources, channel);
-    let bcr = &mut *get_bcr(resources, channel);
+fn handle_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
+    let chcr = unsafe { &mut *get_chcr(resources, channel) };
+    let madr = unsafe { &mut *get_madr(resources, channel) };
+    let bcr = unsafe { &mut *get_bcr(resources, channel) };
     let sync_mode = get_sync_mode(chcr);
 
     if chcr.read_bitfield(CHCR_CHOPPING) != 0 {
@@ -92,9 +92,9 @@ unsafe fn handle_transfer(resources: &mut Resources, channel: usize) -> i32 {
     }
 }
 
-unsafe fn handle_continuous_transfer(resources: &mut Resources, channel: usize) -> i32 {
-    let chcr = &mut *get_chcr(resources, channel);
-    let transfer_state = &mut *get_transfer_state(resources, channel);
+fn handle_continuous_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let chcr = unsafe { &mut *get_chcr(resources, channel) };
+    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
 
@@ -142,13 +142,13 @@ unsafe fn handle_continuous_transfer(resources: &mut Resources, channel: usize) 
     return 1;
 }
 
-unsafe fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i32 {
-    let chcr = &mut *get_chcr(resources, channel);
-    let transfer_state = &mut *get_transfer_state(resources, channel);
+fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let chcr = unsafe { &mut *get_chcr(resources, channel) };
+    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
-    let bcr = &mut *get_bcr(resources, channel);
-    let madr = &mut *get_madr(resources, channel);
+    let bcr = unsafe { &mut *get_bcr(resources, channel) };
+    let madr = unsafe { &mut *get_madr(resources, channel) };
 
     let blocks_state = if let SyncModeState::Blocks(s) = &mut transfer_state.sync_mode_state { s } else { panic!("Unexpected transfer sync mode state"); };
 
@@ -208,11 +208,11 @@ unsafe fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i
     return 1;
 }
 
-unsafe fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32 {
-    let chcr = &mut *get_chcr(resources, channel);
-    let transfer_state = &mut *get_transfer_state(resources, channel);
+fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32 {
+    let chcr = unsafe { &mut *get_chcr(resources, channel) };
+    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
     let transfer_direction = get_transfer_direction(chcr);
-    let madr = &mut *get_madr(resources, channel);
+    let madr = unsafe { &mut *get_madr(resources, channel) };
 
     if transfer_direction != TransferDirection::ToChannel {
         panic!("Linked list transfers are ToChannel only");

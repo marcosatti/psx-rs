@@ -77,7 +77,7 @@ pub unsafe fn get_transfer_state(resources: &mut Resources, channel: usize) -> *
     }
 }
 
-pub unsafe fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo<u32> {
+pub fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo<u32> {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
@@ -90,7 +90,7 @@ pub unsafe fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo
     }
 }
 
-pub unsafe fn pop_channel_data(resources: &mut Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
+pub fn pop_channel_data(resources: &mut Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
         0..=5 => {
             let fifo = get_fifo(resources, channel);
@@ -109,7 +109,7 @@ pub unsafe fn pop_channel_data(resources: &mut Resources, channel: usize, madr: 
     }
 }
 
-pub unsafe fn push_channel_data(resources: &mut Resources, channel: usize, value: u32) -> Result<(), ()> {
+pub fn push_channel_data(resources: &mut Resources, channel: usize, value: u32) -> Result<(), ()> {
     match channel {
         0..=5 => {
             let fifo = get_fifo(resources, channel);
