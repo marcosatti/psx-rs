@@ -6,11 +6,9 @@ use crate::controllers::r3000::debug;
 
 pub fn set_exception(resources: &mut Resources, exccode: usize) {
     let pc = &mut resources.r3000.pc;
-    let cause = &mut resources.r3000.cp0.cause;
+    let cause = &mut resources.r3000.cp0.cause.register;
     let status = &mut resources.r3000.cp0.status;
     let mut pc_value = pc.read_u32();
-
-    let _cp0_lock = resources.r3000.cp0.mutex.lock();
 
     if resources.r3000.branch_delay.branching() {
         cause.write_bitfield(CAUSE_BD, 1);
@@ -52,14 +50,27 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
 }
 
 pub fn handle_interrupts(resources: &mut Resources) {
-    if resources.r3000.cp0.status.read_bitfield(STATUS_IEC) == 0 {
-        return;
-    }
+    let check_interrupts = {
+        let status = &resources.r3000.cp0.status;
+        let cause = &mut resources.r3000.cp0.cause;
 
-    let im = resources.r3000.cp0.status.read_bitfield(STATUS_IM);
-    let ip = resources.r3000.cp0.cause.read_bitfield(CAUSE_IP);
-    if (im & ip) > 0 {
-        debug::trace_interrupt(resources);
-        set_exception(resources, CAUSE_EXCCODE_INT);
+        if status.read_bitfield(STATUS_IEC) == 0 {
+            return;
+        }
+
+        cause.handle_irq_messages()
+    };
+
+    if check_interrupts {
+        let set_bits = {
+            let status = &resources.r3000.cp0.status;
+            let cause = &resources.r3000.cp0.cause.register;
+            status.read_bitfield(STATUS_IM) & cause.read_bitfield(CAUSE_IP)
+        };
+
+        if set_bits != 0 {
+            debug::trace_interrupt(resources);
+            set_exception(resources, CAUSE_EXCCODE_INT);
+        }
     }
 }

@@ -495,7 +495,6 @@ pub fn mfc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
 }
 
 pub fn mtc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
-    let _lock = resources.r3000.cp0.mutex.lock();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
     let rd = unsafe { resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
@@ -528,7 +527,6 @@ pub fn tlbp(_resources: &mut Resources, _instruction: Instruction) -> InstResult
 }
 
 pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
-    let _lock = resources.r3000.cp0.mutex.lock();
     debug::trace_rfe(resources);
     let status = &mut resources.r3000.cp0.status;
     let status_value = status_pop_exception(status.read_u32());

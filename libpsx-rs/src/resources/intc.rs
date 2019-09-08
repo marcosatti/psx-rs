@@ -24,6 +24,7 @@ pub const IRQ_BITFIELDS: [Bitfield; 11] = [VBLANK, GPU, CDROM, DMA, TMR0, TMR1, 
 pub struct Intc {
     pub stat: Stat,
     pub mask: B32Register,
+    pub old_masked_value: u32
 }
 
 impl Intc {
@@ -31,6 +32,7 @@ impl Intc {
         Intc {
             stat: Stat::new(),
             mask: B32Register::new(),
+            old_masked_value: 0,
         }
     }
 }

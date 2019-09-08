@@ -6,7 +6,7 @@ use crate::State;
 use crate::resources::Resources;
 use crate::constants::intc::CLOCK_SPEED;
 use crate::controllers::Event;
-use crate::resources::r3000::cp0::CAUSE_IP_INTC;
+use crate::resources::r3000::cp0::register::IrqLine;
 
 pub fn run(state: &State, event: Event) {
     match event {
@@ -30,23 +30,23 @@ fn tick(resources: &mut Resources) {
 fn handle_interrupt_check(resources: &mut Resources) {
     let stat = &mut resources.intc.stat;
     let mask = &mut resources.intc.mask;
+    let old_masked_value = &mut resources.intc.old_masked_value;
 
     let stat_value = stat.register.read_u32();
     let mask_value = mask.read_u32();
-    let int_value = stat_value & mask_value;
+    let masked_value = stat_value & mask_value;
 
-    let value = if int_value != 0 {
-        1
-    } else {
-        0
-    };
+    if masked_value != *old_masked_value {
+        let cause = &resources.r3000.cp0.cause;
 
-    let cause = &mut resources.r3000.cp0.cause;
-    if cause.read_bitfield(CAUSE_IP_INTC) != value {
-        if value != 0 {
-            debug!("INTC interrupt, value = 0x{:08X}", int_value);
+        debug!("INTC edge triggered event, value = 0x{:08X}", masked_value);
+
+        if masked_value != 0 { 
+            cause.raise_irq(IrqLine::Intc);
+        } else { 
+            cause.reset_irq(IrqLine::Intc);
         }
-        let _cp0_lock = resources.r3000.cp0.mutex.lock();
-        cause.write_bitfield(CAUSE_IP_INTC, value);
+
+        *old_masked_value = masked_value;
     }
 }

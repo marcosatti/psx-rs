@@ -1,8 +1,10 @@
+pub mod register;
+
 use std::ptr::NonNull;
-use parking_lot::Mutex;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 use crate::resources::Resources;
+use crate::resources::r3000::cp0::register::*;
 
 pub const PRID_REVISION: Bitfield = Bitfield::new(0, 8);
 pub const PRID_IMPLEMENTATION: Bitfield = Bitfield::new(8, 8);
@@ -27,7 +29,9 @@ pub const CAUSE_BD: Bitfield = Bitfield::new(31, 1);
 
 pub const CAUSE_EXCCODE_INT: usize = 0;
 pub const CAUSE_EXCCODE_SYSCALL: usize = 8;
-pub const CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
+
+pub const _CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
+pub const CAUSE_IP_INTC_OFFSET: Bitfield = Bitfield::new(2, 1);
 
 fn prid() -> u32 {
     let value: u32 = 0;
@@ -44,14 +48,10 @@ pub struct Cp0 {
     pub bdam: B32Register,
     pub bpcm: B32Register,
     pub status: B32Register,
-    pub cause: B32Register,
+    pub cause: Cause,
     pub epc: B32Register,
     pub prid: B32Register,
     pub register: [Option<NonNull<B32Register>>; 64],
-    pub mutex: Mutex<()>, // Normally, the cause register has dedicated external lines 
-                          // attached to other hardware that trigger the interrupts. 
-                          // However, this is an emulator - to ensure write consistency, 
-                          // enforce the use of a lock, when doing writes with CP0.
 }
 
 impl Cp0 {
@@ -64,11 +64,10 @@ impl Cp0 {
             bdam: B32Register::new(),
             bpcm: B32Register::new(),
             status: B32Register::new(),
-            cause: B32Register::new(),
+            cause: Cause::new(),
             epc: B32Register::new(),
             prid: B32Register::read_only(prid()),
             register: [None; 64],
-            mutex: Mutex::new(()),
         }
     }
 }
@@ -86,7 +85,7 @@ pub fn initialize(resources: &mut Resources) {
     resources.r3000.cp0.register[9] = Some(NonNull::new(&mut resources.r3000.cp0.bdam as *mut B32Register).unwrap());
     resources.r3000.cp0.register[11] = Some(NonNull::new(&mut resources.r3000.cp0.bpcm as *mut B32Register).unwrap());
     resources.r3000.cp0.register[12] = Some(NonNull::new(&mut resources.r3000.cp0.status as *mut B32Register).unwrap());
-    resources.r3000.cp0.register[13] = Some(NonNull::new(&mut resources.r3000.cp0.cause as *mut B32Register).unwrap());
+    resources.r3000.cp0.register[13] = Some(NonNull::new(&mut resources.r3000.cp0.cause.register as *mut B32Register).unwrap());
     resources.r3000.cp0.register[14] = Some(NonNull::new(&mut resources.r3000.cp0.epc as *mut B32Register).unwrap());
     resources.r3000.cp0.register[15] = Some(NonNull::new(&mut resources.r3000.cp0.prid as *mut B32Register).unwrap());
 }
