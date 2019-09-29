@@ -138,6 +138,7 @@ impl<'a> Core<'a> {
 
 fn video_setup(video_backend: &VideoBackend) {
     match video_backend {
+        VideoBackend::None => { unimplemented!() },
         VideoBackend::Opengl(ref params) => video_setup_opengl(params),
     }
 }
@@ -185,6 +186,7 @@ fn video_setup_opengl(backend_params: &opengl::BackendParams) {
 
 fn audio_setup(audio_backend: &AudioBackend) {
     match audio_backend {
+        AudioBackend::None => {},
         AudioBackend::Openal(ref params) => audio_setup_openal(params),
     }
 }

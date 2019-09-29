@@ -29,6 +29,7 @@ unsafe fn vblank_interrupt(state: &State) {
 
 fn render(state: &State) {
     match state.video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref params) => render_opengl(params),
     }
 }

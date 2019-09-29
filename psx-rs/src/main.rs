@@ -64,7 +64,7 @@ fn main() {
     openal_release_context();
 
     // Initialize psx_rs core
-    let time_delta_us = args().nth(1).map_or(25, |v| v.parse::<u64>().unwrap());
+    let time_delta_us = args().nth(1).map_or(25, |v| v.parse::<usize>().unwrap());
     let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
@@ -74,12 +74,13 @@ fn main() {
                 context: BackendContext::new(&opengl_acquire_context, &opengl_release_context),
             }
         ),
-        audio_backend: AudioBackend::Openal(
-            openal::BackendParams {
-                context: BackendContext::new(&openal_acquire_context, &openal_release_context),
-            }
-        ),
-        time_delta: Duration::from_micros(time_delta_us),
+        // audio_backend: AudioBackend::Openal(
+        //     openal::BackendParams {
+        //         context: BackendContext::new(&openal_acquire_context, &openal_release_context),
+        //     }
+        // ),
+        audio_backend: AudioBackend::None,
+        time_delta: Duration::from_micros(time_delta_us as u64),
         worker_threads: worker_threads,
     };
     let mut core = Core::new(config);

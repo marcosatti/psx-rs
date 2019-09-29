@@ -100,10 +100,11 @@ fn handle_play_sound_buffer<'a>(resources: &mut Resources, audio_backend: &Audio
     let control = &resources.spu.control;
 
     if play_state.sample_buffer.len() == BUFFER_SIZE {
-        let muted = control.read_bitfield(CONTROL_MUTE) != 0;
+        let unmuted = control.read_bitfield(CONTROL_UNMUTE) != 0;
 
-        if !muted {
+        if unmuted {
             match audio_backend {
+                AudioBackend::None => {},
                 AudioBackend::Openal(ref backend_params) => {
                     openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id);
                 },

@@ -4,7 +4,7 @@ pub mod intc;
 pub mod dmac;
 pub mod spu;
 pub mod cdrom;
-pub mod joystick;
+pub mod padmc;
 
 use std::time::Duration;
 

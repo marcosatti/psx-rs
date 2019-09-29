@@ -58,6 +58,7 @@ pub fn command_28_handler<'a>(_resources: &mut Resources, video_backend: &VideoB
     let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]]);
     
     match video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::draw_polygon_4_solid(backend_params, vertices, color);
         },
@@ -82,6 +83,7 @@ pub fn command_2c_handler<'a>(_resources: &mut Resources, video_backend: &VideoB
     let _clut = extract_clut_base_normalized(data[2]);
 
     match video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::draw_polygon_4_textured_framebuffer(backend_params, vertices, texcoords);
         },
@@ -99,6 +101,7 @@ pub fn command_30_handler<'a>(_resources: &mut Resources, video_backend: &VideoB
     let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]]);
 
     match video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::draw_polygon_3_shaded(backend_params, vertices, colors);
         },
@@ -116,6 +119,7 @@ pub fn command_38_handler<'a>(_resources: &mut Resources, video_backend: &VideoB
     let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]]);
 
     match video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::draw_polygon_4_shaded(backend_params, vertices, colors);
         },
@@ -208,6 +212,7 @@ pub fn command_a0_handler<'a>(_resources: &mut Resources, video_backend: &VideoB
     }
 
     match video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::draw_polygon_4_textured(backend_params, positions, texcoords, texture_width, texture_height, &texture_colors);
         },
@@ -240,6 +245,7 @@ pub fn command_c0_handler<'a>(resources: &mut Resources, video_backend: &VideoBa
     let fifo_words = (count + 1) / 2;
 
     let mut data = match video_backend {
+        VideoBackend::None => { unimplemented!("") },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::read_framebuffer_5551(backend_params, origin, size)
         },
