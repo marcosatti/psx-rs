@@ -3,6 +3,7 @@ pub mod debug;
 use log::debug;
 use std::time::Duration;
 use crate::State;
+use crate::types::bitfield::Bitfield;
 use crate::resources::Resources;
 use crate::constants::intc::CLOCK_SPEED;
 use crate::controllers::Event;
@@ -38,15 +39,28 @@ fn handle_interrupt_check(resources: &mut Resources) {
 
     if masked_value != *old_masked_value {
         let cause = &resources.r3000.cp0.cause;
-
-        debug!("INTC edge triggered event, value = 0x{:08X}", masked_value);
-
-        if masked_value != 0 { 
-            cause.raise_irq(IrqLine::Intc);
-        } else { 
+        
+        if masked_value == 0 {
+            debug!("INTC all interrupts acknowledged, clearing COP0.Cause");
             cause.reset_irq(IrqLine::Intc);
+        } else {
+            for i in 0..32 {
+                if is_edge_triggered(i, *old_masked_value, masked_value) {
+                    debug!("INTC edge triggered interrupt on line {}", i);
+                    cause.raise_irq(IrqLine::Intc);
+                    break;
+                }
+            }
         }
 
         *old_masked_value = masked_value;
     }
+}
+
+/// Checks for a 0 -> 1 transition.
+fn is_edge_triggered(bit: usize, old_value: u32, new_value: u32) -> bool {
+    let bit = Bitfield::new(bit, 1);
+    let old_value = bit.extract_from(old_value) > 0;
+    let new_value = bit.extract_from(new_value) > 0;
+    (!old_value) && (new_value)
 }

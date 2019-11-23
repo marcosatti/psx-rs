@@ -36,19 +36,30 @@ impl Bitfield {
         (value & self.shifted_mask()) >> self.start
     }
         
-    pub fn insert_into<T>(&self, dest: T, source: T) -> T 
+    pub fn insert_into<T>(&self, destination: T, source: T) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + One + Shr<usize, Output=T> + BitAnd<T, Output=T> + BitOr<T, Output=T> + Not<Output=T>
     {
-        let dest_masked =  dest & (!self.shifted_mask::<T>());
+        let destination_masked =  destination & (!self.shifted_mask::<T>());
         let source_masked = (source & self.unshifted_mask()) << self.start;
-        dest_masked | source_masked
+        destination_masked | source_masked
     }
 
+    /// Example:
+    ///    self.shifted_mask() == 0b1111_0000           // ie: register interrupt mask
+    ///    value == 0b0110_0000                         // Acknowledging IRQ1 and IRQ2
+    ///    self.acknowledge_mask(value) == 0b1001_1111  // New mask to apply onto register
     pub fn acknowledge_mask<T>(&self, value: T) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + BitAnd<T, Output=T> + Not<Output=T> + One 
     {
         !(value & self.shifted_mask())
+    }
+
+    pub fn acknowledge<T>(&self, value: T, acknowledge_value: T) -> T
+    where
+        T: Shl<usize, Output=T> + Sub<T, Output=T> + BitAnd<T, Output=T> + Not<Output=T> + One 
+    {
+        value & self.acknowledge_mask(acknowledge_value)
     }
 }

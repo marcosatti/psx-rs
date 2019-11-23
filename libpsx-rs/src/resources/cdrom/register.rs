@@ -90,7 +90,7 @@ impl B8MemoryMap for IntFlag {
         }
 
         let register_value = self.register.read_u8();
-        let value = register_value & INTERRUPT_FLAGS.acknowledge_mask(value);
+        let value = INTERRUPT_FLAGS.acknowledge(register_value, value);
         B8MemoryMap::write_u8(&mut self.register, offset, value).unwrap();
 
         Ok(())
