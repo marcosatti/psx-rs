@@ -13,6 +13,7 @@ use std::marker::PhantomPinned;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool
 use log::info;
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
 use crate::types::memory::b8_memory::B8Memory;
@@ -44,7 +45,7 @@ pub struct Resources {
     /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening. 
     /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing 
     /// the DMA controller to read/write garbage if the CPU is allowed to continue to run.
-    pub bus_locked: bool, 
+    pub bus_locked: AtomicBool, 
 
     pub r3000: R3000,
     pub intc: Intc,
@@ -65,7 +66,7 @@ impl Resources {
     pub fn new() -> Pin<Box<Resources>> {
         let mut resources = Box::pin(Resources {
             _pin: PhantomPinned,
-            bus_locked: false,
+            bus_locked: AtomicBool::new(false),
             r3000: R3000::new(),
             intc: Intc::new(),
             dmac: Dmac::new(),

@@ -8,6 +8,7 @@ pub struct Bitfield {
 }
 
 impl Bitfield {
+    #[must_use]
     pub const fn new(start: usize, length: usize) -> Bitfield {
         Bitfield { 
             start: start, 
@@ -15,6 +16,7 @@ impl Bitfield {
         }
     }
 
+    #[must_use]
     pub fn unshifted_mask<T>(&self) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + One 
@@ -22,6 +24,7 @@ impl Bitfield {
         (T::one() << self.length) - T::one()
     }
 
+    #[must_use]
     pub fn shifted_mask<T>(&self) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + One 
@@ -29,6 +32,7 @@ impl Bitfield {
         Self::unshifted_mask::<T>(self) << self.start
     }
 
+    #[must_use]
     pub fn extract_from<T>(&self, value: T) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + One + Shr<usize, Output=T> + BitAnd<T, Output=T>
@@ -36,6 +40,7 @@ impl Bitfield {
         (value & self.shifted_mask()) >> self.start
     }
         
+    #[must_use]
     pub fn insert_into<T>(&self, destination: T, source: T) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + One + Shr<usize, Output=T> + BitAnd<T, Output=T> + BitOr<T, Output=T> + Not<Output=T>
@@ -46,9 +51,10 @@ impl Bitfield {
     }
 
     /// Example:
-    ///    self.shifted_mask() == 0b1111_0000           // ie: register interrupt mask
-    ///    value == 0b0110_0000                         // Acknowledging IRQ1 and IRQ2
-    ///    self.acknowledge_mask(value) == 0b1001_1111  // New mask to apply onto register
+    ///    self.shifted_mask() == 0b1111_0000           // Example: register interrupt mask.
+    ///    value == 0b0110_0000                         // Acknowledging IRQ1 and IRQ2.
+    ///    self.acknowledge_mask(value) == 0b1001_1111  // New mask to apply onto register.
+    #[must_use]
     pub fn acknowledge_mask<T>(&self, value: T) -> T 
     where 
         T: Shl<usize, Output=T> + Sub<T, Output=T> + BitAnd<T, Output=T> + Not<Output=T> + One 
@@ -56,10 +62,19 @@ impl Bitfield {
         !(value & self.shifted_mask())
     }
 
+    #[must_use]
     pub fn acknowledge<T>(&self, value: T, acknowledge_value: T) -> T
     where
         T: Shl<usize, Output=T> + Sub<T, Output=T> + BitAnd<T, Output=T> + Not<Output=T> + One 
     {
         value & self.acknowledge_mask(acknowledge_value)
+    }
+
+    #[must_use]
+    pub fn copy<T>(&self, destination: T, source: T) -> T
+    where
+        T: Shl<usize, Output=T> + Sub<T, Output=T> + One + Shr<usize, Output=T> + BitAnd<T, Output=T> + BitOr<T, Output=T> + Not<Output=T>
+    {
+        self.insert_into(destination, self.extract_from(source))
     }
 }
