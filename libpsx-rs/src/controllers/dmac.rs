@@ -2,6 +2,7 @@ pub mod channel;
 pub mod debug;
 
 use std::time::Duration;
+use std::sync::atomic::Ordering;
 use log::warn;
 use crate::State;
 use crate::resources::Resources;
@@ -44,6 +45,8 @@ fn run_time(state: &State, duration: Duration) {
     }
     
     handle_irq_check(resources);
+
+    handle_bus_lock(resources);
 }
 
 fn tick(resources: &mut Resources, channel: usize) -> i32 {
@@ -56,6 +59,19 @@ fn tick(resources: &mut Resources, channel: usize) -> i32 {
     } else {
         0
     }
+}
+
+/// Check if all channels are finished, and release the bus lock if true.
+fn handle_bus_lock(resources: &mut Resources) {
+    for channel_id in 0..6 {
+        let transfer_state = unsafe { &mut *get_transfer_state(resources, channel_id) };
+        
+        if transfer_state.started {
+            return;
+        }
+    }
+
+    resources.bus_locked.store(false, Ordering::Release);
 }
 
 fn handle_transfer(resources: &mut Resources, channel: usize) -> i32 {
@@ -71,7 +87,7 @@ fn handle_transfer(resources: &mut Resources, channel: usize) -> i32 {
 
     if chcr.read_bitfield(CHCR_STARTBUSY) != 0 {
         if !transfer_state.started {
-            resources.bus_locked = true;
+            resources.bus_locked.store(true, Ordering::Release);
 
             initialize_transfer(transfer_state, sync_mode, madr, bcr);
 
@@ -135,8 +151,6 @@ fn handle_continuous_transfer(resources: &mut Resources, channel: usize) -> i32 
         set_interrupt_flag(resources, channel);
 
         debug::transfer_end(resources, channel);
-        
-        resources.bus_locked = false;
     }
 
     return 1;
@@ -201,8 +215,6 @@ fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i32 {
         set_interrupt_flag(resources, channel);
 
         debug::transfer_end(resources, channel);
-
-        resources.bus_locked = false;
     }
 
     return 1;
@@ -229,7 +241,6 @@ fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32
             
             debug::transfer_end(resources, channel);
 
-            resources.bus_locked = false;
             return 1;
         }
 

@@ -2,7 +2,6 @@ pub mod register;
 pub mod channel;
 pub mod debug;
 
-use std::ptr::NonNull;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::bitfield::Bitfield;
@@ -60,32 +59,32 @@ pub struct Dmac {
 
     pub mdecin_madr: B32Register,
     pub mdecin_bcr: B32Register,
-    pub mdecin_chcr: Chcr,
+    pub mdecin_chcr: B32Register,
     pub mdecin_transfer_state: TransferState,
 
     pub mdecout_madr: B32Register,
     pub mdecout_bcr: B32Register,
-    pub mdecout_chcr: Chcr,
+    pub mdecout_chcr: B32Register,
     pub mdecout_transfer_state: TransferState,
 
     pub gpu_madr: B32Register,
     pub gpu_bcr: B32Register,
-    pub gpu_chcr: Chcr,
+    pub gpu_chcr: B32Register,
     pub gpu_transfer_state: TransferState,
 
     pub cdrom_madr: B32Register,
     pub cdrom_bcr: B32Register,
-    pub cdrom_chcr: Chcr,
+    pub cdrom_chcr: B32Register,
     pub cdrom_transfer_state: TransferState,
 
     pub spu_madr: B32Register,
     pub spu_bcr: B32Register,
-    pub spu_chcr: Chcr,
+    pub spu_chcr: B32Register,
     pub spu_transfer_state: TransferState,
 
     pub pio_madr: B32Register,
     pub pio_bcr: B32Register,
-    pub pio_chcr: Chcr,
+    pub pio_chcr: B32Register,
     pub pio_transfer_state: TransferState,
     
     pub otc_madr: B32Register,
@@ -101,27 +100,27 @@ impl Dmac {
             dicr: Dicr::new(),
             mdecin_madr: B32Register::new(),
             mdecin_bcr: B32Register::new(),
-            mdecin_chcr: Chcr::new(),
+            mdecin_chcr: B32Register::new(),
             mdecin_transfer_state: TransferState::reset(),
             mdecout_madr: B32Register::new(),
             mdecout_bcr: B32Register::new(),
-            mdecout_chcr: Chcr::new(),
+            mdecout_chcr: B32Register::new(),
             mdecout_transfer_state: TransferState::reset(),
             gpu_madr: B32Register::new(),
             gpu_bcr: B32Register::new(),
-            gpu_chcr: Chcr::new(),
+            gpu_chcr: B32Register::new(),
             gpu_transfer_state: TransferState::reset(),
             cdrom_madr: B32Register::new(),
             cdrom_bcr: B32Register::new(),
-            cdrom_chcr: Chcr::new(),
+            cdrom_chcr: B32Register::new(),
             cdrom_transfer_state: TransferState::reset(),
             spu_madr: B32Register::new(),
             spu_bcr: B32Register::new(),
-            spu_chcr: Chcr::new(),
+            spu_chcr: B32Register::new(),
             spu_transfer_state: TransferState::reset(),
             pio_madr: B32Register::new(),
             pio_bcr: B32Register::new(),
-            pio_chcr: Chcr::new(),
+            pio_chcr: B32Register::new(),
             pio_transfer_state: TransferState::reset(),
             otc_madr: B32Register::new(),
             otc_bcr: B32Register::new(),
@@ -132,14 +131,6 @@ impl Dmac {
 }
 
 pub fn initialize(resources: &mut Resources) {
-    resources.dmac.mdecin_chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-    resources.dmac.mdecout_chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-    resources.dmac.gpu_chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-    resources.dmac.cdrom_chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-    resources.dmac.spu_chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-    resources.dmac.pio_chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-    resources.dmac.otc_chcr.chcr.bus_locked = NonNull::new(&mut resources.bus_locked as *mut bool);
-
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1080, 4, &mut resources.dmac.mdecin_madr as *mut dyn B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1084, 4, &mut resources.dmac.mdecin_bcr as *mut dyn B8MemoryMap);
     resources.r3000.memory_mapper.map::<u32>(0x1F80_1088, 4, &mut resources.dmac.mdecin_chcr as *mut dyn B8MemoryMap);

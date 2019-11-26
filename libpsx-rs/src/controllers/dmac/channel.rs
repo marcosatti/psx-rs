@@ -53,13 +53,13 @@ pub unsafe fn get_bcr(resources: &mut Resources, channel: usize) -> *mut B32Regi
 
 pub unsafe fn get_chcr(resources: &mut Resources, channel: usize) -> *mut B32Register {
     match channel {
-        0 => &mut resources.dmac.mdecin_chcr.register,
-        1 => &mut resources.dmac.mdecout_chcr.register,
-        2 => &mut resources.dmac.gpu_chcr.register,
-        3 => &mut resources.dmac.cdrom_chcr.register,
-        4 => &mut resources.dmac.spu_chcr.register,
-        5 => &mut resources.dmac.pio_chcr.register,
-        6 => &mut resources.dmac.otc_chcr.chcr.register,
+        0 => &mut resources.dmac.mdecin_chcr,
+        1 => &mut resources.dmac.mdecout_chcr,
+        2 => &mut resources.dmac.gpu_chcr,
+        3 => &mut resources.dmac.cdrom_chcr,
+        4 => &mut resources.dmac.spu_chcr,
+        5 => &mut resources.dmac.pio_chcr,
+        6 => &mut resources.dmac.otc_chcr.register,
         _ => unreachable!("Invalid DMAC channel"),
     }
 }

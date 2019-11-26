@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use crate::resources::Resources;
 use crate::controllers::r3000::*;
 use crate::controllers::r3000::debug;
@@ -31,7 +32,7 @@ pub fn translate_address(va: u32) -> u32 {
 
 pub fn read_u8(resources: &mut Resources, physical_address: u32) -> Result<u8, Hazard> {
     let result = {
-        if resources.bus_locked {
+        if resources.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
@@ -47,7 +48,7 @@ pub fn read_u8(resources: &mut Resources, physical_address: u32) -> Result<u8, H
 
 pub fn write_u8(resources: &mut Resources, physical_address: u32, value: u8) -> Result<(), Hazard> {
     let result = {
-        if resources.bus_locked {
+        if resources.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
@@ -63,7 +64,7 @@ pub fn write_u8(resources: &mut Resources, physical_address: u32, value: u8) -> 
 
 pub fn read_u16(resources: &mut Resources, physical_address: u32) -> Result<u16, Hazard> {
     let result = {
-        if resources.bus_locked {
+        if resources.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
@@ -79,7 +80,7 @@ pub fn read_u16(resources: &mut Resources, physical_address: u32) -> Result<u16,
 
 pub fn write_u16(resources: &mut Resources, physical_address: u32, value: u16) -> Result<(), Hazard> {
     let result = {
-        if resources.bus_locked {
+        if resources.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
@@ -95,7 +96,7 @@ pub fn write_u16(resources: &mut Resources, physical_address: u32, value: u16) -
 
 pub fn read_u32(resources: &mut Resources, physical_address: u32) -> Result<u32, Hazard> {
     let result = {
-        if resources.bus_locked {
+        if resources.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
@@ -111,7 +112,7 @@ pub fn read_u32(resources: &mut Resources, physical_address: u32) -> Result<u32,
 
 pub fn write_u32(resources: &mut Resources, physical_address: u32, value: u32) -> Result<(), Hazard> {
     let result = {
-        if resources.bus_locked {
+        if resources.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 

@@ -13,7 +13,7 @@ use std::marker::PhantomPinned;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use std::sync::atomic::AtomicBool
+use std::sync::atomic::AtomicBool;
 use log::info;
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
 use crate::types::memory::b8_memory::B8Memory;

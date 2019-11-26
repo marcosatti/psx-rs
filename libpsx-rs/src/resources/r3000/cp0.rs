@@ -34,9 +34,9 @@ pub const _CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
 pub const CAUSE_IP_INTC_OFFSET: Bitfield = Bitfield::new(2, 1);
 
 fn prid() -> u32 {
-    let value: u32 = 0;
-    PRID_REVISION.insert_into(value, 2);
-    PRID_IMPLEMENTATION.insert_into(value, 0);
+    let mut value: u32 = 0;
+    value = PRID_REVISION.insert_into(value, 2);
+    value = PRID_IMPLEMENTATION.insert_into(value, 0);
     value
 }
 

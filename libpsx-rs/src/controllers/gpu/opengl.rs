@@ -391,9 +391,9 @@ pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<usi
 
     for i in 0..fixed_buffer_size {
         let index = (size.width * size.height) - (size.width * (1 + (i / size.width))) + i;
-        let data: u16 = 0;
-        Bitfield::new(0, 8).insert_into(data, buffer[index] as u16);
-        Bitfield::new(8, 8).insert_into(data, buffer[index + 1] as u16);
+        let mut data: u16 = 0;
+        data = Bitfield::new(0, 8).insert_into(data, buffer[index] as u16);
+        data = Bitfield::new(8, 8).insert_into(data, buffer[index + 1] as u16);
         fixed_buffer[i] = data;
     }
 

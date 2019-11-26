@@ -1,4 +1,3 @@
-use std::ptr::NonNull;
 use parking_lot::Mutex;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
@@ -26,12 +25,12 @@ impl B8MemoryMap for Dicr {
     
     fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
         let _lock = self.mutex.lock();
-        let mut register_value = self.register.read_u32()
+        let mut register_value = self.register.read_u32();
         register_value = Bitfield::new(0, 6).copy(register_value, value);
         register_value = Bitfield::new(15, 1).copy(register_value, value);
         register_value = Bitfield::new(16, 7).copy(register_value, value);
         register_value = Bitfield::new(23, 1).copy(register_value, value);
-        register_value = Bitfield::new(24, 7).acknowledge(register_value, value)
+        register_value = Bitfield::new(24, 7).acknowledge(register_value, value);
         B8MemoryMap::write_u32(&mut self.register, offset, register_value)
     }
 }
@@ -50,14 +49,14 @@ impl OtcChcr {
 
 impl B8MemoryMap for OtcChcr {
     fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
-        B8MemoryMap::read_u32(&mut self.chcr, offset)
+        B8MemoryMap::read_u32(&mut self.register, offset)
     }
     
     fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
-        let mut register_value = self.chcr.register.read_u32();
+        let mut register_value = self.register.read_u32();
         register_value = CHCR_STARTBUSY.copy(register_value, value);
         register_value = CHCR_STARTTRIGGER.copy(register_value, value);
         register_value = CHCR_BIT30.copy(register_value, value);
-        B8MemoryMap::write_u32(&mut self.chcr, offset, register_value)
+        B8MemoryMap::write_u32(&mut self.register, offset, register_value)
     }
 }

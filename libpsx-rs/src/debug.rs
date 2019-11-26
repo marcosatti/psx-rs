@@ -4,12 +4,13 @@ use std::path::PathBuf;
 use std::fs::File;
 use std::io::Write;
 use std::ffi::CStr;
+use std::sync::atomic::AtomicBool;
 use opengl_sys::*;
 use log::debug;
 use crate::Core;
 use crate::resources::Resources;
 
-pub static mut DEBUG_CORE_EXIT: bool = false;
+pub static DEBUG_CORE_EXIT: AtomicBool = AtomicBool::new(false);
 
 pub fn analysis(core: &Core) {
     debug!("Core debug analysis:");

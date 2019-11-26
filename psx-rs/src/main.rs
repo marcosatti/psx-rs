@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::panic;
 use std::env::args;
 use std::time::Duration;
+use std::sync::atomic::Ordering;
 use log::{error, info};
 use sdl2::video::GLProfile;
 use opengl_sys::*;
@@ -87,18 +88,20 @@ fn main() {
     info!("Core initialized");
 
     // Do event loop
-    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-        while unsafe { !DEBUG_CORE_EXIT } {
-            for event in event_pump.poll_iter() {
-                match event {
-                    sdl2::event::Event::Quit { .. } => break,
-                    _ => {}
+    let result = panic::catch_unwind(
+        panic::AssertUnwindSafe(|| {
+            while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
+                for event in event_pump.poll_iter() {
+                    match event {
+                        sdl2::event::Event::Quit { .. } => break,
+                        _ => {}
+                    }
                 }
-            }
 
-            core.run();
-        }
-    }));
+                core.run();
+            }
+        })
+    );
 
     if result.is_err() {
         error!("Panic occurred, exiting");
@@ -145,6 +148,9 @@ fn setup_logger(log_file_path: &Path) {
 }
 
 fn setup_signal_handler() {
-    let ctrl_c_handler = || { unsafe { DEBUG_CORE_EXIT = true; } };
+    let ctrl_c_handler = || { 
+        DEBUG_CORE_EXIT.store(true, Ordering::Release);
+    };
+    
     ctrlc::set_handler(ctrl_c_handler).unwrap();
 }

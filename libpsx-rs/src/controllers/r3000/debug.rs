@@ -3,6 +3,7 @@ pub mod disassembler;
 pub mod register;
 
 use std::fmt::UpperHex;
+use std::sync::atomic::Ordering;
 use log::trace;
 use log::debug;
 use log::warn;
@@ -50,7 +51,7 @@ pub fn trace_state(resources: &Resources) {
     }
 
     if false {
-        unsafe { DEBUG_CORE_EXIT = true; }
+        DEBUG_CORE_EXIT.store(true, Ordering::Release);
     }
 }
 

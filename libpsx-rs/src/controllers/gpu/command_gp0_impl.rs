@@ -259,9 +259,9 @@ pub fn command_c0_handler<'a>(resources: &mut Resources, video_backend: &VideoBa
 
     let read_buffer = &mut resources.gpu.gp0_read_buffer;
     for i in 0..fifo_words {
-        let word: u32 = 0;
-        Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
-        Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
+        let mut word: u32 = 0;
+        word = Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
+        word = Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
         read_buffer.push_back(word)
     }
 

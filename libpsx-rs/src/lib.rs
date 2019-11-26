@@ -13,6 +13,7 @@ pub mod backends;
 use std::pin::Pin;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
+use std::sync::atomic::{fence, Ordering};
 use opengl_sys::*;
 use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
@@ -98,38 +99,55 @@ impl<'a> Core<'a> {
         let now = Instant::now();
 
         let time = self.config.time_delta;
+        
+        fence(Ordering::Acquire);
+        
         self.task_executor.scope(|scope| {
             scope.spawn(|_| {
+                fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_r3000(&state, Event::Time(time));
                 unsafe { *benchmark.r3000.get() = timer.elapsed(); }
+                fence(Ordering::Release);
             });
             scope.spawn(|_| {
+                fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_dmac(&state, Event::Time(time));
                 unsafe { *benchmark.dmac.get() = timer.elapsed(); }
+                fence(Ordering::Release);
             });
             scope.spawn(|_| {
+                fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_gpu(&state, Event::Time(time));
                 unsafe { *benchmark.gpu.get() = timer.elapsed(); }
+                fence(Ordering::Release);
             });
             scope.spawn(|_| {
+                fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_spu(&state, Event::Time(time));
                 unsafe { *benchmark.spu.get() = timer.elapsed(); }
+                fence(Ordering::Release);
             });
             scope.spawn(|_| {
+                fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_gpu_crtc(&state, Event::Time(time));
                 unsafe { *benchmark.gpu_crtc.get() = timer.elapsed(); }
+                fence(Ordering::Release);
             });
             scope.spawn(|_| { 
+                fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_intc(&state, Event::Time(time));
                 unsafe { *benchmark.intc.get() = timer.elapsed(); }
+                fence(Ordering::Release);
             });
         });
+
+        fence(Ordering::Release);
 
         let scope_duration = now.elapsed();
         debug::benchmark::trace_performance(&time, &scope_duration, &benchmark);
