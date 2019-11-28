@@ -9,6 +9,7 @@ pub mod resources;
 pub mod controllers;
 pub mod debug;
 pub mod backends;
+pub mod executor;
 
 use std::pin::Pin;
 use std::path::PathBuf;
@@ -18,7 +19,7 @@ use opengl_sys::*;
 use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use log::info;
-use crate::debug::benchmark::Benchmark;
+use crate::debug::benchmark::BenchmarkResults;
 use crate::debug::debug_opengl_trace;
 use crate::backends::video::VideoBackend;
 use crate::backends::video::opengl;
@@ -95,7 +96,7 @@ impl<'a> Core<'a> {
             audio_backend: &self.config.audio_backend,
         };
 
-        let benchmark = Benchmark::empty();
+        let benchmark_results = BenchmarkResults::new();
         let now = Instant::now();
 
         let time = self.config.time_delta;
@@ -107,42 +108,42 @@ impl<'a> Core<'a> {
                 fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_r3000(&state, Event::Time(time));
-                unsafe { *benchmark.r3000.get() = timer.elapsed(); }
+                benchmark_results.add_result("r3000", timer.elapsed());
                 fence(Ordering::Release);
             });
             scope.spawn(|_| {
                 fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_dmac(&state, Event::Time(time));
-                unsafe { *benchmark.dmac.get() = timer.elapsed(); }
+                benchmark_results.add_result("dmac", timer.elapsed());
                 fence(Ordering::Release);
             });
             scope.spawn(|_| {
                 fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_gpu(&state, Event::Time(time));
-                unsafe { *benchmark.gpu.get() = timer.elapsed(); }
+                benchmark_results.add_result("gpu", timer.elapsed());
                 fence(Ordering::Release);
             });
             scope.spawn(|_| {
                 fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_spu(&state, Event::Time(time));
-                unsafe { *benchmark.spu.get() = timer.elapsed(); }
+                benchmark_results.add_result("spu", timer.elapsed());
                 fence(Ordering::Release);
             });
             scope.spawn(|_| {
                 fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_gpu_crtc(&state, Event::Time(time));
-                unsafe { *benchmark.gpu_crtc.get() = timer.elapsed(); }
+                benchmark_results.add_result("gpu_ctrc", timer.elapsed());
                 fence(Ordering::Release);
             });
             scope.spawn(|_| { 
                 fence(Ordering::Acquire);
                 let timer = Instant::now();
                 run_intc(&state, Event::Time(time));
-                unsafe { *benchmark.intc.get() = timer.elapsed(); }
+                benchmark_results.add_result("intc", timer.elapsed());
                 fence(Ordering::Release);
             });
         });
@@ -150,7 +151,7 @@ impl<'a> Core<'a> {
         fence(Ordering::Release);
 
         let scope_duration = now.elapsed();
-        debug::benchmark::trace_performance(&time, &scope_duration, &benchmark);
+        debug::benchmark::trace_performance(time, scope_duration, benchmark_results);
     }
 }
 

@@ -67,3 +67,7 @@ pub extern "C" fn debug_opengl_trace(_source: GLenum, type_: GLenum, _id: GLuint
         }
     }
 }
+
+pub struct DebugState {
+
+}
