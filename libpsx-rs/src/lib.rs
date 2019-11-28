@@ -9,7 +9,6 @@ pub mod resources;
 pub mod controllers;
 pub mod debug;
 pub mod backends;
-pub mod executor;
 
 use std::pin::Pin;
 use std::path::PathBuf;
