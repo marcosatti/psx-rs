@@ -11,14 +11,14 @@ const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_WRITE_TRACE: bool = false;
 
-static mut TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
+static TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
 
 pub fn transfer_start(resources: &mut Resources, channel: usize) {
     if !ENABLE_CHANNEL_STATE_CHANGE_TRACE {
         return;
     }
 
-    let transfer_id = unsafe { TRANSFER_ID.fetch_add(1, Ordering::SeqCst) };
+    let transfer_id = TRANSFER_ID.fetch_add(1, Ordering::SeqCst);
     let chcr = unsafe { &mut *get_chcr(resources, channel) };
     let madr = unsafe { &mut *get_madr(resources, channel) };
     let bcr = unsafe { &mut *get_bcr(resources, channel) };

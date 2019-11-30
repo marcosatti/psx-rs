@@ -46,11 +46,8 @@ fn run_time(resources: &mut Resources, audio_backend: &AudioBackend, duration: D
     }
 
     {
-        let current_duration = unsafe { &mut *(&mut resources.spu.dac.current_duration as *mut Duration) };
-        
-        *current_duration += duration;
-        while *current_duration >= SAMPLE_RATE_PERIOD {
-            *current_duration -= SAMPLE_RATE_PERIOD;
+        handle_current_duration_tick(resources, duration);
+        while handle_current_duration_update(resources) {
             generate_sound(resources, audio_backend);
         }
     }
@@ -60,4 +57,20 @@ fn tick(resources: &mut Resources) {
     handle_current_volume(resources);
     handle_transfer(resources);
     handle_interrupt_check(resources);
+}
+
+fn handle_current_duration_tick(resources: &mut Resources, duration: Duration) {
+    let current_duration = &mut resources.spu.dac.current_duration;
+    *current_duration += duration;
+}
+
+fn handle_current_duration_update(resources: &mut Resources) -> bool {
+    let current_duration = &mut resources.spu.dac.current_duration;
+
+    if *current_duration >= SAMPLE_RATE_PERIOD {
+        *current_duration -= SAMPLE_RATE_PERIOD;
+        true
+    } else {
+        false
+    }
 }
