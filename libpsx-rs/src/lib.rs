@@ -1,7 +1,3 @@
-#![feature(const_fn)]
-#![feature(nll)]
-#![feature(box_syntax)]
-
 pub mod constants;
 pub mod types;
 pub mod utilities;
@@ -9,30 +5,17 @@ pub mod resources;
 pub mod controllers;
 pub mod debug;
 pub mod backends;
+pub mod executor;
 
 use std::pin::Pin;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use std::sync::atomic::{fence, Ordering};
-use opengl_sys::*;
-use openal_sys::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use log::info;
-use crate::debug::benchmark::BenchmarkResults;
-use crate::debug::debug_opengl_trace;
-use crate::backends::video::VideoBackend;
-use crate::backends::video::opengl;
-use crate::backends::audio::AudioBackend;
-use crate::backends::audio::openal;
+use crate::backends::video::{self, VideoBackend};
+use crate::backends::audio::{self, AudioBackend};
 use crate::resources::Resources;
 use crate::controllers::Event;
-use crate::controllers::r3000::run as run_r3000;
-use crate::controllers::gpu::crtc::run as run_gpu_crtc;
-use crate::controllers::intc::run as run_intc;
-use crate::controllers::gpu::run as run_gpu;
-use crate::controllers::dmac::run as run_dmac;
-use crate::controllers::spu::run as run_spu;
-use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
 pub struct State<'b, 'a: 'b> {
     pub resources: *mut Resources,
@@ -65,7 +48,12 @@ impl<'a> Core<'a> {
         let mut resources = Resources::new();
 
         let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
-        Resources::load_bios(&mut resources, &bios_path);
+
+        unsafe {
+            let resources_mut = resources.as_mut().get_unchecked_mut();
+            Resources::initialize(resources_mut);
+            Resources::load_bios(resources_mut, &bios_path);
+        }
 
         let task_executor = ThreadPoolBuilder::new()
             .num_threads(config.worker_threads)
@@ -76,8 +64,8 @@ impl<'a> Core<'a> {
             .build()
             .unwrap();
 
-        video_setup(&config.video_backend);
-        audio_setup(&config.audio_backend);
+        video::setup(&config.video_backend);
+        audio::setup(&config.audio_backend);
 
         Core {
             resources: resources,
@@ -86,138 +74,24 @@ impl<'a> Core<'a> {
         }
     }
 
-    pub fn run(&mut self) {
-        let resources_mut = unsafe { self.resources.as_mut().get_unchecked_mut() as *mut Resources };
+    pub fn step(&mut self) {
+        let resources_mut = unsafe { 
+            self.resources.as_mut().get_unchecked_mut()  
+        };
         
         let state = State {
-            resources: resources_mut,
+            resources: resources_mut as *mut Resources,
             video_backend: &self.config.video_backend,
             audio_backend: &self.config.audio_backend,
         };
 
-        let benchmark_results = BenchmarkResults::new();
-        let now = Instant::now();
-
         let time = self.config.time_delta;
+        let event = Event::Time(time);
         
-        fence(Ordering::Acquire);
-        
-        self.task_executor.scope(|scope| {
-            scope.spawn(|_| {
-                fence(Ordering::Acquire);
-                let timer = Instant::now();
-                run_r3000(&state, Event::Time(time));
-                benchmark_results.add_result("r3000", timer.elapsed());
-                fence(Ordering::Release);
-            });
-            scope.spawn(|_| {
-                fence(Ordering::Acquire);
-                let timer = Instant::now();
-                run_dmac(&state, Event::Time(time));
-                benchmark_results.add_result("dmac", timer.elapsed());
-                fence(Ordering::Release);
-            });
-            scope.spawn(|_| {
-                fence(Ordering::Acquire);
-                let timer = Instant::now();
-                run_gpu(&state, Event::Time(time));
-                benchmark_results.add_result("gpu", timer.elapsed());
-                fence(Ordering::Release);
-            });
-            scope.spawn(|_| {
-                fence(Ordering::Acquire);
-                let timer = Instant::now();
-                run_spu(&state, Event::Time(time));
-                benchmark_results.add_result("spu", timer.elapsed());
-                fence(Ordering::Release);
-            });
-            scope.spawn(|_| {
-                fence(Ordering::Acquire);
-                let timer = Instant::now();
-                run_gpu_crtc(&state, Event::Time(time));
-                benchmark_results.add_result("gpu_ctrc", timer.elapsed());
-                fence(Ordering::Release);
-            });
-            scope.spawn(|_| { 
-                fence(Ordering::Acquire);
-                let timer = Instant::now();
-                run_intc(&state, Event::Time(time));
-                benchmark_results.add_result("intc", timer.elapsed());
-                fence(Ordering::Release);
-            });
-        });
+        let timer = Instant::now();
+        let benchmark_results = executor::atomic_broadcast(&self.task_executor, &state, event);
+        let scope_duration = timer.elapsed();
 
-        fence(Ordering::Release);
-
-        let scope_duration = now.elapsed();
         debug::benchmark::trace_performance(time, scope_duration, benchmark_results);
-    }
-}
-
-fn video_setup(video_backend: &VideoBackend) {
-    match video_backend {
-        VideoBackend::None => { unimplemented!() },
-        VideoBackend::Opengl(ref params) => video_setup_opengl(params),
-    }
-}
-
-fn video_setup_opengl(backend_params: &opengl::BackendParams) {
-    let (_context_guard, _context) = backend_params.context.guard();
-
-    unsafe {
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
-        glDebugMessageCallbackARB(Some(debug_opengl_trace), std::ptr::null());
-
-        let mut window_fbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut window_fbo);
-        opengl::rendering::WINDOW_FBO = window_fbo as GLuint;
-
-        let mut fbo = 0;
-        glGenFramebuffers(1, &mut fbo);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-
-        let mut texture = 0;
-        glGenTextures(1, &mut texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);  
-
-        let mut rbo = 0;
-        glGenRenderbuffers(1, &mut rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint);
-        
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); 
-
-        glClearColor(0.0, 0.0, 0.0, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        if glGetError() != GL_NO_ERROR {
-            panic!("Error initializing OpenGL video backend");
-        }
-    }
-}
-
-fn audio_setup(audio_backend: &AudioBackend) {
-    match audio_backend {
-        AudioBackend::None => {},
-        AudioBackend::Openal(ref params) => audio_setup_openal(params),
-    }
-}
-
-fn audio_setup_openal(backend_params: &openal::BackendParams) {
-    let (_context_guard, _context) = backend_params.context.guard();
-
-    unsafe {
-        alGenSources(openal::rendering::SOURCES.len() as ALsizei, openal::rendering::SOURCES.as_mut_ptr());
-        alGenBuffers(openal::rendering::BUFFERS.len() as ALsizei, openal::rendering::BUFFERS.as_mut_ptr());
-
-        if alGetError() != AL_NO_ERROR as ALenum {
-            panic!("Error initializing OpenAL audio backend");
-        }
     }
 }

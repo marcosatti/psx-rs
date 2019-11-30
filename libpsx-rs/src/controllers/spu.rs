@@ -10,7 +10,8 @@ pub mod interpolation;
 pub mod interrupt;
 
 use std::time::Duration;
-use crate::State;
+use crate::audio::AudioBackend;
+use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::constants::spu::*;
 use crate::constants::spu::dac::*;
@@ -21,15 +22,14 @@ use crate::controllers::spu::dac::*;
 use crate::controllers::spu::sound::*;
 use crate::resources::spu::*;
 
-pub fn run(state: &State, event: Event) {
+pub fn run(state: &mut ControllerState, event: Event) {
     match event {
-        Event::Time(time) => run_time(state, time),
+        Event::Time(time) => run_time(state.resources, state.audio_backend, time),
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
+fn run_time(resources: &mut Resources, audio_backend: &AudioBackend, duration: Duration) {
     {
-        let resources = unsafe { &mut *state.resources };
         let control = &resources.spu.control;
 
         if control.read_bitfield(CONTROL_ENABLE) == 0 {
@@ -38,7 +38,6 @@ fn run_time(state: &State, duration: Duration) {
     }
 
     {
-        let resources = unsafe { &mut *state.resources };
         let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
         for _ in 0..ticks {
@@ -47,13 +46,12 @@ fn run_time(state: &State, duration: Duration) {
     }
 
     {
-        let resources = unsafe { &mut *state.resources };
         let current_duration = unsafe { &mut *(&mut resources.spu.dac.current_duration as *mut Duration) };
         
         *current_duration += duration;
         while *current_duration >= SAMPLE_RATE_PERIOD {
             *current_duration -= SAMPLE_RATE_PERIOD;
-            generate_sound(resources, state.audio_backend);
+            generate_sound(resources, audio_backend);
         }
     }
 }

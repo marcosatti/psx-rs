@@ -1,4 +1,4 @@
-use crate::State;
+use crate::resources::Resources;
 
-pub fn handle_timers(_state: &State) {
+pub fn handle_timers(_resources: &mut Resources) {
 }

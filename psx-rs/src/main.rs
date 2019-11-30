@@ -98,7 +98,7 @@ fn main() {
                     }
                 }
 
-                core.run();
+                core.step();
             }
         })
     );

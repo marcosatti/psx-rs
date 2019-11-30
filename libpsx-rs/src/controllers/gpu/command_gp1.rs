@@ -3,7 +3,7 @@ use crate::resources::Resources;
 use crate::resources::gpu::*;
 use crate::controllers::gpu::command_gp1_impl;
 
-pub fn handle_command<'a>(resources: &mut Resources, video_backend: &VideoBackend<'a>) {
+pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
     let fifo = &mut resources.gpu.gpu1814.gp1;
 
     // Commands (GP1) are always of length 1.

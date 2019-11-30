@@ -64,7 +64,7 @@ pub struct Resources {
 
 impl Resources {
     pub fn new() -> Pin<Box<Resources>> {
-        let mut resources = Box::pin(Resources {
+        Box::pin(Resources {
             _pin: PhantomPinned,
             bus_locked: AtomicBool::new(false),
             r3000: R3000::new(),
@@ -80,16 +80,10 @@ impl Resources {
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
             post_display: B8Register::new(),
             pio: B8Memory::new_initialized(0x100, 0xFF),
-        });
-
-        Self::initialize(&mut resources);
-
-        resources
+        })
     }
 
-    fn initialize(resources: &mut Pin<Box<Resources>>) {
-        let resources = unsafe { resources.as_mut().get_unchecked_mut() };
-
+    pub fn initialize(resources: &mut Resources) {
         r3000_initialize(resources);
         intc_initialize(resources);
         timers_initialize(resources);
@@ -104,9 +98,7 @@ impl Resources {
         resources.r3000.memory_mapper.map::<u32>(0x1F00_0000, 0x100, &mut resources.pio as *mut dyn B8MemoryMap);
     }
 
-    pub fn load_bios(resources: &mut Pin<Box<Resources>>, path: &PathBuf) {
-        let resources = unsafe { resources.as_mut().get_unchecked_mut() };
-
+    pub fn load_bios(resources: &mut Resources, path: &PathBuf) {
         info!("Loading BIOS from {}", path.to_str().unwrap());
         let mut f = File::open(path).unwrap();
         let mut buffer = Vec::new();

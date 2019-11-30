@@ -4,7 +4,7 @@ pub mod debug;
 use std::time::Duration;
 use std::sync::atomic::Ordering;
 use log::warn;
-use crate::State;
+use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::constants::dmac::*;
 use crate::types::bitfield::Bitfield;
@@ -13,15 +13,14 @@ use crate::controllers::dmac::channel::*;
 use crate::resources::dmac::*;
 use crate::resources::dmac::channel::*;
 
-pub fn run(state: &State, event: Event) {
+pub fn run(state: &mut ControllerState, event: Event) {
     match event {
-        Event::Time(time) => run_time(state, time),
+        Event::Time(time) => run_time(state.resources, time),
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
+fn run_time(resources: &mut Resources, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
-    let resources = unsafe { &mut *state.resources };
 
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 

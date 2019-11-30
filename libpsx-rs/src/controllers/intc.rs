@@ -2,21 +2,20 @@ pub mod debug;
 
 use log::debug;
 use std::time::Duration;
-use crate::State;
+use crate::controllers::ControllerState;
 use crate::types::bitfield::Bitfield;
 use crate::resources::Resources;
 use crate::constants::intc::CLOCK_SPEED;
 use crate::controllers::Event;
 use crate::resources::r3000::cp0::register::IrqLine;
 
-pub fn run(state: &State, event: Event) {
+pub fn run(state: &mut ControllerState, event: Event) {
     match event {
-        Event::Time(time) => run_time(state, time),
+        Event::Time(time) => run_time(state.resources, time),
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
-    let resources = unsafe { &mut *state.resources };
+fn run_time(resources: &mut Resources, duration: Duration) {
     let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
     for _ in 0..ticks {

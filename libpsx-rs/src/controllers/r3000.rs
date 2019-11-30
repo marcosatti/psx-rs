@@ -7,7 +7,7 @@ pub mod exception;
 
 use std::time::Duration;
 use log::debug;
-use crate::State;
+use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::constants::r3000::{CLOCK_SPEED, INSTRUCTION_SIZE};
 use crate::controllers::Event;
@@ -20,14 +20,13 @@ use crate::types::mips1::instruction::Instruction;
 
 pub type InstResult = Result<(), Hazard>;
 
-pub fn run(state: &State, event: Event) {
+pub fn run(state: &mut ControllerState, event: Event) {
     match event {
-        Event::Time(duration) => run_time(state, duration),
+        Event::Time(duration) => run_time(state.resources, duration),
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
-    let resources = unsafe { &mut *state.resources };
+fn run_time(resources: &mut Resources, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     
     while ticks > 0 {

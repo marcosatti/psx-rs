@@ -3,9 +3,7 @@ pub mod benchmark;
 use std::path::PathBuf;
 use std::fs::File;
 use std::io::Write;
-use std::ffi::CStr;
 use std::sync::atomic::AtomicBool;
-use opengl_sys::*;
 use log::debug;
 use crate::Core;
 use crate::resources::Resources;
@@ -57,17 +55,4 @@ pub fn trace_intc(resources: &Resources, only_enabled: bool) {
 
 pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
     crate::controllers::dmac::debug::trace_dmac(resources, only_enabled);
-}
-
-pub extern "C" fn debug_opengl_trace(_source: GLenum, type_: GLenum, _id: GLuint, severity: GLenum, _length: GLsizei, message: *const GLchar, _user_param: *const std::ffi::c_void) {
-    unsafe {
-        if type_ == GL_DEBUG_TYPE_ERROR_ARB {
-            let message = CStr::from_ptr(message);
-            debug!("OpenGL error: type: {}, severity = {}, message = {}", type_, severity, message.to_str().unwrap());
-        }
-    }
-}
-
-pub struct DebugState {
-
 }
