@@ -20,8 +20,8 @@ impl Timers {
 
 pub fn initialize(resources: &mut Resources) {
     for timer_index in 0..3 {
-        resources.r3000.memory_mapper.map::<u32>(0x1F80_1100 + timer_index * 0x10, 4, &mut resources.timers.timers[timer_index as usize].count as *mut dyn B8MemoryMap);
-        resources.r3000.memory_mapper.map::<u32>(0x1F80_1104 + timer_index * 0x10, 4, &mut resources.timers.timers[timer_index as usize].mode as *mut dyn B8MemoryMap);
-        resources.r3000.memory_mapper.map::<u32>(0x1F80_1108 + timer_index * 0x10, 4, &mut resources.timers.timers[timer_index as usize].target as *mut dyn B8MemoryMap);
+        resources.r3000.memory_mapper.map(0x1F80_1100 + timer_index * 0x10, 4, &mut resources.timers.timers[timer_index as usize].count as *mut dyn B8MemoryMap);
+        resources.r3000.memory_mapper.map(0x1F80_1104 + timer_index * 0x10, 4, &mut resources.timers.timers[timer_index as usize].mode as *mut dyn B8MemoryMap);
+        resources.r3000.memory_mapper.map(0x1F80_1108 + timer_index * 0x10, 4, &mut resources.timers.timers[timer_index as usize].target as *mut dyn B8MemoryMap);
     }
 }

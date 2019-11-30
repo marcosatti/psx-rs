@@ -1,7 +1,8 @@
 use std::ptr::NonNull;
 use std::mem::size_of;
 use std::convert::TryInto;
-use num_traits::Unsigned;
+use std::fmt::{UpperHex, Debug};
+use num_traits::{Unsigned, PrimInt};
 use crate::types::bitfield::Bitfield;
 
 #[derive(Clone, Copy, Debug)]
@@ -44,15 +45,19 @@ pub trait B8MemoryMap {
     }
 }
 
-pub struct B8MemoryMapper {
-    mappings: Vec<Option<Vec<Option<(NonNull<dyn B8MemoryMap>, usize)>>>>,
+pub struct B8MemoryMapper<T: PrimInt + Unsigned> {
+    mappings: Vec<Option<Vec<Option<(NonNull<dyn B8MemoryMap>, T)>>>>,
     directory_mask: Bitfield,
     page_mask: Bitfield,
     offset_mask: Bitfield,
 }
 
-impl B8MemoryMapper {
-    pub fn new<T>(directory_bits: usize, page_bits: usize) -> B8MemoryMapper {
+impl<T> B8MemoryMapper<T> 
+where
+    T: PrimInt + Unsigned + TryInto<usize> + Debug + UpperHex,
+    <T as std::convert::TryInto<usize>>::Error: std::fmt::Debug,
+{
+    pub fn new(directory_bits: usize, page_bits: usize) -> B8MemoryMapper<T> {
         let type_bits = size_of::<T>() * 8;
         let directory_mask = Bitfield::new(type_bits - directory_bits, directory_bits);
         let page_mask = Bitfield::new(type_bits - directory_bits - page_bits, page_bits);
@@ -67,27 +72,20 @@ impl B8MemoryMapper {
             offset_mask: offset_mask,
         }
     }
-}
 
-impl B8MemoryMapper
-{
-    pub fn map<T>(&mut self, address: T, size: usize, object: *mut dyn B8MemoryMap) 
-    where 
-        T: TryInto<usize> + Unsigned
-    {
+    pub fn map(&mut self, address: T, size: usize, object: *mut dyn B8MemoryMap) {
         debug_assert!(size > 0);
         debug_assert!(!object.is_null());
 
-        let address = address.try_into().ok().unwrap();
-        let mut directory_index = self.directory_mask.extract_from(address);
-        let mut page_index = self.page_mask.extract_from(address);
+        let mut directory_index: usize = self.directory_mask.extract_from(address).try_into().unwrap();
+        let mut page_index: usize = self.page_mask.extract_from(address).try_into().unwrap();
         let len_pages = 1 << self.page_mask.length;
         let mut map_size: usize = 0;
 
-        'mapping_loop: while map_size < size {
+        while map_size < size {
             let directory = &mut self.mappings[directory_index];
 
-            while page_index < len_pages && map_size < size {
+            while (page_index < len_pages) && (map_size < size) {
                 if directory.is_none() {
                     *directory = Some(vec![None; len_pages]);
                 }
@@ -96,7 +94,7 @@ impl B8MemoryMapper
                 let page = &mut directory[page_index];
 
                 if page.is_some() {
-                    panic!(format!("Address already mapped: 0x{:0x}", address));
+                    panic!(format!("Address already mapped: 0x{:0X}", address));
                 }
 
                 *page = Some((unsafe { NonNull::new_unchecked(object) }, address));
@@ -110,15 +108,15 @@ impl B8MemoryMapper
         }
     }
 
-    fn object_at(&self, address: usize) -> (*mut dyn B8MemoryMap, usize)
+    fn object_at(&self, address: T) -> (*mut dyn B8MemoryMap, T)
     {
         unsafe {
-            let directory_index = self.directory_mask.extract_from(address);
+            let directory_index: usize = self.directory_mask.extract_from(address).try_into().unwrap();
             let directory = match self.mappings.get_unchecked(directory_index).as_ref() {
                 Some(d) => d,
                 None => panic!(format!("Missing object map at address 0x{:0X}", address)),
             };
-            let page_index = self.page_mask.extract_from(address);
+            let page_index: usize = self.page_mask.extract_from(address).try_into().unwrap();
             let page = &directory.get_unchecked(page_index);
             let page = match page.as_ref() {
                 Some(p) => p,
@@ -128,13 +126,9 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn read_u8<T>(&self, address: T) -> ReadResult<u8>
-    where 
-        T: TryInto<usize> + Unsigned
-    {
-        let address: usize = T::try_into(address).ok().unwrap();
+    pub fn read_u8(&self, address: T) -> ReadResult<u8> {
         let (object, base_address) = self.object_at(address);
-        let offset_index = (address - base_address) + self.offset_mask.extract_from(address);
+        let offset_index: usize = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -142,13 +136,9 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn write_u8<T>(&self, address: T, value: u8) -> WriteResult
-    where 
-        T: TryInto<usize> + Unsigned
-    {
-        let address: usize = T::try_into(address).ok().unwrap();
+    pub fn write_u8(&self, address: T, value: u8) -> WriteResult {
         let (object, base_address) = self.object_at(address);
-        let offset_index = (address - base_address) + self.offset_mask.extract_from(address);
+        let offset_index: usize = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -156,13 +146,9 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn read_u16<T>(&self, address: T) -> ReadResult<u16>
-    where 
-        T: TryInto<usize> + Unsigned
-    {
-        let address: usize = T::try_into(address).ok().unwrap();
+    pub fn read_u16(&self, address: T) -> ReadResult<u16> {
         let (object, base_address) = self.object_at(address);
-        let offset_index = (address - base_address) + self.offset_mask.extract_from(address);
+        let offset_index: usize = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -170,13 +156,9 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn write_u16<T>(&self, address: T, value: u16) -> WriteResult
-    where 
-        T: TryInto<usize> + Unsigned
-    {
-        let address: usize = T::try_into(address).ok().unwrap();
+    pub fn write_u16(&self, address: T, value: u16) -> WriteResult {
         let (object, base_address) = self.object_at(address);
-        let offset_index = (address - base_address) + self.offset_mask.extract_from(address);
+        let offset_index: usize = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -184,13 +166,9 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn read_u32<T>(&self, address: T) -> ReadResult<u32>
-    where 
-        T: TryInto<usize> + Unsigned
-    {
-        let address: usize = T::try_into(address).ok().unwrap();
+    pub fn read_u32(&self, address: T) -> ReadResult<u32> {
         let (object, base_address) = self.object_at(address);
-        let offset_index = (address - base_address) + self.offset_mask.extract_from(address);
+        let offset_index: usize = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -198,13 +176,9 @@ impl B8MemoryMapper
         }
     }
 
-    pub fn write_u32<T>(&self, address: T, value: u32) -> WriteResult
-    where 
-        T: TryInto<usize> + Unsigned
-    {
-        let address: usize = T::try_into(address).ok().unwrap();
+    pub fn write_u32(&self, address: T, value: u32) -> WriteResult {
         let (object, base_address) = self.object_at(address);
-        let offset_index = (address - base_address) + self.offset_mask.extract_from(address);
+        let offset_index: usize = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;

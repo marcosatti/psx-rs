@@ -63,9 +63,9 @@ pub fn initialize(resources: &mut Resources) {
     resources.padmc.padmc1040.tx_fifo = NonNull::new(&mut resources.padmc.tx_fifo as *mut Fifo<u8>);
     resources.padmc.padmc1040.rx_fifo = NonNull::new(&mut resources.padmc.rx_fifo as *mut Fifo<u8>);
 
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1040, 4, &mut resources.padmc.padmc1040 as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1044, 4, &mut resources.padmc.stat as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1048, 2, &mut resources.padmc.mode as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_104A, 2, &mut resources.padmc.ctrl as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_104E, 2, &mut resources.padmc.baud_reload as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1040, 4, &mut resources.padmc.padmc1040 as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1044, 4, &mut resources.padmc.stat as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1048, 2, &mut resources.padmc.mode as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_104A, 2, &mut resources.padmc.ctrl as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_104E, 2, &mut resources.padmc.baud_reload as *mut dyn B8MemoryMap);
 }

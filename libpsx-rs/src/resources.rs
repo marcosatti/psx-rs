@@ -94,8 +94,8 @@ impl Resources {
         cdrom_initialize(resources);
         padmc_initialize(resources);
 
-        resources.r3000.memory_mapper.map::<u32>(0x1F80_2041, 1, &mut resources.post_display as *mut dyn B8MemoryMap);
-        resources.r3000.memory_mapper.map::<u32>(0x1F00_0000, 0x100, &mut resources.pio as *mut dyn B8MemoryMap);
+        resources.r3000.memory_mapper.map(0x1F80_2041, 1, &mut resources.post_display as *mut dyn B8MemoryMap);
+        resources.r3000.memory_mapper.map(0x1F00_0000, 0x100, &mut resources.pio as *mut dyn B8MemoryMap);
     }
 
     pub fn load_bios(resources: &mut Resources, path: &PathBuf) {

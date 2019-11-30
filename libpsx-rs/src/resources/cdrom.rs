@@ -67,8 +67,8 @@ pub fn initialize(resources: &mut Resources) {
     resources.cdrom.cdrom1803.int_flag = NonNull::new(&mut resources.cdrom.int_flag as *mut IntFlag);
     resources.cdrom.cdrom1803.request = NonNull::new(&mut resources.cdrom.request as *mut B8Register);
 
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1800, 1, &mut resources.cdrom.status as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1801, 1, &mut resources.cdrom.cdrom1801 as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1802, 1, &mut resources.cdrom.cdrom1802 as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map::<u32>(0x1F80_1803, 1, &mut resources.cdrom.cdrom1803 as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1800, 1, &mut resources.cdrom.status as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1801, 1, &mut resources.cdrom.cdrom1801 as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1802, 1, &mut resources.cdrom.cdrom1802 as *mut dyn B8MemoryMap);
+    resources.r3000.memory_mapper.map(0x1F80_1803, 1, &mut resources.cdrom.cdrom1803 as *mut dyn B8MemoryMap);
 }
