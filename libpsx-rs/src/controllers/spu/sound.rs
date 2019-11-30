@@ -122,13 +122,13 @@ fn decode_adpcm_block(resources: &mut Resources, voice_id: usize) {
     let memory = &resources.spu.memory;
 
     // ADPCM header.
-    let header = [memory.read_u8(play_state.current_address), memory.read_u8(play_state.current_address + 1)];
+    let header = [memory.read_u8(play_state.current_address as u32), memory.read_u8((play_state.current_address + 1) as u32)];
     play_state.adpcm_state.params = decode_header(header);
 
     // ADPCM (packed) samples are from indexes 2 -> 15, with each byte containing 2 real samples.
     let mut sample_buffer = [0; 28];
     for i in 0..14 {
-        let data = memory.read_u8(play_state.current_address + (2 + i));
+        let data = memory.read_u8((play_state.current_address + (2 + i)) as u32);
         let samples = decode_frame(data, &play_state.adpcm_state.params, &mut play_state.adpcm_state.old_sample, &mut play_state.adpcm_state.older_sample);
         sample_buffer[i * 2] = samples[0];
         sample_buffer[(i * 2) + 1] = samples[1];

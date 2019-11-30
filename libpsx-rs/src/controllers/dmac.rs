@@ -124,10 +124,10 @@ fn handle_continuous_transfer(resources: &mut Resources, channel: usize) -> i32 
                 return 0;
             }
             let value = result.unwrap();
-            resources.main_memory.write_u32(continuous_state.current_address as usize, value);
+            resources.main_memory.write_u32(continuous_state.current_address as u32, value);
         },
         TransferDirection::ToChannel => {
-            let value = resources.main_memory.read_u32(continuous_state.current_address as usize);
+            let value = resources.main_memory.read_u32(continuous_state.current_address as u32);
             let result = push_channel_data(resources, channel, value);
             if result.is_err() {
                 return 0;
@@ -178,10 +178,10 @@ fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i32 {
                 return 0;
             }
             let value = result.unwrap();
-            resources.main_memory.write_u32(blocks_state.current_address as usize, value);
+            resources.main_memory.write_u32(blocks_state.current_address as u32, value);
         },
         TransferDirection::ToChannel => {
-            let value = resources.main_memory.read_u32(blocks_state.current_address as usize);
+            let value = resources.main_memory.read_u32(blocks_state.current_address as u32);
             let result = push_channel_data(resources, channel, value);
             if result.is_err() {
                 return 0;
@@ -243,7 +243,7 @@ fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32
             return 1;
         }
 
-        let header_value = resources.main_memory.read_u32(linked_list_state.next_address as usize);
+        let header_value = resources.main_memory.read_u32(linked_list_state.next_address as u32);
         let next_address = Bitfield::new(0, 24).extract_from(header_value);
         let target_count = Bitfield::new(24, 8).extract_from(header_value) as usize;
 
@@ -255,7 +255,7 @@ fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32
         return 1;
     } else {
         let address = (linked_list_state.current_address + DATA_SIZE) + ((linked_list_state.current_count as u32) * DATA_SIZE);
-        let value = resources.main_memory.read_u32(address as usize);
+        let value = resources.main_memory.read_u32(address as u32);
         let result = push_channel_data(resources, channel, value);
         if result.is_err() {
             return 0;

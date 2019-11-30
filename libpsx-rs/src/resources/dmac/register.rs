@@ -19,11 +19,11 @@ impl Dicr {
 }
 
 impl B8MemoryMap for Dicr {
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.register, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         let _lock = self.mutex.lock();
         let mut register_value = self.register.read_u32();
         register_value = Bitfield::new(0, 6).copy(register_value, value);
@@ -48,11 +48,11 @@ impl OtcChcr {
 }
 
 impl B8MemoryMap for OtcChcr {
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.register, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         let mut register_value = self.register.read_u32();
         register_value = CHCR_STARTBUSY.copy(register_value, value);
         register_value = CHCR_STARTTRIGGER.copy(register_value, value);

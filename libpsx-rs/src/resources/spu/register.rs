@@ -27,7 +27,7 @@ impl DataFifo {
 }
 
 impl B8MemoryMap for DataFifo {
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         self.fifo.write_one(value).map_err(|_| WriteError::Full)
     }
@@ -48,11 +48,11 @@ impl TransferAddress {
 }
 
 impl B8MemoryMap for TransferAddress {
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
         B8MemoryMap::read_u16(&mut self.register, offset)
     }
 
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         if self.write_latch { panic!("Write latch still on"); }
         B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
         self.write_latch = true;
@@ -77,24 +77,24 @@ impl VoiceKey {
 }
 
 impl B8MemoryMap for VoiceKey {
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
         B8MemoryMap::read_u16(&mut self.register, offset)
     }
 
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         let _lock = self.mutex.lock();
         B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
         for i in 0..16 {
-            self.write_latch[(offset * 8) + i] = Bitfield::new(i, 1).extract_from(value) != 0;
+            self.write_latch[((offset * 8) + (i as u32)) as usize] = Bitfield::new(i, 1).extract_from(value) != 0;
         }
         Ok(())
     }
 
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.register, offset)
     }
 
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         let _lock = self.mutex.lock();
         B8MemoryMap::write_u32(&mut self.register, offset, value).unwrap();
         for i in 0..32 {

@@ -70,7 +70,7 @@ fn handle_manual_write_transfer(resources: &mut Resources) {
 
     match fifo.read_one() {
         Ok(value) => {
-            memory.write_u16(*current_transfer_address as usize, value);
+            memory.write_u16(*current_transfer_address as u32, value);
             *current_transfer_address += 2;
             *current_transfer_address &= 0x7FFFF;
         },

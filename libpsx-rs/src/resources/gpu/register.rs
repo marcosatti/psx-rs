@@ -19,7 +19,7 @@ impl Gpu1810 {
 }
 
 impl B8MemoryMap for Gpu1810 {
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         if offset != 0 { panic!("Invalid offset"); }
         
         Ok(self.read.read_one().unwrap_or_else(|_| {
@@ -28,7 +28,7 @@ impl B8MemoryMap for Gpu1810 {
         }))
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         self.gp0.write_one(value).map_err(|_| WriteError::Full)
     }
@@ -49,11 +49,11 @@ impl Gpu1814 {
 }
 
 impl B8MemoryMap for Gpu1814 {
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.stat, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         self.gp1.write_one(value).map_err(|_| WriteError::Full)
     }

@@ -23,21 +23,21 @@ impl Stat {
 }
 
 impl B8MemoryMap for Stat {
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
         B8MemoryMap::read_u16(&mut self.register, offset)
     }
     
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         let _lock = self.mutex.lock();
         let value = value & self.register.read_u16(offset);
         B8MemoryMap::write_u16(&mut self.register, offset, value)
     }
 
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.register, offset)
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         let _lock = self.mutex.lock();
         let value = value & self.register.read_u32();
         B8MemoryMap::write_u32(&mut self.register, offset, value)

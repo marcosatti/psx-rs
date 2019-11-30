@@ -18,11 +18,11 @@ impl Ctrl {
 }
 
 impl B8MemoryMap for Ctrl {
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
         B8MemoryMap::read_u16(&mut self.register, offset)
     }
 
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         if self.write_latch { panic!("Write latch still on"); }
         B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
         self.write_latch = true;
@@ -45,14 +45,14 @@ impl Padmc1040 {
 }
 
 impl B8MemoryMap for Padmc1040 {
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         unsafe {
             if offset != 0 { panic!("Invalid offset"); }
             self.tx_fifo.as_ref().unwrap().as_ref().read_one().map(|v| v as u32).map_err(|_| ReadError::Empty)
         }
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         unsafe {
             if offset != 0 { panic!("Invalid offset"); }
             let value_u8 = value as u8;

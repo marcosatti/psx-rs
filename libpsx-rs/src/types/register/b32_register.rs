@@ -45,23 +45,23 @@ impl B32Register {
         }
     }
 
-    pub fn read_u16(&self, index: usize) -> u16 {
-        unsafe { self.value.v16[index] }
+    pub fn read_u16(&self, offset: u32) -> u16 {
+        unsafe { self.value.v16[offset as usize] }
     }
 
-    pub fn write_u16(&mut self, index: usize, value: u16) {
+    pub fn write_u16(&mut self, offset: u32, value: u16) {
         if !self.read_only {
-            unsafe { self.value.v16[index] = value; }
+            unsafe { self.value.v16[offset as usize] = value; }
         }
     }
 
-    pub fn read_u8(&self, index: usize) -> u8 {
-        unsafe { self.value.v8[index] }
+    pub fn read_u8(&self, offset: u32) -> u8 {
+        unsafe { self.value.v8[offset as usize] }
     }
 
-    pub fn write_u8(&mut self, index: usize, value: u8) {
+    pub fn write_u8(&mut self, offset: u32, value: u8) {
         if !self.read_only {
-            unsafe { self.value.v8[index] = value; }
+            unsafe { self.value.v8[offset as usize] = value; }
         }
     }
 
@@ -76,32 +76,32 @@ impl B32Register {
 }
 
 impl B8MemoryMap for B32Register {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         Ok(Self::read_u8(self, offset))
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         Self::write_u8(self, offset, value);
         Ok(())
     }
 
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
         if offset % 2 != 0 { panic!("Non aligned offset"); }
         Ok(Self::read_u16(self, offset / 2))
     }
     
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         if offset % 2 != 0 { panic!("Non aligned offset"); }
         Self::write_u16(self, offset / 2, value);
         Ok(())
     }
 
-    fn read_u32(&mut self, offset: usize) -> ReadResult<u32> {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         if offset != 0 { panic!("Invalid offset"); }
         Ok(Self::read_u32(self))
     }
     
-    fn write_u32(&mut self, offset: usize, value: u32) -> WriteResult {
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         Self::write_u32(self, value);
         Ok(())

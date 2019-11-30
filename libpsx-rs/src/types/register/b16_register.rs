@@ -37,13 +37,13 @@ impl B16Register {
         }
     }
 
-    pub fn read_u8(&self, index: usize) -> u8 {
-        unsafe { self.value.v8[index] }
+    pub fn read_u8(&self, offset: u32) -> u8 {
+        unsafe { self.value.v8[offset as usize] }
     }
 
-    pub fn write_u8(&mut self, index: usize, value: u8) {
+    pub fn write_u8(&mut self, offset: u32, value: u8) {
         if !self.read_only {
-            unsafe { self.value.v8[index] = value; }
+            unsafe { self.value.v8[offset as usize] = value; }
         }
     }
 
@@ -58,21 +58,21 @@ impl B16Register {
 }
 
 impl B8MemoryMap for B16Register {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         Ok(Self::read_u8(self, offset))
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         Self::write_u8(self, offset, value);
         Ok(())
     }
 
-    fn read_u16(&mut self, offset: usize) -> ReadResult<u16> {
+    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
         if offset != 0 { panic!("Invalid offset"); }
         Ok(Self::read_u16(self))
     }
     
-    fn write_u16(&mut self, offset: usize, value: u16) -> WriteResult {
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         if offset != 0 { panic!("Invalid offset"); }
         Self::write_u16(self, value);
         Ok(())

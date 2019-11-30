@@ -19,11 +19,11 @@ impl Command {
 }
 
 impl B8MemoryMap for Command {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         B8MemoryMap::read_u8(&mut self.register, offset)
     }
 
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         if self.write_latch { panic!("Write latch still on"); }
         B8MemoryMap::write_u8(&mut self.register, offset, value).unwrap();
         self.write_latch = true;
@@ -44,11 +44,11 @@ impl IntEnable {
 }
 
 impl B8MemoryMap for IntEnable {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         B8MemoryMap::read_u8(&mut self.register, offset)
     }
 
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         let value = INTERRUPT_FLAGS.insert_into(self.register.read_u8(), value);
         B8MemoryMap::write_u8(&mut self.register, offset, value)
     }
@@ -78,11 +78,11 @@ impl IntFlag {
 }
 
 impl B8MemoryMap for IntFlag {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         B8MemoryMap::read_u8(&mut self.register, offset)
     }
 
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         if self.parameter_reset { panic!("Parameter FIFO reset still pending"); }
 
         if INT_FLAG_CLRPRM.extract_from(value) != 0 {
@@ -114,7 +114,7 @@ impl Cdrom1801 {
 }
 
 impl B8MemoryMap for Cdrom1801 {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -128,7 +128,7 @@ impl B8MemoryMap for Cdrom1801 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -162,7 +162,7 @@ impl Cdrom1802 {
 }
 
 impl B8MemoryMap for Cdrom1802 {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -176,7 +176,7 @@ impl B8MemoryMap for Cdrom1802 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -208,7 +208,7 @@ impl Cdrom1803 {
 }
 
 impl B8MemoryMap for Cdrom1803 {
-    fn read_u8(&mut self, offset: usize) -> ReadResult<u8> {
+    fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
@@ -222,7 +222,7 @@ impl B8MemoryMap for Cdrom1803 {
         }
     }
     
-    fn write_u8(&mut self, offset: usize, value: u8) -> WriteResult {
+    fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         unsafe { 
             if offset != 0 { panic!("Invalid offset"); }
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
