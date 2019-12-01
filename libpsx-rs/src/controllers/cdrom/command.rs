@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use crate::resources::Resources;
 use crate::resources::cdrom::*;
 use crate::controllers::cdrom::command_impl;
@@ -7,7 +8,7 @@ pub fn handle_command(resources: &mut Resources) {
         let status = &mut resources.cdrom.status;
         let command = &mut resources.cdrom.command;
         
-        if !command.write_latch {
+        if !command.write_latch.load(Ordering::Acquire) {
             return;
         }
 
@@ -29,7 +30,7 @@ pub fn handle_command(resources: &mut Resources) {
     {
         let status = &mut resources.cdrom.status;
         let command = &mut resources.cdrom.command;
-        command.write_latch = false;
         status.write_bitfield(STATUS_BUSYSTS, 0);
+        command.write_latch.store(false, Ordering::Release);
     }
 }

@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use parking_lot::Mutex;
 use crate::types::fifo::Fifo;
 use crate::types::fifo::debug::DebugState;
@@ -28,21 +29,21 @@ impl DataFifo {
 
 impl B8MemoryMap for DataFifo {
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         self.fifo.write_one(value).map_err(|_| WriteError::Full)
     }
 }
 
 pub struct TransferAddress {
     pub register: B16Register,
-    pub write_latch: bool,
+    pub write_latch: AtomicBool,
 }
 
 impl TransferAddress {
     pub fn new() -> TransferAddress {
         TransferAddress {
             register: B16Register::new(),
-            write_latch: false,
+            write_latch: AtomicBool::new(false),
         }
     }
 }
@@ -53,9 +54,9 @@ impl B8MemoryMap for TransferAddress {
     }
 
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        if self.write_latch { panic!("Write latch still on"); }
+        assert!(self.write_latch.load(Ordering::Acquire) == false, "Write latch still on");
+        self.write_latch.store(true, Ordering::Release);
         B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
-        self.write_latch = true;
         Ok(())
     }
 }

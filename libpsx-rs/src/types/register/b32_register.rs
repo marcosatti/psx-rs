@@ -86,23 +86,23 @@ impl B8MemoryMap for B32Register {
     }
 
     fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
-        if offset % 2 != 0 { panic!("Non aligned offset"); }
+        assert!(offset % 2 == 0, "Non aligned offset");
         Ok(Self::read_u16(self, offset / 2))
     }
     
-    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        if offset % 2 != 0 { panic!("Non aligned offset"); }
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {        
+        assert!(offset % 2 == 0, "Non aligned offset");
         Self::write_u16(self, offset / 2, value);
         Ok(())
     }
 
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         Ok(Self::read_u32(self))
     }
     
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         Self::write_u32(self, value);
         Ok(())
     }

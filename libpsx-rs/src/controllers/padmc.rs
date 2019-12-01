@@ -1,6 +1,7 @@
 pub mod debug;
 pub mod command;
 
+use std::sync::atomic::Ordering;
 use crate::resources::Resources;
 use crate::resources::padmc::*;
 
@@ -17,7 +18,7 @@ fn handle_ctrl(resources: &mut Resources) {
     let stat = &mut resources.padmc.stat;
     let baud = &mut resources.padmc.baud_reload;
 
-    if !ctrl.write_latch {
+    if !ctrl.write_latch.load(Ordering::Acquire) {
         return;
     }
 
@@ -32,6 +33,8 @@ fn handle_ctrl(resources: &mut Resources) {
         ctrl.register.write_u16(0);
         baud.write_u16(0);
     }
+
+    ctrl.write_latch.store(false, Ordering::Release);
 }
 
 fn handle_tx(resources: &mut Resources) {

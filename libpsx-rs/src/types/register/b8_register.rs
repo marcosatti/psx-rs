@@ -55,12 +55,12 @@ impl B8Register {
 
 impl B8MemoryMap for B8Register {
     fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         Ok(Self::read_u8(self))
     }
     
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         Self::write_u8(self, value);
         Ok(())
     }

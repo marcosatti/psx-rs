@@ -50,13 +50,16 @@ pub fn atomic_broadcast(executor: &ThreadPool, state: &State, event: Event) -> B
 }
 
 pub fn atomic_run(controller_fn: fn(&mut ControllerState, Event) -> (), state: &State, event: Event) -> Duration {
+    let timer = Instant::now();
+    
+    fence(Ordering::Acquire);
+
     unsafe {
         let mut controller_state = ControllerState::from_core_state(state);
-        
-        let timer = Instant::now();
-        fence(Ordering::Acquire);
         controller_fn(&mut controller_state, event);
-        fence(Ordering::Release);
-        timer.elapsed()
     }
+
+    fence(Ordering::Release);
+
+    timer.elapsed()
 }

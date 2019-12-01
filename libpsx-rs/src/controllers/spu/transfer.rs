@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use crate::resources::Resources;
 use crate::controllers::spu::voice::*;
 use crate::resources::spu::*;
@@ -29,13 +30,13 @@ fn handle_current_transfer_address(resources: &mut Resources) {
     let data_transfer_address = &mut resources.spu.data_transfer_address;
     let current_transfer_adderss = &mut resources.spu.current_transfer_address;
 
-    if data_transfer_address.write_latch {
+    if data_transfer_address.write_latch.load(Ordering::Acquire) {
         if get_transfer_mode(control) != TransferMode::Stop {
             panic!("A write to the data transfer register happened while a transfer was in progress - probably bad");
         }
 
         *current_transfer_adderss = data_transfer_address.register.read_u16() as u32 * 8;
-        data_transfer_address.write_latch = false;
+        data_transfer_address.write_latch.store(false, Ordering::Release);
     }
 }
 

@@ -68,12 +68,12 @@ impl B8MemoryMap for B16Register {
     }
 
     fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         Ok(Self::read_u16(self))
     }
     
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        if offset != 0 { panic!("Invalid offset"); }
+        assert!(offset == 0, "Invalid offset");
         Self::write_u16(self, value);
         Ok(())
     }
