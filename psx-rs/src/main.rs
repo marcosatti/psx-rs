@@ -65,7 +65,7 @@ fn main() {
     openal_release_context();
 
     // Initialize psx_rs core
-    let time_delta_us = args().nth(1).map_or(25, |v| v.parse::<usize>().unwrap());
+    let time_delta_us = args().nth(1).map_or(20, |v| v.parse::<usize>().unwrap());
     let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),

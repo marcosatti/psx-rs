@@ -51,7 +51,9 @@ fn tick(resources: &mut Resources) -> i64 {
 
     resources.r3000.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
-    let (fn_ptr, cycles) = instruction_lookup(inst).unwrap();
+    let (fn_ptr, cycles) = instruction_lookup(inst)
+        .ok_or_else(|| format!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_pa))
+        .unwrap();
 
     debug::trace_state(resources);
 

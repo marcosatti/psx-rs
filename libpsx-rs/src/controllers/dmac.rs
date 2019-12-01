@@ -1,6 +1,7 @@
 pub mod channel;
 pub mod debug;
 
+use log::debug;
 use std::time::Duration;
 use std::sync::atomic::Ordering;
 use log::warn;
@@ -225,13 +226,13 @@ fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32
     let transfer_direction = get_transfer_direction(chcr);
     let madr = unsafe { &mut *get_madr(resources, channel) };
 
-    if transfer_direction != TransferDirection::ToChannel {
-        panic!("Linked list transfers are ToChannel only");
-    }
+    assert!(transfer_direction == TransferDirection::ToChannel, "Linked list transfers are ToChannel only");
 
     let linked_list_state = if let SyncModeState::LinkedList(s) = &mut transfer_state.sync_mode_state { s } else { panic!("Unexpected transfer sync mode state"); };
 
-    if linked_list_state.current_count == linked_list_state.target_count {        
+    if linked_list_state.current_count == linked_list_state.target_count {    
+        assert!(linked_list_state.next_address != 0x0, "Null linked list transfer address - DMAC is probably too fast for CPU");
+        
         if linked_list_state.next_address == 0xFF_FFFF {
             transfer_state.started = false;
             chcr.write_bitfield(CHCR_STARTBUSY, 0);
