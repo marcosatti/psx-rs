@@ -2,6 +2,7 @@ pub mod debug;
 pub mod command;
 
 use std::sync::atomic::Ordering;
+use log::debug;
 use crate::resources::Resources;
 use crate::resources::padmc::*;
 
@@ -35,6 +36,7 @@ fn handle_ctrl(resources: &mut Resources) {
     }
 
     ctrl.write_latch.store(false, Ordering::Release);
+    debug!("Acknowledged PADMC CTRL write");
 }
 
 fn handle_tx(resources: &mut Resources) {

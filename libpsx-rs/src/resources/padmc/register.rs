@@ -24,7 +24,8 @@ impl B8MemoryMap for Ctrl {
     }
 
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        assert!(self.write_latch.load(Ordering::Acquire) == false, "Write latch still on");
+        // BIOS writes consecutively to this register without a chance to acknowledge...
+        //assert!(self.write_latch.load(Ordering::Acquire) == false, "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
         B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
         Ok(())

@@ -97,6 +97,20 @@ pub fn trace_rfe(resources: &Resources) {
     }
 }
 
+pub fn track_memory_read_pending<T>(physical_address: u32) {
+    if !ENABLE_MEMORY_TRACKING_READ {
+        return;
+    }
+
+    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END) {
+        return;
+    }
+
+    let tick_count = unsafe { DEBUG_TICK_COUNT };
+    let type_name = core::any::type_name::<T>();
+    debug!("[{:X}] Read {} address = 0x{:08X} start", tick_count, type_name, physical_address);
+}
+
 pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_READ {
         return;
@@ -109,11 +123,26 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
     let count = memory::update_state_read(physical_address);
 
     if true {
+        let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        debug!("Read {} address = 0x{:08X}, value = 0x{:X}", type_name, physical_address, value);
+        debug!("[{:X}] Read {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);
     }
 
     trace_memory_spin_loop_detection_read(resources, physical_address, count);
+}
+
+pub fn track_memory_write_pending<T: Copy + UpperHex>(physical_address: u32, value: T) {
+    if !ENABLE_MEMORY_TRACKING_WRITE {
+        return;
+    }
+
+    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END) {
+        return;
+    }
+
+    let tick_count = unsafe { DEBUG_TICK_COUNT };
+    let type_name = core::any::type_name::<T>();
+    debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} start", tick_count, type_name, physical_address, value);
 }
 
 pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
@@ -128,8 +157,9 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
     let count = memory::update_state_write(physical_address);
 
     if true {
+        let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        debug!("Write {} address = 0x{:08X}, value = 0x{:X}", type_name, physical_address, value);
+        debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);
     }
 
     trace_memory_spin_loop_detection_write(resources, physical_address, count);

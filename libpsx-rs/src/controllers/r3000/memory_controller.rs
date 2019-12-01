@@ -36,6 +36,7 @@ pub fn read_u8(resources: &mut Resources, physical_address: u32) -> Result<u8, H
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
+        debug::track_memory_read_pending::<u8>(physical_address);
         resources.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
@@ -52,6 +53,7 @@ pub fn write_u8(resources: &mut Resources, physical_address: u32, value: u8) -> 
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
+        debug::track_memory_write_pending(physical_address, value);
         resources.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
@@ -68,6 +70,7 @@ pub fn read_u16(resources: &mut Resources, physical_address: u32) -> Result<u16,
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
+        debug::track_memory_read_pending::<u16>(physical_address);
         resources.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
@@ -84,6 +87,7 @@ pub fn write_u16(resources: &mut Resources, physical_address: u32, value: u16) -
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
+        debug::track_memory_write_pending(physical_address, value);
         resources.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
     
@@ -100,6 +104,7 @@ pub fn read_u32(resources: &mut Resources, physical_address: u32) -> Result<u32,
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
+        debug::track_memory_read_pending::<u32>(physical_address);
         resources.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
@@ -116,6 +121,7 @@ pub fn write_u32(resources: &mut Resources, physical_address: u32, value: u32) -
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
+        debug::track_memory_write_pending(physical_address, value);
         resources.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))    
     };
 
