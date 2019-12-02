@@ -1,3 +1,4 @@
+use log::warn;
 use crate::resources::Resources;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
@@ -25,8 +26,8 @@ pub enum SyncMode {
     LinkedList,
 }
 
-pub unsafe fn get_madr(resources: &mut Resources, channel: usize) -> *mut B32Register {
-    match channel {
+pub fn get_madr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
+    let madr = match channel {
         0 => &mut resources.dmac.mdecin_madr,
         1 => &mut resources.dmac.mdecout_madr,
         2 => &mut resources.dmac.gpu_madr,
@@ -35,11 +36,15 @@ pub unsafe fn get_madr(resources: &mut Resources, channel: usize) -> *mut B32Reg
         5 => &mut resources.dmac.pio_madr,
         6 => &mut resources.dmac.otc_madr,
         _ => unreachable!("Invalid DMAC channel"),
+    };
+
+    unsafe {
+        (madr as *mut B32Register).as_mut().unwrap()
     }
 }
 
-pub unsafe fn get_bcr(resources: &mut Resources, channel: usize) -> *mut B32Register {
-    match channel {
+pub fn get_bcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
+    let bcr = match channel {
         0 => &mut resources.dmac.mdecin_bcr,
         1 => &mut resources.dmac.mdecout_bcr,
         2 => &mut resources.dmac.gpu_bcr,
@@ -48,11 +53,15 @@ pub unsafe fn get_bcr(resources: &mut Resources, channel: usize) -> *mut B32Regi
         5 => &mut resources.dmac.pio_bcr,
         6 => &mut resources.dmac.otc_bcr,
         _ => unreachable!("Invalid DMAC channel"),
+    };
+    
+    unsafe {
+        (bcr as *mut B32Register).as_mut().unwrap()
     }
 }
 
-pub unsafe fn get_chcr(resources: &mut Resources, channel: usize) -> *mut B32Register {
-    match channel {
+pub fn get_chcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
+    let chcr = match channel {
         0 => &mut resources.dmac.mdecin_chcr,
         1 => &mut resources.dmac.mdecout_chcr,
         2 => &mut resources.dmac.gpu_chcr,
@@ -61,11 +70,15 @@ pub unsafe fn get_chcr(resources: &mut Resources, channel: usize) -> *mut B32Reg
         5 => &mut resources.dmac.pio_chcr,
         6 => &mut resources.dmac.otc_chcr.register,
         _ => unreachable!("Invalid DMAC channel"),
+    };
+
+    unsafe {
+        (chcr as *mut B32Register).as_mut().unwrap()
     }
 }
 
-pub unsafe fn get_transfer_state(resources: &mut Resources, channel: usize) -> *mut TransferState {
-    match channel {
+pub fn get_transfer_state<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut TransferState {
+    let transfer_state = match channel {
         0 => &mut resources.dmac.mdecin_transfer_state,
         1 => &mut resources.dmac.mdecout_transfer_state,
         2 => &mut resources.dmac.gpu_transfer_state,
@@ -74,6 +87,10 @@ pub unsafe fn get_transfer_state(resources: &mut Resources, channel: usize) -> *
         5 => &mut resources.dmac.pio_transfer_state,
         6 => &mut resources.dmac.otc_transfer_state,
         _ => unreachable!("Invalid DMAC channel"),
+    };
+
+    unsafe {
+        (transfer_state as *mut TransferState).as_mut().unwrap()
     }
 }
 
@@ -90,7 +107,7 @@ pub fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo<u32> {
     }
 }
 
-pub fn pop_channel_data(resources: &mut Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
+pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
         0..=5 => {
             let fifo = get_fifo(resources, channel);
@@ -109,7 +126,7 @@ pub fn pop_channel_data(resources: &mut Resources, channel: usize, madr: u32, la
     }
 }
 
-pub fn push_channel_data(resources: &mut Resources, channel: usize, value: u32) -> Result<(), ()> {
+pub fn push_channel_data(resources: &Resources, channel: usize, value: u32) -> Result<(), ()> {
     match channel {
         0..=5 => {
             let fifo = get_fifo(resources, channel);
@@ -161,30 +178,38 @@ pub fn raise_irq(resources: &mut Resources, channel: usize) {
     }
 }
 
-pub fn initialize_transfer(transfer_state: &mut TransferState, sync_mode: SyncMode, madr: &B32Register, bcr: &B32Register) {
-    *transfer_state = TransferState::reset();
+pub fn initialize_transfer(transfer_state: &mut TransferState, chcr: &B32Register, madr: &B32Register, bcr: &B32Register) {
+    let bcr_calculate = |v| {
+        if v == 0 {
+            0x1_0000
+        } else {
+            v
+        }
+    };
 
-    let mut madr_value = madr.read_u32();
-    madr_value = Bitfield::new(0, 24).extract_from(madr_value);
-    let mut bs_count = bcr.read_bitfield(BCR_BLOCKSIZE) as usize;
-    bs_count = if bs_count == 0 { 0x1_0000 } else { bs_count };
-    let mut ba_count = bcr.read_bitfield(BCR_BLOCKAMOUNT) as usize;
-    ba_count = if ba_count == 0 { 0x1_0000 } else { ba_count };
+    let address = madr.read_bitfield(Bitfield::new(0, 24));
+    let sync_mode = get_sync_mode(chcr);
+    let bs_count = bcr_calculate(bcr.read_bitfield(BCR_BLOCKSIZE) as usize);
+    let ba_count = bcr_calculate(bcr.read_bitfield(BCR_BLOCKAMOUNT) as usize);
+
+    *transfer_state = TransferState::reset();
 
     match sync_mode {
         SyncMode::Continuous => {
             transfer_state.sync_mode_state = SyncModeState::Continuous(
                 ContinuousState {
-                    current_address: madr_value,
+                    current_address: address,
                     current_count: 0,
                     target_count: bs_count,
                 }
             );
         },
         SyncMode::Blocks => {
+            warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending next block");
+
             transfer_state.sync_mode_state = SyncModeState::Blocks(
                 BlocksState {
-                    current_address: madr_value,
+                    current_address: address,
                     current_bsize_count: 0,
                     target_bsize_count: bs_count,
                     current_bamount_count: 0,
@@ -196,7 +221,7 @@ pub fn initialize_transfer(transfer_state: &mut TransferState, sync_mode: SyncMo
             transfer_state.sync_mode_state = SyncModeState::LinkedList(
                 LinkedListState {
                     current_address: 0,
-                    next_address: madr_value,
+                    next_address: address,
                     target_count: 0,
                     current_count: 0,
                 }

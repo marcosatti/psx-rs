@@ -18,13 +18,14 @@ pub fn transfer_start(resources: &mut Resources, channel: usize) {
         return;
     }
 
-    let transfer_id = TRANSFER_ID.fetch_add(1, Ordering::SeqCst);
-    let chcr = unsafe { &mut *get_chcr(resources, channel) };
-    let madr = unsafe { &mut *get_madr(resources, channel) };
-    let bcr = unsafe { &mut *get_bcr(resources, channel) };
+    let transfer_id = TRANSFER_ID.fetch_add(1, Ordering::Relaxed);
+
+    let chcr = get_chcr(resources, channel);
+    let madr = get_madr(resources, channel);
+    let bcr = get_bcr(resources, channel);
     let sync_mode = get_sync_mode(chcr);
     let transfer_direction = get_transfer_direction(chcr);
-    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
+    let transfer_state = get_transfer_state(resources, channel);
     
     transfer_state.debug_state = Some(DebugState { transfer_id });
 
@@ -39,9 +40,9 @@ pub fn transfer_end(resources: &mut Resources, channel: usize) {
         return;
     }
 
-    let madr = unsafe { &mut *get_madr(resources, channel) };
-    let bcr = unsafe { &mut *get_bcr(resources, channel) };
-    let transfer_state = unsafe { &mut *get_transfer_state(resources, channel) };
+    let madr = get_madr(resources, channel);
+    let bcr = get_bcr(resources, channel);
+    let transfer_state = get_transfer_state(resources, channel);
 
     let transfer_id = transfer_state.debug_state.unwrap().transfer_id;
 
