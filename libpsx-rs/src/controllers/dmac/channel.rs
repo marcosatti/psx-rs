@@ -151,6 +151,16 @@ pub fn get_sync_mode(chcr: &B32Register) -> SyncMode {
     }
 }
 
+pub fn raise_irq(resources: &mut Resources, channel: usize) {
+    let dicr = &mut resources.dmac.dicr;
+
+    let _lock = dicr.mutex.lock();
+    
+    if dicr.register.read_bitfield(DICR_IRQ_ENABLE_BITFIELDS[channel]) != 0 {
+        dicr.register.write_bitfield(DICR_IRQ_FLAG_BITFIELDS[channel], 1);
+    }
+}
+
 pub fn initialize_transfer(transfer_state: &mut TransferState, sync_mode: SyncMode, madr: &B32Register, bcr: &B32Register) {
     *transfer_state = TransferState::reset();
 

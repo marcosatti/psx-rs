@@ -1,5 +1,6 @@
 pub mod channel;
 pub mod debug;
+pub mod linked_list;
 
 use log::debug;
 use std::time::Duration;
@@ -8,7 +9,6 @@ use log::warn;
 use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::constants::dmac::*;
-use crate::types::bitfield::Bitfield;
 use crate::controllers::Event;
 use crate::controllers::dmac::channel::*;
 use crate::resources::dmac::*;
@@ -148,7 +148,7 @@ fn handle_continuous_transfer(resources: &mut Resources, channel: usize) -> i32 
     if finished {
         transfer_state.started = false;
         chcr.write_bitfield(CHCR_STARTBUSY, 0);
-        set_interrupt_flag(resources, channel);
+        raise_irq(resources, channel);
 
         debug::transfer_end(resources, channel);
     }
@@ -212,7 +212,7 @@ fn handle_blocks_transfer(resources: &mut Resources, channel: usize) -> i32 {
         madr.write_u32(blocks_state.current_address as u32);
         bcr.write_bitfield(BCR_BLOCKAMOUNT, 0);
         chcr.write_bitfield(CHCR_STARTBUSY, 0);
-        set_interrupt_flag(resources, channel);
+        raise_irq(resources, channel);
 
         debug::transfer_end(resources, channel);
     }
@@ -236,23 +236,15 @@ fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32
         if linked_list_state.next_address == 0xFF_FFFF {
             transfer_state.started = false;
             chcr.write_bitfield(CHCR_STARTBUSY, 0);
-            madr.write_u32(0x00FFFFFF);
-            set_interrupt_flag(resources, channel);
+            madr.write_u32(0xFF_FFFF);
+            raise_irq(resources, channel);
             
             debug::transfer_end(resources, channel);
 
             return 1;
         }
 
-        let header_value = resources.main_memory.read_u32(linked_list_state.next_address as u32);
-        let next_address = Bitfield::new(0, 24).extract_from(header_value);
-        let target_count = Bitfield::new(24, 8).extract_from(header_value) as usize;
-
-        linked_list_state.current_address = linked_list_state.next_address;
-        linked_list_state.next_address = next_address;
-        linked_list_state.target_count = target_count;
-        linked_list_state.current_count = 0;
-
+        linked_list::process_header(linked_list_state, &resources.main_memory);
         return 1;
     } else {
         let address = (linked_list_state.current_address + DATA_SIZE) + ((linked_list_state.current_count as u32) * DATA_SIZE);
@@ -264,16 +256,6 @@ fn handle_linked_list_transfer(resources: &mut Resources, channel: usize) -> i32
         linked_list_state.current_count += 1;
 
         return 1;
-    }
-}
-
-fn set_interrupt_flag(resources: &mut Resources, channel: usize) {
-    let dicr = &mut resources.dmac.dicr;
-
-    let _lock = dicr.mutex.lock();
-    
-    if dicr.register.read_bitfield(DICR_IRQ_ENABLE_BITFIELDS[channel]) != 0 {
-        dicr.register.write_bitfield(DICR_IRQ_FLAG_BITFIELDS[channel], 1);
     }
 }
 
