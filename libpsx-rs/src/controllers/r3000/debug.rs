@@ -22,11 +22,11 @@ const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = true;
 const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
-const ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: bool = true;
-const ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: bool = true;
+const ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: bool = false;
+const ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: bool = false;
 
 const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1040;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1050; //0x1FBF_FFFF;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1050; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 static mut DEBUG_TICK_COUNT: usize = 0;
@@ -106,9 +106,11 @@ pub fn track_memory_read_pending<T>(physical_address: u32) {
         return;
     }
 
-    let tick_count = unsafe { DEBUG_TICK_COUNT };
-    let type_name = core::any::type_name::<T>();
-    debug!("[{:X}] Read {} address = 0x{:08X} start", tick_count, type_name, physical_address);
+    if true {
+        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let type_name = core::any::type_name::<T>();
+        debug!("[{:X}] Read {} address = 0x{:08X} start", tick_count, type_name, physical_address);
+    }
 }
 
 pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
@@ -140,9 +142,11 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(physical_address: u32, val
         return;
     }
 
-    let tick_count = unsafe { DEBUG_TICK_COUNT };
-    let type_name = core::any::type_name::<T>();
-    debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} start", tick_count, type_name, physical_address, value);
+    if true {
+        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let type_name = core::any::type_name::<T>();
+        debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} start", tick_count, type_name, physical_address, value);
+    }
 }
 
 pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {

@@ -4,27 +4,9 @@ use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 use crate::types::fifo::Fifo;
 use crate::resources::dmac::channel::*;
+use crate::resources::dmac::register::*;
 use crate::resources::dmac::*;
 use crate::controllers::dmac::debug;
-    
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum TransferDirection {
-    FromChannel,
-    ToChannel,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum StepDirection {
-    Forwards,
-    Backwards,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum SyncMode {
-    Continuous,
-    Blocks,
-    LinkedList,
-}
 
 pub fn get_madr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
     let madr = match channel {
@@ -60,7 +42,7 @@ pub fn get_bcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut 
     }
 }
 
-pub fn get_chcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
+pub fn get_chcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut Chcr {
     let chcr = match channel {
         0 => &mut resources.dmac.mdecin_chcr,
         1 => &mut resources.dmac.mdecout_chcr,
@@ -68,12 +50,12 @@ pub fn get_chcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut
         3 => &mut resources.dmac.cdrom_chcr,
         4 => &mut resources.dmac.spu_chcr,
         5 => &mut resources.dmac.pio_chcr,
-        6 => &mut resources.dmac.otc_chcr.register,
+        6 => &mut resources.dmac.otc_chcr.chcr,
         _ => unreachable!("Invalid DMAC channel"),
     };
 
     unsafe {
-        (chcr as *mut B32Register).as_mut().unwrap()
+        (chcr as *mut Chcr).as_mut().unwrap()
     }
 }
 
@@ -143,24 +125,24 @@ pub fn push_channel_data(resources: &Resources, channel: usize, value: u32) -> R
     }
 }
 
-pub fn get_transfer_direction(chcr: &B32Register) -> TransferDirection {
-    match chcr.read_bitfield(CHCR_TRANSFER_DIRECTION) {
+pub fn get_transfer_direction(chcr: &Chcr) -> TransferDirection {
+    match chcr.register.read_bitfield(CHCR_TRANSFER_DIRECTION) {
         0 => TransferDirection::FromChannel,
         1 => TransferDirection::ToChannel,
         _ => unreachable!("Invalid transfer direction"),
     }
 }
 
-pub fn get_step_direction(chcr: &B32Register) -> StepDirection {
-    match chcr.read_bitfield(CHCR_MADR_STEP_DIRECTION) { 
+pub fn get_step_direction(chcr: &Chcr) -> StepDirection {
+    match chcr.register.read_bitfield(CHCR_MADR_STEP_DIRECTION) { 
         0 => StepDirection::Forwards,
         1 => StepDirection::Backwards,
         _ => unreachable!("Invalid step direction"),
     }
 }
 
-pub fn get_sync_mode(chcr: &B32Register) -> SyncMode {
-    match chcr.read_bitfield(CHCR_SYNCMODE) {
+pub fn get_sync_mode(chcr: &Chcr) -> SyncMode {
+    match chcr.register.read_bitfield(CHCR_SYNCMODE) {
         0 => SyncMode::Continuous,
         1 => SyncMode::Blocks,
         2 => SyncMode::LinkedList,
@@ -178,7 +160,7 @@ pub fn raise_irq(resources: &mut Resources, channel: usize) {
     }
 }
 
-pub fn initialize_transfer(transfer_state: &mut TransferState, chcr: &B32Register, madr: &B32Register, bcr: &B32Register) {
+pub fn initialize_transfer_state(transfer_state: &mut TransferState, chcr: &Chcr, madr: &B32Register, bcr: &B32Register) {
     let bcr_calculate = |v| {
         if v == 0 {
             0x1_0000
@@ -220,8 +202,8 @@ pub fn initialize_transfer(transfer_state: &mut TransferState, chcr: &B32Registe
         SyncMode::LinkedList => {
             transfer_state.sync_mode_state = SyncModeState::LinkedList(
                 LinkedListState {
-                    current_address: 0,
-                    next_address: address,
+                    current_header_address: 0,
+                    next_header_address: address,
                     target_count: 0,
                     current_count: 0,
                 }

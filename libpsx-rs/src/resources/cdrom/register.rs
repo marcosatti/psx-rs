@@ -25,10 +25,9 @@ impl B8MemoryMap for Command {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        assert!(self.write_latch.load(Ordering::Acquire) == false, "Write latch still on");
+        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
-        B8MemoryMap::write_u8(&mut self.register, offset, value).unwrap();
-        Ok(())
+        B8MemoryMap::write_u8(&mut self.register, offset, value)
     }
 }
 

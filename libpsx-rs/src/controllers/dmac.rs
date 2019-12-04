@@ -3,9 +3,10 @@ pub mod debug;
 pub mod linked_list;
 pub mod transfer;
 
-use log::debug;
 use std::time::Duration;
 use std::sync::atomic::Ordering;
+use std::cmp::min;
+use log::debug;
 use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::constants::dmac::*;
@@ -25,17 +26,18 @@ fn run_time(resources: &mut Resources, duration: Duration) {
 
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 
-    let mut channel_id: isize = 6;
+    let mut channel_id: usize = 6;
 
     while ticks > 0 {
-        let channel_ticks = tick(resources, channel_id as usize);
+        let channel_ticks = tick(resources, channel_id, ticks as usize);
 
         if channel_ticks == 0 {
-            ticks -= 1;
-            channel_id -= 1;
+            ticks -= 16;
 
-            if channel_id < 0 {
+            if channel_id == 0 {
                 channel_id = 6;
+            } else {
+                channel_id -= 1;
             }
 
             handle_irq_check(resources);
@@ -45,20 +47,29 @@ fn run_time(resources: &mut Resources, duration: Duration) {
     }
     
     handle_irq_check(resources);
-
     handle_bus_lock(resources);
 }
 
-fn tick(resources: &mut Resources, channel: usize) -> i32 {
+fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) -> usize {
+    // Number of ticks per word transfer.
+    const TICK_WORD_RATIO: usize = 2;
+
     let dpcr = &resources.dmac.dpcr;
+    let enable = DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id];
 
-    let enable = DPCR_CHANNEL_ENABLE_BITFIELDS[channel];
+    // Round up to nearset alignment for no remainder.
+    let mut word_transfers_allowed = (ticks_remaining + (TICK_WORD_RATIO - 1)) / TICK_WORD_RATIO;
 
-    if dpcr.read_bitfield(enable) != 0 {
-        handle_transfer(resources, channel)
+    // Cap it to a maximum.
+    word_transfers_allowed = min(word_transfers_allowed, 16);
+
+    let word_transfers_actual = if dpcr.read_bitfield(enable) != 0 {
+        handle_transfer(resources, channel_id, word_transfers_allowed)
     } else {
         0
-    }
+    };
+
+    word_transfers_actual * TICK_WORD_RATIO
 }
 
 /// Check if all channels are finished, and release the bus lock if true.

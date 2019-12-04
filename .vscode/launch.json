@@ -5,26 +5,44 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Unix Debug",
+            "name": "Unix Debug (gdb)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/target/debug/psx_rs",
             "args": [],
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb",
-            "miDebuggerPath": "rust-gdb",
-            "externalConsole": true
+            "miDebuggerPath": "rust-gdb"
         },
         {
-            "name": "Unix Release (dbginfo)",
+            "name": "Unix Release (gdb, dbginfo)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/target/release/psx_rs",
             "args": [],
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb",
-            "miDebuggerPath": "rust-gdb",
-            "externalConsole": true
+            "miDebuggerPath": "rust-gdb"
+        },
+        {
+            "name": "Unix Debug (lldb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/psx_rs",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb",
+            "miDebuggerPath": "rust-lldb"
+        },
+        {
+            "name": "Unix Release (lldb, dbginfo)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/release/psx_rs",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb",
+            "miDebuggerPath": "rust-lldb"
         },
         {
             "name": "Windows Debug",
@@ -34,8 +52,17 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true
+            "environment": []
+        },
+        {
+            "name": "Windows Release (dbginfo)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/release/psx_rs.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": []
         }
     ]
 }

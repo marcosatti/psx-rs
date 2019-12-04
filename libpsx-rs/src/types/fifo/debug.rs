@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use log::trace;
 use crate::types::fifo::*;
 
-pub static ENABLE_READ_TRACE: bool = false;
-pub static ENABLE_WRITE_TRACE: bool = false;
+const ENABLE_READ_TRACE: bool = false;
+const ENABLE_WRITE_TRACE: bool = false;
 
 pub struct DebugState {
     pub identifier: &'static str,
@@ -35,7 +35,7 @@ where
     } 
 
     let debug_state = match fifo.debug_state {
-        None => return,
+        None => panic!("Debug state is required to trace FIFO reads"),
         Some(ref d) => d,
     };
 
@@ -55,7 +55,7 @@ where
     } 
 
     let debug_state = match fifo.debug_state {
-        None => return,
+        None => panic!("Debug state is required to trace FIFO writes"),
         Some(ref d) => d,
     };
 

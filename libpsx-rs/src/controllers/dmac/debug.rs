@@ -1,5 +1,4 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-use log::warn;
 use log::trace;
 use crate::resources::Resources;
 use crate::types::fifo::Fifo;
@@ -10,6 +9,7 @@ use crate::resources::dmac::debug::*;
 const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_WRITE_TRACE: bool = false;
+const ENABLE_LINKED_LIST_NULL_HEADER_TRACE: bool = true;
 
 static TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -62,7 +62,7 @@ pub fn trace_hazard_empty(fifo: &Fifo<u32>) {
         Some(ref d) => d,
     };
 
-    warn!("DMAC: reading from {} but empty, trying again later", debug_state.identifier);
+    trace!("DMAC: reading from {} but empty, trying again later", debug_state.identifier);
 }
 
 pub fn trace_hazard_full(fifo: &Fifo<u32>) {
@@ -75,7 +75,7 @@ pub fn trace_hazard_full(fifo: &Fifo<u32>) {
         Some(ref d) => d,
     };
 
-    warn!("DMAC: writing to {} but full, trying again later", debug_state.identifier);
+    trace!("DMAC: writing to {} but full, trying again later", debug_state.identifier);
 }
 
 pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
@@ -107,4 +107,12 @@ pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
     }
     let dicr_irq_master_flag_value = DICR_IRQ_MASTER_FLAG.extract_from(dicr) != 0;
     trace!("DMAC DICR: master flag = {}", dicr_irq_master_flag_value);
+}
+
+pub fn trace_linked_list_null_header(header_address: u32) {
+    if !ENABLE_LINKED_LIST_NULL_HEADER_TRACE {
+        return;
+    }
+
+    trace!("Null linked list transfer header value (address 0x{:08X}) - CPU is probably too slow (or bad timing)!", header_address);
 }

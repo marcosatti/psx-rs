@@ -54,10 +54,9 @@ impl B8MemoryMap for TransferAddress {
     }
 
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        assert!(self.write_latch.load(Ordering::Acquire) == false, "Write latch still on");
+        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
-        B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
-        Ok(())
+        B8MemoryMap::write_u16(&mut self.register, offset, value)
     }
 }
 

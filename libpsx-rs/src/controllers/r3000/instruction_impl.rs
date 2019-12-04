@@ -40,7 +40,13 @@ pub fn sllv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = &resources.r3000.gpr[instruction.rt()];
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
-    rd.write_u32(value2 << value1);
+
+    if value1 >= 32 {
+        rd.write_u32(0);
+    } else {
+        rd.write_u32(value2 << value1);
+    }
+
     Ok(())
 }
 
@@ -50,7 +56,13 @@ pub fn srlv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = &resources.r3000.gpr[instruction.rt()];
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
-    rd.write_u32(value2 >> value1);
+
+    if value1 >= 32 {
+        rd.write_u32(0);
+    } else {
+        rd.write_u32(value2 >> value1);
+    }
+    
     Ok(())
 }
 
@@ -60,7 +72,17 @@ pub fn srav(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = &resources.r3000.gpr[instruction.rt()];
     let value2 = rt.read_u32() as i32;
     let rd = &mut resources.r3000.gpr[instruction.rd()];
-    rd.write_u32((value2 >> value1) as u32);
+
+    if value1 >= 32 {
+        if value2 < 0 {
+            rd.write_u32(0xFFFF_FFFF);
+        } else {
+            rd.write_u32(0);
+        }
+    } else {
+        rd.write_u32((value2 >> value1) as u32);
+    }
+    
     Ok(())
 }
 

@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use parking_lot::Mutex;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
@@ -35,28 +36,59 @@ impl B8MemoryMap for Dicr {
     }
 }
 
-pub struct OtcChcr {
+pub struct Chcr {
     pub register: B32Register,
+    pub write_latch: AtomicBool,
+}
+
+impl Chcr {
+    pub fn new() -> Chcr {
+        Chcr { 
+            register: B32Register::new(),
+            write_latch: AtomicBool::new(false),
+        }
+    }
+}
+
+impl B8MemoryMap for Chcr {
+    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
+        B8MemoryMap::read_u32(&mut self.register, offset)
+    }
+    
+    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
+        // BIOS writes consecutively to this register without a chance to acknowledge...
+        //assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
+        self.write_latch.store(true, Ordering::Release);
+        B8MemoryMap::write_u32(&mut self.register, offset, value)
+    }
+}
+
+
+pub struct OtcChcr {
+    pub chcr: Chcr,
 }
 
 impl OtcChcr {
     pub fn new() -> OtcChcr {
-        OtcChcr { 
-            register: B32Register::from(0x0000_0002),
+        let mut chcr = Chcr::new();
+        chcr.register.write_u32(0x0000_0002);
+        
+        OtcChcr {
+            chcr: chcr,
         }
     }
 }
 
 impl B8MemoryMap for OtcChcr {
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
-        B8MemoryMap::read_u32(&mut self.register, offset)
+        B8MemoryMap::read_u32(&mut self.chcr, offset)
     }
     
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
-        let mut register_value = self.register.read_u32();
+        let mut register_value = self.chcr.register.read_u32();
         register_value = CHCR_STARTBUSY.copy(register_value, value);
         register_value = CHCR_STARTTRIGGER.copy(register_value, value);
         register_value = CHCR_BIT30.copy(register_value, value);
-        B8MemoryMap::write_u32(&mut self.register, offset, register_value)
+        B8MemoryMap::write_u32(&mut self.chcr, offset, register_value)
     }
 }
