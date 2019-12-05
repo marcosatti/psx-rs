@@ -2,9 +2,26 @@ pub mod debug;
 pub mod command;
 
 use std::sync::atomic::Ordering;
+use std::time::Duration;
 use log::debug;
 use crate::resources::Resources;
 use crate::resources::padmc::*;
+use crate::constants::padmc::*;
+use crate::controllers::{Event, ControllerState};
+
+pub fn run(state: &mut ControllerState, event: Event) {
+    match event {
+        Event::Time(duration) => run_time(state.resources, duration),
+    }
+}
+
+fn run_time(resources: &mut Resources, duration: Duration) {
+    let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    
+    for _ in 0..ticks {
+        tick(resources); 
+    }
+}
 
 pub fn tick(resources: &mut Resources) {
     handle_ctrl(resources);

@@ -1,68 +1,43 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Unix Debug (gdb)",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/psx_rs",
+            "name": "Linux (lldb, debug)",
+            "program": "${workspaceRoot}/target/debug/psx_rs",
+            "cwd": "${workspaceRoot}",
             "args": [],
-            "cwd": "${workspaceFolder}",
-            "MIMode": "gdb",
-            "miDebuggerPath": "rust-gdb"
+            "preLaunchTask": "Build debug"
         },
         {
-            "name": "Unix Release (gdb, dbginfo)",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/release/psx_rs",
+            "name": "Linux (lldb, release)",
+            "program": "${workspaceRoot}/target/release/psx_rs",
+            "cwd": "${workspaceRoot}",
             "args": [],
-            "cwd": "${workspaceFolder}",
-            "MIMode": "gdb",
-            "miDebuggerPath": "rust-gdb"
-        },
+            "preLaunchTask": "Build release"
+        },  
         {
-            "name": "Unix Debug (lldb)",
-            "type": "cppdbg",
+            "type": "gdb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/psx_rs",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "MIMode": "lldb",
-            "miDebuggerPath": "rust-lldb"
-        },
+            "name": "Linux (gdb, debug)",
+            "target": "${workspaceRoot}/target/debug/psx_rs",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "prettyPrinters",
+            "gdbpath": "rust-gdb",
+            "preLaunchTask": "Build debug"
+        },      
         {
-            "name": "Unix Release (lldb, dbginfo)",
-            "type": "cppdbg",
+            "type": "gdb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/release/psx_rs",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "MIMode": "lldb",
-            "miDebuggerPath": "rust-lldb"
-        },
-        {
-            "name": "Windows Debug",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/target/debug/psx_rs.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": []
-        },
-        {
-            "name": "Windows Release (dbginfo)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/target/release/psx_rs.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": []
+            "name": "Linux (gdb, release)",
+            "target": "${workspaceRoot}/target/release/psx_rs",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "prettyPrinters",
+            "gdbpath": "rust-gdb",
+            "preLaunchTask": "Build release"
         }
     ]
 }

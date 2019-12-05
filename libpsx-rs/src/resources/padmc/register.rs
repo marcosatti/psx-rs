@@ -1,5 +1,6 @@
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicBool, Ordering};
+use log::warn;
 use crate::types::fifo::Fifo;
 use crate::types::b8_memory_mapper::*;
 use crate::types::register::b16_register::B16Register;
@@ -46,9 +47,25 @@ impl Padmc1040 {
 }
 
 impl B8MemoryMap for Padmc1040 {
+    fn read_u8(&mut self, _offset: u32) -> ReadResult<u8> {
+        unsafe {
+            Ok(self.tx_fifo.as_ref().unwrap().as_ref().read_one().unwrap_or_else(|_| {
+                warn!("PADMC RX FIFO empty - returning 0xFF");
+                0xFF
+            }))
+        }
+    }
+    
+    fn write_u8(&mut self, _offset: u32, value: u8) -> WriteResult {
+        unsafe {
+            self.tx_fifo.as_ref().unwrap().as_ref().write_one(value).map_err(|_| WriteError::Full)
+        }
+    }
+
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         unsafe {
             assert!(offset == 0, "Invalid offset");
+            warn!("PADMC RX FIFO preview reads not properly implemented");
             self.tx_fifo.as_ref().unwrap().as_ref().read_one().map(|v| v as u32).map_err(|_| ReadError::Empty)
         }
     }

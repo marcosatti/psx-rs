@@ -127,7 +127,7 @@ where
         }
     }
 
-    pub fn read_u8(&self, address: T) -> ReadResult<u8> {
+    pub fn read_u8(&mut self, address: T) -> ReadResult<u8> {
         let (object, base_address) = self.object_at(address);
         let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
@@ -137,7 +137,7 @@ where
         }
     }
 
-    pub fn write_u8(&self, address: T, value: u8) -> WriteResult {
+    pub fn write_u8(&mut self, address: T, value: u8) -> WriteResult {
         let (object, base_address) = self.object_at(address);
         let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
@@ -147,7 +147,7 @@ where
         }
     }
 
-    pub fn read_u16(&self, address: T) -> ReadResult<u16> {
+    pub fn read_u16(&mut self, address: T) -> ReadResult<u16> {
         let (object, base_address) = self.object_at(address);
         let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
@@ -157,7 +157,7 @@ where
         }
     }
 
-    pub fn write_u16(&self, address: T, value: u16) -> WriteResult {
+    pub fn write_u16(&mut self, address: T, value: u16) -> WriteResult {
         let (object, base_address) = self.object_at(address);
         let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
@@ -167,7 +167,7 @@ where
         }
     }
 
-    pub fn read_u32(&self, address: T) -> ReadResult<u32> {
+    pub fn read_u32(&mut self, address: T) -> ReadResult<u32> {
         let (object, base_address) = self.object_at(address);
         let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
@@ -177,7 +177,7 @@ where
         }
     }
 
-    pub fn write_u32(&self, address: T, value: u32) -> WriteResult {
+    pub fn write_u32(&mut self, address: T, value: u32) -> WriteResult {
         let (object, base_address) = self.object_at(address);
         let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 

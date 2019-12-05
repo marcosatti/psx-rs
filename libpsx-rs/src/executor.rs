@@ -11,6 +11,7 @@ use crate::controllers::intc::run as run_intc;
 use crate::controllers::gpu::run as run_gpu;
 use crate::controllers::dmac::run as run_dmac;
 use crate::controllers::spu::run as run_spu;
+use crate::controllers::padmc::run as run_padmc;
 
 pub fn atomic_broadcast(executor: &ThreadPool, state: &State, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
@@ -41,6 +42,10 @@ pub fn atomic_broadcast(executor: &ThreadPool, state: &State, event: Event) -> B
         scope.spawn(|_| { 
             let elapsed = atomic_run(run_intc, &state, event);
             benchmark_results.add_result("intc", elapsed);
+        });
+        scope.spawn(|_| { 
+            let elapsed = atomic_run(run_padmc, &state, event);
+            benchmark_results.add_result("padmc", elapsed);
         });
     });
 

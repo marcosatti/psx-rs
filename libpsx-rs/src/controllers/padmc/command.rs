@@ -1,4 +1,6 @@
 use crate::resources::Resources;
 
-pub fn handle_command(_resources: &mut Resources, _data: u8) {
+pub fn handle_command(resources: &mut Resources, data: u8) {
+    log::debug!("PADMC command 0x{:X} received, returning 0xFF in RX FIFO", data);
+    resources.padmc.rx_fifo.write_one(0xFF).unwrap();
 }

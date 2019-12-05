@@ -65,9 +65,10 @@ pub fn trace_pc(resources: &Resources) {
 pub fn trace_hazard(hazard: Hazard) {
     if ENABLE_HAZARD_TRACING {
         match hazard {
-            Hazard::MemoryRead(address) | Hazard::MemoryWrite(address) => warn!("R3000 Hazard {} at address 0x{:08X}", hazard, address),
-            // Bus locking is normal and expected occasionally.
-            _ => {},
+            Hazard::MemoryRead(_) | Hazard::MemoryWrite(_) => warn!("R3000 memory hazard: {}", hazard),
+            Hazard::BusLockedMemoryRead(_) | Hazard::BusLockedMemoryWrite(_) => {
+                // Bus locking is normal and expected occasionally.
+            },
         }
     }
 }
