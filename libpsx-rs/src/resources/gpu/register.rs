@@ -1,4 +1,4 @@
-use log::debug;
+use log::warn;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::fifo::Fifo;
@@ -23,7 +23,7 @@ impl B8MemoryMap for Gpu1810 {
         assert!(offset == 0, "Invalid offset");
         
         Ok(self.read.read_one().unwrap_or_else(|_| {
-            debug!("GPUREAD is empty - returning 0xFFFF_FFFF");
+            warn!("GPUREAD is empty - returning 0xFFFF_FFFF");
             0xFFFF_FFFF
         }))
     }

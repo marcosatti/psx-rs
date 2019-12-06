@@ -497,8 +497,12 @@ pub fn ori(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn xori(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction xori not implemented");
+pub fn xori(resources: &mut Resources, instruction: Instruction) -> InstResult {
+    let rs = &resources.r3000.gpr[instruction.rs()];
+    let value = rs.read_u32();
+    let rt = &mut resources.r3000.gpr[instruction.rt()];
+    rt.write_u32(value ^ (instruction.u_imm() as u32));
+    Ok(())
 }
 
 pub fn lui(resources: &mut Resources, instruction: Instruction) -> InstResult {

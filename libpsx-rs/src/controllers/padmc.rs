@@ -68,35 +68,25 @@ fn handle_tx(resources: &mut Resources) {
             return;
         }
 
-        unsafe { std::intrinsics::breakpoint(); }
-
-        stat.write_bitfield(STAT_TXRDY_1, 0);
+        stat.write_bitfield(STAT_TXRDY_1, 1);
         stat.write_bitfield(STAT_TXRDY_2, 0);
 
-        if tx_fifo.read_available() == 0 {
+        if tx_fifo.is_empty() {
             return;
         }
-
-        // Start transfer.
-        stat.write_bitfield(STAT_TXRDY_1, 1);
     }
 
+    // Start transfer.
     let data = {
         let tx_fifo = &resources.padmc.tx_fifo;
-        match tx_fifo.read_one() {
-            Err(_) => {
-                log::debug!("Reading PADMC TX FIFO failed ({})", tx_fifo.read_available());
-                unsafe { std::intrinsics::breakpoint(); }
-                panic!();
-            },
-            Ok(d) => d,
-        }
+        tx_fifo.read_one().unwrap()
     };
 
     command::handle_command(resources, data);
 
     {
         let stat = &mut resources.padmc.stat;
+        stat.write_bitfield(STAT_TXRDY_1, 0);
         stat.write_bitfield(STAT_TXRDY_2, 1);
     }
 }
@@ -104,7 +94,7 @@ fn handle_tx(resources: &mut Resources) {
 fn handle_rx(resources: &mut Resources) {
     let rx_fifo = &resources.padmc.rx_fifo;
 
-    if rx_fifo.read_available() == 0 {
+    if rx_fifo.is_empty() {
         return;
     }
 

@@ -2,7 +2,6 @@ pub mod command;
 pub mod command_impl;
 
 use std::sync::atomic::Ordering;
-use log::debug;
 use crate::resources::Resources;
 use crate::controllers::cdrom::command::*;
 use crate::resources::cdrom::*;
@@ -23,7 +22,6 @@ fn handle_parameter_fifo(resources: &mut Resources) {
 
     if int_flag.parameter_reset.load(Ordering::Acquire) {
         fifo.clear();
-        debug!("Cleared CDROM parameter fifo");
         int_flag.parameter_reset.store(false, Ordering::Release);
     }
 

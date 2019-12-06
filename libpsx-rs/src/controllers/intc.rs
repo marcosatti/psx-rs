@@ -1,6 +1,5 @@
 pub mod debug;
 
-use log::debug;
 use std::time::Duration;
 use crate::controllers::ControllerState;
 use crate::types::bitfield::Bitfield;
@@ -40,12 +39,10 @@ fn handle_interrupt_check(resources: &mut Resources) {
         let cause = &resources.r3000.cp0.cause;
         
         if masked_value == 0 {
-            debug!("INTC all interrupts acknowledged, clearing COP0.Cause");
             cause.reset_irq(IrqLine::Intc);
         } else {
             for i in 0..32 {
                 if is_edge_triggered(i, *old_masked_value, masked_value) {
-                    debug!("INTC edge triggered interrupt on line {}", i);
                     cause.raise_irq(IrqLine::Intc);
                     break;
                 }

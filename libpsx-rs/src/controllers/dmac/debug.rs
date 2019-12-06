@@ -6,7 +6,7 @@ use crate::controllers::dmac::channel::*;
 use crate::resources::dmac::*;
 use crate::resources::dmac::debug::*;
 
-const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = true;
+const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_WRITE_TRACE: bool = false;
 const ENABLE_LINKED_LIST_NULL_HEADER_TRACE: bool = true;

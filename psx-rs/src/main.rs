@@ -3,6 +3,7 @@ use std::panic;
 use std::env::args;
 use std::time::Duration;
 use std::sync::atomic::Ordering;
+use std::time::Instant;
 use log::{error, info};
 use sdl2::video::GLProfile;
 use opengl_sys::*;
@@ -90,11 +91,11 @@ fn main() {
     // Do event loop
     let result = panic::catch_unwind(
         panic::AssertUnwindSafe(|| {
-            while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
+            'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
                 for event in event_pump.poll_iter() {
                     match event {
-                        sdl2::event::Event::Quit { .. } => break,
-                        _ => {}
+                        sdl2::event::Event::Quit { .. } => break 'event_loop,
+                        _ => {},
                     }
                 }
 
@@ -130,11 +131,12 @@ fn setup_log_file(logs_path: &Path) -> PathBuf {
 }
 
 fn setup_logger(log_file_path: &Path) {
+    let now = Instant::now();
     fern::Dispatch::new()
-        .format(|out, message, record| {
+        .format(move |out, message, record| {
             out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                "[{}ms][{}][{}] {}",
+                now.elapsed().as_millis(),
                 record.target(),
                 record.level(),
                 message
