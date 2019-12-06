@@ -12,7 +12,7 @@ pub struct Gpu1810 {
 impl Gpu1810 {
     pub fn new() -> Gpu1810 {
         Gpu1810 {
-            gp0: Fifo::new(64, Some(DebugState::new("GPU GP0", true, true))),
+            gp0: Fifo::new(64, Some(DebugState::new("GPU GP0", false, false))),
             read: Fifo::new(64, Some(DebugState::new("GPU READ", false, false))),
         }
     }
@@ -42,7 +42,7 @@ pub struct Gpu1814 {
 impl Gpu1814 {
     pub fn new() -> Gpu1814 {
         Gpu1814 {
-            gp1: Fifo::new(64, Some(DebugState::new("GPU GP1", true, true))), // Not really a FIFO(?), but emulator needs to buffer commands.
+            gp1: Fifo::new(64, Some(DebugState::new("GPU GP1", false, false))),
             stat: B32Register::new(),
         }
     }

@@ -16,7 +16,8 @@ pub fn run(state: &mut ControllerState, event: Event) {
 }
 
 fn run_time(resources: &mut Resources, duration: Duration) {
-    let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    ticks /= 16;
     
     for _ in 0..ticks {
         tick(resources); 
@@ -43,6 +44,7 @@ fn handle_ctrl(resources: &mut Resources) {
     if ctrl.register.read_bitfield(CTRL_ACK) != 0 {
         stat.write_bitfield(STAT_RXERR_PARITY, 0);
         stat.write_bitfield(STAT_IRQ, 0);
+        ctrl.register.write_bitfield(CTRL_ACK, 0);
     }
 
     if ctrl.register.read_bitfield(CTRL_RESET) != 0 {
@@ -66,9 +68,10 @@ fn handle_tx(resources: &mut Resources) {
             return;
         }
 
-        if stat.read_bitfield(STAT_TXRDY_2) == 0 {
-            return;
-        }
+        unsafe { std::intrinsics::breakpoint(); }
+
+        stat.write_bitfield(STAT_TXRDY_1, 0);
+        stat.write_bitfield(STAT_TXRDY_2, 0);
 
         if tx_fifo.read_available() == 0 {
             return;
@@ -76,12 +79,18 @@ fn handle_tx(resources: &mut Resources) {
 
         // Start transfer.
         stat.write_bitfield(STAT_TXRDY_1, 1);
-        stat.write_bitfield(STAT_TXRDY_2, 0);
     }
 
     let data = {
         let tx_fifo = &resources.padmc.tx_fifo;
-        tx_fifo.read_one().unwrap()
+        match tx_fifo.read_one() {
+            Err(_) => {
+                log::debug!("Reading PADMC TX FIFO failed ({})", tx_fifo.read_available());
+                unsafe { std::intrinsics::breakpoint(); }
+                panic!();
+            },
+            Ok(d) => d,
+        }
     };
 
     command::handle_command(resources, data);
@@ -95,11 +104,12 @@ fn handle_tx(resources: &mut Resources) {
 fn handle_rx(resources: &mut Resources) {
     let rx_fifo = &resources.padmc.rx_fifo;
 
-    let stat = &mut resources.padmc.stat;
-
-    if rx_fifo.read_available() != 0 {
-        stat.write_bitfield(STAT_RXFIFO_READY, 1);
+    if rx_fifo.read_available() == 0 {
+        return;
     }
+
+    let stat = &mut resources.padmc.stat;
+    stat.write_bitfield(STAT_RXFIFO_READY, 1);
 }
 
 fn handle_baud_timer(resources: &mut Resources) {

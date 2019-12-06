@@ -1,3 +1,5 @@
+#![feature(core_intrinsics)]
+
 pub mod constants;
 pub mod types;
 pub mod utilities;
