@@ -1,5 +1,7 @@
 #%%
 import os
+import sys
+import pyexcel as p
 
 MATCH = "match inst.{}() {{"
 VALUE_MATCH = "{} => {{"
@@ -7,9 +9,9 @@ SOME = "Some(({}, {}))"
 NONE = "None"
 BRACE_CLOSE = "},"
 BRACE_CLOSE_NC = "}"
-INSTRUCTION_FN_DECL = "type InstructionFn = fn(&mut Resources, Instruction);"
+INSTRUCTION_FN_DECL = "type InstructionFn = fn(&mut Resources, Instruction) -> InstResult;"
 HEADER = "pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {"
-INST_HEADER = "pub unsafe fn {}(_resources: &mut Resources, _instruction: Instruction) {{"
+INST_HEADER = "pub fn {}(_resources: &mut Resources, _instruction: Instruction) -> InstResult {{"
 UNIMPLEMENTED = "unimplemented!(\"Instruction {} not implemented\");"
 
 START_KEY_COLUMN = 3 # opcode column
@@ -24,8 +26,13 @@ def write_line(f, indent, lines, string):
     f.write(string)
     f.write('\n' * lines)
 
-import pyexcel as p
-records = p.get_records(file_name=os.path.join(BASE_DIR, 'Instruction List.ods'), sheet_name='Sheet1', start_row=4)
+try:
+    file_name = sys.argv[1]
+except IndexError:
+    file_name = 'Instruction List.ods'
+print(f'Parsing {file_name}')
+
+records = p.get_records(file_name=os.path.join(BASE_DIR, file_name), sheet_name='Sheet1', start_row=4)
 keys = list(records[0].keys())
 
 # make instruction templates
@@ -43,8 +50,6 @@ with open(os.path.join(BASE_DIR, 'core.rs'), 'w') as f:
 # make tree
 
 def make_switch(d, record, col_idx):
-    global END_KEY_COLUMN
-
     value = record[keys[col_idx]]
     if value == '':
         value = -1
@@ -62,8 +67,8 @@ for record in records:
         d.setdefault(record[key], { 'type' : keys[START_KEY_COLUMN + 1] })
         make_switch(d[record[key]], record, START_KEY_COLUMN + 1)
 
-# for item in d.items():
-#     print(item)
+import pprint
+#pprint.pprint(d)
 
 # clean tree
 

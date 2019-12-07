@@ -1,6 +1,7 @@
 pub mod instruction;
 pub mod memory_controller;
 pub mod instruction_impl;
+pub mod instruction_impl_cop2;
 pub mod hazard;
 pub mod debug;
 pub mod exception;
@@ -40,6 +41,13 @@ fn tick(resources: &mut Resources) -> i64 {
     handle_interrupts(resources);
 
     if let Some(target) = resources.r3000.branch_delay.advance() {
+        if translate_address(target) < 0x80 {
+            debug!("PC about to jump into invalid memory! Breaking...");
+            debug::trace_pc(resources);
+            debug::disassembler::trace_instructions_at_pc(resources, Some(50));
+            debug::register::trace_registers(resources);
+            unsafe { std::intrinsics::breakpoint(); }
+        }
         resources.r3000.pc.write_u32(target);
     }
 

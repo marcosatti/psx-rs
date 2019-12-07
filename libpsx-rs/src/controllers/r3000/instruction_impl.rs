@@ -803,3 +803,11 @@ pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     Ok(())
 }
+
+pub fn lwc2(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+    unimplemented!("Instruction lwc2 not implemented");
+}
+
+pub fn swc2(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+    unimplemented!("Instruction swc2 not implemented");
+}

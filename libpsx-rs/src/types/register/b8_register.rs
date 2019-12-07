@@ -2,13 +2,15 @@ use crate::types::b8_memory_mapper::*;
 use crate::types::bitfield::Bitfield;
 
 #[repr(C)]
-pub union B8Register_ {
-    pub v8: u8,
+#[derive(Copy, Clone)]
+union B8Register_ {
+    v8: u8,
 }
 
+#[derive(Copy, Clone)]
 pub struct B8Register {
-    pub value: B8Register_,
-    pub read_only: bool,
+    value: B8Register_,
+    read_only: bool,
 }
 
 impl B8Register {

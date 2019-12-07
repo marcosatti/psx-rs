@@ -2,6 +2,7 @@ use crate::types::mips1::instruction::Instruction;
 use crate::resources::Resources;
 use crate::controllers::r3000::*;
 use crate::controllers::r3000::instruction_impl::*;
+use crate::controllers::r3000::instruction_impl_cop2::*;
 
 type InstructionFn = fn(&mut Resources, Instruction) -> InstResult;
 
@@ -253,6 +254,108 @@ pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {
         },
         46 => {
             Some((swr, 2))
+        },
+        18 => {
+            lookup_cop2(inst)
+        },
+        50 => {
+            Some((lwc2, 2))
+        },
+        58 => {
+            Some((swc2, 2))
+        },
+        _ => {
+            None
+        },
+    }
+}
+
+pub fn lookup_cop2(inst: Instruction) -> Option<(InstructionFn, usize)> {
+    match inst.funct() {
+        0 => {
+            match inst.rs() {
+                0 => {
+                    Some((mfc2, 2))
+                },
+                2 => {
+                    Some((cfc2, 2))
+                },
+                4 => {
+                    Some((mtc2, 2))
+                },
+                6 => {
+                    Some((ctc2, 2))
+                },
+                _ => {
+                    None
+                },
+            }
+        },
+        1 => {
+            Some((rtps, 2))
+        },
+        6 => {
+            Some((nclip, 2))
+        },
+        12 => {
+            Some((op, 2))
+        },
+        16 => {
+            Some((dpcs, 2))
+        },
+        17 => {
+            Some((intpl, 2))
+        },
+        18 => {
+            Some((mvmva, 2))
+        },
+        19 => {
+            Some((ncds, 2))
+        },
+        20 => {
+            Some((cdp, 2))
+        },
+        22 => {
+            Some((ncdt, 2))
+        },
+        27 => {
+            Some((nccs, 2))
+        },
+        28 => {
+            Some((cc, 2))
+        },
+        30 => {
+            Some((ncs, 2))
+        },
+        32 => {
+            Some((nct, 2))
+        },
+        40 => {
+            Some((sqr, 2))
+        },
+        41 => {
+            Some((dcpl, 2))
+        },
+        42 => {
+            Some((dpct, 2))
+        },
+        45 => {
+            Some((avsz3, 2))
+        },
+        46 => {
+            Some((avsz4, 2))
+        },
+        48 => {
+            Some((rtpt, 2))
+        },
+        61 => {
+            Some((gpf, 2))
+        },
+        62 => {
+            Some((gpl, 2))
+        },
+        63 => {
+            Some((ncct, 2))
         },
         _ => {
             None

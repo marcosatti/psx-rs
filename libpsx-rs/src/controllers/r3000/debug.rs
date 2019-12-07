@@ -107,7 +107,7 @@ pub fn track_memory_read_pending<T>(physical_address: u32) {
         return;
     }
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         debug!("[{:X}] Read {} address = 0x{:08X} start", tick_count, type_name, physical_address);
@@ -125,7 +125,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
 
     let count = memory::update_state_read(physical_address);
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         debug!("[{:X}] Read {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);
@@ -143,7 +143,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(physical_address: u32, val
         return;
     }
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} start", tick_count, type_name, physical_address, value);
@@ -161,7 +161,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 
     let count = memory::update_state_write(physical_address);
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);

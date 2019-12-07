@@ -2,15 +2,17 @@ use crate::types::bitfield::Bitfield;
 use crate::types::b8_memory_mapper::*;
 
 #[repr(C)]
-pub union B32Register_ {
-    pub v32: u32,
-    pub v16: [u16; 2],
-    pub v8: [u8; 4],
+#[derive(Copy, Clone)]
+union B32Register_ {
+    v32: u32,
+    v16: [u16; 2],
+    v8: [u8; 4],
 }
 
+#[derive(Copy, Clone)]
 pub struct B32Register {
-    pub value: B32Register_,
-    pub read_only: bool,
+    value: B32Register_,
+    read_only: bool,
 }
 
 impl B32Register {
