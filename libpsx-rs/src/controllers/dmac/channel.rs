@@ -76,11 +76,17 @@ pub fn get_transfer_state<'a, 'b>(resources: &'a mut Resources, channel: usize) 
     }
 }
 
-pub fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo<u32> {
+pub fn get_fifo<'a>(resources: &'a Resources, channel: usize, writing: bool) -> &'a Fifo<u32> {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
-        2 => &resources.gpu.gpu1810.gp0,
+        2 => {
+            if writing {
+                &resources.gpu.gpu1810.gp0
+            } else {
+                &resources.gpu.gpu1810.read
+            }
+        },
         3 => unimplemented!("Unhandled DMAC channel 3"),
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
@@ -92,7 +98,7 @@ pub fn get_fifo<'a>(resources: &'a Resources, channel: usize) -> &'a Fifo<u32> {
 pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
         0..=5 => {
-            let fifo = get_fifo(resources, channel);
+            let fifo = get_fifo(resources, channel, false);
             let result = fifo.read_one();
 
             if result.is_err() {
@@ -111,7 +117,7 @@ pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_t
 pub fn push_channel_data(resources: &Resources, channel: usize, value: u32) -> Result<(), ()> {
     match channel {
         0..=5 => {
-            let fifo = get_fifo(resources, channel);
+            let fifo = get_fifo(resources, channel, true);
             let result = fifo.write_one(value);
             
             if result.is_err() {

@@ -1,3 +1,4 @@
+use log::debug;
 use crate::backends::video::VideoBackend;
 use crate::resources::Resources;
 use crate::types::bitfield::Bitfield;
@@ -36,7 +37,7 @@ pub fn command_03(resources: &mut Resources, _video_backend: &VideoBackend, comm
 pub fn command_04(resources: &mut Resources, _video_backend: &VideoBackend, command: u32) {
     let dma_direction = Bitfield::new(0, 2).extract_from(command);
     if dma_direction == 3 {
-        unimplemented!("DMA direction set to 3 (GPUREAD to CPU)");
+        debug!("DMA direction set to 3 (GPUREAD to CPU)");
     }
     resources.gpu.gpu1814.stat.write_bitfield(STAT_DMA_DIRECTION, dma_direction);
 }

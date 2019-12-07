@@ -264,10 +264,6 @@ pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBacken
         word = Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
         read_buffer.push_back(word)
     }
-
-    if size.height > 1 {
-        unimplemented!("Verify function works properly for multiple lines");
-    }
 }
 
 pub fn command_e1_length(_data: &[u32]) -> Option<usize> {
