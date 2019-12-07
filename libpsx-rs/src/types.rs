@@ -1,4 +1,3 @@
-#[macro_use]
 pub mod register;
 pub mod mips1;
 pub mod memory;
@@ -8,3 +7,4 @@ pub mod geometry;
 pub mod color;
 pub mod stereo;
 pub mod fifo;
+pub mod gte;

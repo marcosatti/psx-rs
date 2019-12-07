@@ -804,10 +804,34 @@ pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lwc2(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction lwc2 not implemented");
+pub fn lwc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+    let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
+    addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
+    addr = translate_address(addr);
+
+    let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
+    let value = if !isc { 
+        read_u32(resources, addr)?
+    } else { 
+        0
+    };
+
+    resources.r3000.cp2.gd[instruction.rt()].write_u32(value);
+
+    Ok(())
 }
 
-pub fn swc2(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction swc2 not implemented");
+pub fn swc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+    let value = resources.r3000.cp2.gd[instruction.rt()].read_u32();
+    let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
+    addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
+    addr = translate_address(addr);
+
+    let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
+
+    if !isc { 
+        write_u32(resources, addr, value)?
+    }
+
+    Ok(())
 }
