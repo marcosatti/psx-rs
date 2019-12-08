@@ -4,6 +4,7 @@ pub mod register;
 
 use std::fmt::UpperHex;
 use std::sync::atomic::Ordering;
+use std::ffi::CStr;
 use log::trace;
 use log::debug;
 use log::warn;
@@ -11,11 +12,13 @@ use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::controllers::r3000::hazard::*;
 use crate::controllers::r3000::debug::disassembler::*;
 use crate::controllers::r3000::debug::register::*;
+use crate::controllers::r3000::memory_controller::translate_address;
 use crate::resources::Resources;
 use crate::resources::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
-const ENABLE_STATE_TRACING: bool = false;
+const ENABLE_STATE_TRACING: bool = true;
+const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
 const ENABLE_INTERRUPT_TRACING: bool = false;
 const ENABLE_SYSCALL_TRACING: bool = false;
@@ -42,11 +45,11 @@ pub fn trace_state(resources: &Resources) {
 
     let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
 
-    if tick_count >= 0x10001592686D || pc_va == 0x800513FC {
+    if tick_count >= 0x10000000 {
         let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
         let branching = resources.r3000.branch_delay.branching();
         debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
-        trace_instructions_at_pc(resources, None);
+        trace_instructions_at_pc(resources, Some(1));
         trace_registers(resources);
     }
 
@@ -193,5 +196,45 @@ fn trace_memory_spin_loop_detection_write(resources: &Resources, physical_addres
         trace_instructions_at_pc(resources, None);
         trace_registers(resources);
         memory::clear_state_write(physical_address);
+    }
+}
+
+pub fn trace_printf(resources: &Resources) {
+    // BIOS call 0xA0, $t1 = 0x3F.
+    if !ENABLE_PRINTF_TRACE {
+        return;
+    }
+    
+    let mut pc = resources.r3000.pc.read_u32();
+    pc = translate_address(pc);
+    let t1 = resources.r3000.gpr[9].read_u32();
+
+    if (pc == 0xA0) && (t1 == 0x3F) {
+        unsafe {
+            let mut fmt_string_ptr = resources.r3000.gpr[4].read_u32();
+            fmt_string_ptr = translate_address(fmt_string_ptr);
+
+            let a1 = resources.r3000.gpr[5].read_u32();
+            let a2 = resources.r3000.gpr[6].read_u32();
+            let a3 = resources.r3000.gpr[7].read_u32();
+
+            let memory_offset;
+            let memory = match fmt_string_ptr {
+                0..=0x1F_FFFF => {
+                    memory_offset = fmt_string_ptr;
+                    &resources.main_memory.memory
+                },
+                0x1FC0_0000..=0x1FC7_FFFF => {
+                    memory_offset = fmt_string_ptr - 0x1FC0_0000;
+                    &resources.bios.memory
+                },
+                _ => panic!("fmt_string_ptr = 0x{:08X} is not inside memory", fmt_string_ptr)
+            };
+    
+            let ptr = &memory[memory_offset as usize] as *const u8 as *const i8;
+            let string = CStr::from_ptr(ptr).to_string_lossy().to_owned();
+            let string_trimmed = string.trim();
+            trace!("printf call: fmt: {}, a1 = 0x{:X}, a2 = 0x{:X}, a3 = 0x{:X}", string_trimmed, a1, a2, a3);       
+        }
     }
 }

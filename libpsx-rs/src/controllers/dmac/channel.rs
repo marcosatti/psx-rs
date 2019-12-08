@@ -193,7 +193,7 @@ pub fn initialize_transfer_state(transfer_state: &mut TransferState, chcr: &Chcr
             );
         },
         SyncMode::Blocks => {
-            warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending next block");
+            warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending/receiving next block");
 
             transfer_state.sync_mode_state = SyncModeState::Blocks(
                 BlocksState {

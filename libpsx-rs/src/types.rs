@@ -7,4 +7,3 @@ pub mod geometry;
 pub mod color;
 pub mod stereo;
 pub mod fifo;
-pub mod gte;

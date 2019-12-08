@@ -245,7 +245,7 @@ pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBacken
     let fifo_words = (count + 1) / 2;
 
     let mut data = match video_backend {
-        VideoBackend::None => { unimplemented!("") },
+        VideoBackend::None => { unimplemented!() },
         VideoBackend::Opengl(ref backend_params) => {
             opengl::read_framebuffer_5551(backend_params, origin, size)
         },

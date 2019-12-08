@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use log::debug;
 use average::{Mean, Estimate};
 
-const ENABLE_BENCHMARK_TRACING: bool = false;
+const ENABLE_BENCHMARK_TRACING: bool = true;
 
 const REPORTING_PERIOD: Duration = Duration::from_secs(3);
 

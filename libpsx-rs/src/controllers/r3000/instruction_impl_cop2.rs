@@ -1,6 +1,6 @@
 use crate::resources::Resources;
 use crate::types::mips1::instruction::Instruction;
-use crate::types::gte::GteInstruction;
+use crate::resources::r3000::cp2::instruction::GteInstruction;
 use crate::controllers::r3000::InstResult;
 
 pub fn mfc2(resources: &mut Resources, instruction: Instruction) -> InstResult {

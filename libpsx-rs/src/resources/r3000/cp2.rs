@@ -1,3 +1,5 @@
+pub mod instruction;
+
 use crate::resources::Resources;
 use crate::types::register::b32_register::B32Register;
 
