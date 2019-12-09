@@ -5,6 +5,7 @@ pub mod dmac;
 pub mod spu;
 pub mod cdrom;
 pub mod padmc;
+pub mod timers;
 
 use std::time::Duration;
 use crate::State;
