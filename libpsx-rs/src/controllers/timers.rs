@@ -6,7 +6,7 @@ use log::debug;
 use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::resources::timers::*;
-use crate::constants::timers::CLOCK_SPEED;
+use crate::constants::timers::*;
 use crate::controllers::Event;
 use crate::controllers::timers::timer::*;
 
@@ -24,6 +24,9 @@ pub fn run(state: &mut ControllerState, event: Event) {
 }
 
 fn run_time(resources: &mut Resources, duration: Duration) {
+    // Update internal HBLANK counter.
+    resources.timers.hblank_counter += duration;
+
     let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
     for _ in 0..ticks {
@@ -55,10 +58,12 @@ fn handle_mode_write(resources: &mut Resources, timer_id: usize) {
 
     let clock_src = MODE_CLK_SRC.extract_from(value);
     if clock_src > 0 {
-        if timer_id == 0 || timer_id == 1 {
+        if timer_id == 0 {
             if clock_src != 2 {
                 unimplemented!("Non system clock src: {}, timer_id = {}", clock_src, timer_id);
             }
+        } else if timer_id == 1 {
+            // All implemented.
         } else if timer_id == 2 {
             if clock_src != 1 {
                 unimplemented!("Non system clock src: {}, timer_id = {}", clock_src, timer_id);
@@ -89,8 +94,25 @@ fn handle_mode_read(resources: &mut Resources, timer_id: usize) {
 fn handle_count(resources: &mut Resources, timer_id: usize) {
     let count = get_count(resources, timer_id);
     
-    let value = count.read_u32() + 1;
-    count.write_u32(value);
+    if timer_id == 1 {
+        let clk_src = resources.timers.timer1_mode.register.read_bitfield(MODE_CLK_SRC);
+        if (clk_src == 1) || (clk_src == 3) {
+            let mut hblank_ticks = 0;
+            while resources.timers.hblank_counter >= HBLANK_INTERVAL_NTSC {
+                resources.timers.hblank_counter -= HBLANK_INTERVAL_NTSC;
+                hblank_ticks += 1;
+            }
+
+            let value = count.read_u32() + hblank_ticks;
+            count.write_u32(value);
+        } else {
+            let value = count.read_u32() + 1;
+            count.write_u32(value);
+        }
+    } else {
+        let value = count.read_u32() + 1;
+        count.write_u32(value);
+    }
 
     let irq_type = handle_count_reset(resources, timer_id);
     handle_irq_trigger(resources, timer_id, irq_type);

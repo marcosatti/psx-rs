@@ -1,5 +1,6 @@
 pub mod register;
 
+use std::time::Duration;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::resources::Resources;
 use crate::resources::timers::register::*;
@@ -30,6 +31,8 @@ pub struct Timers {
     pub timer2_count: B32Register,
     pub timer2_mode: Mode,
     pub timer2_target: B32Register,
+
+    pub hblank_counter: Duration,
 }
 
 impl Timers {
@@ -44,6 +47,7 @@ impl Timers {
             timer2_count: B32Register::new(),
             timer2_mode: Mode::new(),
             timer2_target: B32Register::new(),
+            hblank_counter: Duration::from_secs(0),
         }
     }
 }
