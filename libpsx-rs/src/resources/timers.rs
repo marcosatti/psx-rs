@@ -1,9 +1,10 @@
 pub mod register;
+pub mod timer;
 
-use std::time::Duration;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::resources::Resources;
 use crate::resources::timers::register::*;
+use crate::resources::timers::timer::*;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 
@@ -12,8 +13,8 @@ pub const MODE_SYNC_MODE: Bitfield = Bitfield::new(1, 2);
 pub const MODE_RESET: Bitfield = Bitfield::new(3, 1);
 pub const MODE_IRQ_TARGET: Bitfield = Bitfield::new(4, 1);
 pub const MODE_IRQ_OVERFLOW: Bitfield = Bitfield::new(5, 1);
-pub const _MODE_IRQ_REPEAT: Bitfield = Bitfield::new(6, 1);
-pub const _MODE_IRQ_PULSE: Bitfield = Bitfield::new(7, 1);
+pub const MODE_IRQ_REPEAT: Bitfield = Bitfield::new(6, 1);
+pub const MODE_IRQ_PULSE: Bitfield = Bitfield::new(7, 1);
 pub const MODE_CLK_SRC: Bitfield = Bitfield::new(8, 2);
 pub const MODE_IRQ_STATUS: Bitfield = Bitfield::new(10, 1);
 pub const MODE_TARGET_HIT: Bitfield = Bitfield::new(11, 1);
@@ -23,16 +24,17 @@ pub struct Timers {
     pub timer0_count: B32Register,
     pub timer0_mode: Mode,
     pub timer0_target: B32Register,
+    pub timer0_state: TimerState,
 
     pub timer1_count: B32Register,
     pub timer1_mode: Mode,
     pub timer1_target: B32Register,
+    pub timer1_state: TimerState,
 
     pub timer2_count: B32Register,
     pub timer2_mode: Mode,
     pub timer2_target: B32Register,
-
-    pub hblank_counter: Duration,
+    pub timer2_state: TimerState,
 }
 
 impl Timers {
@@ -41,13 +43,15 @@ impl Timers {
             timer0_count: B32Register::new(),
             timer0_mode: Mode::new(),
             timer0_target: B32Register::new(),
+            timer0_state: TimerState::new(),
             timer1_count: B32Register::new(),
             timer1_mode: Mode::new(),
             timer1_target: B32Register::new(),
+            timer1_state: TimerState::new(),
             timer2_count: B32Register::new(),
             timer2_mode: Mode::new(),
             timer2_target: B32Register::new(),
-            hblank_counter: Duration::from_secs(0),
+            timer2_state: TimerState::new(),
         }
     }
 }

@@ -12,6 +12,7 @@ use libpsx_rs::{Core, Config};
 use libpsx_rs::backends::context::*;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
+use libpsx_rs::controllers::r3000::debug::ENABLE_STATE_TRACING;
 use libpsx_rs::debug::DEBUG_CORE_EXIT;
 use libpsx_rs::debug::analysis as debug_analysis;
 
@@ -66,7 +67,7 @@ fn main() {
     openal_release_context();
 
     // Initialize psx_rs core
-    let time_delta_us = args().nth(1).map_or(20, |v| v.parse::<usize>().unwrap());
+    let time_delta_us = args().nth(1).map_or(25, |v| v.parse::<usize>().unwrap());
     let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
@@ -95,6 +96,11 @@ fn main() {
                 for event in event_pump.poll_iter() {
                     match event {
                         sdl2::event::Event::Quit { .. } => break 'event_loop,
+                        sdl2::event::Event::KeyDown { keycode, .. } => {
+                            if let Some(key) = keycode {
+                                handle_keycode(key);
+                            }
+                        },
                         _ => {},
                     }
                 }
@@ -109,7 +115,7 @@ fn main() {
     }
 
     // Post mortem
-    debug_analysis(&core);
+    debug_analysis(&mut core);
 
     // Audio teardown
     unsafe { alcDestroyContext(openal_context) };
@@ -155,4 +161,13 @@ fn setup_signal_handler() {
     };
     
     ctrlc::set_handler(ctrl_c_handler).unwrap();
+}
+
+fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
+    use sdl2::keyboard::Keycode;
+
+    match keycode {
+        Keycode::F1 => { ENABLE_STATE_TRACING.fetch_xor(true, Ordering::AcqRel); },
+        _ => {},
+    }
 }

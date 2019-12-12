@@ -1,3 +1,4 @@
+use log::debug;
 use crate::resources::Resources;
 use crate::backends::video::VideoBackend;
 use crate::controllers::gpu::crtc::opengl::*;
@@ -23,6 +24,7 @@ pub fn handle_vblank(resources: &mut Resources, video_backend: &VideoBackend) {
 fn vblank_interrupt(resources: &mut Resources) {
     use crate::resources::intc::VBLANK;
     resources.intc.stat.set_irq(VBLANK);
+    debug!("VBLANK interrupt fired");
 }
 
 fn render(video_backend: &VideoBackend) {

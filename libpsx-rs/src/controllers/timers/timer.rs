@@ -1,6 +1,15 @@
+use std::time::Duration;
 use crate::resources::Resources;
 use crate::resources::timers::register::*;
+use crate::resources::timers::timer::*;
 use crate::types::register::b32_register::B32Register;
+
+#[derive(Copy, Clone, Debug)]
+pub enum IrqType {
+    None,
+    Overflow,
+    Target,
+}
 
 pub fn get_count<'a, 'b>(resources: &'a mut Resources, timer_id: usize) -> &'b mut B32Register {
     let count = match timer_id {
@@ -39,4 +48,23 @@ pub fn get_target<'a, 'b>(resources: &'a mut Resources, timer_id: usize) -> &'b 
     unsafe {
         (target as *mut B32Register).as_mut().unwrap()
     }
+}
+
+pub fn get_state<'a, 'b>(resources: &'a mut Resources, timer_id: usize) -> &'b mut TimerState {
+    let state = match timer_id {
+        0 => &mut resources.timers.timer0_state,
+        1 => &mut resources.timers.timer1_state,
+        2 => &mut resources.timers.timer2_state,
+        _ => unreachable!("Invalid timer ID"),
+    };
+
+    unsafe {
+        (state as *mut TimerState).as_mut().unwrap()
+    }
+}
+
+pub fn handle_duration_clear(resources: &mut Resources, timer_id: usize) {
+    let state = get_state(resources, timer_id);
+    state.current_elapsed = Duration::from_secs(0);
+    state.acknowledged_elapsed = Duration::from_secs(0);    
 }

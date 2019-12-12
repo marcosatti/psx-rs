@@ -6,7 +6,6 @@ use crate::controllers::ControllerState;
 use crate::controllers::Event;
 use crate::debug::benchmark::BenchmarkResults;
 use crate::controllers::r3000::run as run_r3000;
-use crate::controllers::gpu::crtc::run as run_gpu_crtc;
 use crate::controllers::intc::run as run_intc;
 use crate::controllers::gpu::run as run_gpu;
 use crate::controllers::dmac::run as run_dmac;
@@ -35,10 +34,6 @@ pub fn atomic_broadcast(executor: &ThreadPool, state: &State, event: Event) -> B
         scope.spawn(|_| {
             let elapsed = atomic_run(run_spu, &state, event);
             benchmark_results.add_result("spu", elapsed);
-        });
-        scope.spawn(|_| {
-            let elapsed = atomic_run(run_gpu_crtc, &state, event);
-            benchmark_results.add_result("gpu_crtc", elapsed);
         });
         scope.spawn(|_| { 
             let elapsed = atomic_run(run_intc, &state, event);

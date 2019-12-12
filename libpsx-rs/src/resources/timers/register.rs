@@ -20,8 +20,9 @@ impl Mode {
 
 impl B8MemoryMap for Mode {
     fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
+        let result = B8MemoryMap::read_u16(&mut self.register, offset);
         self.read_latch.store(true, Ordering::Release);
-        B8MemoryMap::read_u16(&mut self.register, offset)
+        result
     }
 
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
@@ -31,8 +32,9 @@ impl B8MemoryMap for Mode {
     }
 
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
+        let result = B8MemoryMap::read_u32(&mut self.register, offset);
         self.read_latch.store(true, Ordering::Release);
-        B8MemoryMap::read_u32(&mut self.register, offset)
+        result
     }
 
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {

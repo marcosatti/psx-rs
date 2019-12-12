@@ -3,7 +3,7 @@ pub mod disassembler;
 pub mod register;
 
 use std::fmt::UpperHex;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::ffi::CStr;
 use log::trace;
 use log::debug;
@@ -17,19 +17,20 @@ use crate::resources::Resources;
 use crate::resources::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
-const ENABLE_STATE_TRACING: bool = true;
+pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
+const ENABLE_DETECT_SYSTEMERROR: bool = true;
 const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
-const ENABLE_INTERRUPT_TRACING: bool = false;
+const ENABLE_INTERRUPT_TRACING: bool = true;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
-const ENABLE_MEMORY_TRACKING_READ: bool = true;
+const ENABLE_MEMORY_TRACKING_READ: bool = false;
 const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
 const ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: bool = false;
 const ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: bool = false;
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F8010E0; //0x1F80_1040;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F8010F0; //0x1F80_1050; 
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x0; //0x79ddc; //0x1F80_1040;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x0; //0x79ddf; //0x1F80_1050; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 static mut DEBUG_TICK_COUNT: usize = 0;
@@ -37,7 +38,7 @@ static mut DEBUG_TICK_COUNT: usize = 0;
 pub fn trace_state(resources: &Resources) {
     unsafe { DEBUG_TICK_COUNT += 1; }
 
-    if !ENABLE_STATE_TRACING {
+    if !ENABLE_STATE_TRACING.load(Ordering::Acquire) {
         return;
     }
 
@@ -45,7 +46,7 @@ pub fn trace_state(resources: &Resources) {
 
     let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
 
-    if tick_count >= 0x10000000 {
+    if true {
         let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
         let branching = resources.r3000.branch_delay.branching();
         debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
@@ -62,7 +63,8 @@ pub fn trace_pc(resources: &Resources) {
     let pc = resources.r3000.pc.read_u32();
     let kuc = resources.r3000.cp0.status.read_bitfield(STATUS_KUC);
     let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC);
-    trace!("R3000 pc = 0x{:0X}, kuc = {}, iec = {}", pc, kuc, iec);
+    let tick_count = unsafe { DEBUG_TICK_COUNT };
+    trace!("[{:X}] R3000 pc = 0x{:0X}, kuc = {}, iec = {}", tick_count, pc, kuc, iec);
 }
 
 pub fn trace_hazard(hazard: Hazard) {
@@ -164,7 +166,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 
     let count = memory::update_state_write(physical_address);
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);
@@ -234,7 +236,24 @@ pub fn trace_printf(resources: &Resources) {
             let ptr = &memory[memory_offset as usize] as *const u8 as *const i8;
             let string = CStr::from_ptr(ptr).to_string_lossy().to_owned();
             let string_trimmed = string.trim();
-            trace!("printf call: fmt: {}, a1 = 0x{:X}, a2 = 0x{:X}, a3 = 0x{:X}", string_trimmed, a1, a2, a3);       
+            let tick_count = DEBUG_TICK_COUNT;
+            let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
+            trace!("[{:X}] printf call: iec: {}, fmt: {}, a1 = 0x{:X}, a2 = 0x{:X}, a3 = 0x{:X}", tick_count, iec, string_trimmed, a1, a2, a3);       
         }
+    }
+}
+
+pub fn detect_systemerror(resources: &Resources) {
+    // BIOS call 0xC0, $t1 = 0x0B.
+    if !ENABLE_DETECT_SYSTEMERROR {
+        return;
+    }
+    
+    let mut pc = resources.r3000.pc.read_u32();
+    pc = translate_address(pc);
+    let t1 = resources.r3000.gpr[9].read_u32();
+
+    if (pc == 0xC0) && (t1 == 0x0B) {
+        panic!("BIOS SystemError C0(0x0B) call detected");
     }
 }

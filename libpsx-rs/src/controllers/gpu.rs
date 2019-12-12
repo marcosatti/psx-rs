@@ -14,6 +14,7 @@ use crate::controllers::ControllerState;
 use crate::constants::gpu::*;
 use crate::controllers::Event;
 use crate::controllers::gpu::command::*;
+use crate::controllers::gpu::crtc::run_time as crtc_run_time;
 
 pub fn run(state: &mut ControllerState, event: Event) {
     match event {
@@ -26,6 +27,8 @@ fn run_time(resources: &mut Resources, video_backend: &VideoBackend, duration: D
     for _ in 0..ticks {
         tick(resources, video_backend);
     }
+
+    crtc_run_time(resources, video_backend, duration);
 }
 
 fn tick(resources: &mut Resources, video_backend: &VideoBackend) {

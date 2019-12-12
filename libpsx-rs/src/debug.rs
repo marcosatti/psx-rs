@@ -10,12 +10,14 @@ use crate::resources::Resources;
 
 pub static DEBUG_CORE_EXIT: AtomicBool = AtomicBool::new(false);
 
-pub fn analysis(core: &Core) {
+pub fn analysis(core: &mut Core) {
     debug!("Core debug analysis:");
     let debug_path = core.config.workspace_path.join(r"debug/");
     std::fs::create_dir_all(&debug_path).unwrap();
     dump_memory(&debug_path, &core.resources);
-    trace(&core.resources);
+    unsafe {
+        trace(core.resources.as_mut().get_unchecked_mut());
+    }
 }
 
 pub fn dump_memory(base_dir_path: &PathBuf, resources: &Resources) {
@@ -37,10 +39,11 @@ pub fn dump_memory_spu(resources: &Resources, base_dir_path: &PathBuf) {
     debug!("Dumped SPU memory to {}", memory_path.to_str().unwrap());
 }
 
-pub fn trace(resources: &Resources) {
+pub fn trace(resources: &mut Resources) {
     trace_r3000(resources);
     trace_intc(resources, false);
     trace_dmac(resources, false);
+    trace_timers(resources);
 }
 
 pub fn trace_r3000(resources: &Resources) {
@@ -55,4 +58,8 @@ pub fn trace_intc(resources: &Resources, only_enabled: bool) {
 
 pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
     crate::controllers::dmac::debug::trace_dmac(resources, only_enabled);
+}
+
+pub fn trace_timers(resources: &mut Resources) {
+    crate::controllers::timers::debug::trace_timers(resources);
 }
