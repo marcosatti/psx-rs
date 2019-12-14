@@ -102,6 +102,11 @@ pub fn jalr(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
 pub fn syscall(resources: &mut Resources, _instruction: Instruction) -> InstResult {
     debug::trace_syscall(resources);
+
+    if resources.r3000.branch_delay.branching() {
+        unimplemented!("SYSCALL in branch delay slot not handled");    
+    }
+
     set_exception(resources, CAUSE_EXCCODE_SYSCALL);
     Ok(())
 }

@@ -41,4 +41,10 @@ impl BranchDelaySlot {
     pub fn branching(&self) -> bool {
         self.target.is_some()
     }
+
+    pub fn cancel(&mut self) {
+        assert!(self.branching());
+        self.target = None;
+        self.slots = 0;
+    }
 }

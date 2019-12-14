@@ -13,6 +13,7 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
     if resources.r3000.branch_delay.branching() {
         cause.write_bitfield(CAUSE_BD, 1);
         pc_value -= INSTRUCTION_SIZE;
+        resources.r3000.branch_delay.cancel();
     }
 
     // Push IEc & KUc (stack).
