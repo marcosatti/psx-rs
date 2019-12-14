@@ -21,7 +21,7 @@ pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(true);
 const ENABLE_DETECT_SYSTEMERROR: bool = true;
 const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
-const ENABLE_INTERRUPT_TRACING: bool = true;
+const ENABLE_INTERRUPT_TRACING: bool = false;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = false;
@@ -46,14 +46,14 @@ pub fn trace_state(resources: &Resources) {
         let tick_count = DEBUG_TICK_COUNT;
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
     
-        let start = 0xF000029c89b;
-        let end = 0xF000029cef0;
+        let start = 0xF00000125DB53;
+        let end = 0xF00000125DB57;
         if (start..=end).contains(&tick_count) {
             let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
             let branching = resources.r3000.branch_delay.branching();
             debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
             trace_instructions_at_pc(resources, Some(1));
-            trace_registers(resources);
+            //trace_registers(resources);
         }
 
         if false {
@@ -85,7 +85,8 @@ pub fn trace_interrupt(resources: &Resources) {
     if ENABLE_INTERRUPT_TRACING {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32();
-        trace!("R3000 interrupt, cycle = 0x{:X}, pc = 0x{:0X}", debug_tick_count, pc_va);
+        let branching = resources.r3000.branch_delay.branching();
+        trace!("R3000 interrupt, cycle = 0x{:X}, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
         crate::controllers::intc::debug::trace_intc(resources, true);
     }
 }

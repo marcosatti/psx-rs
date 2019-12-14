@@ -50,7 +50,7 @@ fn tick(resources: &mut Resources) -> i64 {
         }
         resources.r3000.pc.write_u32(target);
     }
-
+    
     debug::detect_systemerror(resources);
     debug::trace_printf(resources);
 

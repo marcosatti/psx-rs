@@ -26,6 +26,16 @@ impl BranchDelaySlot {
         None
     }
 
+    pub fn advance_all(&mut self) -> Option<u32> {
+        if let Some(t) = self.target {
+            self.slots = 0;
+            self.target = None;
+            Some(t)
+        } else {
+            None
+        }
+    }
+
     pub fn back(&mut self) {
         if self.target.is_some() {
             self.slots += 1;

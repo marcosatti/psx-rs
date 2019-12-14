@@ -111,7 +111,6 @@ fn handle_irq_check(resources: &mut Resources) {
             use crate::resources::intc::DMA;
             let stat = &mut resources.intc.stat;
             stat.set_irq(DMA);
-            debug!("Raised DMAC IRQ with DICR = 0x{:08X}", dicr.register.read_u32());
         }
     } else {
         dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 0);

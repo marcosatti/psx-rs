@@ -32,7 +32,8 @@ impl B8MemoryMap for Dicr {
         register_value = Bitfield::new(16, 7).copy(register_value, value);
         register_value = Bitfield::new(23, 1).copy(register_value, value);
         register_value = Bitfield::new(24, 7).acknowledge(register_value, value);
-        log::debug!("dicr_old = 0x{:08X}, dicr_new = 0x{:08X}", self.register.read_u32(), register_value);
+        // Always reset the master IRQ bit - the DMAC will assert it again if it needs to.
+        register_value = Bitfield::new(31, 1).insert_into(register_value, 0);
         B8MemoryMap::write_u32(&mut self.register, offset, register_value)
     }
 }
