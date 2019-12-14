@@ -1,15 +1,15 @@
 use std::time::Duration;
 
 pub struct Crtc {
-    pub vblank_time: Duration,
-    pub drawing_odd: bool,
+    pub frame_elapsed: Duration,
+    pub scanline_elapsed: Duration,
 }
 
 impl Crtc {
     pub fn new() -> Crtc {
         Crtc {
-            vblank_time: Duration::from_nanos(0),
-            drawing_odd: false,
+            frame_elapsed: Duration::from_secs(0),
+            scanline_elapsed: Duration::from_secs(0),
         }
     }
 }

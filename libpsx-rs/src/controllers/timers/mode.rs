@@ -1,5 +1,4 @@
 use std::sync::atomic::Ordering;
-use log::debug as log_debug;
 use crate::resources::Resources;
 use crate::resources::timers::*;
 use crate::resources::timers::timer::*;
@@ -26,7 +25,6 @@ pub fn handle_mode_write(resources: &mut Resources, timer_id: usize) {
     debug::trace_mode_write(resources, timer_id);
 
     mode.write_latch.store(false, Ordering::Release);
-    log_debug!("Timer {} mode write acknowledged, cleared count", timer_id);
 }
 
 pub fn handle_mode_read(resources: &mut Resources, timer_id: usize) {
@@ -40,7 +38,6 @@ pub fn handle_mode_read(resources: &mut Resources, timer_id: usize) {
     mode.register.write_bitfield(MODE_TARGET_HIT, 0);
 
     mode.write_latch.store(false, Ordering::Release);
-    log_debug!("Timer {} mode read acknowledged, cleared ack bits", timer_id);
 }
 
 pub fn handle_clock_source(resources: &mut Resources, timer_id: usize) {

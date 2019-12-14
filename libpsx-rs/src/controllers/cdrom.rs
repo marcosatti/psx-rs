@@ -65,7 +65,6 @@ fn handle_interrupt_check(resources: &mut Resources) {
     if (int_enable_value & int_flag_value) > 0 {
         use crate::resources::intc::CDROM;
         let stat = &mut resources.intc.stat;
-        let _stat_lock = stat.mutex.lock();
-        stat.register.write_bitfield(CDROM, 1);
+        stat.set_irq(CDROM);
     }
 }

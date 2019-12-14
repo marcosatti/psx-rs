@@ -57,10 +57,6 @@ fn tick(resources: &mut Resources) -> i64 {
     let pc_va = resources.r3000.pc.read_u32();
     let pc_pa = translate_address(pc_va);
 
-    if pc_pa == 0x59e30 {
-        debug::trace_pc(resources);
-    }
-
     let inst_value = resources.r3000.memory_mapper.read_u32(pc_pa).unwrap();   
     let inst = Instruction::new(inst_value);                
 

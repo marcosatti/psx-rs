@@ -74,7 +74,9 @@ fn calc_ticks(clock_source: ClockSource, delta_elapsed: Duration) -> (usize, Dur
             DOTCLOCK_320_INTERVAL_NTSC
         },
         ClockSource::Hblank => {
-            HBLANK_INTERVAL_NTSC
+            // Timer ticks when HBLANK line is asserted... which happens after every scanline is rendered.
+            // So we are actually ticking over when a scanline interval has passed, in the context of an emulator.
+            SCANLINE_INTERVAL_NTSC
         },
         ClockSource::System => {
             SYSTEM_CLOCK_INTERVAL

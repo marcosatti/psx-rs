@@ -560,8 +560,9 @@ pub fn tlbp(_resources: &mut Resources, _instruction: Instruction) -> InstResult
 pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
     debug::trace_rfe(resources);
     let status = &mut resources.r3000.cp0.status;
-    let status_value = status_pop_exception(status.read_u32());
-    status.write_u32(status_value);
+    let old_status_value = status.read_u32();
+    let new_status_value = status_pop_exception(old_status_value);
+    status.write_u32(new_status_value);
     Ok(())
 }
 

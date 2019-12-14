@@ -32,6 +32,7 @@ impl B8MemoryMap for Dicr {
         register_value = Bitfield::new(16, 7).copy(register_value, value);
         register_value = Bitfield::new(23, 1).copy(register_value, value);
         register_value = Bitfield::new(24, 7).acknowledge(register_value, value);
+        log::debug!("dicr_old = 0x{:08X}, dicr_new = 0x{:08X}", self.register.read_u32(), register_value);
         B8MemoryMap::write_u32(&mut self.register, offset, register_value)
     }
 }

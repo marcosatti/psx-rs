@@ -17,7 +17,7 @@ use crate::resources::Resources;
 use crate::resources::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
-pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
+pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(true);
 const ENABLE_DETECT_SYSTEMERROR: bool = true;
 const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
@@ -25,37 +25,40 @@ const ENABLE_INTERRUPT_TRACING: bool = true;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = false;
-const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
+const ENABLE_MEMORY_TRACKING_WRITE: bool = false;
 const ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: bool = false;
 const ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: bool = false;
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x0; //0x79ddc; //0x1F80_1040;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x0; //0x79ddf; //0x1F80_1050; 
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0xe288; //0x79ddc; //0x1F80_1040;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0xe28c; //0x79ddf; //0x1F80_1050; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
-static mut DEBUG_TICK_COUNT: usize = 0;
+pub static mut DEBUG_TICK_COUNT: usize = 0;
 
 pub fn trace_state(resources: &Resources) {
-    unsafe { DEBUG_TICK_COUNT += 1; }
+    unsafe { 
+        DEBUG_TICK_COUNT += 1; 
 
-    if !ENABLE_STATE_TRACING.load(Ordering::Acquire) {
-        return;
-    }
+        if !ENABLE_STATE_TRACING.load(Ordering::Acquire) {
+            return;
+        }
+    
+        let tick_count = DEBUG_TICK_COUNT;
+        let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
+    
+        let start = 0xF000029c89b;
+        let end = 0xF000029cef0;
+        if (start..=end).contains(&tick_count) {
+            let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
+            let branching = resources.r3000.branch_delay.branching();
+            debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
+            trace_instructions_at_pc(resources, Some(1));
+            trace_registers(resources);
+        }
 
-    let tick_count = unsafe { DEBUG_TICK_COUNT };
-
-    let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
-
-    if true {
-        let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
-        let branching = resources.r3000.branch_delay.branching();
-        debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
-        trace_instructions_at_pc(resources, Some(1));
-        trace_registers(resources);
-    }
-
-    if false {
-        DEBUG_CORE_EXIT.store(true, Ordering::Release);
+        if false {
+            DEBUG_CORE_EXIT.store(true, Ordering::Release);
+        }
     }
 }
 
@@ -103,7 +106,7 @@ pub fn trace_rfe(resources: &Resources) {
     }
 }
 
-pub fn track_memory_read_pending<T>(physical_address: u32) {
+pub fn track_memory_read_pending<T>(resources: &Resources, physical_address: u32) {
     if !ENABLE_MEMORY_TRACKING_READ {
         return;
     }
@@ -112,10 +115,11 @@ pub fn track_memory_read_pending<T>(physical_address: u32) {
         return;
     }
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        debug!("[{:X}] Read {} address = 0x{:08X} start", tick_count, type_name, physical_address);
+        let pc = resources.r3000.pc.read_u32();
+        debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X} start", tick_count, pc, type_name, physical_address);
     }
 }
 
@@ -130,16 +134,17 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
 
     let count = memory::update_state_read(physical_address);
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        debug!("[{:X}] Read {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);
+        let pc = resources.r3000.pc.read_u32();
+        debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
     trace_memory_spin_loop_detection_read(resources, physical_address, count);
 }
 
-pub fn track_memory_write_pending<T: Copy + UpperHex>(physical_address: u32, value: T) {
+pub fn track_memory_write_pending<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_WRITE {
         return;
     }
@@ -148,10 +153,11 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(physical_address: u32, val
         return;
     }
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} start", tick_count, type_name, physical_address, value);
+        let pc = resources.r3000.pc.read_u32();
+        debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} start", tick_count, pc, type_name, physical_address, value);
     }
 }
 
@@ -169,7 +175,8 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
     if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        debug!("[{:X}] Write {} address = 0x{:08X}, value = 0x{:X} end", tick_count, type_name, physical_address, value);
+        let pc = resources.r3000.pc.read_u32();
+        debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
     trace_memory_spin_loop_detection_write(resources, physical_address, count);

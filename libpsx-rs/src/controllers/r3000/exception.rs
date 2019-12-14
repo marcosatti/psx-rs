@@ -8,7 +8,11 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
     let pc = &mut resources.r3000.pc;
     let cause = &mut resources.r3000.cp0.cause.register;
     let status = &mut resources.r3000.cp0.status;
-    let mut pc_value = pc.read_u32();
+    let mut pc_value = pc.read_u32() - INSTRUCTION_SIZE;
+
+    if exccode == CAUSE_EXCCODE_INT {
+        pc_value += INSTRUCTION_SIZE;
+    }
 
     if resources.r3000.branch_delay.branching() {
         cause.write_bitfield(CAUSE_BD, 1);
@@ -17,8 +21,9 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
     }
 
     // Push IEc & KUc (stack).
-    let status_value = status_push_exception(status.read_u32());
-    status.write_u32(status_value);
+    let old_status_value = status.read_u32();
+    let new_status_value = status_push_exception(old_status_value);
+    status.write_u32(new_status_value);
 
     // Set ExcCode cause.
     cause.write_bitfield(CAUSE_EXCCODE, exccode as u32);

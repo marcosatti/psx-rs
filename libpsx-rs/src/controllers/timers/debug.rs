@@ -3,7 +3,7 @@ use crate::resources::timers::*;
 use crate::controllers::timers::timer::*;
 use crate::resources::Resources;
 
-const ENABLE_MODE_WRITE_TRACE: bool = true;
+const ENABLE_MODE_WRITE_TRACE: bool = false;
 
 pub fn trace_timers(resources: &mut Resources) {
     for i in 0..3 {

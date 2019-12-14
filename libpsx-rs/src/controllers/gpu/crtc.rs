@@ -6,26 +6,20 @@ use crate::video::VideoBackend;
 use crate::resources::Resources;
 use crate::constants::gpu::crtc::*;
 use crate::controllers::gpu::crtc::display::*;
+use crate::resources::gpu::*;
 
 pub fn run_time(resources: &mut Resources, video_backend: &VideoBackend, duration: Duration) {
-    handle_vblank_step(resources, duration);
-    while handle_vblank_update(resources) {
-        handle_vblank(resources, video_backend);
-    }
-}
+    resources.gpu.crtc.scanline_elapsed += duration;
+    while resources.gpu.crtc.scanline_elapsed > SCANLINE_INTERVAL_NTSC {
+        resources.gpu.crtc.scanline_elapsed -= SCANLINE_INTERVAL_NTSC;
+        let old_drawing_odd_bit = resources.gpu.gpu1814.stat.read_bitfield(STAT_DRAWING_ODD);
+        let new_drawing_odd_bit = old_drawing_odd_bit ^ 1;
+        resources.gpu.gpu1814.stat.write_bitfield(STAT_DRAWING_ODD, new_drawing_odd_bit);
 
-fn handle_vblank_step(resources: &mut Resources, duration: Duration) {
-    let vblank_time = &mut resources.gpu.crtc.vblank_time;
-    *vblank_time += duration;
-}
-
-fn handle_vblank_update(resources: &mut Resources) -> bool {
-    let vblank_time = &mut resources.gpu.crtc.vblank_time;
-
-    if *vblank_time >= REFRESH_RATE_NTSC_PERIOD {
-        *vblank_time -= REFRESH_RATE_NTSC_PERIOD;
-        true
-    } else {
-        false
+        resources.gpu.crtc.frame_elapsed += duration;
+        while resources.gpu.crtc.frame_elapsed > REFRESH_RATE_NTSC_PERIOD {
+            resources.gpu.crtc.frame_elapsed -= REFRESH_RATE_NTSC_PERIOD;
+            handle_vblank(resources, video_backend);
+        }
     }
 }

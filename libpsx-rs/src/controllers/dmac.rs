@@ -105,14 +105,15 @@ fn handle_irq_check(resources: &mut Resources) {
     }
 
     if force_irq || channel_irq {
-        let master_flag_value = dicr.register.read_bitfield(DICR_IRQ_MASTER_FLAG) != 0;
-        if !master_flag_value {
+        if dicr.register.read_bitfield(DICR_IRQ_MASTER_FLAG) == 0 {
             dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 1);
 
             use crate::resources::intc::DMA;
             let stat = &mut resources.intc.stat;
-            let _stat_lock = stat.mutex.lock();
-            stat.register.write_bitfield(DMA, 1);
+            stat.set_irq(DMA);
+            debug!("Raised DMAC IRQ with DICR = 0x{:08X}", dicr.register.read_u32());
         }
+    } else {
+        dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 0);
     }
 }

@@ -47,4 +47,8 @@ impl BranchDelaySlot {
         self.target = None;
         self.slots = 0;
     }
+    
+    pub fn target_or_null(&self) -> u32 {
+        self.target.unwrap_or(0x0)
+    }
 }

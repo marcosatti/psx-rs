@@ -39,8 +39,6 @@ pub fn handle_irq_raise(resources: &mut Resources, timer_id: usize) {
     };
 
     let stat = &mut resources.intc.stat;
-    let _stat_lock = stat.mutex.lock();
-    stat.register.write_bitfield(irq_bit, 1);
-
+    stat.set_irq(irq_bit);
     debug!("Raised INTC IRQ for timer {}", timer_id);
 }
