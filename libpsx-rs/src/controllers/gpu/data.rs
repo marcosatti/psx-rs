@@ -19,6 +19,42 @@ pub enum ClutMode {
     Reserved,
 }
 
+fn default_modifier(d: usize) -> usize {
+    d
+}
+
+pub fn default_fill_x_position_modifier(d: usize) -> usize {
+    d & 0x3F0
+}
+
+pub fn default_fill_y_position_modifier(d: usize) -> usize {
+    d & 0x1FF
+}
+
+pub fn default_fill_x_size_modifier(d: usize) -> usize {
+    ((d & 0x3FF) + 0xF) & (!0xF)
+}
+
+pub fn default_fill_y_size_modifier(d: usize) -> usize {
+    d & 0x1FF
+}
+
+pub fn default_copy_x_position_modifier(d: usize) -> usize {
+    d & 0x3FF
+}
+
+pub fn default_copy_y_position_modifier(d: usize) -> usize {
+    d & 0x1FF
+}
+
+pub fn default_copy_x_size_modifier(d: usize) -> usize {
+    ((d - 1) & 0x3FF) + 1
+}
+
+pub fn default_copy_y_size_modifier(d: usize) -> usize {
+    ((d - 1) & 0x1FF) + 1
+}
+
 pub fn extract_texpage_transparency_mode(texpage_raw: u32) -> TransparencyMode {
     match Bitfield::new(21, 2).extract_from(texpage_raw) {
         0 => TransparencyMode::Average,
@@ -72,15 +108,15 @@ pub fn normalize_point(point: Point2D<usize, Pixel>) -> Point2D<f32, Normalized>
     )
 }
 
-pub fn extract_point(point_raw: u32) -> Point2D<usize, Pixel> {
+pub fn extract_point(point_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Point2D<usize, Pixel> {
     Point2D::new(
-        Bitfield::new(0, 16).extract_from(point_raw) as usize,
-        Bitfield::new(16, 16).extract_from(point_raw) as usize,
+        x_modifier.unwrap_or(default_modifier)(Bitfield::new(0, 16).extract_from(point_raw) as usize),
+        y_modifier.unwrap_or(default_modifier)(Bitfield::new(16, 16).extract_from(point_raw) as usize),
     )
 }
 
-pub fn extract_point_normalized(point_raw: u32) -> Point2D<f32, Normalized> {
-    normalize_point(extract_point(point_raw))
+pub fn extract_point_normalized(point_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Point2D<f32, Normalized> {
+    normalize_point(extract_point(point_raw, x_modifier, y_modifier))
 }
 
 pub fn normalize_size(size: Size2D<usize, Pixel>) -> Size2D<f32, Normalized> {
@@ -90,15 +126,15 @@ pub fn normalize_size(size: Size2D<usize, Pixel>) -> Size2D<f32, Normalized> {
     )
 }
 
-pub fn extract_size(size_raw: u32) -> Size2D<usize, Pixel> {
+pub fn extract_size(size_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Size2D<usize, Pixel> {
     Size2D::new(
-        Bitfield::new(0, 16).extract_from(size_raw) as usize, 
-        Bitfield::new(16, 16).extract_from(size_raw) as usize,
+        x_modifier.unwrap_or(default_modifier)(Bitfield::new(0, 16).extract_from(size_raw) as usize), 
+        y_modifier.unwrap_or(default_modifier)(Bitfield::new(16, 16).extract_from(size_raw) as usize),
     )
 }
 
-pub fn extract_size_normalized(size_raw: u32) -> Size2D<f32, Normalized> {
-    normalize_size(extract_size(size_raw))
+pub fn extract_size_normalized(size_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Size2D<f32, Normalized> {
+    normalize_size(extract_size(size_raw, x_modifier, y_modifier))
 }
 
 pub fn normalize_points_3(points: [Point2D<usize, Pixel>; 3]) -> [Point2D<f32, Normalized>; 3] {
@@ -109,16 +145,16 @@ pub fn normalize_points_3(points: [Point2D<usize, Pixel>; 3]) -> [Point2D<f32, N
     ]
 }
 
-pub fn extract_vertices_3(vertices_raw: [u32; 3]) -> [Point2D<usize, Pixel>; 3] {
+pub fn extract_vertices_3(vertices_raw: [u32; 3], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<usize, Pixel>; 3] {
     [
-        extract_point(vertices_raw[0]),
-        extract_point(vertices_raw[1]),
-        extract_point(vertices_raw[2]),
+        extract_point(vertices_raw[0], x_modifier, y_modifier),
+        extract_point(vertices_raw[1], x_modifier, y_modifier),
+        extract_point(vertices_raw[2], x_modifier, y_modifier),
     ]
 }
 
-pub fn extract_vertices_3_normalized(vertices_raw: [u32; 3]) -> [Point2D<f32, Normalized>; 3] {
-    normalize_points_3(extract_vertices_3(vertices_raw))
+pub fn extract_vertices_3_normalized(vertices_raw: [u32; 3], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<f32, Normalized>; 3] {
+    normalize_points_3(extract_vertices_3(vertices_raw, x_modifier, y_modifier))
 }
 
 pub fn normalize_points_4(points: [Point2D<usize, Pixel>; 4]) -> [Point2D<f32, Normalized>; 4] {
@@ -130,17 +166,17 @@ pub fn normalize_points_4(points: [Point2D<usize, Pixel>; 4]) -> [Point2D<f32, N
     ]
 }
 
-pub fn extract_vertices_4(vertices_raw: [u32; 4]) -> [Point2D<usize, Pixel>; 4] {
+pub fn extract_vertices_4(vertices_raw: [u32; 4], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<usize, Pixel>; 4] {
     [
-        extract_point(vertices_raw[0]),
-        extract_point(vertices_raw[1]),
-        extract_point(vertices_raw[2]),
-        extract_point(vertices_raw[3]),
+        extract_point(vertices_raw[0], x_modifier, y_modifier),
+        extract_point(vertices_raw[1], x_modifier, y_modifier),
+        extract_point(vertices_raw[2], x_modifier, y_modifier),
+        extract_point(vertices_raw[3], x_modifier, y_modifier),
     ]
 }
 
-pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4]) -> [Point2D<f32, Normalized>; 4] {
-    normalize_points_4(extract_vertices_4(vertices_raw))
+pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<f32, Normalized>; 4] {
+    normalize_points_4(extract_vertices_4(vertices_raw, x_modifier, y_modifier))
 }
 
 pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw: [u32; 4]) -> [Point2D<f32, Normalized>; 4] {

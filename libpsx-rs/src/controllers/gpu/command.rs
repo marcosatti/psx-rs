@@ -22,14 +22,16 @@ fn handle_read(resources: &mut Resources) {
     let read = &mut resources.gpu.gpu1810.read;
 
     loop {
+        if read.is_full() {
+            break;
+        }
+
         let data = match read_buffer.pop_front() {
             None => break,
             Some(v) => v,
         };
-        match read.write_one(data) {
-            Ok(_) => {},
-            Err(_) => break,
-        }
+
+        read.write_one(data).unwrap();
     }
 }
 

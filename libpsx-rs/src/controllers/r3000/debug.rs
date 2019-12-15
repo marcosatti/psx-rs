@@ -17,20 +17,21 @@ use crate::resources::Resources;
 use crate::resources::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
-pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(true);
+pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_DETECT_SYSTEMERROR: bool = true;
 const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
 const ENABLE_INTERRUPT_TRACING: bool = false;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
-const ENABLE_MEMORY_TRACKING_READ: bool = false;
+const ENABLE_MEMORY_TRACKING_READ: bool = true;
 const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
-const ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: bool = false;
-const ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: bool = false;
+pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(false);
+pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
+pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1100;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1130; 
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0; //0x1F80_1100;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0xFFFF_FFFF; //0x1F80_1130; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 pub static mut DEBUG_TICK_COUNT: usize = 0;
@@ -46,14 +47,17 @@ pub fn trace_state(resources: &Resources) {
         let tick_count = DEBUG_TICK_COUNT;
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
     
-        let start = 0xF00000125DB53;
-        let end = 0xF00000125DB57;
-        if (start..=end).contains(&tick_count) {
+        // let start = 0xF00000125DB53;
+        // let end = 0xF00000125DB57;
+        // if (start..=end).contains(&tick_count) {
+        if true {
             let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
             let branching = resources.r3000.branch_delay.branching();
             debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
             trace_instructions_at_pc(resources, Some(1));
-            //trace_registers(resources);
+            if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
+                trace_registers(resources);
+            }
         }
 
         if false {
@@ -116,7 +120,7 @@ pub fn track_memory_read_pending<T>(resources: &Resources, physical_address: u32
         return;
     }
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -135,7 +139,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
 
     let count = memory::update_state_read(physical_address);
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -154,7 +158,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(resources: &Resources, phy
         return;
     }
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -173,7 +177,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 
     let count = memory::update_state_write(physical_address);
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -184,27 +188,31 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 }
 
 fn trace_memory_spin_loop_detection_read(resources: &Resources, physical_address: u32, count: usize) {
-    if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ {
+    if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ.load(Ordering::Acquire) {
         return;
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
         trace!("Memory read spin loop detected on address = 0x{:08X}", physical_address);
-        trace_instructions_at_pc(resources, None);
-        trace_registers(resources);
+        trace_instructions_at_pc(resources, Some(1));
+        if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
+            trace_registers(resources);
+        }
         memory::clear_state_read(physical_address);
     }
 } 
 
 fn trace_memory_spin_loop_detection_write(resources: &Resources, physical_address: u32, count: usize) {
-    if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE {
+    if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE.load(Ordering::Acquire) {
         return;
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
         trace!("Memory write spin loop detected on address = 0x{:08X}", physical_address);
-        trace_instructions_at_pc(resources, None);
-        trace_registers(resources);
+        trace_instructions_at_pc(resources, Some(1));
+        if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
+            trace_registers(resources);
+        }
         memory::clear_state_write(physical_address);
     }
 }

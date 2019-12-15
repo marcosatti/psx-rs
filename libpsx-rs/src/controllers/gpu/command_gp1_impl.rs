@@ -1,4 +1,3 @@
-//use log::debug;
 use crate::backends::video::VideoBackend;
 use crate::resources::Resources;
 use crate::types::bitfield::Bitfield;
@@ -59,11 +58,6 @@ pub fn command_04(resources: &mut Resources, _video_backend: &VideoBackend, comm
     }
 
     if read_clear_required {
-        // debug!(
-        //     "Clearing GPUREAD FIFO (len {}) and internal buffer (len {})", 
-        //     resources.gpu.gpu1810.read.read_available(), 
-        //     resources.gpu.gp0_read_buffer.len(),
-        // );
         resources.gpu.gp0_read_buffer.clear();
         while let Ok(_) = resources.gpu.gpu1810.read.read_one() {}
     }

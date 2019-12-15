@@ -82,6 +82,7 @@ fn get_command_handler(command_index: u8) -> (LengthFn, HandlerFn) {
     match command_index {
         0x00 => (command_gp0_impl::command_00_length, command_gp0_impl::command_00_handler),
         0x01 => (command_gp0_impl::command_01_length, command_gp0_impl::command_01_handler),
+        0x02 => (command_gp0_impl::command_02_length, command_gp0_impl::command_02_handler),
         0x05 => (command_gp0_impl::command_05_length, command_gp0_impl::command_05_handler),
         0x06 => (command_gp0_impl::command_06_length, command_gp0_impl::command_06_handler),
         0x0c => (command_gp0_impl::command_0c_length, command_gp0_impl::command_0c_handler),

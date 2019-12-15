@@ -195,15 +195,15 @@ pub fn initialize_transfer_state(transfer_state: &mut TransferState, chcr: &Chcr
         SyncMode::Blocks => {
             warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending/receiving next block");
 
-            transfer_state.sync_mode_state = SyncModeState::Blocks(
-                BlocksState {
-                    current_address: address,
-                    current_bsize_count: 0,
-                    target_bsize_count: bs_count,
-                    current_bamount_count: 0,
-                    target_bamount_count: ba_count,
-                }
-            );
+            let blocks_state = BlocksState {
+                current_address: address,
+                current_bsize_count: 0,
+                target_bsize_count: bs_count,
+                current_bamount_count: 0,
+                target_bamount_count: ba_count,
+            };
+
+            transfer_state.sync_mode_state = SyncModeState::Blocks(blocks_state);
         },
         SyncMode::LinkedList => {
             transfer_state.sync_mode_state = SyncModeState::LinkedList(

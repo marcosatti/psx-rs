@@ -23,6 +23,33 @@ pub fn command_01_handler(_resources: &mut Resources, _video_backend: &VideoBack
     // Flush cache (NOP)
 }
 
+pub fn command_02_length(_data: &[u32]) -> Option<usize> {
+    Some(3)
+}
+
+pub fn command_02_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+    debug!("Fill Rectangle in VRAM, c1 = 0x{:08X}, c2 = 0x{:08X}, c3 = 0x{:08X}", data[0], data[1], data[2]);
+
+    let color = extract_color_rgb(data[0], std::u8::MAX);
+    // Upper left corner is starting point.
+    let base_point = extract_point_normalized(data[1], Some(default_fill_x_position_modifier), Some(default_fill_y_position_modifier));
+    let size = extract_size_normalized(data[2], Some(default_fill_x_size_modifier), Some(default_fill_y_size_modifier));
+
+    let positions = [
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
+        Point2D::new(base_point.x, base_point.y - size.height),
+        Point2D::new(base_point.x + size.width, base_point.y - size.height),
+    ];
+
+    match video_backend {
+        VideoBackend::None => { unimplemented!("") },
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_4_solid(backend_params, positions, color);
+        },
+    }
+}
+
 pub fn command_05_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
@@ -55,7 +82,7 @@ pub fn command_28_handler(_resources: &mut Resources, video_backend: &VideoBacke
     //debug!("Monochrome four-point polygon, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4]);
     
     let color = extract_color_rgb(data[0], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]]);
+    let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], None, None);
     
     match video_backend {
         VideoBackend::None => { unimplemented!("") },
@@ -76,7 +103,7 @@ pub fn command_2c_handler(_resources: &mut Resources, video_backend: &VideoBacke
     // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
 
     let _color = extract_color_rgb(data[0], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]]);
+    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], None, None);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
@@ -98,7 +125,7 @@ pub fn command_30_handler(_resources: &mut Resources, video_backend: &VideoBacke
     //debug!("Shaded three-point polygon, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5]);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
-    let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]]);
+    let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]], None, None);
 
     match video_backend {
         VideoBackend::None => { unimplemented!("") },
@@ -116,7 +143,7 @@ pub fn command_38_handler(_resources: &mut Resources, video_backend: &VideoBacke
     //debug!("Shaded four-point polygon, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}, c7 = 0x{:0X}, c8 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
     
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]]);
+    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], None, None);
 
     match video_backend {
         VideoBackend::None => { unimplemented!("") },
@@ -174,8 +201,8 @@ pub fn command_a0_length(data: &[u32]) -> Option<usize> {
 pub fn command_a0_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
     //debug!("Copy Rectangle (CPU to VRAM), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, data len = {}", data[0], data[1], data[2], data.len() - 3);
     
-    let base_point = extract_point_normalized(data[1]);
-    let size = extract_size_normalized(data[2]);
+    let base_point = extract_point_normalized(data[1], Some(default_copy_x_position_modifier), Some(default_copy_y_position_modifier));
+    let size = extract_size_normalized(data[2], Some(default_copy_x_size_modifier), Some(default_copy_y_size_modifier));
     let texture_width = Bitfield::new(0, 16).extract_from(data[2]) as usize;
     let texture_height = Bitfield::new(16, 16).extract_from(data[2]) as usize;
 
@@ -226,15 +253,8 @@ pub fn command_c0_length(_data: &[u32]) -> Option<usize> {
 pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
     //debug!("Copy Rectangle (VRAM to CPU), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
 
-    let origin = Point2D::new(
-        Bitfield::new(0, 16).extract_from(data[1]) as usize,
-        Bitfield::new(16, 16).extract_from(data[1]) as usize,
-    );
-
-    let size = Size2D::new(
-        Bitfield::new(0, 16).extract_from(data[2]) as usize,
-        Bitfield::new(16, 16).extract_from(data[2]) as usize,
-    );
+    let origin = extract_point(data[1], Some(default_copy_x_position_modifier), Some(default_copy_y_position_modifier));
+    let size = extract_size(data[2], Some(default_copy_x_size_modifier), Some(default_copy_y_size_modifier));
 
     let count = size.width * size.height;
 
