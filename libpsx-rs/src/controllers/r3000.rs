@@ -38,8 +38,6 @@ fn run_time(resources: &mut Resources, duration: Duration) {
 }
 
 fn tick(resources: &mut Resources) -> i64 {
-    handle_interrupts(resources);
-
     if let Some(target) = resources.r3000.branch_delay.advance() {
         if translate_address(target) < 0x80 {
             debug!("PC about to jump into invalid memory! Breaking...");
@@ -63,7 +61,7 @@ fn tick(resources: &mut Resources) -> i64 {
     resources.r3000.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
     let (fn_ptr, cycles) = instruction_lookup(inst)
-        .ok_or_else(|| format!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_pa))
+        .ok_or_else(|| format!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_va))
         .unwrap();
 
     debug::trace_state(resources);
@@ -76,6 +74,8 @@ fn tick(resources: &mut Resources) -> i64 {
         resources.r3000.pc.write_u32(pc_va);
 
         debug::trace_hazard(result.unwrap_err());
+    } else {
+        handle_interrupts(resources);
     }
     
     cycles as i64

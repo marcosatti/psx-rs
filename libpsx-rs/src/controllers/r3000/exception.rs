@@ -14,11 +14,7 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
         pc_value += INSTRUCTION_SIZE;
     }
 
-    if resources.r3000.branch_delay.branching() {
-        cause.write_bitfield(CAUSE_BD, 1);
-        pc_value -= INSTRUCTION_SIZE;
-        resources.r3000.branch_delay.cancel();
-    }
+    assert!(!resources.r3000.branch_delay.branching(), "Exception handling while branching not implmeneted");
 
     // Push IEc & KUc (stack).
     let old_status_value = status.read_u32();
@@ -61,6 +57,11 @@ pub fn handle_interrupts(resources: &mut Resources) {
         let cause = &mut resources.r3000.cp0.cause;
 
         if status.read_bitfield(STATUS_IEC) == 0 {
+            return;
+        }
+
+        if resources.r3000.branch_delay.branching() {
+            // Unimplemented for now.
             return;
         }
 

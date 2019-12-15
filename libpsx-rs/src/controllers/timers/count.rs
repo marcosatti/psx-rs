@@ -1,5 +1,4 @@
 use std::time::Duration;
-use log::debug as log_debug;
 use crate::resources::Resources;
 use crate::resources::timers::*;
 use crate::controllers::timers::timer::*;
@@ -51,7 +50,6 @@ fn handle_count_reset(resources: &mut Resources, timer_id: usize) -> IrqType {
             let target_value = target.read_u32() & 0xFFFF;
             if count_value == target_value {
                 handle_count_clear(resources, timer_id);
-                log_debug!("Cleared count for timer {} by target 0x{:04X}", timer_id, target_value);
                 mode.register.write_bitfield(MODE_TARGET_HIT, 0);
                 irq_type = IrqType::Target;
             }

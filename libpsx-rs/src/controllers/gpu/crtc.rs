@@ -15,11 +15,11 @@ pub fn run_time(resources: &mut Resources, video_backend: &VideoBackend, duratio
         let old_drawing_odd_bit = resources.gpu.gpu1814.stat.read_bitfield(STAT_DRAWING_ODD);
         let new_drawing_odd_bit = old_drawing_odd_bit ^ 1;
         resources.gpu.gpu1814.stat.write_bitfield(STAT_DRAWING_ODD, new_drawing_odd_bit);
+    }
 
-        resources.gpu.crtc.frame_elapsed += duration;
-        while resources.gpu.crtc.frame_elapsed > REFRESH_RATE_NTSC_PERIOD {
-            resources.gpu.crtc.frame_elapsed -= REFRESH_RATE_NTSC_PERIOD;
-            handle_vblank(resources, video_backend);
-        }
+    resources.gpu.crtc.frame_elapsed += duration;
+    while resources.gpu.crtc.frame_elapsed > REFRESH_RATE_NTSC_PERIOD {
+        resources.gpu.crtc.frame_elapsed -= REFRESH_RATE_NTSC_PERIOD;
+        handle_vblank(resources, video_backend);
     }
 }
