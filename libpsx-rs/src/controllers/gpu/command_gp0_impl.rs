@@ -1,4 +1,4 @@
-use log::debug;
+use log::{debug, warn};
 use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
@@ -28,7 +28,7 @@ pub fn command_02_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_02_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    debug!("Fill Rectangle in VRAM, c1 = 0x{:08X}, c2 = 0x{:08X}, c3 = 0x{:08X}", data[0], data[1], data[2]);
+    //debug!("Fill Rectangle in VRAM, c1 = 0x{:08X}, c2 = 0x{:08X}, c3 = 0x{:08X}", data[0], data[1], data[2]);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
     // Upper left corner is starting point.
@@ -301,6 +301,7 @@ pub fn command_e1_handler(resources: &mut Resources, _video_backend: &VideoBacke
     stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
     resources.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
     resources.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
+    warn!("GP0(E1h) not properly implemented");
 }
 
 pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
@@ -312,6 +313,7 @@ pub fn command_e2_handler(resources: &mut Resources, _video_backend: &VideoBacke
     resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as usize;
+    warn!("GP0(E2h) not properly implemented");
 }
 
 pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
@@ -321,6 +323,7 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e3_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+    warn!("GP0(E3h) not properly implemented");
 }
 
 pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
@@ -330,6 +333,7 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e4_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+    warn!("GP0(E4h) not properly implemented");
 }
 
 pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
@@ -339,6 +343,7 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e5_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     resources.gpu.drawing_offset_x = Bitfield::new(0, 11).extract_from(data[0]) as usize;
     resources.gpu.drawing_offset_y = Bitfield::new(11, 11).extract_from(data[0]) as usize;
+    warn!("GP0(E5h) not properly implemented");
 }
 
 pub fn command_e6_length(_data: &[u32]) -> Option<usize> {
@@ -349,4 +354,5 @@ pub fn command_e6_handler(resources: &mut Resources, _video_backend: &VideoBacke
     let stat = &mut resources.gpu.gpu1814.stat;
     stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
     stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
+    warn!("GP0(E6h) not properly implemented");
 }

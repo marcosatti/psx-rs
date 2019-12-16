@@ -20,7 +20,7 @@ fn main() {
     } else if target.contains("windows") {
         builder
             .clang_arg("-IC:/Devel/mesa/include")
-            .clang_arg("-IC:/Devel/mesa-18.2.6-devel/include/x64")
+            .clang_arg("-IC:/Devel/mesa3d-19.3.0-development-pack-msvc/include/x64")
             .rustfmt_bindings(false)
             .derive_debug(false)
             .generate()
@@ -34,7 +34,7 @@ fn main() {
     if target.contains("linux") {
         println!("cargo:rustc-link-lib=GL");
     } else if target.contains("windows") {
-        println!("cargo:rustc-link-search=C:/Devel/mesa-18.2.6-devel/lib/x64/gallium/targets/libgl-gdi");
+        println!("cargo:rustc-link-search=C:/Devel/mesa3d-19.3.0-development-pack-msvc/lib/x64/src/gallium/targets/libgl-gdi");
         println!("cargo:rustc-link-lib=opengl32");
     } else {
         unimplemented!("Unsupported target");

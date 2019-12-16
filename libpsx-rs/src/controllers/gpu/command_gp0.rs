@@ -63,9 +63,11 @@ pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
 
     // Execute it.
     {
-        let command_buffer_slice: &[u32] = &resources.gpu.gp0_command_buffer;
-        let command_buffer_slice_ptr = command_buffer_slice as *const _;
-        (command_handler.1)(resources, video_backend, unsafe { &*command_buffer_slice_ptr });
+        let command_buffer_slice: &[u32] = unsafe {
+            (&resources.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()
+        };
+        
+        (command_handler.1)(resources, video_backend, command_buffer_slice);
     }
     
     // Setup for the next one.
