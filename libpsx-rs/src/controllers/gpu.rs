@@ -6,6 +6,7 @@ pub mod command_gp1;
 pub mod command_gp1_impl;
 pub mod data;
 pub mod opengl;
+pub mod debug;
 
 use std::time::Duration;
 use crate::resources::Resources;

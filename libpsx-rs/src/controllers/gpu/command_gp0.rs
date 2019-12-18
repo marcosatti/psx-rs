@@ -54,30 +54,20 @@ pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
 
 
     // Check if we can execute the command.
-    {
-        let command_buffer = &mut resources.gpu.gp0_command_buffer;
-        if command_buffer.len() < required_length_value {
-            return;
-        }
+    if resources.gpu.gp0_command_buffer.len() < required_length_value {
+        return;
     }
 
     // Execute it.
-    {
-        let command_buffer_slice: &[u32] = unsafe {
-            (&resources.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()
-        };
-        
-        (command_handler.1)(resources, video_backend, command_buffer_slice);
-    }
+    let command_buffer_slice: &[u32] = unsafe {
+        &(&resources.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()[0..required_length_value]
+    };
+    
+    (command_handler.1)(resources, video_backend, command_buffer_slice);
     
     // Setup for the next one.
-    {
-        let command_buffer = &mut resources.gpu.gp0_command_buffer;
-        command_buffer.drain(0..required_length_value);
-        
-        let required_length = &mut resources.gpu.gp0_command_required_length;
-        *required_length = None;
-    }
+    resources.gpu.gp0_command_buffer.drain(0..required_length_value);
+    resources.gpu.gp0_command_required_length = None;
 }
 
 fn get_command_handler(command_index: u8) -> (LengthFn, HandlerFn) {

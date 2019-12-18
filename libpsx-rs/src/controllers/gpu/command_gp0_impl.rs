@@ -1,4 +1,4 @@
-use log::{debug, warn};
+use log::warn;
 use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
@@ -7,6 +7,7 @@ use crate::resources::gpu::*;
 use crate::backends::video::VideoBackend;
 use crate::controllers::gpu::opengl;
 use crate::controllers::gpu::data::*;
+use crate::controllers::gpu::debug;
 
 pub fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
@@ -28,7 +29,7 @@ pub fn command_02_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_02_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Fill Rectangle in VRAM, c1 = 0x{:08X}, c2 = 0x{:08X}, c3 = 0x{:08X}", data[0], data[1], data[2]);
+    debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
     // Upper left corner is starting point.
@@ -79,7 +80,7 @@ pub fn command_28_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_28_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Monochrome four-point polygon, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4]);
+    debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
     
     let color = extract_color_rgb(data[0], std::u8::MAX);
     let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], None, None);
@@ -97,7 +98,7 @@ pub fn command_2c_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_2c_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Textured four-point polygon, opaque, texture-blending, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}, c7 = 0x{:0X}, c8 = 0x{:0X}, c9 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8]);
+    debug::trace_gp0_command("Textured four-point polygon, opaque, texture-blending", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
     // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
@@ -122,7 +123,7 @@ pub fn command_30_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_30_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Shaded three-point polygon, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5]);
+    debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
     let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]], None, None);
@@ -140,7 +141,7 @@ pub fn command_38_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_38_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Shaded four-point polygon, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}, c7 = 0x{:0X}, c8 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+    debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
     
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
     let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], None, None);
@@ -158,7 +159,7 @@ pub fn command_3c_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_3c_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
-    debug!("Shaded Textured four-point polygon, opaque, texture-blending, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}, c5 = 0x{:0X}, c6 = 0x{:0X}, c7 = 0x{:0X}, c8 = 0x{:0X}, c9 = 0x{:0X}, c10 = 0x{:0X}, c11 = 0x{:0X}, c12 = 0x{:0X}", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
+    debug::trace_gp0_command("Shaded Textured four-point polygon, opaque, texture-blending", data);
 }
 
 pub fn command_50_length(_data: &[u32]) -> Option<usize> {
@@ -166,7 +167,7 @@ pub fn command_50_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_50_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
-    debug!("Shaded line, opaque, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}", data[0], data[1], data[2], data[3]);
+    debug::trace_gp0_command("Shaded line, opaque", data);
 }
 
 pub fn command_6f_length(_data: &[u32]) -> Option<usize> {
@@ -174,7 +175,7 @@ pub fn command_6f_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_6f_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
-    debug!("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture, c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
+    debug::trace_gp0_command("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture", data);
 }
 
 pub fn command_80_length(_data: &[u32]) -> Option<usize> {
@@ -182,7 +183,7 @@ pub fn command_80_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_80_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
-    debug!("Copy Rectangle (VRAM to VRAM), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, c4 = 0x{:0X}", data[0], data[1], data[2], data[3]);
+    debug::trace_gp0_command("Copy Rectangle (VRAM to VRAM)", data);
 }
 
 pub fn command_a0_length(data: &[u32]) -> Option<usize> {
@@ -199,7 +200,7 @@ pub fn command_a0_length(data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_a0_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Copy Rectangle (CPU to VRAM), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}, data len = {}", data[0], data[1], data[2], data.len() - 3);
+    debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
     
     let base_point = extract_point_normalized(data[1], Some(default_copy_x_position_modifier), Some(default_copy_y_position_modifier));
     let size = extract_size_normalized(data[2], Some(default_copy_x_size_modifier), Some(default_copy_y_size_modifier));
@@ -251,7 +252,7 @@ pub fn command_c0_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
-    //debug!("Copy Rectangle (VRAM to CPU), c1 = 0x{:0X}, c2 = 0x{:0X}, c3 = 0x{:0X}", data[0], data[1], data[2]);
+    debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
     let origin = extract_point(data[1], Some(default_copy_x_position_modifier), Some(default_copy_y_position_modifier));
     let size = extract_size(data[2], Some(default_copy_x_size_modifier), Some(default_copy_y_size_modifier));
@@ -324,6 +325,10 @@ pub fn command_e3_handler(resources: &mut Resources, _video_backend: &VideoBacke
     resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     warn!("GP0(E3h) not properly implemented");
+
+    if (resources.gpu.drawing_area_x1 != 0) || (resources.gpu.drawing_area_y1 != 0) {
+        log::debug!("Non zero drawing area x1 y1: {}, {}", resources.gpu.drawing_area_x1, resources.gpu.drawing_area_y1);
+    }
 }
 
 pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
@@ -343,7 +348,16 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e5_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     resources.gpu.drawing_offset_x = Bitfield::new(0, 11).extract_from(data[0]) as usize;
     resources.gpu.drawing_offset_y = Bitfield::new(11, 11).extract_from(data[0]) as usize;
-    warn!("GP0(E5h) not properly implemented");
+
+    // Sign extend from 11-bit to 16-bit.
+    let x_offset = ((resources.gpu.drawing_offset_x as u16) << 5) as i16 >> 5;
+    let y_offset = ((resources.gpu.drawing_offset_y as u16) << 5) as i16 >> 5;
+    
+    //debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset, resources.gpu.drawing_offset_x, y_offset, resources.gpu.drawing_offset_y);
+    
+    if (x_offset != 0) || (y_offset != 0) {
+        log::debug!("Non zero drawing offset: {}, {} ({}, {})", x_offset, y_offset, resources.gpu.drawing_offset_x, resources.gpu.drawing_offset_y);
+    }
 }
 
 pub fn command_e6_length(_data: &[u32]) -> Option<usize> {
