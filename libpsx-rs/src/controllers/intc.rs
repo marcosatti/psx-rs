@@ -39,11 +39,11 @@ fn handle_interrupt_check(resources: &mut Resources) {
         let cause = &resources.r3000.cp0.cause;
         
         if masked_value == 0 {
-            cause.reset_irq(IrqLine::Intc);
+            cause.deassert_irq_line(IrqLine::Intc);
         } else {
             for i in 0..32 {
                 if is_edge_triggered(i, *old_masked_value, masked_value) {
-                    cause.raise_irq(IrqLine::Intc);
+                    cause.assert_irq_line(IrqLine::Intc);
                     break;
                 }
             }

@@ -1,4 +1,4 @@
-use spsc_ringbuffer::SpscRingbuffer;
+use std::sync::atomic::{AtomicBool, Ordering};
 use crate::types::register::b32_register::B32Register;
 use crate::resources::r3000::cp0::*;
 
@@ -7,70 +7,38 @@ pub enum IrqLine {
     Intc,
 }
 
-fn get_irq_line_index(irq_line: IrqLine) -> usize {
-    match irq_line {
-        IrqLine::Intc => CAUSE_IP_INTC_OFFSET.start,
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum IrqMessage {
-    Unknown,
-    Trigger(IrqLine),
-    Reset(IrqLine),
-}
-
-impl Default for IrqMessage {
-    fn default() -> IrqMessage {
-        IrqMessage::Unknown
-    }
-}
-
 pub struct Cause {
     pub register: B32Register,
-    irq_message_queue: SpscRingbuffer<IrqMessage>,
+    intc_pending: AtomicBool,
 }
 
 impl Cause {
     pub fn new() -> Cause {
         Cause {
             register: B32Register::new(),
-            irq_message_queue: SpscRingbuffer::new(16),
+            intc_pending: AtomicBool::new(false),
         }
     }
 
-    pub fn raise_irq(&self, irq_line: IrqLine) {
-        self.irq_message_queue.push(IrqMessage::Trigger(irq_line)).unwrap();
+    pub fn assert_irq_line(&self, irq_line: IrqLine) {
+        match irq_line {
+            IrqLine::Intc => self.intc_pending.store(true, Ordering::Release),
+        }
     }
 
-    pub fn reset_irq(&self, irq_line: IrqLine) {
-        self.irq_message_queue.push(IrqMessage::Reset(irq_line)).unwrap();
+    pub fn deassert_irq_line(&self, irq_line: IrqLine) {
+        match irq_line {
+            IrqLine::Intc => self.intc_pending.store(false, Ordering::Release),
+        }
     }
 
-    pub fn handle_irq_messages(&mut self) -> bool {
-        if self.irq_message_queue.is_empty() {
-            return false;
-        }
+    pub fn update_ip_field(&mut self) {
+        fn bool_to_flag(value: bool) -> u32 { if value { 1 } else { 0 } };
+        let intc_value = bool_to_flag(self.intc_pending.load(Ordering::Acquire));
+        self.register.write_bitfield(CAUSE_IP_INTC, intc_value);
+    }
 
-        loop {
-            match self.irq_message_queue.pop() {
-                Ok(m) => {
-                    match m {
-                        IrqMessage::Unknown => unreachable!(),
-                        IrqMessage::Trigger(l) => {
-                            let bit = CAUSE_IP.start + get_irq_line_index(l);
-                            self.register.write_bitfield(Bitfield::new(bit, 1), 1);
-                        },
-                        IrqMessage::Reset(l) => {
-                            let bit = CAUSE_IP.start + get_irq_line_index(l);
-                            self.register.write_bitfield(Bitfield::new(bit, 1), 0);
-                        },
-                    }
-                },
-                Err(_) => break,
-            }
-        }
-
-        true
+    pub fn clear_ip_field(&mut self) {
+        self.register.write_bitfield(CAUSE_IP, 0);
     }
 }

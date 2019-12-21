@@ -569,6 +569,10 @@ pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
         resources.r3000.pc.write_u32(translate_address(t));
     }
 
+    // Also flush the cause register to make sure no stray interrupts are pending as a result of the emulator being out of sync temporarily.
+    // If there is an actual interrupt pending, then it will be asserted again shortly (R3000 interrupts are level triggered).
+    resources.r3000.cp0.cause.clear_ip_field();
+
     Ok(())
 }
 

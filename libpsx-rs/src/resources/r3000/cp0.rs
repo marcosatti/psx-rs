@@ -30,8 +30,8 @@ pub const CAUSE_BD: Bitfield = Bitfield::new(31, 1);
 pub const CAUSE_EXCCODE_INT: usize = 0;
 pub const CAUSE_EXCCODE_SYSCALL: usize = 8;
 
-pub const _CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
-pub const CAUSE_IP_INTC_OFFSET: Bitfield = Bitfield::new(2, 1);
+pub const CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
+pub const _CAUSE_IP_INTC_OFFSET: Bitfield = Bitfield::new(2, 1);
 
 fn prid() -> u32 {
     let mut value: u32 = 0;

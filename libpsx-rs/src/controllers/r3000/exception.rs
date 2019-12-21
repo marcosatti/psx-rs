@@ -52,32 +52,28 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
 }
 
 pub fn handle_interrupts(resources: &mut Resources) {
-    let check_interrupts = {
+    let status = &resources.r3000.cp0.status;
+    let cause = &mut resources.r3000.cp0.cause;
+
+    if status.read_bitfield(STATUS_IEC) == 0 {
+        return;
+    }
+
+    if resources.r3000.branch_delay.branching() {
+        // Unimplemented for now, can just wait until we are not branching to handle this.
+        return;
+    }
+
+    cause.update_ip_field();
+
+    let set_bits = {
         let status = &resources.r3000.cp0.status;
-        let cause = &mut resources.r3000.cp0.cause;
-
-        if status.read_bitfield(STATUS_IEC) == 0 {
-            return;
-        }
-
-        if resources.r3000.branch_delay.branching() {
-            // Unimplemented for now.
-            return;
-        }
-
-        cause.handle_irq_messages()
+        let cause = &resources.r3000.cp0.cause.register;
+        status.read_bitfield(STATUS_IM) & cause.read_bitfield(CAUSE_IP)
     };
 
-    if check_interrupts {
-        let set_bits = {
-            let status = &resources.r3000.cp0.status;
-            let cause = &resources.r3000.cp0.cause.register;
-            status.read_bitfield(STATUS_IM) & cause.read_bitfield(CAUSE_IP)
-        };
-
-        if set_bits != 0 {
-            debug::trace_interrupt(resources);
-            set_exception(resources, CAUSE_EXCCODE_INT);
-        }
+    if set_bits != 0 {
+        debug::trace_interrupt(resources);
+        set_exception(resources, CAUSE_EXCCODE_INT);
     }
 }
