@@ -2,6 +2,7 @@ use crate::resources::Resources;
 use crate::backends::video::VideoBackend;
 use crate::resources::gpu::*;
 use crate::controllers::gpu::command_gp0_impl;
+use crate::controllers::gpu::debug;
 
 /// Determines the amount of words needed to process the command.
 type LengthFn = fn(&[u32]) -> Option<usize>;
@@ -59,11 +60,17 @@ pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
     }
 
     // Execute it.
-    let command_buffer_slice: &[u32] = unsafe {
-        &(&resources.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()[0..required_length_value]
-    };
+    {
+        let command_buffer_slice: &[u32] = unsafe {
+            &(&resources.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()[0..required_length_value]
+        };
+        
+        (command_handler.1)(resources, video_backend, command_buffer_slice);
     
-    (command_handler.1)(resources, video_backend, command_buffer_slice);
+        if (command_buffer_slice[0] >> 24) < 0xE0 {
+            debug::trace_gp0_command_render(resources, video_backend);
+        }
+    }
     
     // Setup for the next one.
     resources.gpu.gp0_command_buffer.drain(0..required_length_value);

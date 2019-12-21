@@ -1,11 +1,13 @@
 pub mod display;
 pub mod opengl;
+pub mod interrupt;
 
 use std::time::Duration;
 use crate::video::VideoBackend;
 use crate::resources::Resources;
 use crate::constants::gpu::crtc::*;
 use crate::controllers::gpu::crtc::display::*;
+use crate::controllers::gpu::crtc::interrupt::*;
 use crate::resources::gpu::*;
 
 pub fn run_time(resources: &mut Resources, video_backend: &VideoBackend, duration: Duration) {
@@ -20,6 +22,7 @@ pub fn run_time(resources: &mut Resources, video_backend: &VideoBackend, duratio
     resources.gpu.crtc.frame_elapsed += duration;
     while resources.gpu.crtc.frame_elapsed > REFRESH_RATE_NTSC_PERIOD {
         resources.gpu.crtc.frame_elapsed -= REFRESH_RATE_NTSC_PERIOD;
-        handle_vblank(resources, video_backend);
+        handle_vblank_interrupt(resources);
+        handle_render(resources, video_backend);
     }
 }

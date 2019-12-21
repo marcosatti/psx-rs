@@ -296,6 +296,8 @@ pub fn command_e1_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e1_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Draw Mode setting", data);
+    
     let stat = &mut resources.gpu.gpu1814.stat;
     stat.write_bitfield(STAT_TEXPAGEX, Bitfield::new(0, 4).extract_from(data[0]));
     stat.write_bitfield(STAT_TEXPAGEY, Bitfield::new(4, 1).extract_from(data[0]));
@@ -314,6 +316,8 @@ pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e2_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Texture Window setting", data);
+
     resources.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize;
@@ -326,6 +330,8 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e3_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Set Drawing Area top left", data);
+
     resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     //warn!("GP0(E3h) not properly implemented");
@@ -340,6 +346,8 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e4_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Set Drawing Area bottom right", data);
+
     resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     //warn!("GP0(E4h) not properly implemented");
@@ -354,6 +362,8 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e5_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Set Drawing Offset", data);
+
     let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;
     let y_offset = Bitfield::new(11, 11).extract_from(data[0]) as i16;
     //warn!("GP0(E5h) not properly implemented");
@@ -373,6 +383,8 @@ pub fn command_e6_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e6_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Mask Bit Setting", data);
+
     let stat = &mut resources.gpu.gpu1814.stat;
     stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
     stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));

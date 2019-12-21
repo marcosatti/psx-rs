@@ -30,8 +30,8 @@ pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(
 pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
 pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0; //0x1F80_1100;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0xFFFF_FFFF; //0x1F80_1130; 
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x00083C94; //0x1F80_1100;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x00083C98; //0x1F80_1130; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 pub static mut DEBUG_TICK_COUNT: usize = 0;
@@ -158,7 +158,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(resources: &Resources, phy
         return;
     }
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -177,7 +177,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 
     let count = memory::update_state_write(physical_address);
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -193,7 +193,8 @@ fn trace_memory_spin_loop_detection_read(resources: &Resources, physical_address
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
-        trace!("Memory read spin loop detected on address = 0x{:08X}", physical_address);
+        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        trace!("[{:X}] Memory read spin loop detected on address = 0x{:08X}", tick_count, physical_address);
         trace_instructions_at_pc(resources, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(resources);
@@ -208,7 +209,8 @@ fn trace_memory_spin_loop_detection_write(resources: &Resources, physical_addres
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
-        trace!("Memory write spin loop detected on address = 0x{:08X}", physical_address);
+        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        trace!("[{:X}] Memory write spin loop detected on address = 0x{:08X}", tick_count, physical_address);
         trace_instructions_at_pc(resources, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(resources);
