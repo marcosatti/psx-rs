@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use opengl_sys::*;
 use crate::backends::video::opengl::*;
 use crate::backends::video::opengl::rendering::*;
@@ -351,17 +352,17 @@ pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, posit
     }
 }
 
-pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<usize, Pixel>, size: Size2D<usize, Pixel>) -> Vec<u16> {
+pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>) -> Vec<u16> {
     let (_context_guard, _context) = backend_params.context.guard();
     
-    let opengl_origin: Point2D<usize, Pixel> = Point2D::new(
+    let opengl_origin: Point2D<isize, Pixel> = Point2D::new(
         origin.x,
-        VRAM_HEIGHT_LINES - origin.y - size.height,
+        (VRAM_HEIGHT_LINES as isize) - origin.y - size.height,
     );
     
     let mut buffer: Vec<u8> = Vec::new();
-    let buffer_size = size.width * size.height * std::mem::size_of::<u16>();
-    buffer.resize_with(buffer_size, Default::default);
+    let buffer_size = size.width * size.height * (std::mem::size_of::<u16>() as isize);
+    buffer.resize_with(buffer_size.try_into().unwrap(), Default::default);
 
     unsafe {
         let mut draw_fbo = 0;
@@ -387,14 +388,14 @@ pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<usi
     
     let mut fixed_buffer: Vec<u16> = Vec::new();
     let fixed_buffer_size = size.width * size.height;
-    fixed_buffer.resize_with(fixed_buffer_size, Default::default);
+    fixed_buffer.resize_with(fixed_buffer_size.try_into().unwrap(), Default::default);
 
     for i in 0..fixed_buffer_size {
         let index = (size.width * size.height) - (size.width * (1 + (i / size.width))) + i;
         let mut data: u16 = 0;
-        data = Bitfield::new(0, 8).insert_into(data, buffer[index] as u16);
-        data = Bitfield::new(8, 8).insert_into(data, buffer[index + 1] as u16);
-        fixed_buffer[i] = data;
+        data = Bitfield::new(0, 8).insert_into(data, buffer[index as usize] as u16);
+        data = Bitfield::new(8, 8).insert_into(data, buffer[(index as usize) + 1] as u16);
+        fixed_buffer[i as usize] = data;
     }
 
     fixed_buffer

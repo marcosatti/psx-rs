@@ -1,4 +1,4 @@
-use log::warn;
+//use log::warn;
 use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
@@ -33,8 +33,8 @@ pub fn command_02_handler(_resources: &mut Resources, video_backend: &VideoBacke
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
     // Upper left corner is starting point.
-    let base_point = extract_point_normalized(data[1], Some(default_fill_x_position_modifier), Some(default_fill_y_position_modifier));
-    let size = extract_size_normalized(data[2], Some(default_fill_x_size_modifier), Some(default_fill_y_size_modifier));
+    let base_point = extract_point_normalized(data[1], default_fill_x_position_modifier, default_fill_y_position_modifier);
+    let size = extract_size_normalized(data[2], default_fill_x_size_modifier, default_fill_y_size_modifier);
 
     let positions = [
         Point2D::new(base_point.x, base_point.y),
@@ -83,7 +83,7 @@ pub fn command_28_handler(_resources: &mut Resources, video_backend: &VideoBacke
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
     
     let color = extract_color_rgb(data[0], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], None, None);
+    let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
     
     match video_backend {
         VideoBackend::None => { unimplemented!("") },
@@ -104,7 +104,7 @@ pub fn command_2c_handler(_resources: &mut Resources, video_backend: &VideoBacke
     // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
 
     let _color = extract_color_rgb(data[0], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], None, None);
+    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
@@ -126,7 +126,7 @@ pub fn command_30_handler(_resources: &mut Resources, video_backend: &VideoBacke
     debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
-    let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]], None, None);
+    let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
 
     match video_backend {
         VideoBackend::None => { unimplemented!("") },
@@ -144,7 +144,7 @@ pub fn command_38_handler(_resources: &mut Resources, video_backend: &VideoBacke
     debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
     
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], None, None);
+    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
 
     match video_backend {
         VideoBackend::None => { unimplemented!("") },
@@ -202,8 +202,8 @@ pub fn command_a0_length(data: &[u32]) -> Option<usize> {
 pub fn command_a0_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
     
-    let base_point = extract_point_normalized(data[1], Some(default_copy_x_position_modifier), Some(default_copy_y_position_modifier));
-    let size = extract_size_normalized(data[2], Some(default_copy_x_size_modifier), Some(default_copy_y_size_modifier));
+    let base_point = extract_point_normalized(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
+    let size = extract_size_normalized(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier);
     let texture_width = Bitfield::new(0, 16).extract_from(data[2]) as usize;
     let texture_height = Bitfield::new(16, 16).extract_from(data[2]) as usize;
 
@@ -254,8 +254,8 @@ pub fn command_c0_length(_data: &[u32]) -> Option<usize> {
 pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
-    let origin = extract_point(data[1], Some(default_copy_x_position_modifier), Some(default_copy_y_position_modifier));
-    let size = extract_size(data[2], Some(default_copy_x_size_modifier), Some(default_copy_y_size_modifier));
+    let origin = extract_point(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
+    let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier);
 
     let count = size.width * size.height;
 
@@ -278,11 +278,15 @@ pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBacken
         data.push(0);
     }
 
+    resources.gpu.gpu1810.read.clear();
+
     let read_buffer = &mut resources.gpu.gp0_read_buffer;
+    read_buffer.clear();
+
     for i in 0..fifo_words {
         let mut word: u32 = 0;
-        word = Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
-        word = Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
+        word = Bitfield::new(0, 16).insert_into(word, data[(i * 2) as usize] as u32);
+        word = Bitfield::new(16, 16).insert_into(word, data[(i * 2 + 1) as usize] as u32);
         read_buffer.push_back(word)
     }
 }
@@ -302,7 +306,7 @@ pub fn command_e1_handler(resources: &mut Resources, _video_backend: &VideoBacke
     stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
     resources.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
     resources.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
-    warn!("GP0(E1h) not properly implemented");
+    //warn!("GP0(E1h) not properly implemented");
 }
 
 pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
@@ -314,7 +318,7 @@ pub fn command_e2_handler(resources: &mut Resources, _video_backend: &VideoBacke
     resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as usize;
-    warn!("GP0(E2h) not properly implemented");
+    //warn!("GP0(E2h) not properly implemented");
 }
 
 pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
@@ -324,7 +328,7 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e3_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
-    warn!("GP0(E3h) not properly implemented");
+    //warn!("GP0(E3h) not properly implemented");
 
     if (resources.gpu.drawing_area_x1 != 0) || (resources.gpu.drawing_area_y1 != 0) {
         log::debug!("Non zero drawing area x1 y1: {}, {}", resources.gpu.drawing_area_x1, resources.gpu.drawing_area_y1);
@@ -338,7 +342,11 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e4_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     resources.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
-    warn!("GP0(E4h) not properly implemented");
+    //warn!("GP0(E4h) not properly implemented");
+
+    if (resources.gpu.drawing_area_x2 != 0) || (resources.gpu.drawing_area_y2 != 0) {
+        //log::debug!("Non zero drawing area x2 y2: {}, {}", resources.gpu.drawing_area_x2, resources.gpu.drawing_area_y2);
+    }
 }
 
 pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
@@ -346,17 +354,17 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
 }
 
 pub fn command_e5_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
-    resources.gpu.drawing_offset_x = Bitfield::new(0, 11).extract_from(data[0]) as usize;
-    resources.gpu.drawing_offset_y = Bitfield::new(11, 11).extract_from(data[0]) as usize;
+    let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;
+    let y_offset = Bitfield::new(11, 11).extract_from(data[0]) as i16;
+    //warn!("GP0(E5h) not properly implemented");
 
     // Sign extend from 11-bit to 16-bit.
-    let x_offset = ((resources.gpu.drawing_offset_x as u16) << 5) as i16 >> 5;
-    let y_offset = ((resources.gpu.drawing_offset_y as u16) << 5) as i16 >> 5;
+    resources.gpu.drawing_offset_x = ((x_offset << 5) >> 5) as isize;
+    resources.gpu.drawing_offset_y = ((y_offset << 5) >> 5) as isize;
     
     //debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset, resources.gpu.drawing_offset_x, y_offset, resources.gpu.drawing_offset_y);
-    
     if (x_offset != 0) || (y_offset != 0) {
-        log::debug!("Non zero drawing offset: {}, {} ({}, {})", x_offset, y_offset, resources.gpu.drawing_offset_x, resources.gpu.drawing_offset_y);
+        log::debug!("Non zero drawing offset: {}, {}", resources.gpu.drawing_offset_x, resources.gpu.drawing_offset_y);
     }
 }
 
@@ -368,5 +376,5 @@ pub fn command_e6_handler(resources: &mut Resources, _video_backend: &VideoBacke
     let stat = &mut resources.gpu.gpu1814.stat;
     stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
     stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
-    warn!("GP0(E6h) not properly implemented");
+    //warn!("GP0(E6h) not properly implemented");
 }

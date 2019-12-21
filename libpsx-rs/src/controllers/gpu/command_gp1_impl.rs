@@ -36,30 +36,20 @@ pub fn command_03(resources: &mut Resources, _video_backend: &VideoBackend, comm
 pub fn command_04(resources: &mut Resources, _video_backend: &VideoBackend, command: u32) {
     let dma_direction = Bitfield::new(0, 2).extract_from(command);
     
-    let mut read_clear_required = false;
-
     match dma_direction {
         0 => {
             //debug!("DMA direction set to 0 (off)");
-            read_clear_required = true;
         }
         1 => {
             //debug!("DMA direction set to 1 (FIFO) - what does this mean???");
-            read_clear_required = true;
         },
         2 => {
             //debug!("DMA direction set to 2 (CPUtoGP0)");
-            read_clear_required = true;
         },
         3 => {
             //debug!("DMA direction set to 3 (GPUREADtoCPU)");
         },
         _ => unreachable!(),
-    }
-
-    if read_clear_required {
-        resources.gpu.gp0_read_buffer.clear();
-        while let Ok(_) = resources.gpu.gpu1810.read.read_one() {}
     }
 
     resources.gpu.gpu1814.stat.write_bitfield(STAT_DMA_DIRECTION, dma_direction);

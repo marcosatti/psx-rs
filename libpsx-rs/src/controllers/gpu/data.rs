@@ -19,39 +19,47 @@ pub enum ClutMode {
     Reserved,
 }
 
-fn default_modifier(d: usize) -> usize {
-    d
+pub fn default_render_x_position_modifier(d: isize) -> isize {
+    // Sign extend from 11-bit to isize.
+    let d = Bitfield::new(0, 11).extract_from(d as i16);
+    ((d << 5) >> 5) as isize
 }
 
-pub fn default_fill_x_position_modifier(d: usize) -> usize {
+pub fn default_render_y_position_modifier(d: isize) -> isize {
+    // Sign extend from 11-bit to isize.
+    let d = Bitfield::new(0, 11).extract_from(d as i16);
+    ((d << 5) >> 5) as isize
+}
+
+pub fn default_fill_x_position_modifier(d: isize) -> isize {
     d & 0x3F0
 }
 
-pub fn default_fill_y_position_modifier(d: usize) -> usize {
+pub fn default_fill_y_position_modifier(d: isize) -> isize {
     d & 0x1FF
 }
 
-pub fn default_fill_x_size_modifier(d: usize) -> usize {
+pub fn default_fill_x_size_modifier(d: isize) -> isize {
     ((d & 0x3FF) + 0xF) & (!0xF)
 }
 
-pub fn default_fill_y_size_modifier(d: usize) -> usize {
+pub fn default_fill_y_size_modifier(d: isize) -> isize {
     d & 0x1FF
 }
 
-pub fn default_copy_x_position_modifier(d: usize) -> usize {
+pub fn default_copy_x_position_modifier(d: isize) -> isize {
     d & 0x3FF
 }
 
-pub fn default_copy_y_position_modifier(d: usize) -> usize {
+pub fn default_copy_y_position_modifier(d: isize) -> isize {
     d & 0x1FF
 }
 
-pub fn default_copy_x_size_modifier(d: usize) -> usize {
+pub fn default_copy_x_size_modifier(d: isize) -> isize {
     ((d - 1) & 0x3FF) + 1
 }
 
-pub fn default_copy_y_size_modifier(d: usize) -> usize {
+pub fn default_copy_y_size_modifier(d: isize) -> isize {
     ((d - 1) & 0x1FF) + 1
 }
 
@@ -101,43 +109,43 @@ pub fn extract_colors_4_rgb(colors_raw: [u32; 4], alpha: u8) -> [Color; 4] {
     ]
 }
 
-pub fn normalize_point(point: Point2D<usize, Pixel>) -> Point2D<f32, Normalized> {
+pub fn normalize_point(point: Point2D<isize, Pixel>) -> Point2D<f32, Normalized> {
     Point2D::new(
-        (point.x as f32 - ((VRAM_WIDTH_16B as f32 / 2.0) - 1.0)) / ((VRAM_WIDTH_16B as f32 / 2.0) - 1.0),
-        -((point.y as f32 - ((VRAM_HEIGHT_LINES as f32 / 2.0) - 1.0)) / ((VRAM_HEIGHT_LINES as f32 / 2.0) - 1.0)),
+        ((point.x as f64 - ((VRAM_WIDTH_16B as f64 / 2.0) - 1.0)) / ((VRAM_WIDTH_16B as f64 / 2.0) - 1.0)) as f32,
+        (-((point.y as f64 - ((VRAM_HEIGHT_LINES as f64 / 2.0) - 1.0)) / ((VRAM_HEIGHT_LINES as f64 / 2.0) - 1.0))) as f32,
     )
 }
 
-pub fn extract_point(point_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Point2D<usize, Pixel> {
+pub fn extract_point(point_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Point2D<isize, Pixel> {
     Point2D::new(
-        x_modifier.unwrap_or(default_modifier)(Bitfield::new(0, 16).extract_from(point_raw) as usize),
-        y_modifier.unwrap_or(default_modifier)(Bitfield::new(16, 16).extract_from(point_raw) as usize),
+        x_modifier(Bitfield::new(0, 16).extract_from(point_raw) as isize),
+        y_modifier(Bitfield::new(16, 16).extract_from(point_raw) as isize),
     )
 }
 
-pub fn extract_point_normalized(point_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Point2D<f32, Normalized> {
+pub fn extract_point_normalized(point_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Point2D<f32, Normalized> {
     normalize_point(extract_point(point_raw, x_modifier, y_modifier))
 }
 
-pub fn normalize_size(size: Size2D<usize, Pixel>) -> Size2D<f32, Normalized> {
+pub fn normalize_size(size: Size2D<isize, Pixel>) -> Size2D<f32, Normalized> {
     Size2D::new(
         (size.width as f32 / VRAM_WIDTH_16B as f32) * 2.0, 
         (size.height as f32 / VRAM_HEIGHT_LINES as f32) * 2.0, 
     )
 }
 
-pub fn extract_size(size_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Size2D<usize, Pixel> {
+pub fn extract_size(size_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Size2D<isize, Pixel> {
     Size2D::new(
-        x_modifier.unwrap_or(default_modifier)(Bitfield::new(0, 16).extract_from(size_raw) as usize), 
-        y_modifier.unwrap_or(default_modifier)(Bitfield::new(16, 16).extract_from(size_raw) as usize),
+        x_modifier(Bitfield::new(0, 16).extract_from(size_raw) as isize), 
+        y_modifier(Bitfield::new(16, 16).extract_from(size_raw) as isize),
     )
 }
 
-pub fn extract_size_normalized(size_raw: u32, x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> Size2D<f32, Normalized> {
+pub fn extract_size_normalized(size_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Size2D<f32, Normalized> {
     normalize_size(extract_size(size_raw, x_modifier, y_modifier))
 }
 
-pub fn normalize_points_3(points: [Point2D<usize, Pixel>; 3]) -> [Point2D<f32, Normalized>; 3] {
+pub fn normalize_points_3(points: [Point2D<isize, Pixel>; 3]) -> [Point2D<f32, Normalized>; 3] {
     [
         normalize_point(points[0]),
         normalize_point(points[1]),
@@ -145,7 +153,7 @@ pub fn normalize_points_3(points: [Point2D<usize, Pixel>; 3]) -> [Point2D<f32, N
     ]
 }
 
-pub fn extract_vertices_3(vertices_raw: [u32; 3], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<usize, Pixel>; 3] {
+pub fn extract_vertices_3(vertices_raw: [u32; 3], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Point2D<isize, Pixel>; 3] {
     [
         extract_point(vertices_raw[0], x_modifier, y_modifier),
         extract_point(vertices_raw[1], x_modifier, y_modifier),
@@ -153,11 +161,11 @@ pub fn extract_vertices_3(vertices_raw: [u32; 3], x_modifier: Option<fn(usize) -
     ]
 }
 
-pub fn extract_vertices_3_normalized(vertices_raw: [u32; 3], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<f32, Normalized>; 3] {
+pub fn extract_vertices_3_normalized(vertices_raw: [u32; 3], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Point2D<f32, Normalized>; 3] {
     normalize_points_3(extract_vertices_3(vertices_raw, x_modifier, y_modifier))
 }
 
-pub fn normalize_points_4(points: [Point2D<usize, Pixel>; 4]) -> [Point2D<f32, Normalized>; 4] {
+pub fn normalize_points_4(points: [Point2D<isize, Pixel>; 4]) -> [Point2D<f32, Normalized>; 4] {
     [
         normalize_point(points[0]),
         normalize_point(points[1]),
@@ -166,7 +174,7 @@ pub fn normalize_points_4(points: [Point2D<usize, Pixel>; 4]) -> [Point2D<f32, N
     ]
 }
 
-pub fn extract_vertices_4(vertices_raw: [u32; 4], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<usize, Pixel>; 4] {
+pub fn extract_vertices_4(vertices_raw: [u32; 4], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Point2D<isize, Pixel>; 4] {
     [
         extract_point(vertices_raw[0], x_modifier, y_modifier),
         extract_point(vertices_raw[1], x_modifier, y_modifier),
@@ -175,14 +183,14 @@ pub fn extract_vertices_4(vertices_raw: [u32; 4], x_modifier: Option<fn(usize) -
     ]
 }
 
-pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4], x_modifier: Option<fn(usize) -> usize>, y_modifier: Option<fn(usize) -> usize>) -> [Point2D<f32, Normalized>; 4] {
+pub fn extract_vertices_4_normalized(vertices_raw: [u32; 4], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Point2D<f32, Normalized>; 4] {
     normalize_points_4(extract_vertices_4(vertices_raw, x_modifier, y_modifier))
 }
 
 pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, texcoords_raw: [u32; 4]) -> [Point2D<f32, Normalized>; 4] {
     let texpage = Bitfield::new(16, 16).extract_from(texpage_raw);
-    let texpage_x_base = (Bitfield::new(0, 4).extract_from(texpage) * 64) as usize;
-    let texpage_y_base = (Bitfield::new(4, 1).extract_from(texpage) * 256) as usize;
+    let texpage_x_base = (Bitfield::new(0, 4).extract_from(texpage) * 64) as isize;
+    let texpage_y_base = (Bitfield::new(4, 1).extract_from(texpage) * 256) as isize;
     let texpage_x_base = texpage_x_base as f32 / (VRAM_WIDTH_16B as f32 - 1.0);
     let texpage_y_base = 1.0 - (texpage_y_base as f32 / (VRAM_HEIGHT_LINES as f32 - 1.0));
     let texpage_base = Point2D::new(texpage_x_base, texpage_y_base);
@@ -193,11 +201,11 @@ pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, tex
     let texcoord_y_bitfield = Bitfield::new(8, 8);
 
     // The texcoords are in terms of texture pixels, not framebuffer pixels (see clut_mode below).
-    let texcoord_offset_points: [Point2D<usize, Pixel>; 4] = [
-        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[0]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[0]) as usize),
-        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[1]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[1]) as usize),
-        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[2]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[2]) as usize),
-        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[3]) as usize, texcoord_y_bitfield.extract_from(texcoords_raw[3]) as usize),
+    let texcoord_offset_points: [Point2D<isize, Pixel>; 4] = [
+        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[0]) as isize, texcoord_y_bitfield.extract_from(texcoords_raw[0]) as isize),
+        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[1]) as isize, texcoord_y_bitfield.extract_from(texcoords_raw[1]) as isize),
+        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[2]) as isize, texcoord_y_bitfield.extract_from(texcoords_raw[2]) as isize),
+        Point2D::new(texcoord_x_bitfield.extract_from(texcoords_raw[3]) as isize, texcoord_y_bitfield.extract_from(texcoords_raw[3]) as isize),
     ];
 
     // Each framebuffer pixel represents {scale_factor} number of texture pixels.
@@ -214,10 +222,10 @@ pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, tex
     texcoords
 }
 
-pub fn extract_clut_base(clut_raw: u32) -> Point2D<usize, Pixel> {
+pub fn extract_clut_base(clut_raw: u32) -> Point2D<isize, Pixel> {
     let clut = Bitfield::new(16, 16).extract_from(clut_raw);
-    let clut_x = (Bitfield::new(0, 6).extract_from(clut) * 16) as usize;
-    let clut_y = Bitfield::new(6, 9).extract_from(clut) as usize;
+    let clut_x = (Bitfield::new(0, 6).extract_from(clut) * 16) as isize;
+    let clut_y = Bitfield::new(6, 9).extract_from(clut) as isize;
 
     Point2D::new(
         clut_x, 
