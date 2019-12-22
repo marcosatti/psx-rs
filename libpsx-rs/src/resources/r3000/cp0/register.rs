@@ -21,24 +21,24 @@ impl Cause {
         }
     }
 
-    pub fn assert_irq_line(&self, irq_line: IrqLine) {
+    pub fn assert_line(&self, irq_line: IrqLine) {
         match irq_line {
             IrqLine::Intc => self.intc_pending.store(true, Ordering::Release),
         }
     }
 
-    pub fn deassert_irq_line(&self, irq_line: IrqLine) {
+    pub fn deassert_line(&self, irq_line: IrqLine) {
         match irq_line {
             IrqLine::Intc => self.intc_pending.store(false, Ordering::Release),
         }
     }
 
     pub fn update_ip_field(&mut self) {
-        let intc_value = bool_to_flag(self.intc_pending.load(Ordering::Acquire));
-        self.register.write_bitfield(CAUSE_IP_INTC, intc_value);
+        self.register.write_bitfield(CAUSE_IP_INTC, bool_to_flag(self.intc_pending.load(Ordering::Acquire)));
     }
 
     pub fn clear_ip_field(&mut self) {
+        self.intc_pending.store(false, Ordering::Release);
         self.register.write_bitfield(CAUSE_IP, 0);
     }
 }

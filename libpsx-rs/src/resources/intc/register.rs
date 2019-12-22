@@ -3,6 +3,7 @@ use crate::utilities::bool_to_flag;
 use crate::types::b8_memory_mapper::*;
 use crate::resources::intc::*;
 
+#[derive(Debug, Copy, Clone)]
 pub enum Line {
     Vblank,
     Gpu,
@@ -62,6 +63,7 @@ impl Stat {
             Line::Spu => self.spu.store(true, Ordering::Release),
             Line::Pio => self.pio.store(true, Ordering::Release),
         }
+        //log::debug!("Asserted INTC line {:?}", line);
     }
 
     fn acknowledge(&self, acknowledge_mask: u32) {
@@ -85,7 +87,6 @@ impl Stat {
                 }
             }
         }
-        log::debug!("value = 0x{:08X}", self.value());
     }
 
     pub fn value(&self) -> u32 {

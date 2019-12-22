@@ -2,6 +2,7 @@ pub mod command;
 pub mod command_impl;
 
 use std::sync::atomic::Ordering;
+use crate::utilities::bool_to_flag;
 use crate::resources::Resources;
 use crate::controllers::cdrom::command::*;
 use crate::resources::cdrom::*;
@@ -25,20 +26,10 @@ fn handle_parameter_fifo(resources: &mut Resources) {
         int_flag.parameter_reset.store(false, Ordering::Release);
     }
 
-    let empty_bit = if fifo.is_empty() {
-        1
-    } else {
-        0
-    };
-
+    let empty_bit = bool_to_flag(fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_PRMEMPT, empty_bit);
 
-    let ready_bit = if !fifo.is_full() {
-        1
-    } else {
-        0
-    };
-
+    let ready_bit = bool_to_flag(!fifo.is_full()) as u8;
     status.write_bitfield(STATUS_PRMWRDY, ready_bit);
 }
 
@@ -46,12 +37,7 @@ fn handle_response_fifo(resources: &mut Resources) {
     let status = &mut resources.cdrom.status;
     let fifo = &mut resources.cdrom.response;
 
-    let ready_bit = if !fifo.is_empty() {
-        1
-    } else {
-        0
-    };
-
+    let ready_bit = bool_to_flag(!fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_RSLRRDY, ready_bit);
 }
 

@@ -34,8 +34,8 @@ fn handle_interrupt_check(resources: &mut Resources) {
     let masked_value = stat_value & mask_value;
 
     if masked_value == 0 {
-        resources.r3000.cp0.cause.deassert_irq_line(IrqLine::Intc);
+        resources.r3000.cp0.cause.deassert_line(IrqLine::Intc);
     } else {
-        resources.r3000.cp0.cause.assert_irq_line(IrqLine::Intc);
+        resources.r3000.cp0.cause.assert_line(IrqLine::Intc);
     }
 }

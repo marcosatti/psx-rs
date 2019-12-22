@@ -12,7 +12,7 @@ use libpsx_rs::{Core, Config};
 use libpsx_rs::backends::context::*;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
-use libpsx_rs::controllers::r3000::debug::{ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
+use libpsx_rs::controllers::r3000::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
 use libpsx_rs::controllers::gpu::debug::{ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL};
 use libpsx_rs::debug::DEBUG_CORE_EXIT;
 use libpsx_rs::debug::analysis as debug_analysis;
@@ -168,12 +168,13 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
     use sdl2::keyboard::Keycode;
 
     match keycode {
-        Keycode::F1 => { toggle_debug_option(&ENABLE_REGISTER_TRACING, "register tracing"); },
+        Keycode::F1 => { toggle_debug_option(&ENABLE_REGISTER_TRACING, "register output"); },
         Keycode::F2 => { toggle_debug_option(&ENABLE_STATE_TRACING, "state tracing"); },
         Keycode::F3 => { toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, "spin loop detection (read)"); },
         Keycode::F4 => { toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, "spin loop detection (write)"); },
-        Keycode::F5 => { toggle_debug_option(&ENABLE_GP0_RENDER_PER_CALL, "GPU rendering per draw call"); },
-        Keycode::F6 => { toggle_debug_option(&ENABLE_GP0_COMMAND_TRACING, "GPU GP0 command tracing"); },
+        Keycode::F5 => { toggle_debug_option(&ENABLE_INTERRUPT_TRACING, "interrupt tracing"); },
+        Keycode::F6 => { toggle_debug_option(&ENABLE_GP0_RENDER_PER_CALL, "GPU rendering per draw call"); },
+        Keycode::F7 => { toggle_debug_option(&ENABLE_GP0_COMMAND_TRACING, "GPU GP0 command tracing"); },
         _ => {},
     }
 }

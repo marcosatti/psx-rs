@@ -14,6 +14,8 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
         pc_value += INSTRUCTION_SIZE;
     }
 
+    log::debug!("exception, exccode = {}", exccode);
+
     assert!(!resources.r3000.branch_delay.branching(), "Exception handling while branching not implmeneted");
 
     // Push IEc & KUc (stack).
@@ -73,7 +75,6 @@ pub fn handle_interrupts(resources: &mut Resources) {
     };
 
     if set_bits != 0 {
-        log::debug!("set bits = 0x{:08X}", set_bits);
         debug::trace_interrupt(resources);
         set_exception(resources, CAUSE_EXCCODE_INT);
     }

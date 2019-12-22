@@ -53,7 +53,7 @@ pub fn trace_r3000(resources: &Resources) {
 }
 
 pub fn trace_intc(resources: &Resources, only_enabled: bool) {
-    crate::controllers::intc::debug::trace_intc(resources, only_enabled);
+    crate::controllers::intc::debug::trace_intc(resources, only_enabled, false);
 }
 
 pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
