@@ -108,9 +108,9 @@ fn handle_irq_check(resources: &mut Resources) {
         if dicr.register.read_bitfield(DICR_IRQ_MASTER_FLAG) == 0 {
             dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 1);
 
-            use crate::resources::intc::DMA;
-            let stat = &mut resources.intc.stat;
-            stat.set_irq(DMA);
+            use crate::resources::intc::register::Line;
+            let stat = &resources.intc.stat;
+            stat.assert_line(Line::Cdrom);
         }
     } else {
         dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 0);

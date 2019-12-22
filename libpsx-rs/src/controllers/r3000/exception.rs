@@ -73,6 +73,7 @@ pub fn handle_interrupts(resources: &mut Resources) {
     };
 
     if set_bits != 0 {
+        log::debug!("set bits = 0x{:08X}", set_bits);
         debug::trace_interrupt(resources);
         set_exception(resources, CAUSE_EXCCODE_INT);
     }

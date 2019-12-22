@@ -63,8 +63,8 @@ fn handle_interrupt_check(resources: &mut Resources) {
     let int_flag_value = INTERRUPT_FLAGS.extract_from(int_flag.register.read_u8());
     
     if (int_enable_value & int_flag_value) > 0 {
-        use crate::resources::intc::CDROM;
-        let stat = &mut resources.intc.stat;
-        stat.set_irq(CDROM);
+        use crate::resources::intc::register::Line;
+        let stat = &resources.intc.stat;
+        stat.assert_line(Line::Cdrom);
     }
 }

@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use crate::utilities::bool_to_flag;
 use crate::types::register::b32_register::B32Register;
 use crate::resources::r3000::cp0::*;
 
@@ -33,7 +34,6 @@ impl Cause {
     }
 
     pub fn update_ip_field(&mut self) {
-        fn bool_to_flag(value: bool) -> u32 { if value { 1 } else { 0 } };
         let intc_value = bool_to_flag(self.intc_pending.load(Ordering::Acquire));
         self.register.write_bitfield(CAUSE_IP_INTC, intc_value);
     }

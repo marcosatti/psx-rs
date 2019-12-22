@@ -29,16 +29,17 @@ pub fn handle_irq_raise(resources: &mut Resources, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
     mode.register.write_bitfield(MODE_IRQ_STATUS, 0);
 
-    use crate::resources::intc::{TMR0, TMR1, TMR2};
+    use crate::resources::intc::register::Line;
 
-    let irq_bit = match timer_id {
-        0 => TMR0,
-        1 => TMR1,
-        2 => TMR2,
+    let irq_line = match timer_id {
+        0 => Line::Tmr0,
+        1 => Line::Tmr1,
+        2 => Line::Tmr2,
         _ => unreachable!(),
     };
 
-    let stat = &mut resources.intc.stat;
-    stat.set_irq(irq_bit);
+    let stat = &resources.intc.stat;
+    stat.assert_line(irq_line);
+
     debug!("Raised INTC IRQ for timer {}", timer_id);
 }
