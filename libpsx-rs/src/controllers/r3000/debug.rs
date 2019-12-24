@@ -47,8 +47,8 @@ pub fn trace_state(resources: &Resources) {
         let tick_count = DEBUG_TICK_COUNT;
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
     
-        // let start = 0xF00000125DB53;
-        // let end = 0xF00000125DB57;
+        // let start = 0x12B2680;
+        // let end = 0x12B2AFF;
         // if (start..=end).contains(&tick_count) {
         if true {
             let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
@@ -90,24 +90,25 @@ pub fn trace_interrupt(resources: &Resources) {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32();
         let branching = resources.r3000.branch_delay.branching();
-        trace!("R3000 interrupt, cycle = 0x{:X}, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
-        crate::controllers::intc::debug::trace_intc(resources, true, true);
+        trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
+        //crate::controllers::intc::debug::trace_intc(resources, true, true);
     }
 }
 
 pub fn trace_syscall(resources: &Resources) {
     if ENABLE_SYSCALL_TRACING {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
-        let pc_va = resources.r3000.pc.read_u32();
-        trace!("[{:X}] syscall, pc = 0x{:X}", debug_tick_count, pc_va);
+        let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
+        trace!("[{:X}] syscall, pc = 0x{:08X}", debug_tick_count, pc_va);
     }
 }
 
 pub fn trace_rfe(resources: &Resources) {
     if ENABLE_RFE_TRACING {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
-        let pc_va = resources.r3000.pc.read_u32();
-        trace!("[{:X}] rfe, pc = 0x{:X}", debug_tick_count, pc_va);
+        let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
+        let branch_target = resources.r3000.branch_delay.target_or_null();
+        trace!("[{:X}] rfe, pc = 0x{:08X}, branch target = 0x{:08X}", debug_tick_count, pc_va, branch_target);
     }
 }
 

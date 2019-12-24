@@ -118,6 +118,30 @@ pub fn command_2c_handler(_resources: &mut Resources, video_backend: &VideoBacke
     }
 }
 
+pub fn command_2d_length(_data: &[u32]) -> Option<usize> {
+    Some(9)
+}
+
+pub fn command_2d_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Textured four-point polygon, opaque, raw-texture", data);
+
+    // TODO: implement this properly - need to make a shader to do this I think...
+    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
+
+    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let clut_mode = extract_texpage_clut_mode(data[4]);
+    let _transparency_mode = extract_texpage_transparency_mode(data[4]);
+    let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
+    let _clut = extract_clut_base_normalized(data[2]);
+
+    match video_backend {
+        VideoBackend::None => { unimplemented!("") },
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_4_textured_framebuffer(backend_params, vertices, texcoords);
+        },
+    }
+}
+
 pub fn command_30_length(_data: &[u32]) -> Option<usize> {
     Some(6)
 }
@@ -168,6 +192,43 @@ pub fn command_50_length(_data: &[u32]) -> Option<usize> {
 
 pub fn command_50_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded line, opaque", data);
+}
+
+pub fn command_65_length(_data: &[u32]) -> Option<usize> {
+    Some(4)
+}
+
+pub fn command_65_handler(resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+    debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
+
+    // TODO: implement this properly - need to make a shader to do this I think...
+    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
+
+    let _color = extract_color_rgb(data[0], std::u8::MAX);
+    // Upper left corner is starting point.
+    let base_point = extract_point_normalized(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
+    let size = extract_size_normalized(data[3], default_render_x_size_modifier, default_render_y_size_modifier);
+    let clut_mode = resources.gpu.clut_mode;
+    let texpage_base = Point2D::new(
+        resources.gpu.texpage_base_x, 
+        resources.gpu.texpage_base_y, 
+    );
+    let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
+    let _clut = extract_clut_base_normalized(data[2]);
+
+    let positions = [
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
+        Point2D::new(base_point.x, base_point.y - size.height),
+        Point2D::new(base_point.x + size.width, base_point.y - size.height),
+    ];
+
+    match video_backend {
+        VideoBackend::None => { unimplemented!("") },
+        VideoBackend::Opengl(ref backend_params) => {
+            opengl::draw_polygon_4_textured_framebuffer(backend_params, positions, texcoords);
+        },
+    }
 }
 
 pub fn command_6f_length(_data: &[u32]) -> Option<usize> {
@@ -299,14 +360,31 @@ pub fn command_e1_handler(resources: &mut Resources, _video_backend: &VideoBacke
     debug::trace_gp0_command("Draw Mode setting", data);
     
     let stat = &mut resources.gpu.gpu1814.stat;
-    stat.write_bitfield(STAT_TEXPAGEX, Bitfield::new(0, 4).extract_from(data[0]));
-    stat.write_bitfield(STAT_TEXPAGEY, Bitfield::new(4, 1).extract_from(data[0]));
-    stat.write_bitfield(STAT_TRANSPARENCY, Bitfield::new(5, 2).extract_from(data[0]));
-    stat.write_bitfield(STAT_TEXPAGE_COLORS, Bitfield::new(7, 2).extract_from(data[0]));
+
+    let texpage_base_x = Bitfield::new(0, 4).extract_from(data[0]);
+    stat.write_bitfield(STAT_TEXPAGEX, texpage_base_x);
+    resources.gpu.texpage_base_x = texpage_base_x as isize;
+
+    let texpage_base_y = Bitfield::new(4, 1).extract_from(data[0]);
+    stat.write_bitfield(STAT_TEXPAGEY, texpage_base_y);
+    resources.gpu.texpage_base_y = texpage_base_y as isize;
+
+    let transparency_mode_raw = Bitfield::new(5, 2).extract_from(data[0]);
+    stat.write_bitfield(STAT_TRANSPARENCY, transparency_mode_raw);
+    resources.gpu.transparency_mode = extract_texpage_transparency_mode(data[0]);
+
+    let clut_mode_raw = Bitfield::new(7, 2).extract_from(data[0]);
+    stat.write_bitfield(STAT_TEXPAGE_COLORS, clut_mode_raw);
+    resources.gpu.clut_mode = extract_texpage_clut_mode(data[0]);
+
     stat.write_bitfield(STAT_DITHER, Bitfield::new(9, 1).extract_from(data[0]));
+
     stat.write_bitfield(STAT_DRAW_DISPLAY, Bitfield::new(10, 1).extract_from(data[0]));
+
     stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
+
     resources.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
+
     resources.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
     //warn!("GP0(E1h) not properly implemented");
 }
@@ -320,8 +398,8 @@ pub fn command_e2_handler(resources: &mut Resources, _video_backend: &VideoBacke
 
     resources.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
     resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
-    resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize;
-    resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as usize;
+    resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
+    resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
     //warn!("GP0(E2h) not properly implemented");
 }
 

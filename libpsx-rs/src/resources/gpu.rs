@@ -1,5 +1,6 @@
 pub mod crtc;
 pub mod register;
+pub mod data;
 
 use std::collections::VecDeque;
 use crate::types::b8_memory_mapper::B8MemoryMap;
@@ -7,6 +8,7 @@ use crate::types::bitfield::Bitfield;
 use crate::resources::Resources;
 use crate::resources::gpu::crtc::Crtc;
 use crate::resources::gpu::register::{Gpu1810, Gpu1814};
+use crate::resources::gpu::data::*;
 
 pub const GP_CMD: Bitfield = Bitfield::new(24, 8);
 
@@ -49,14 +51,18 @@ pub struct Gpu {
     pub vertical_display_range_y2: usize,
     pub texture_window_mask_x: usize,
     pub texture_window_mask_y: usize,
-    pub texture_window_offset_x: usize,
-    pub texture_window_offset_y: usize,
+    pub texture_window_offset_x: isize,
+    pub texture_window_offset_y: isize,
     pub drawing_area_x1: usize,
     pub drawing_area_y1: usize,
     pub drawing_area_x2: usize,
     pub drawing_area_y2: usize,
     pub drawing_offset_x: isize,
     pub drawing_offset_y: isize,
+    pub texpage_base_x: isize,
+    pub texpage_base_y: isize,
+    pub clut_mode: ClutMode,
+    pub transparency_mode: TransparencyMode,
     pub gp0_command_buffer: Vec<u32>,
     pub gp0_command_required_length: Option<usize>,
     pub gp0_read_buffer: VecDeque<u32>,
@@ -87,6 +93,10 @@ impl Gpu {
             drawing_area_y2: 0,
             drawing_offset_x: 0,
             drawing_offset_y: 0,
+            texpage_base_x: 0,
+            texpage_base_y: 0,
+            clut_mode: ClutMode::Bits4,
+            transparency_mode: TransparencyMode::Average,
             gp0_command_buffer: Vec::new(),
             gp0_command_required_length: None,
             gp0_read_buffer: VecDeque::new(),

@@ -14,8 +14,6 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
         pc_value += INSTRUCTION_SIZE;
     }
 
-    log::debug!("exception, exccode = {}", exccode);
-
     assert!(!resources.r3000.branch_delay.branching(), "Exception handling while branching not implmeneted");
 
     // Push IEc & KUc (stack).

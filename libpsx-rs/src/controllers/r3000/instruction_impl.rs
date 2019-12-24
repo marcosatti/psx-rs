@@ -565,8 +565,8 @@ pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
     status.write_u32(new_status_value);
     
     // Flush the branch delay slot if any.
-    if let Some(t) = resources.r3000.branch_delay.advance_all() {
-        resources.r3000.pc.write_u32(translate_address(t));
+    if let Some(target) = resources.r3000.branch_delay.advance_all() {
+        resources.r3000.pc.write_u32(target);
     }
 
     // Also flush the cause register to make sure no stray interrupts are pending as a result of the emulator being out of sync temporarily.

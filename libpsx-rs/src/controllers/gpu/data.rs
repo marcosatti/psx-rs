@@ -2,22 +2,7 @@ use crate::constants::gpu::*;
 use crate::types::color::Color;
 use crate::types::bitfield::Bitfield;
 use crate::types::geometry::*;
-
-#[derive(Copy, Clone, Debug)]
-pub enum TransparencyMode {
-    Average,
-    Additive,
-    Difference,
-    Quarter,
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum ClutMode {
-    Bits4,
-    Bits8,
-    Bits15,
-    Reserved,
-}
+use crate::resources::gpu::data::*;
 
 pub fn default_render_x_position_modifier(d: isize) -> isize {
     // Sign extend from 11-bit to isize.
@@ -37,6 +22,14 @@ pub fn default_fill_x_position_modifier(d: isize) -> isize {
 
 pub fn default_fill_y_position_modifier(d: isize) -> isize {
     d & 0x1FF
+}
+
+pub fn default_render_x_size_modifier(d: isize) -> isize {
+    d
+}
+
+pub fn default_render_y_size_modifier(d: isize) -> isize {
+    d
 }
 
 pub fn default_fill_x_size_modifier(d: isize) -> isize {
@@ -211,12 +204,47 @@ pub fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMode, tex
     // Each framebuffer pixel represents {scale_factor} number of texture pixels.
     let scale_factor = match clut_mode {
         ClutMode::Bits4 => 4.0,
+        ClutMode::Bits8 => 2.0,
+        ClutMode::Bits15 => 1.0,
         _ => unimplemented!("Extracting texcoords CLUT mode unimplemented: {:?}", clut_mode),
     };
 
     for i in 0..4 {
         texcoords[i].x += (texcoord_offset_points[i].x as f32 / scale_factor) / (VRAM_WIDTH_16B as f32 - 1.0);
         texcoords[i].y -= texcoord_offset_points[i].y as f32 / (VRAM_HEIGHT_LINES as f32 - 1.0);
+    }
+
+    texcoords
+}
+
+pub fn extract_texcoords_rect_normalized(texpage_base: Point2D<isize, Pixel>, texcoord_offset_raw: u32, clut_mode: ClutMode, size: Size2D<f32, Normalized>) -> [Point2D<f32, Normalized>; 4] {
+    let texcoord_offset_x = Bitfield::new(0, 8).extract_from(texcoord_offset_raw) as isize;
+    let texcoord_offset_y = Bitfield::new(8, 8).extract_from(texcoord_offset_raw) as isize;
+    let texpage_x_base = (texpage_base.x + texcoord_offset_x) as f32 / (VRAM_WIDTH_16B as f32 - 1.0);
+    let texpage_y_base = 1.0 - ((texpage_base.y + texcoord_offset_y) as f32 / (VRAM_HEIGHT_LINES as f32 - 1.0));
+    let texpage_base = Point2D::new(texpage_x_base, texpage_y_base);
+    
+    let mut texcoords: [Point2D<f32, Normalized>; 4] = [texpage_base; 4];
+
+    // The texcoords are in terms of texture pixels, not framebuffer pixels (see clut_mode below).
+    let texcoord_offset_points: [Point2D<f32, Normalized>; 4] = [
+        Point2D::new(0.0, 0.0),
+        Point2D::new(size.width, 0.0),
+        Point2D::new(0.0, size.height),
+        Point2D::new(size.width, size.height),
+    ];
+
+    // Each framebuffer pixel represents {scale_factor} number of texture pixels.
+    let scale_factor = match clut_mode {
+        ClutMode::Bits4 => 4.0,
+        ClutMode::Bits8 => 2.0,
+        ClutMode::Bits15 => 1.0,
+        _ => unimplemented!("Extracting texcoords CLUT mode unimplemented: {:?}", clut_mode),
+    };
+
+    for i in 0..4 {
+        texcoords[i].x += texcoord_offset_points[i].x / scale_factor;
+        texcoords[i].y -= texcoord_offset_points[i].y;
     }
 
     texcoords

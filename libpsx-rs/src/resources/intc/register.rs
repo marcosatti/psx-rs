@@ -63,12 +63,11 @@ impl Stat {
             Line::Spu => self.spu.store(true, Ordering::Release),
             Line::Pio => self.pio.store(true, Ordering::Release),
         }
-        //log::debug!("Asserted INTC line {:?}", line);
     }
 
     fn acknowledge(&self, acknowledge_mask: u32) {
         for i in 0..32 {
-            let acknowledged = ((acknowledge_mask >> i) & 1) > 0;
+            let acknowledged = ((acknowledge_mask >> i) & 1) == 0;
             if acknowledged {
                 match i {
                     0 => self.vblank.store(false, Ordering::Release),
@@ -116,7 +115,7 @@ impl B8MemoryMap for Stat {
     }
 
     fn read_u32(&mut self, _offset: u32) -> ReadResult<u32> {
-        Ok(self.value())
+        Ok(self.value() as u32)
     }
     
     fn write_u32(&mut self, _offset: u32, value: u32) -> WriteResult {
