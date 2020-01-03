@@ -54,6 +54,9 @@ impl Cdrom {
 }
 
 pub fn initialize(resources: &mut Resources) {
+    resources.cdrom.int_enable.register.write_u8(0xE0);
+    resources.cdrom.int_flag.register.write_u8(0xE0);
+
     resources.cdrom.cdrom1801.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
     resources.cdrom.cdrom1801.command = NonNull::new(&mut resources.cdrom.command as *mut Command);
     resources.cdrom.cdrom1801.response = NonNull::new(&mut resources.cdrom.response as *mut Fifo<u8>);

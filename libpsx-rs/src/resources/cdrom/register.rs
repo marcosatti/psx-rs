@@ -38,7 +38,7 @@ pub struct IntEnable {
 impl IntEnable {
     pub fn new() -> IntEnable {
         IntEnable {
-            register: B8Register::with_value(0xE0),
+            register: B8Register::new(),
         }
     }
 }
@@ -63,7 +63,7 @@ pub struct IntFlag {
 impl IntFlag {
     pub fn new() -> IntFlag {
         IntFlag {
-            register: B8Register::with_value(0xE0),
+            register: B8Register::new(),
             parameter_reset: AtomicBool::new(false),
         }
     }
@@ -81,7 +81,7 @@ impl B8MemoryMap for IntFlag {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        assert!(self.parameter_reset.load(Ordering::Acquire) == false, "Parameter FIFO reset still pending");
+        assert!(!self.parameter_reset.load(Ordering::Acquire), "Parameter FIFO reset still pending");
 
         if INT_FLAG_CLRPRM.extract_from(value) != 0 {
             self.parameter_reset.store(true, Ordering::Release);

@@ -33,13 +33,6 @@ pub const CAUSE_EXCCODE_SYSCALL: usize = 8;
 pub const CAUSE_IP_INTC: Bitfield = Bitfield::new(10, 1);
 pub const _CAUSE_IP_INTC_OFFSET: Bitfield = Bitfield::new(2, 1);
 
-fn prid() -> u32 {
-    let mut value: u32 = 0;
-    value = PRID_REVISION.insert_into(value, 2);
-    value = PRID_IMPLEMENTATION.insert_into(value, 0);
-    value
-}
-
 pub struct Cp0 {
     pub bpc: B32Register,
     pub bda: B32Register,
@@ -66,13 +59,22 @@ impl Cp0 {
             status: B32Register::new(),
             cause: Cause::new(),
             epc: B32Register::new(),
-            prid: B32Register::read_only(prid()),
+            prid: B32Register::new(),
             register: [None; 64],
         }
     }
 }
 
+fn prid() -> u32 {
+    let mut value: u32 = 0;
+    value = PRID_REVISION.insert_into(value, 2);
+    value = PRID_IMPLEMENTATION.insert_into(value, 0);
+    value
+}
+
 pub fn initialize(resources: &mut Resources) {
+    resources.r3000.cp0.prid.write_u32(prid());
+
     resources.r3000.cp0.status.write_bitfield(STATUS_KUC, 0);
     resources.r3000.cp0.status.write_bitfield(STATUS_IEC, 0);
     resources.r3000.cp0.status.write_bitfield(STATUS_BEV, 1);

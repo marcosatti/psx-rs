@@ -27,16 +27,7 @@ impl R3000 {
         R3000 {
             pc: B32Register::new(),
             branch_delay: BranchDelaySlot::new(),
-            gpr: [
-                B32Register::read_only(0), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-                B32Register::new(), B32Register::new(), B32Register::new(), B32Register::new(), 
-            ],
+            gpr: [B32Register::new(); 32],
             hi: B32Register::new(),
             lo: B32Register::new(),
             memory_mapper: B8MemoryMapper::new(16, 16),

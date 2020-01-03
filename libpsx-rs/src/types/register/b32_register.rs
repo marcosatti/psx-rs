@@ -12,39 +12,27 @@ union B32Register_ {
 #[derive(Copy, Clone)]
 pub struct B32Register {
     value: B32Register_,
-    read_only: bool,
 }
 
 impl B32Register {
     pub fn new() -> B32Register {
         B32Register { 
             value: B32Register_ { v32: 0 },
-            read_only: false
         }
     }
 
     pub fn from(value: u32) -> B32Register {
         B32Register { 
             value: B32Register_ { v32: value },
-            read_only: false
         }
     }
 
-    pub fn read_only(value: u32) -> B32Register {
-        B32Register {
-            value: B32Register_ { v32: value },
-            read_only: true,
-        }
-    }
-    
     pub fn read_u32(&self) -> u32 {
         unsafe { self.value.v32 }
     } 
 
     pub fn write_u32(&mut self, value: u32) {
-        if !self.read_only {
-            self.value.v32 = value;
-        }
+        self.value.v32 = value;
     }
 
     pub fn read_u16(&self, offset: u32) -> u16 {
@@ -52,9 +40,7 @@ impl B32Register {
     }
 
     pub fn write_u16(&mut self, offset: u32, value: u16) {
-        if !self.read_only {
-            unsafe { self.value.v16[offset as usize] = value; }
-        }
+        unsafe { self.value.v16[offset as usize] = value; }
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
@@ -62,9 +48,7 @@ impl B32Register {
     }
 
     pub fn write_u8(&mut self, offset: u32, value: u8) {
-        if !self.read_only {
-            unsafe { self.value.v8[offset as usize] = value; }
-        }
+        unsafe { self.value.v8[offset as usize] = value; }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u32 {

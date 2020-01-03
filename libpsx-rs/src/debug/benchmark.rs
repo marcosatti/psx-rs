@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use std::sync::Mutex;
+use parking_lot::Mutex;
 use log::debug;
 use average::{Mean, Estimate};
 
@@ -20,11 +20,11 @@ impl BenchmarkResults {
     }
 
     pub fn add_result(&self, controller: &'static str, duration: Duration) {
-        self.results.lock().unwrap().insert(controller, duration);
+        self.results.lock().insert(controller, duration);
     }
 
     fn consume(self) -> HashMap<&'static str, Duration> {
-        self.results.into_inner().unwrap()
+        self.results.into_inner()
     }
 }
 

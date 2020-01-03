@@ -10,28 +10,12 @@ union B8Register_ {
 #[derive(Copy, Clone)]
 pub struct B8Register {
     value: B8Register_,
-    read_only: bool,
 }
 
 impl B8Register {
     pub fn new() -> B8Register {
         B8Register { 
             value: B8Register_ { v8: 0 },
-            read_only: false,
-        }
-    }
-
-    pub fn with_value(value: u8) -> B8Register {
-        B8Register { 
-            value: B8Register_ { v8: value },
-            read_only: false,
-        }
-    }
-
-    pub fn read_only(value: u8) -> B8Register {
-        B8Register { 
-            value: B8Register_ { v8: value },
-            read_only: true,
         }
     }
 
@@ -40,9 +24,7 @@ impl B8Register {
     }
 
     pub fn write_u8(&mut self, value: u8) {
-        if !self.read_only {
-            self.value.v8 = value;
-        }
+        self.value.v8 = value;
     }
     
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u8 {

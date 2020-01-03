@@ -22,3 +22,5 @@ spsc-ringbuffer = { git = "https://github.com/marco9999/spsc-ringbuffer" }
 capstone = "0.6"
 hashbrown = "0.6"
 lru = "0.1"
+fixed = "0.5"
+typenum = "1.3"

@@ -11,21 +11,12 @@ union B16Register_ {
 #[derive(Copy, Clone)]
 pub struct B16Register {
     value: B16Register_,
-    read_only: bool,
 }
 
 impl B16Register {
     pub fn new() -> B16Register {
         B16Register { 
             value: B16Register_ { v16: 0 },
-            read_only: false,
-        }
-    }
-
-    pub fn read_only(value: u16) -> B16Register {
-        B16Register { 
-            value: B16Register_ { v16: value },
-            read_only: true,
         }
     }
 
@@ -34,9 +25,7 @@ impl B16Register {
     }
 
     pub fn write_u16(&mut self, value: u16) {
-        if !self.read_only {
-            self.value.v16 = value;
-        }
+        self.value.v16 = value;
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
@@ -44,9 +33,7 @@ impl B16Register {
     }
 
     pub fn write_u8(&mut self, offset: u32, value: u8) {
-        if !self.read_only {
-            unsafe { self.value.v8[offset as usize] = value; }
-        }
+        unsafe { self.value.v8[offset as usize] = value; }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
