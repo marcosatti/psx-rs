@@ -3,6 +3,7 @@ use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
 use crate::controllers::r3000::{InstResult, set_exception};
 use crate::controllers::r3000::memory_controller::*;
+use crate::controllers::r3000::register::*;
 use crate::resources::r3000::cp0::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
 use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
 use crate::controllers::r3000::debug;
@@ -13,6 +14,7 @@ pub fn sll(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let shamt = instruction.shamt();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value << shamt);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -22,6 +24,7 @@ pub fn srl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let shamt = instruction.shamt();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value >> shamt);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -31,6 +34,7 @@ pub fn sra(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let shamt = instruction.shamt();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32((value >> shamt) as u32);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -47,6 +51,7 @@ pub fn sllv(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rd.write_u32(value2 << value1);
     }
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -63,6 +68,7 @@ pub fn srlv(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rd.write_u32(value2 >> value1);
     }
     
+    handle_zero(resources);
     Ok(())
 }
 
@@ -83,6 +89,7 @@ pub fn srav(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rd.write_u32((value2 >> value1) as u32);
     }
     
+    handle_zero(resources);
     Ok(())
 }
 
@@ -97,6 +104,7 @@ pub fn jalr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     resources.r3000.branch_delay.set(target, 1);
     let pc = resources.r3000.pc.read_u32();
     resources.r3000.gpr[instruction.rd()].write_u32(pc + INSTRUCTION_SIZE);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -119,6 +127,7 @@ pub fn mfhi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.hi.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -133,6 +142,7 @@ pub fn mflo(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = resources.r3000.lo.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -157,6 +167,8 @@ pub fn mult(resources: &mut Resources, instruction: Instruction) -> InstResult {
     hi.write_u32(hi_value);
     let lo = &mut resources.r3000.lo;
     lo.write_u32(lo_value);
+
+    handle_zero(resources);
     Ok(())
 }
 
@@ -174,6 +186,8 @@ pub fn multu(resources: &mut Resources, instruction: Instruction) -> InstResult 
     hi.write_u32(hi_value);
     let lo = &mut resources.r3000.lo;
     lo.write_u32(lo_value);
+
+    handle_zero(resources);
     Ok(())
 }
 
@@ -193,6 +207,8 @@ pub fn div(resources: &mut Resources, instruction: Instruction) -> InstResult {
         hi.write_u32(remainder as u32);
         lo.write_u32(quotient as u32);
     }
+
+    handle_zero(resources);
     Ok(())
 }
 
@@ -212,6 +228,8 @@ pub fn divu(resources: &mut Resources, instruction: Instruction) -> InstResult {
         hi.write_u32(remainder);
         lo.write_u32(quotient);
     }
+
+    handle_zero(resources);
     Ok(())
 }
 
@@ -228,6 +246,8 @@ pub fn add(resources: &mut Resources, instruction: Instruction) -> InstResult {
         let rd = &mut resources.r3000.gpr[instruction.rd()];
         rd.write_u32(result as u32);
     }
+
+    handle_zero(resources);
     Ok(())
 }
 
@@ -238,6 +258,8 @@ pub fn addu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value1.wrapping_add(value2));
+
+    handle_zero(resources);
     Ok(())
 }
 
@@ -252,6 +274,7 @@ pub fn subu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value1.wrapping_sub(value2));
+    handle_zero(resources);
     Ok(())
 }
 
@@ -262,6 +285,7 @@ pub fn and(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value1 & value2);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -272,6 +296,7 @@ pub fn or(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value1 | value2);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -282,6 +307,7 @@ pub fn xor(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value1 ^ value2);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -292,6 +318,7 @@ pub fn nor(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(!(value1 | value2));
+    handle_zero(resources);
     Ok(())
 }
 
@@ -308,6 +335,7 @@ pub fn slt(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rd.write_u32(0);
     }
     
+    handle_zero(resources);
     Ok(())
 }
 
@@ -324,6 +352,7 @@ pub fn sltu(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rd.write_u32(0);
     }
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -444,6 +473,7 @@ pub fn addi(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rt.write_u32(result as u32);
     }
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -453,6 +483,7 @@ pub fn addiu(resources: &mut Resources, instruction: Instruction) -> InstResult 
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     rt.write_u32(value.wrapping_add(imm));
+    handle_zero(resources);
     Ok(())
 }
 
@@ -468,6 +499,7 @@ pub fn slti(resources: &mut Resources, instruction: Instruction) -> InstResult {
         rt.write_u32(0);
     }
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -483,6 +515,7 @@ pub fn sltiu(resources: &mut Resources, instruction: Instruction) -> InstResult 
         rt.write_u32(0);
     }
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -491,6 +524,7 @@ pub fn andi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     rt.write_u32(value & (instruction.u_imm() as u32));
+    handle_zero(resources);
     Ok(())
 }
 
@@ -499,6 +533,7 @@ pub fn ori(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     rt.write_u32(value | (instruction.u_imm() as u32));
+    handle_zero(resources);
     Ok(())
 }
 
@@ -507,6 +542,7 @@ pub fn xori(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     rt.write_u32(value ^ (instruction.u_imm() as u32));
+    handle_zero(resources);
     Ok(())
 }
 
@@ -514,6 +550,7 @@ pub fn lui(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt = instruction.rt();
     let imm = (instruction.u_imm() as u32) << 16;
     resources.r3000.gpr[rt].write_u32(imm);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -522,6 +559,7 @@ pub fn mfc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value = rd.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     rt.write_u32(value);
+    handle_zero(resources);
     Ok(())
 }
 
@@ -590,6 +628,7 @@ pub fn lb(resources: &mut Resources, instruction: Instruction) -> InstResult {
     
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -607,6 +646,7 @@ pub fn lh(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -634,6 +674,7 @@ pub fn lwl(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     rt.write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -651,6 +692,7 @@ pub fn lw(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -668,6 +710,7 @@ pub fn lbu(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -685,6 +728,7 @@ pub fn lhu(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     resources.r3000.gpr[instruction.rt()].write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -712,6 +756,7 @@ pub fn lwr(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     rt.write_u32(value);
 
+    handle_zero(resources);
     Ok(())
 }
 
@@ -812,38 +857,6 @@ pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let rt_value = resources.r3000.gpr[instruction.rt()].read_u32();
 
     let value = (rt_value << SHIFT[shift]) | (mem_value & MASK[shift]);
-
-    if !isc { 
-        write_u32(resources, addr, value)?
-    }
-
-    Ok(())
-}
-
-pub fn lwc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
-    let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
-    addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
-    addr = translate_address(addr);
-
-    let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
-        read_u32(resources, addr)?
-    } else { 
-        0
-    };
-
-    resources.r3000.cp2.gd[instruction.rt()].write_u32(value);
-
-    Ok(())
-}
-
-pub fn swc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
-    let value = resources.r3000.cp2.gd[instruction.rt()].read_u32();
-    let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
-    addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
-    addr = translate_address(addr);
-
-    let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
     if !isc { 
         write_u32(resources, addr, value)?

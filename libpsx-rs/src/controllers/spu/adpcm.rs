@@ -12,7 +12,7 @@ pub fn decode_header(data: [u8; 2]) -> AdpcmParams {
     }
 }
 
-pub fn decode_frame(data: u8, params: &AdpcmParams, old_sample: &mut i16, older_sample: &mut i16) -> [i16; 2]{
+pub fn decode_frame(data: u8, params: &AdpcmParams, old_sample: &mut i16, older_sample: &mut i16) -> [i16; 2] {
     let mut samples = [
         Bitfield::new(0, 4).extract_from(data) as i16,
         Bitfield::new(4, 4).extract_from(data) as i16,
@@ -24,7 +24,7 @@ pub fn decode_frame(data: u8, params: &AdpcmParams, old_sample: &mut i16, older_
     for i in 0..2 {
         let mut shifted_sample = ((samples[i] << 12) as i32) >> params.shift;
         // TODO: change formula to the no cash psx docs way - the pcsxr way is wrong? Only this way for debugging.
-        // Right shift != division (pow 2) when negatives...
+        // Right shift != division (pow 2) when negatives... https://en.wikipedia.org/wiki/Arithmetic_shift.
         shifted_sample += ((*old_sample as i32 * pos_filter_value) >> 6) + ((*older_sample as i32 * neg_filter_value) >> 6);
 
         samples[i] = clamp(shifted_sample, std::i16::MIN as i32, std::i16::MAX as i32) as i16; 

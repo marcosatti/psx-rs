@@ -18,7 +18,6 @@ use crate::controllers::r3000::exception::*;
 use crate::controllers::cdrom::handle_tick as tick_cdrom;
 use crate::controllers::r3000::memory_controller::translate_address;
 use crate::controllers::r3000::instruction::lookup as instruction_lookup;
-use crate::controllers::r3000::register::handle_registers;
 use crate::types::mips1::instruction::Instruction;
 
 pub type InstResult = Result<(), Hazard>;
@@ -71,7 +70,6 @@ fn tick(resources: &mut Resources) -> i64 {
     debug::trace_state(resources);
 
     let result = fn_ptr(resources, inst);
-    handle_registers(resources);
 
     if result.is_err() {
         // "Pipeline" hazard, go back to previous state, instruction was not performed.
