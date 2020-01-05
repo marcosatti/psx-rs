@@ -106,11 +106,11 @@ pub fn rtps(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let (ir2_value, ir2_overflow_flag) = checked_clamp(mac2_value, std::i16::MIN as f64, std::i16::MAX as f64);
     let (ir3_value, ir3_overflow_flag) = checked_clamp(mac3_value, std::i16::MIN as f64, std::i16::MAX as f64);
 
-    let mac1_overflow_flag = f64::abs(mac1_value) >= ((1 << 44) as f64);
+    let mac1_overflow_flag = f64::abs(mac1_value) >= ((1u64 << 44) as f64);
     let mac1_negative_flag = mac1_value < 0.0;
-    let mac2_overflow_flag = f64::abs(mac2_value) >= ((1 << 44) as f64);
+    let mac2_overflow_flag = f64::abs(mac2_value) >= ((1u64 << 44) as f64);
     let mac2_negative_flag = mac2_value < 0.0;
-    let mac3_overflow_flag = f64::abs(mac3_value) >= ((1 << 44) as f64);
+    let mac3_overflow_flag = f64::abs(mac3_value) >= ((1u64 << 44) as f64);
     let mac3_negative_flag = mac3_value < 0.0;
 
     let mut sz3_value = mac3_value;
@@ -146,7 +146,7 @@ pub fn rtps(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let ir0_value = mac0_value / (0x10000 as f64);
     let (ir0_value, ir0_overflow_flag) = checked_clamp(ir0_value, 0.0, 0x1000 as f64);
 
-    let mac0_overflow_flag = f64::abs(mac0_value) >= ((1 << 32) as f64);
+    let mac0_overflow_flag = f64::abs(mac0_value) >= ((1u64 << 32) as f64);
     let mac0_negative_flag = mac0_value < 0.0;
 
     // Write back.
