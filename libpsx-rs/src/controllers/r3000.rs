@@ -8,6 +8,7 @@ pub mod exception;
 pub mod register;
 
 use std::time::Duration;
+use std::intrinsics::unlikely;
 use log::debug;
 use crate::controllers::ControllerState;
 use crate::resources::Resources;
@@ -63,15 +64,21 @@ fn tick(resources: &mut Resources) -> i64 {
 
     resources.r3000.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
-    let (fn_ptr, cycles) = instruction_lookup(inst)
-        .ok_or_else(|| format!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_va))
-        .unwrap();
+    let (fn_ptr, cycles) = {
+        let instruction = instruction_lookup(inst);
+
+        if unlikely(instruction.is_none()) {
+            unimplemented!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_va);
+        }
+        
+        instruction.unwrap()
+    };
 
     debug::trace_state(resources);
 
     let result = fn_ptr(resources, inst);
 
-    if result.is_err() {
+    if unlikely(result.is_err()) {
         // "Pipeline" hazard, go back to previous state, instruction was not performed.
         resources.r3000.branch_delay.back();
         resources.r3000.pc.write_u32(pc_va);

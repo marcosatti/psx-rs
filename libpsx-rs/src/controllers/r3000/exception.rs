@@ -1,3 +1,4 @@
+use std::intrinsics::unlikely;
 use crate::resources::Resources;
 use crate::utilities::mips1::status_push_exception;
 use crate::constants::r3000::INSTRUCTION_SIZE;
@@ -72,7 +73,7 @@ pub fn handle_interrupts(resources: &mut Resources) {
         status.read_bitfield(STATUS_IM) & cause.read_bitfield(CAUSE_IP)
     };
 
-    if set_bits != 0 {
+    if unlikely(set_bits != 0) {
         debug::trace_interrupt(resources);
         set_exception(resources, CAUSE_EXCCODE_INT);
     }

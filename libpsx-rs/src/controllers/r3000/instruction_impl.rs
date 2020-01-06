@@ -1,3 +1,4 @@
+use std::intrinsics::{likely, unlikely};
 use crate::resources::Resources;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
@@ -45,7 +46,7 @@ pub fn sllv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
 
-    if value1 >= 32 {
+    if unlikely(value1 >= 32) {
         rd.write_u32(0);
     } else {
         rd.write_u32(value2 << value1);
@@ -62,7 +63,7 @@ pub fn srlv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
 
-    if value1 >= 32 {
+    if unlikely(value1 >= 32) {
         rd.write_u32(0);
     } else {
         rd.write_u32(value2 >> value1);
@@ -79,7 +80,7 @@ pub fn srav(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32() as i32;
     let rd = &mut resources.r3000.gpr[instruction.rd()];
 
-    if value1 >= 32 {
+    if unlikely(value1 >= 32) {
         if value2 < 0 {
             rd.write_u32(0xFFFF_FFFF);
         } else {
@@ -198,7 +199,7 @@ pub fn div(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32() as i32;
 
     // Undefined results for MIPS if denominator is 0.
-    if value2 != 0 {
+    if likely(value2 != 0) {
         let remainder = value1 % value2;
         let quotient = value1 / value2;
 
@@ -219,7 +220,7 @@ pub fn divu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let value2 = rt.read_u32();
 
     // Undefined results for MIPS if denominator is 0.
-    if value2 != 0 {
+    if likely(value2 != 0) {
         let remainder = value1 % value2;
         let quotient = value1 / value2;
 
@@ -603,8 +604,9 @@ pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
     status.write_u32(new_status_value);
     
     // Flush the branch delay slot if any.
-    if let Some(target) = resources.r3000.branch_delay.advance_all() {
-        resources.r3000.pc.write_u32(target);
+    let target = resources.r3000.branch_delay.advance_all();
+    if likely(target.is_some()) {
+        resources.r3000.pc.write_u32(target.unwrap());
     }
 
     // Also flush the cause register to make sure no stray interrupts are pending as a result of the emulator being out of sync temporarily.
@@ -620,7 +622,7 @@ pub fn lb(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u8(resources, addr).map(|v| v as i8 as i32 as u32)?
     } else { 
         0 
@@ -638,7 +640,7 @@ pub fn lh(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u16(resources, addr).map(|v| v as i16 as i32 as u32)?
     } else { 
         0 
@@ -662,7 +664,7 @@ pub fn lwl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr &= !3;
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u32(resources, addr)?
     } else { 
         0
@@ -684,7 +686,7 @@ pub fn lw(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u32(resources, addr)?
     } else { 
         0
@@ -702,7 +704,7 @@ pub fn lbu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u8(resources, addr).map(|v| v as u32)?
     } else { 
         0 
@@ -720,7 +722,7 @@ pub fn lhu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u16(resources, addr).map(|v| v as u32)?
     } else { 
         0 
@@ -744,7 +746,7 @@ pub fn lwr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr &= !3;
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u32(resources, addr)?
     } else { 
         0
@@ -768,7 +770,7 @@ pub fn sb(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if !isc { 
+    if likely(!isc) { 
         write_u8(resources, addr, value)?
     }
 
@@ -783,7 +785,7 @@ pub fn sh(resources: &mut Resources, instruction: Instruction) -> InstResult {
         
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if !isc { 
+    if likely(!isc) { 
         write_u16(resources, addr, value)?
     }
 
@@ -803,7 +805,7 @@ pub fn swl(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    let mem_value = if !isc { 
+    let mem_value = if likely(!isc) { 
         read_u32(resources, addr)?
     } else { 
         0
@@ -813,7 +815,7 @@ pub fn swl(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let value = (rt_value >> SHIFT[shift]) | (mem_value & MASK[shift]);
 
-    if !isc { 
+    if likely(!isc) { 
         write_u32(resources, addr, value)?
     }
 
@@ -828,7 +830,7 @@ pub fn sw(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if !isc { 
+    if likely(!isc) { 
         write_u32(resources, addr, value)?
     }
 
@@ -848,7 +850,7 @@ pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    let mem_value = if !isc { 
+    let mem_value = if likely(!isc) { 
         read_u32(resources, addr)?
     } else { 
         0
@@ -858,7 +860,7 @@ pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let value = (rt_value << SHIFT[shift]) | (mem_value & MASK[shift]);
 
-    if !isc { 
+    if likely(!isc) { 
         write_u32(resources, addr, value)?
     }
 

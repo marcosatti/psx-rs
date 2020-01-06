@@ -1,3 +1,4 @@
+use std::intrinsics::likely;
 use typenum::*;
 use crate::types::bitfield::Bitfield;
 use crate::utilities::numeric::*;
@@ -17,7 +18,7 @@ pub fn lwc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if !isc { 
+    let value = if likely(!isc) { 
         read_u32(resources, addr)?
     } else { 
         0
@@ -38,7 +39,7 @@ pub fn swc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
 
     let isc = resources.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if !isc { 
+    if likely(!isc) { 
         write_u32(resources, addr, value)?
     }
 
