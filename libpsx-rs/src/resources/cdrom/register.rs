@@ -57,6 +57,7 @@ impl B8MemoryMap for IntEnable {
 
 pub struct IntFlag {
     pub register: B8Register,
+    pub write_latch: AtomicBool,
     pub parameter_reset: AtomicBool,
 }
 
@@ -64,6 +65,7 @@ impl IntFlag {
     pub fn new() -> IntFlag {
         IntFlag {
             register: B8Register::new(),
+            write_latch: AtomicBool::new(false),
             parameter_reset: AtomicBool::new(false),
         }
     }
@@ -81,7 +83,9 @@ impl B8MemoryMap for IntFlag {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
+        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         assert!(!self.parameter_reset.load(Ordering::Acquire), "Parameter FIFO reset still pending");
+        self.write_latch.store(true, Ordering::Release);
 
         if INT_FLAG_CLRPRM.extract_from(value) != 0 {
             self.parameter_reset.store(true, Ordering::Release);
@@ -89,9 +93,11 @@ impl B8MemoryMap for IntFlag {
 
         let mut register_value = self.register.read_u8();
         register_value = INTERRUPT_FLAGS.acknowledge(register_value, value);
-        B8MemoryMap::write_u8(&mut self.register, offset, register_value).unwrap();
+        register_value = Bitfield::new(5, 1).insert_into(register_value, 1);
+        register_value = Bitfield::new(6, 1).insert_into(register_value, 1);
+        register_value = Bitfield::new(7, 1).insert_into(register_value, 1);
 
-        Ok(())
+        B8MemoryMap::write_u8(&mut self.register, offset, register_value)
     }
 }
 

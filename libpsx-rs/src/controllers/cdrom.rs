@@ -8,6 +8,7 @@ use crate::controllers::cdrom::command::*;
 use crate::resources::cdrom::*;
 
 pub fn handle_tick(resources: &mut Resources) {
+    handle_interrupt_flags(resources);
     handle_parameter_fifo(resources);
     handle_response_fifo(resources);
     
@@ -16,15 +17,23 @@ pub fn handle_tick(resources: &mut Resources) {
     handle_interrupt_check(resources);
 }
 
+fn handle_interrupt_flags(resources: &mut Resources) {
+    let int_flag = &mut resources.cdrom.int_flag;
+
+    if int_flag.write_latch.load(Ordering::Acquire) {
+        resources.cdrom.response.clear();
+        int_flag.write_latch.store(false, Ordering::Release);
+    }
+
+    if int_flag.parameter_reset.load(Ordering::Acquire) {
+        resources.cdrom.parameter.clear();
+        int_flag.parameter_reset.store(false, Ordering::Release);
+    }
+}
+
 fn handle_parameter_fifo(resources: &mut Resources) {
     let status = &mut resources.cdrom.status;
     let fifo = &mut resources.cdrom.parameter;
-    let int_flag = &mut resources.cdrom.int_flag;
-
-    if int_flag.parameter_reset.load(Ordering::Acquire) {
-        fifo.clear();
-        int_flag.parameter_reset.store(false, Ordering::Release);
-    }
 
     let empty_bit = bool_to_flag(fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_PRMEMPT, empty_bit);

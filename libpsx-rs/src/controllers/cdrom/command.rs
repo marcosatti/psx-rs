@@ -4,33 +4,49 @@ use crate::resources::cdrom::*;
 use crate::controllers::cdrom::command_impl;
 
 pub fn handle_command(resources: &mut Resources) {
-    {
-        let status = &mut resources.cdrom.status;
-        let command = &mut resources.cdrom.command;
-        
-        if !command.write_latch.load(Ordering::Acquire) {
-            return;
+    if resources.cdrom.command_index.is_none() {
+        // Read a new command if available.
+
+        {
+            let status = &mut resources.cdrom.status;
+            let command = &mut resources.cdrom.command;
+            
+            status.write_bitfield(STATUS_BUSYSTS, 0);
+
+            if !command.write_latch.load(Ordering::Acquire) {
+                return;
+            }
+    
+            status.write_bitfield(STATUS_BUSYSTS, 1);
         }
 
-        status.write_bitfield(STATUS_BUSYSTS, 1);
+        let command_value = {
+            let command = &mut resources.cdrom.command;
+            let value = command.register.read_u8();
+            command.write_latch.store(false, Ordering::Release);
+            value
+        };
+
+        resources.cdrom.command_index = Some(command_value);
+        resources.cdrom.command_iteration = 0;
     }
 
 
-    let command_value = {
-        let command = &mut resources.cdrom.command;
-        command.register.read_u8()
-    };
+    if resources.cdrom.command_index.is_some() {
+        let command_index = resources.cdrom.command_index.unwrap();
+        let command_iteration = resources.cdrom.command_iteration;
 
-    match command_value {
-        0x01 => command_impl::command_01(resources),
-        0x19 => command_impl::command_19(resources),
-        _ => unimplemented!("Command not implemented: 0x{:X}", command_value),
-    }
+        let finished = match command_index {
+            0x01 => command_impl::command_01(resources, command_iteration),
+            0x19 => command_impl::command_19(resources, command_iteration),
+            0x1A => command_impl::command_1a(resources, command_iteration),
+            _ => unimplemented!("Command not implemented: 0x{:X}", command_index),
+        };
 
-    {
-        let status = &mut resources.cdrom.status;
-        let command = &mut resources.cdrom.command;
-        status.write_bitfield(STATUS_BUSYSTS, 0);
-        command.write_latch.store(false, Ordering::Release);
+        if !finished {
+            resources.cdrom.command_iteration += 1;
+        } else {
+            resources.cdrom.command_index = None;
+        }
     }
 }

@@ -8,6 +8,8 @@ members = [
 
 [profile.dev]
 opt-level = 1
+lto = true
 
 [profile.release]
 debug = true
+lto = true

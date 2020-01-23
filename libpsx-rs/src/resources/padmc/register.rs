@@ -50,7 +50,7 @@ impl B8MemoryMap for Padmc1040 {
     fn read_u8(&mut self, _offset: u32) -> ReadResult<u8> {
         unsafe {
             Ok(self.rx_fifo.as_ref().unwrap().as_ref().read_one().unwrap_or_else(|_| {
-                warn!("PADMC RX FIFO empty - returning 0xFF");
+                //warn!("PADMC RX FIFO empty - returning 0xFF");
                 0xFF
             }))
         }
