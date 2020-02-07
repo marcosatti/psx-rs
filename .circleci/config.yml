@@ -5,9 +5,11 @@ jobs:
       - image: rustlang/rust:nightly-slim
     steps:
       - run:
-          name: Apt package list update
+          name: Apt setup
           command: |
+            echo "deb http://www.deb-multimedia.org stretch main" >> /etc/apt/sources.list
             apt-get update
+            apt-get -y install deb-multimedia-keyring
       - run:
           name: OpenAL (openal-soft)
           command: |
@@ -16,6 +18,10 @@ jobs:
           name: OpenGL (mesa)
           command: |
             apt-get -y install mesa-common-dev
+      - run:
+          name: libmirage
+          command: |
+            apt-get -y install libmirage10 libmirage10-dev
       - run:
           name: SDL2
           command: |
@@ -30,6 +36,7 @@ jobs:
           command: |
             mkdir -p external/openal
             mkdir -p external/opengl
+            mkdir -p external/libmirage
       - run:
           name: OpenAL bindgen wrapper
           command: |
@@ -38,6 +45,10 @@ jobs:
           name: OpenGL bindgen wrapper
           command: |
             cp external-sample/opengl/wrapper.h.sample-linux external/opengl/wrapper.h
+      - run:
+          name: libmirage bindgen wrapper
+          command: |
+            cp external-sample/libmirage/wrapper.h.sample-linux external/libmirage/wrapper.h
       - run:
           name: Build
           command: cargo build
