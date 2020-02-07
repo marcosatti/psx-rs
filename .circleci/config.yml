@@ -21,7 +21,7 @@ jobs:
       - run:
           name: libmirage
           command: |
-            apt-get -y install libmirage10 libmirage10-dev
+            apt-get -y install -oAPT::Get::AllowUnauthenticated=true libmirage10 libmirage10-dev
       - run:
           name: SDL2
           command: |
