@@ -2,6 +2,7 @@
 members = [
     "opengl-sys",
     "openal-sys",
+    "libmirage-sys",
     "libpsx-rs",
     "psx-rs",
 ]

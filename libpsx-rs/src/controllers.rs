@@ -10,13 +10,15 @@ pub mod timers;
 use std::time::Duration;
 use crate::State;
 use crate::resources::Resources;
-use crate::video::VideoBackend;
-use crate::audio::AudioBackend;
+use crate::backends::video::VideoBackend;
+use crate::backends::audio::AudioBackend;
+use crate::backends::cdrom::CdromBackend;
 
 pub struct ControllerState<'b, 'a: 'b> {
     resources: &'b mut Resources,
     video_backend: &'b VideoBackend<'a>,
     audio_backend: &'b AudioBackend<'a>,
+    cdrom_backend: &'b CdromBackend<'a>,
 }
 
 impl<'b, 'a: 'b> ControllerState<'b, 'a> {
@@ -25,6 +27,7 @@ impl<'b, 'a: 'b> ControllerState<'b, 'a> {
             resources: state.resources.as_mut().unwrap(),
             video_backend: state.video_backend,
             audio_backend: state.audio_backend,
+            cdrom_backend: state.cdrom_backend,
         }
     }
 }

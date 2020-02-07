@@ -1,7 +1,11 @@
+use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::constants::cdrom::*;
+use crate::controllers::cdrom::libmirage;
 
-pub fn command_01(resources: &mut Resources, _command_iteration: usize) -> bool {
+pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    assert_eq!(command_iteration, 0);
+
     let response = &mut resources.cdrom.response;
     let int_flag = &mut resources.cdrom.int_flag;
 
@@ -25,7 +29,9 @@ pub fn command_01(resources: &mut Resources, _command_iteration: usize) -> bool 
     true
 }
 
-pub fn command_19(resources: &mut Resources, _command_iteration: usize) -> bool {
+pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    assert_eq!(command_iteration, 0);
+
     let parameter = &resources.cdrom.parameter;
     let response = &resources.cdrom.response;
 
@@ -46,19 +52,25 @@ pub fn command_19(resources: &mut Resources, _command_iteration: usize) -> bool 
     true
 }
 
-pub fn command_1a(_resources: &mut Resources, command_iteration: usize) -> bool {
+pub fn command_1a(_resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // SCEA = 0x53, 0x43, 0x45, 0x41
     // SCEE = 0x53, 0x43, 0x45, 0x45
     // SCEI = 0x53, 0x43, 0x45, 0x49
 
-    // MODE1 disk: INT3(stat)     INT2(02h,00h, 00h,00h, 53h,43h,45h,4xh)
-    // MODE2 disk: INT3(stat)     INT2(02h,00h, 20h,00h, 53h,43h,45h,4xh)
+    // MODE1 disc: INT3(stat)     INT2(02h,00h, 00h,00h, 53h,43h,45h,4xh)
+    // MODE2 disc: INT3(stat)     INT2(02h,00h, 20h,00h, 53h,43h,45h,4xh)
     
     match command_iteration {
         0 => {
             unimplemented!();
         },
         1 => {
+            // Determine disc mode type.
+            let _disc_type = match cdrom_backend {
+                CdromBackend::None => panic!("Unsupported"),
+                CdromBackend::Libmirage(ref params) => libmirage::disc_mode(params),
+            };
+            
             unimplemented!();
         },
         _ => panic!(),

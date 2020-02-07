@@ -16,6 +16,7 @@ use rayon::{ThreadPool, ThreadPoolBuilder};
 use log::info;
 use crate::backends::video::{self, VideoBackend};
 use crate::backends::audio::{self, AudioBackend};
+use crate::backends::cdrom::{self, CdromBackend};
 use crate::resources::Resources;
 use crate::controllers::Event;
 
@@ -23,6 +24,7 @@ pub struct State<'b, 'a: 'b> {
     pub resources: *mut Resources,
     pub video_backend: &'b VideoBackend<'a>,
     pub audio_backend: &'b AudioBackend<'a>,
+    pub cdrom_backend: &'b CdromBackend<'a>,
 }
 
 unsafe impl<'b, 'a> Sync for State<'b, 'a> {}
@@ -32,6 +34,7 @@ pub struct Config<'a> {
     pub bios_filename: String,
     pub video_backend: VideoBackend<'a>,
     pub audio_backend: AudioBackend<'a>,
+    pub cdrom_backend: CdromBackend<'a>,
     pub time_delta: Duration,
     pub worker_threads: usize,
 }
@@ -68,6 +71,7 @@ impl<'a> Core<'a> {
 
         video::setup(&config.video_backend);
         audio::setup(&config.audio_backend);
+        cdrom::setup(&config.cdrom_backend);
 
         Core {
             resources: resources,
@@ -85,6 +89,7 @@ impl<'a> Core<'a> {
             resources: resources_mut as *mut Resources,
             video_backend: &self.config.video_backend,
             audio_backend: &self.config.audio_backend,
+            cdrom_backend: &self.config.cdrom_backend,
         };
 
         let time = self.config.time_delta;

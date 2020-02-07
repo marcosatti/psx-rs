@@ -1,9 +1,10 @@
 use std::sync::atomic::Ordering;
+use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::resources::cdrom::*;
 use crate::controllers::cdrom::command_impl;
 
-pub fn handle_command(resources: &mut Resources) {
+pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
     if resources.cdrom.command_index.is_none() {
         // Read a new command if available.
 
@@ -37,9 +38,9 @@ pub fn handle_command(resources: &mut Resources) {
         let command_iteration = resources.cdrom.command_iteration;
 
         let finished = match command_index {
-            0x01 => command_impl::command_01(resources, command_iteration),
-            0x19 => command_impl::command_19(resources, command_iteration),
-            0x1A => command_impl::command_1a(resources, command_iteration),
+            0x01 => command_impl::command_01(resources, cdrom_backend, command_iteration),
+            0x19 => command_impl::command_19(resources, cdrom_backend, command_iteration),
+            0x1A => command_impl::command_1a(resources, cdrom_backend, command_iteration),
             _ => unimplemented!("Command not implemented: 0x{:X}", command_index),
         };
 

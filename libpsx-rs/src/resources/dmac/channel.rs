@@ -93,7 +93,7 @@ impl BlocksState {
     pub fn transfers_remaining(&self) -> usize {
         let target = self.target_bsize_count * self.target_bamount_count;
         let current = (self.current_bamount_count * self.target_bsize_count) + self.current_bsize_count;
-        (target - current)
+        target - current
     }
 }
 

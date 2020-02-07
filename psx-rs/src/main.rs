@@ -12,6 +12,7 @@ use libpsx_rs::{Core, Config};
 use libpsx_rs::backends::context::*;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
+use libpsx_rs::backends::cdrom::*;
 use libpsx_rs::controllers::r3000::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
 use libpsx_rs::controllers::gpu::debug::{ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL};
 use libpsx_rs::debug::DEBUG_CORE_EXIT;
@@ -84,6 +85,7 @@ fn main() {
         //     }
         // ),
         audio_backend: AudioBackend::None,
+        cdrom_backend: CdromBackend::None,
         time_delta: Duration::from_micros(time_delta_us as u64),
         worker_threads: worker_threads,
     };

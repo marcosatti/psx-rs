@@ -387,6 +387,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libmirage-sys"
+version = "3.2.0"
+dependencies = [
+ "bindgen 0.42.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "libpsx-rs"
 version = "0.1.0"
 dependencies = [
@@ -398,6 +405,7 @@ dependencies = [
  "fixed-vec-deque 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "hashbrown 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libmirage-sys 3.2.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "lru 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -608,7 +616,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "psx_rs"
+name = "psx-rs"
 version = "0.1.0"
 dependencies = [
  "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",

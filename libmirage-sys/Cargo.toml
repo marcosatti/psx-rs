@@ -1,0 +1,8 @@
+[package]
+name = "libmirage-sys"
+version = "3.2.0"
+authors = ["Marco Satti <marcosatti@gmail.com>"]
+edition = "2018"
+
+[build-dependencies]
+bindgen = "0.42"

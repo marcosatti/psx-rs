@@ -10,6 +10,7 @@ pub mod register;
 use std::time::Duration;
 use std::intrinsics::unlikely;
 use log::debug;
+use crate::backends::cdrom::CdromBackend;
 use crate::controllers::ControllerState;
 use crate::resources::Resources;
 use crate::constants::r3000::{CLOCK_SPEED, INSTRUCTION_SIZE};
@@ -25,17 +26,17 @@ pub type InstResult = Result<(), Hazard>;
 
 pub fn run(state: &mut ControllerState, event: Event) {
     match event {
-        Event::Time(duration) => run_time(state.resources, duration),
+        Event::Time(duration) => run_time(state.resources, state.cdrom_backend, duration),
     }
 }
 
-fn run_time(resources: &mut Resources, duration: Duration) {
+fn run_time(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     
     while ticks > 0 {
         ticks -= tick(resources); 
         // Synchronous controllers - timing is way off when done asynchronously, causing problems.
-        tick_cdrom(resources);
+        tick_cdrom(resources, cdrom_backend);
     }
 }
 

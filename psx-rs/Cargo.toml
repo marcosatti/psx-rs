@@ -1,5 +1,5 @@
 [package]
-name = "psx_rs"
+name = "psx-rs"
 version = "0.1.0"
 authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"

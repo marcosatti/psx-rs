@@ -1,18 +1,20 @@
 pub mod command;
 pub mod command_impl;
+pub mod libmirage;
 
 use std::sync::atomic::Ordering;
 use crate::utilities::bool_to_flag;
+use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::controllers::cdrom::command::*;
 use crate::resources::cdrom::*;
 
-pub fn handle_tick(resources: &mut Resources) {
+pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
     handle_interrupt_flags(resources);
     handle_parameter_fifo(resources);
     handle_response_fifo(resources);
     
-    handle_command(resources);
+    handle_command(resources, cdrom_backend);
 
     handle_interrupt_check(resources);
 }
