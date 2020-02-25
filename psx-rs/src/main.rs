@@ -8,6 +8,7 @@ use log::{error, info, debug};
 use sdl2::video::GLProfile;
 use opengl_sys::*;
 use openal_sys::*;
+use libmirage_sys::*;
 use libpsx_rs::{Core, Config};
 use libpsx_rs::backends::context::*;
 use libpsx_rs::backends::video::*;
@@ -68,9 +69,17 @@ fn main() {
     info!("Audio initialized: {}, {}, {}", openal_vendor_string, openal_version_string, openal_renderer_string);
     openal_release_context();
 
+    // Initialize libmirage (CDROM)
+    unsafe { mirage_initialize(std::ptr::null_mut()) };
+    let libmirage_context = unsafe { g_object_new(mirage_context_get_type(), std::ptr::null()) as *mut MirageContext };
+    let libmirage_acquire_context = || { &libmirage_context };
+    let libmirage_release_context = || { };
+    let libmirage_version_string = unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
+    info!("CDROM initialized: libmirage {}", libmirage_version_string);
+
     // Initialize psx_rs core
-    let time_delta_us = args().nth(1).map_or(25, |v| v.parse::<usize>().unwrap());
-    let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
+    let time_delta_us = args().nth(2).map_or(25, |v| v.parse::<usize>().unwrap());
+    let worker_threads = args().nth(3).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
@@ -85,12 +94,21 @@ fn main() {
         //     }
         // ),
         audio_backend: AudioBackend::None,
-        cdrom_backend: CdromBackend::None,
+        cdrom_backend: CdromBackend::Libmirage(
+            libmirage::BackendParams {
+                context: BackendContext::new(&libmirage_acquire_context, &libmirage_release_context),
+            }
+        ),
         time_delta: Duration::from_micros(time_delta_us as u64),
         worker_threads: worker_threads,
     };
     let mut core = Core::new(config);
     info!("Core initialized");
+
+    let disc_path_raw = args().nth(1).expect("No disc file path specified");
+    let disc_path = Path::new(&disc_path_raw);
+    core.change_disc(disc_path);
+    info!("Changed disc to {}", disc_path.display());
 
     // Do event loop
     let result = panic::catch_unwind(
@@ -119,6 +137,9 @@ fn main() {
 
     // Post mortem
     debug_analysis(&mut core);
+
+    // Libmirage teardown
+    unsafe { g_object_unref(libmirage_context as *mut std::ffi::c_void) };
 
     // Audio teardown
     unsafe { alcDestroyContext(openal_context) };
@@ -170,8 +191,8 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
     use sdl2::keyboard::Keycode;
 
     match keycode {
-        Keycode::F1 => { toggle_debug_option(&ENABLE_REGISTER_TRACING, "register output"); },
-        Keycode::F2 => { toggle_debug_option(&ENABLE_STATE_TRACING, "state tracing"); },
+        Keycode::F1 => { toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output"); },
+        Keycode::F2 => { toggle_debug_option(&ENABLE_STATE_TRACING, "R3000 state tracing"); },
         Keycode::F3 => { toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, "spin loop detection (read)"); },
         Keycode::F4 => { toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, "spin loop detection (write)"); },
         Keycode::F5 => { toggle_debug_option(&ENABLE_INTERRUPT_TRACING, "interrupt tracing"); },

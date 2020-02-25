@@ -24,7 +24,7 @@ pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     //     _ => panic!(),
     // }
 
-    response.write_one(0b0000_0010).unwrap();
+    response.write_one(0b0000_0010).unwrap(); // Motor on
     int_flag.set_interrupt(3);
     true
 }
@@ -52,26 +52,44 @@ pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     true
 }
 
-pub fn command_1a(_resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
-    // SCEA = 0x53, 0x43, 0x45, 0x41
-    // SCEE = 0x53, 0x43, 0x45, 0x45
-    // SCEI = 0x53, 0x43, 0x45, 0x49
-
-    // MODE1 disc: INT3(stat)     INT2(02h,00h, 00h,00h, 53h,43h,45h,4xh)
-    // MODE2 disc: INT3(stat)     INT2(02h,00h, 20h,00h, 53h,43h,45h,4xh)
-    
+pub fn command_1a(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     match command_iteration {
         0 => {
-            unimplemented!();
+            let response = &resources.cdrom.response;
+            let int_flag = &mut resources.cdrom.int_flag;
+
+            response.write_one(0b0000_0010).unwrap(); // Reading data | Motor on
+            int_flag.set_interrupt(3);
+
+            false
         },
         1 => {
+            let response = &resources.cdrom.response;
+            let int_flag = &mut resources.cdrom.int_flag;
+
             // Determine disc mode type.
-            let _disc_type = match cdrom_backend {
+            let mode = match cdrom_backend {
                 CdromBackend::None => panic!("Unsupported"),
                 CdromBackend::Libmirage(ref params) => libmirage::disc_mode(params),
             };
+
+            match mode {
+                2 => {
+                    response.write_one(0x02).unwrap(); 
+                    response.write_one(0x00).unwrap(); 
+                    response.write_one(0x20).unwrap(); 
+                    response.write_one(0x00).unwrap(); 
+                    response.write_one(0x53).unwrap(); 
+                    response.write_one(0x43).unwrap(); 
+                    response.write_one(0x45).unwrap(); 
+                    response.write_one(0x41).unwrap(); // SCEx: ASCII A = 0x41, E = 0x45, I = 0x49 
+                },
+                _ => unimplemented!("Disc mode {} not handled", mode),
+            }
             
-            unimplemented!();
+            int_flag.set_interrupt(2);
+
+            true
         },
         _ => panic!(),
     }

@@ -12,4 +12,5 @@ log = "0.4"
 ctrlc = "3.1"
 opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
+libmirage-sys = { path = "../libmirage-sys" }
 libpsx-rs = { path = "../libpsx-rs" }

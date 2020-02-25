@@ -10,7 +10,7 @@ pub mod backends;
 pub mod executor;
 
 use std::pin::Pin;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::time::{Duration, Instant};
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use log::info;
@@ -100,5 +100,9 @@ impl<'a> Core<'a> {
         let scope_duration = timer.elapsed();
 
         debug::benchmark::trace_performance(time, scope_duration, benchmark_results);
+    }
+
+    pub fn change_disc(&mut self, path: &Path) {
+        backends::cdrom::change_disc(&self.config.cdrom_backend, path);
     }
 }

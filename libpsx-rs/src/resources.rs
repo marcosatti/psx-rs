@@ -12,7 +12,7 @@ use std::pin::Pin;
 use std::marker::PhantomPinned;
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::atomic::AtomicBool;
 use log::info;
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
@@ -98,7 +98,7 @@ impl Resources {
         resources.r3000.memory_mapper.map(0x1F00_0000, 0x100, &mut resources.pio as *mut dyn B8MemoryMap);
     }
 
-    pub fn load_bios(resources: &mut Resources, path: &PathBuf) {
+    pub fn load_bios(resources: &mut Resources, path: &Path) {
         info!("Loading BIOS from {}", path.to_str().unwrap());
         let mut f = File::open(path).unwrap();
         let mut buffer = Vec::new();
