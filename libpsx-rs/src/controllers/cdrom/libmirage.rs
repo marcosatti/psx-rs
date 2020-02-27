@@ -23,3 +23,38 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
         }
     }
 }
+
+pub fn msf_to_lba_address(backend_params: &BackendParams, minute: u8, second: u8, frame: u8) -> usize {
+    let (_context_guard, _context) = backend_params.context.guard();
+
+    unsafe {
+        mirage_helper_msf2lba(minute, second, frame, 1) as usize
+    }
+}
+
+pub fn read_sector(backend_params: &BackendParams, lba_address: usize) -> Vec<u8> {
+    let (_context_guard, _context) = backend_params.context.guard();
+
+    unsafe {
+        let mut _error: *mut GError = std::ptr::null_mut();
+
+        assert!(!DISC.is_null());
+        let sector = mirage_disc_get_sector(DISC, lba_address as gint, &mut _error as *mut *mut GError);
+
+        assert!(!sector.is_null());
+
+        let mut buffer_raw_ptr: *const guint8 = std::ptr::null_mut();
+        let mut buffer_raw_size: gint = 0;
+        let result = mirage_sector_get_data(sector, &mut buffer_raw_ptr as *mut *const guint8, &mut buffer_raw_size as *mut gint, &mut _error as *mut *mut GError);
+        assert!(result != 0);
+        
+        let mut buffer = Vec::with_capacity(buffer_raw_size as usize);
+        for offset in 0..(buffer_raw_size as usize) {
+            buffer.push(*buffer_raw_ptr.add(offset));
+        }
+
+        log::debug!("Sector user data size: {}", buffer.len());
+
+        buffer
+    }
+}

@@ -48,6 +48,9 @@ pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_
         let finished = match command_index {
             0x01 => command_impl::command_01(resources, cdrom_backend, command_iteration),
             0x02 => command_impl::command_02(resources, cdrom_backend, command_iteration),
+            0x06 => command_impl::command_06(resources, cdrom_backend, command_iteration),
+            0x0E => command_impl::command_0e(resources, cdrom_backend, command_iteration),
+            0x15 => command_impl::command_15(resources, cdrom_backend, command_iteration),
             0x19 => command_impl::command_19(resources, cdrom_backend, command_iteration),
             0x1A => command_impl::command_1a(resources, cdrom_backend, command_iteration),
             _ => unimplemented!("Command not implemented: 0x{:X}", command_index),

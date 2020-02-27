@@ -5,6 +5,8 @@ use crate::controllers::cdrom::libmirage;
 use crate::controllers::cdrom::interrupt::*;
 
 pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // GetStat
+    
     assert_eq!(command_iteration, 0);
 
     let response = &mut resources.cdrom.response;
@@ -29,7 +31,11 @@ pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     true
 }
 
-pub fn command_02(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_02(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // Setloc
+
+    // TODO: Assumed to be absolute addressing?
+    
     assert_eq!(command_iteration, 0);
     let parameter = &resources.cdrom.parameter;
     let response = &mut resources.cdrom.response;
@@ -38,15 +44,93 @@ pub fn command_02(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
 
-    log::debug!("minute = {}, second = {}, frame = {}", minute, second, frame);
-    unimplemented!();
+    let lba_address = match cdrom_backend {
+        CdromBackend::None => panic!(),
+        CdromBackend::Libmirage(ref params) => libmirage::msf_to_lba_address(params, minute, second, frame),
+    };
+
+    resources.cdrom.lba_address = lba_address;
 
     response.write_one(0b0000_0010).unwrap(); // Motor on
     raise_irq(resources, 3);
     true
 }
 
+pub fn command_06(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // ReadN
+
+    match command_iteration {
+        0 => {
+            let response = &mut resources.cdrom.response;
+            response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
+            raise_irq(resources, 3);
+            false
+        },
+        _ => {
+            let response = &mut resources.cdrom.response;
+            response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
+
+            resources.cdrom.lba_address;
+
+            let data_block = match cdrom_backend {
+                CdromBackend::None => panic!(),
+                CdromBackend::Libmirage(ref params) => libmirage::read_sector(params, resources.cdrom.lba_address),
+            };
+
+            for data in data_block.iter() {
+                // TODO: completely wrong! :D
+                match response.write_one(*data) {
+                    Ok(()) => {},
+                    Err(()) => { break },
+                }
+            }  
+
+            resources.cdrom.lba_address += 1;
+
+            raise_irq(resources, 1);
+
+            false
+        },
+    }
+}
+
+pub fn command_0e(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // Setmode
+    
+    assert_eq!(command_iteration, 0);
+    let parameter = &resources.cdrom.parameter;
+    let response = &mut resources.cdrom.response;
+
+    let _mode = parameter.read_one().unwrap();
+
+    response.write_one(0b0000_0010).unwrap(); // Motor on
+    raise_irq(resources, 3);
+    true
+}
+
+pub fn command_15(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // SeekL
+    
+    match command_iteration {
+        0 => {
+            let response = &mut resources.cdrom.response;
+            response.write_one(0b0100_0010).unwrap(); // Motor on | Seek
+            raise_irq(resources, 3);
+            false
+        },
+        1 => {
+            let response = &mut resources.cdrom.response;
+            response.write_one(0b0000_0010).unwrap(); // Motor on
+            raise_irq(resources, 2);
+            true
+        },
+        _ => panic!(),
+    }
+}
+
 pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // Test
+
     assert_eq!(command_iteration, 0);
 
     let parameter = &resources.cdrom.parameter;
@@ -69,6 +153,8 @@ pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
 }
 
 pub fn command_1a(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // GetID
+
     match command_iteration {
         0 => {
             let response = &resources.cdrom.response;
@@ -81,7 +167,7 @@ pub fn command_1a(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, c
 
             // Determine disc mode type.
             let mode = match cdrom_backend {
-                CdromBackend::None => panic!("Unsupported"),
+                CdromBackend::None => panic!(),
                 CdromBackend::Libmirage(ref params) => libmirage::disc_mode(params),
             };
 
