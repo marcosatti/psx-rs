@@ -33,12 +33,14 @@ impl B8MemoryMap for Command {
 
 pub struct IntEnable {
     pub register: B8Register,
+    pub write_latch: AtomicBool,
 }
 
 impl IntEnable {
     pub fn new() -> IntEnable {
         IntEnable {
             register: B8Register::new(),
+            write_latch: AtomicBool::new(false),
         }
     }
 }
@@ -49,6 +51,7 @@ impl B8MemoryMap for IntEnable {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
+        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         let mut register_value = self.register.read_u8();
         register_value = INTERRUPT_FLAGS.insert_into(register_value, value);
         B8MemoryMap::write_u8(&mut self.register, offset, register_value)
@@ -70,9 +73,9 @@ impl IntFlag {
         }
     }
 
-    pub fn set_interrupt(&mut self, index: u8) {
-        assert!(index <= 10, "Invalid interrupt index");
-        let value = self.register.read_u8() | index;
+    pub fn set_interrupt(&mut self, line: usize) {
+        assert!(line <= 10, "Invalid interrupt index");
+        let value = self.register.read_u8() | (line as u8);
         self.register.write_u8(value);
     }
 }

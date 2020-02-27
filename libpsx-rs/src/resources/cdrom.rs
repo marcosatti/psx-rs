@@ -36,6 +36,8 @@ pub struct Cdrom {
 
     pub command_index: Option<u8>,
     pub command_iteration: usize,
+
+    pub halted: bool,
 }
 
 impl Cdrom {
@@ -54,6 +56,7 @@ impl Cdrom {
             cdrom1803: Cdrom1803::new(),
             command_index: None,
             command_iteration: 0,
+            halted: false,
         }
     }
 }

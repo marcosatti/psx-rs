@@ -52,7 +52,7 @@ impl Bitfield {
 
     /// Example:
     ///    self.shifted_mask() == 0b1111_0000           // Example: register interrupt mask.
-    ///    value == 0b0110_0000                         // Acknowledging IRQ1 and IRQ2.
+    ///    value == 0b0110_0000                         // Incoming value acknowledging IRQ5 and IRQ6.
     ///    self.acknowledge_mask(value) == 0b1001_1111  // New mask to apply onto register.
     #[must_use]
     pub fn acknowledge_mask<T>(&self, value: T) -> T 

@@ -21,7 +21,7 @@ pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_DETECT_SYSTEMERROR: bool = true;
 const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
-pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
+pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(true);
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = true;
@@ -30,8 +30,8 @@ pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(
 pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
 pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x0; //0x1F80_1100;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0xFFFF_FFFF; //0x1F80_1130; 
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1800;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1810; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 pub static mut DEBUG_TICK_COUNT: usize = 0;
@@ -86,11 +86,21 @@ pub fn trace_hazard(hazard: Hazard) {
 }
 
 pub fn trace_interrupt(resources: &Resources) {
+    use crate::controllers::intc::debug::*;
+    use crate::resources::intc::{IRQ_BITFIELDS, IRQ_NAMES};
+
+    let line_index = 2; // CDROM
+    let line = IRQ_BITFIELDS[line_index];
+    let line_name = IRQ_NAMES[line_index];
+
     if ENABLE_INTERRUPT_TRACING.load(Ordering::Acquire) {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32();
         let branching = resources.r3000.branch_delay.branching();
-        trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
+        if is_pending(resources, line) {
+            trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}", debug_tick_count, pc_va, branching, line_name);
+        }
+        //trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
         //crate::controllers::intc::debug::trace_intc(resources, true, true);
     }
 }
@@ -140,7 +150,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
 
     let count = memory::update_state_read(physical_address);
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -178,7 +188,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 
     let count = memory::update_state_write(physical_address);
 
-    if false {
+    if true {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();

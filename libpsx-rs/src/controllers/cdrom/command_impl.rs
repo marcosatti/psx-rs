@@ -2,12 +2,12 @@ use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::constants::cdrom::*;
 use crate::controllers::cdrom::libmirage;
+use crate::controllers::cdrom::interrupt::*;
 
 pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     assert_eq!(command_iteration, 0);
 
     let response = &mut resources.cdrom.response;
-    let int_flag = &mut resources.cdrom.int_flag;
 
     // No CD inserted.
     // match command_iteration {
@@ -25,7 +25,24 @@ pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     // }
 
     response.write_one(0b0000_0010).unwrap(); // Motor on
-    int_flag.set_interrupt(3);
+    raise_irq(resources, 3);
+    true
+}
+
+pub fn command_02(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    assert_eq!(command_iteration, 0);
+    let parameter = &resources.cdrom.parameter;
+    let response = &mut resources.cdrom.response;
+
+    let minute = parameter.read_one().unwrap();
+    let second = parameter.read_one().unwrap();
+    let frame = parameter.read_one().unwrap();
+
+    log::debug!("minute = {}, second = {}, frame = {}", minute, second, frame);
+    unimplemented!();
+
+    response.write_one(0b0000_0010).unwrap(); // Motor on
+    raise_irq(resources, 3);
     true
 }
 
@@ -46,8 +63,7 @@ pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
         _ => unimplemented!(),
     }
 
-    let int_flag = &mut resources.cdrom.int_flag;
-    int_flag.set_interrupt(3);
+    raise_irq(resources, 3);
 
     true
 }
@@ -56,16 +72,12 @@ pub fn command_1a(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, c
     match command_iteration {
         0 => {
             let response = &resources.cdrom.response;
-            let int_flag = &mut resources.cdrom.int_flag;
-
-            response.write_one(0b0000_0010).unwrap(); // Reading data | Motor on
-            int_flag.set_interrupt(3);
-
+            response.write_one(0b0000_0010).unwrap(); // Motor on
+            raise_irq(resources, 3);
             false
         },
         1 => {
             let response = &resources.cdrom.response;
-            let int_flag = &mut resources.cdrom.int_flag;
 
             // Determine disc mode type.
             let mode = match cdrom_backend {
@@ -87,8 +99,7 @@ pub fn command_1a(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, c
                 _ => unimplemented!("Disc mode {} not handled", mode),
             }
             
-            int_flag.set_interrupt(2);
-
+            raise_irq(resources, 2);
             true
         },
         _ => panic!(),
