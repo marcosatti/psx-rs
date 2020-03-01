@@ -110,20 +110,17 @@ pub fn trace_syscall(resources: &Resources) {
     static CRITIAL_SECTION_REFCOUNT: AtomicIsize = AtomicIsize::new(0);
 
     if ENABLE_SYSCALL_TRACING {
-        let add_update = |x| Some(max(0, (x + 1)));
-        let sub_update = |x| Some(max(0, (x - 1)));
-
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
 
         let opcode = match resources.r3000.gpr[4].read_u32() {
             0 => "NoFunction".to_owned(),
             1 => { 
-                let count = CRITIAL_SECTION_REFCOUNT.fetch_update(add_update, Ordering::Acquire, Ordering::Release).unwrap() + 1; 
+                let count = CRITIAL_SECTION_REFCOUNT.fetch_update(|x| Some(x + 1), Ordering::Relaxed, Ordering::Relaxed).unwrap() + 1; 
                 format!("EnterCriticalSection [{}]", count) 
             },
             2 => { 
-                let count = CRITIAL_SECTION_REFCOUNT.fetch_update(sub_update, Ordering::Acquire, Ordering::Release).unwrap() - 1; 
+                let count = max(0, CRITIAL_SECTION_REFCOUNT.fetch_update(|x| Some(max(0, x - 1)), Ordering::Relaxed, Ordering::Relaxed).unwrap() - 1); 
                 format!("ExitCriticalSection [{}]", count) 
             },
             3 => "ChangeThreadSubFunction".to_owned(),
