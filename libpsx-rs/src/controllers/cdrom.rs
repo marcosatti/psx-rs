@@ -2,6 +2,7 @@ pub mod libmirage;
 pub mod command;
 pub mod command_impl;
 pub mod interrupt;
+pub mod debug;
 
 use std::sync::atomic::Ordering;
 use crate::utilities::bool_to_flag;

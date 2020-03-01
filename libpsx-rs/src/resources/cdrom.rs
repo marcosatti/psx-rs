@@ -1,6 +1,7 @@
 pub mod register;
 
 use std::ptr::NonNull;
+use std::collections::VecDeque;
 use crate::types::bitfield::Bitfield;
 use crate::types::register::b8_register::B8Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
@@ -39,6 +40,9 @@ pub struct Cdrom {
 
     /// Current LBA address.
     pub lba_address: usize, 
+    /// Reading status.
+    pub reading: bool,
+    pub read_buffer: VecDeque<u8>,
 }
 
 impl Cdrom {
@@ -58,6 +62,8 @@ impl Cdrom {
             command_index: None,
             command_iteration: 0,
             lba_address: 0,
+            reading: false,
+            read_buffer: VecDeque::with_capacity(2048),
         }
     }
 }

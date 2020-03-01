@@ -3,7 +3,7 @@ pub mod disassembler;
 pub mod register;
 
 use std::fmt::UpperHex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::ffi::CStr;
 use log::trace;
 use log::debug;
@@ -22,7 +22,7 @@ const ENABLE_DETECT_SYSTEMERROR: bool = true;
 const ENABLE_PRINTF_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
 pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(true);
-const ENABLE_SYSCALL_TRACING: bool = false;
+const ENABLE_SYSCALL_TRACING: bool = true;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = true;
 const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
@@ -47,10 +47,10 @@ pub fn trace_state(resources: &Resources) {
         let tick_count = DEBUG_TICK_COUNT;
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
     
-        // let start = 0x12B2680;
-        // let end = 0x12B2AFF;
-        // if (start..=end).contains(&tick_count) {
-        if true {
+        let start = 0x7684159;
+        let end = 0x7686159;
+        if (start..=end).contains(&tick_count) {
+        // if true {
             let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
             let branching = resources.r3000.branch_delay.branching();
             debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
@@ -106,10 +106,30 @@ pub fn trace_interrupt(resources: &Resources) {
 }
 
 pub fn trace_syscall(resources: &Resources) {
+    static CRITIAL_SECTION_REFCOUNT: AtomicIsize = AtomicIsize::new(0);
+
     if ENABLE_SYSCALL_TRACING {
+        let add_update = |x| Some((x + 1).max(0));
+        let sub_update = |x| Some((x - 1).max(0));
+
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
-        trace!("[{:X}] syscall, pc = 0x{:08X}", debug_tick_count, pc_va);
+
+        let opcode = match resources.r3000.gpr[4].read_u32() {
+            0 => "NoFunction".to_owned(),
+            1 => { 
+                let count = CRITIAL_SECTION_REFCOUNT.fetch_update(add_update, Ordering::Acquire, Ordering::Release).unwrap() + 1; 
+                format!("EnterCriticalSection [{}]", count) 
+            },
+            2 => { 
+                let count = CRITIAL_SECTION_REFCOUNT.fetch_update(sub_update, Ordering::Relaxed, Ordering::Release).unwrap() - 1; 
+                format!("ExitCriticalSection [{}]", count) 
+            },
+            3 => "ChangeThreadSubFunction".to_owned(),
+            _ => "DeliverEvent".to_owned(),
+        };
+
+        trace!("[{:X}] syscall, pc = 0x{:08X}, opcode = {}", debug_tick_count, pc_va, &opcode);
     }
 }
 

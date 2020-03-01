@@ -44,6 +44,7 @@ pub fn trace(resources: &mut Resources) {
     trace_intc(resources, false);
     trace_dmac(resources, false);
     trace_timers(resources);
+    trace_cdrom(resources);
 }
 
 pub fn trace_r3000(resources: &Resources) {
@@ -62,4 +63,8 @@ pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
 
 pub fn trace_timers(resources: &mut Resources) {
     crate::controllers::timers::debug::trace_timers(resources);
+}
+
+pub fn trace_cdrom(resources: &Resources) {
+    crate::controllers::cdrom::debug::trace_cdrom(resources);
 }

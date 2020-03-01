@@ -56,42 +56,18 @@ pub fn command_02(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, c
     true
 }
 
-pub fn command_06(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_06(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // ReadN
 
-    match command_iteration {
-        0 => {
-            let response = &mut resources.cdrom.response;
-            response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
-            raise_irq(resources, 3);
-            false
-        },
-        _ => {
-            let response = &mut resources.cdrom.response;
-            response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
+    assert_eq!(command_iteration, 0);
 
-            resources.cdrom.lba_address;
+    // Set CDROM controller state to reading.
+    resources.cdrom.reading = true;
 
-            let data_block = match cdrom_backend {
-                CdromBackend::None => panic!(),
-                CdromBackend::Libmirage(ref params) => libmirage::read_sector(params, resources.cdrom.lba_address),
-            };
-
-            for data in data_block.iter() {
-                // TODO: completely wrong! :D
-                match response.write_one(*data) {
-                    Ok(()) => {},
-                    Err(()) => { break },
-                }
-            }  
-
-            resources.cdrom.lba_address += 1;
-
-            raise_irq(resources, 1);
-
-            false
-        },
-    }
+    let response = &mut resources.cdrom.response;
+    response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
+    raise_irq(resources, 3);
+    true
 }
 
 pub fn command_0e(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {

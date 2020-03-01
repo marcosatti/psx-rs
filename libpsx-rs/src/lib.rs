@@ -1,4 +1,5 @@
 #![feature(core_intrinsics)]
+#![feature(no_more_cas)]
 
 pub mod constants;
 pub mod types;
@@ -104,5 +105,13 @@ impl<'a> Core<'a> {
 
     pub fn change_disc(&mut self, path: &Path) {
         backends::cdrom::change_disc(&self.config.cdrom_backend, path);
+    }
+}
+
+impl<'a> Drop for Core<'a> {
+    fn drop(&mut self) {
+        video::teardown(&self.config.video_backend);
+        audio::teardown(&self.config.audio_backend);
+        cdrom::teardown(&self.config.cdrom_backend);
     }
 }

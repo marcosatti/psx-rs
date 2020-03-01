@@ -15,6 +15,16 @@ pub fn setup(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 }
 
+pub fn teardown(backend_params: &BackendParams) {
+    let (_context_guard, _context) = backend_params.context.guard();
+
+    unsafe {
+        if !DISC.is_null() {
+            g_clear_object((&mut DISC as *mut *mut MirageDisc) as *mut *mut GObject);
+        }
+    }
+}
+
 pub fn change_disc(backend_params: &BackendParams, path: &Path) {
     let (_context_guard, context) = backend_params.context.guard();
 
@@ -35,8 +45,11 @@ pub fn change_disc(backend_params: &BackendParams, path: &Path) {
         DISC = mirage_context_load_image(context, buffer.as_ptr() as *mut *mut i8, &mut error as *mut *mut GError);
 
         if DISC.is_null() {
+            assert!(!error.is_null());
             let error_cstr = CStr::from_ptr((*error).message).to_string_lossy();
             panic!("Changing disc failed: {}", error_cstr.as_ref());
+        } else {
+            assert!(error.is_null());
         }
     }
 }

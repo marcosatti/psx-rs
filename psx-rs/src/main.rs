@@ -6,6 +6,7 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::time::Instant;
 use log::{error, info, debug};
 use sdl2::video::GLProfile;
+use sdl2::EventPump;
 use opengl_sys::*;
 use openal_sys::*;
 use libmirage_sys::*;
@@ -71,7 +72,7 @@ fn main() {
 
     // Initialize libmirage (CDROM)
     unsafe { mirage_initialize(std::ptr::null_mut()) };
-    let libmirage_context = unsafe { g_object_new(mirage_context_get_type(), std::ptr::null()) as *mut MirageContext };
+    let mut libmirage_context = unsafe { g_object_new(mirage_context_get_type(), std::ptr::null()) as *mut MirageContext };
     let libmirage_acquire_context = || { &libmirage_context };
     let libmirage_release_context = || { };
     let libmirage_version_string = unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
@@ -102,44 +103,11 @@ fn main() {
         time_delta: Duration::from_micros(time_delta_us as u64),
         worker_threads: worker_threads,
     };
-    let mut core = Core::new(config);
-    info!("Core initialized");
-
-    let disc_path_raw = args().nth(1).expect("No disc file path specified");
-    let disc_path = Path::new(&disc_path_raw);
-    core.change_disc(disc_path);
-    info!("Changed disc to {}", disc_path.display());
-
-    // Do event loop
-    let result = panic::catch_unwind(
-        panic::AssertUnwindSafe(|| {
-            'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
-                for event in event_pump.poll_iter() {
-                    match event {
-                        sdl2::event::Event::Quit { .. } => break 'event_loop,
-                        sdl2::event::Event::KeyDown { keycode, .. } => {
-                            if let Some(key) = keycode {
-                                handle_keycode(key);
-                            }
-                        },
-                        _ => {},
-                    }
-                }
-
-                core.step();
-            }
-        })
-    );
-
-    if result.is_err() {
-        error!("Panic occurred, exiting");
-    }
-
-    // Post mortem
-    debug_analysis(&mut core);
+    
+    main_inner(&mut event_pump, config);
 
     // Libmirage teardown
-    unsafe { g_object_unref(libmirage_context as *mut std::ffi::c_void) };
+    unsafe { g_clear_object((&mut libmirage_context as *mut *mut MirageContext) as *mut *mut GObject) };
 
     // Audio teardown
     unsafe { alcDestroyContext(openal_context) };
@@ -177,6 +145,44 @@ fn setup_logger(log_file_path: &Path) {
         .chain(fern::log_file(log_file_path).unwrap())
         .apply()
         .unwrap();
+}
+
+fn main_inner(event_pump: &mut EventPump, config: Config) {
+    let mut core = Core::new(config);
+    info!("Core initialized");
+
+    let disc_path_raw = args().nth(1).expect("No disc file path specified");
+    let disc_path = Path::new(&disc_path_raw);
+    core.change_disc(disc_path);
+    info!("Changed disc to {}", disc_path.display());
+
+    // Do event loop
+    let result = panic::catch_unwind(
+        panic::AssertUnwindSafe(|| {
+            'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
+                for event in event_pump.poll_iter() {
+                    match event {
+                        sdl2::event::Event::Quit { .. } => break 'event_loop,
+                        sdl2::event::Event::KeyDown { keycode, .. } => {
+                            if let Some(key) = keycode {
+                                handle_keycode(key);
+                            }
+                        },
+                        _ => {},
+                    }
+                }
+
+                core.step();
+            }
+        })
+    );
+
+    if result.is_err() {
+        error!("Panic occurred, exiting");
+    }
+
+    // Post mortem
+    debug_analysis(&mut core);
 }
 
 fn setup_signal_handler() {

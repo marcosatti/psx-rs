@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use log::trace;
 use crate::types::fifo::*;
 
-const ENABLE_READ_TRACE: bool = false;
-const ENABLE_WRITE_TRACE: bool = false;
+const ENABLE_READ_TRACE: bool = true;
+const ENABLE_WRITE_TRACE: bool = true;
 
 pub struct DebugState {
     pub identifier: &'static str,
@@ -41,10 +41,9 @@ where
 
     if debug_state.trace_reads {
         let count = debug_state.read_count.fetch_add(1, Ordering::SeqCst);
-        trace!("{} ({}): write = 0x{:X}", debug_state.identifier, count, data);
+        trace!("{} ({}): read = 0x{:X}", debug_state.identifier, count, data);
     }
 }
-
 
 pub fn trace_write<T>(fifo: &Fifo<T>, data: T)
 where

@@ -13,3 +13,10 @@ pub fn setup(audio_backend: &AudioBackend) {
         AudioBackend::Openal(ref params) => openal::setup(params),
     }
 }
+
+pub fn teardown(audio_backend: &AudioBackend) {
+    match audio_backend {
+        AudioBackend::None => {},
+        AudioBackend::Openal(ref params) => openal::teardown(params),
+    }
+}

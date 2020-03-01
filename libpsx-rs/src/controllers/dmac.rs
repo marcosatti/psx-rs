@@ -110,7 +110,7 @@ fn handle_irq_check(resources: &mut Resources) {
 
             use crate::resources::intc::register::Line;
             let stat = &resources.intc.stat;
-            stat.assert_line(Line::Cdrom);
+            stat.assert_line(Line::Dma);
         }
     } else {
         dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 0);
