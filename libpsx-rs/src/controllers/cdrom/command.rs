@@ -1,4 +1,3 @@
-use log::debug;
 use std::sync::atomic::Ordering;
 use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
@@ -6,6 +5,10 @@ use crate::resources::cdrom::*;
 use crate::controllers::cdrom::command_impl;
 use crate::controllers::cdrom::libmirage;
 use crate::controllers::cdrom::interrupt::*;
+
+type LengthFn = fn(usize) -> usize;
+
+type HandlerFn = fn(&mut Resources, &CdromBackend, usize) -> bool;
 
 pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
     // Don't run anything until all previous interrupts have been acknowledged, otherwise new ones could be missed.
@@ -51,24 +54,24 @@ pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_
         let command_index = resources.cdrom.command_index.unwrap();
         let command_iteration = resources.cdrom.command_iteration;
 
-        let finished = match command_index {
-            0x01 => command_impl::command_01(resources, cdrom_backend, command_iteration),
-            0x02 => command_impl::command_02(resources, cdrom_backend, command_iteration),
-            0x06 => command_impl::command_06(resources, cdrom_backend, command_iteration),
-            0x0E => command_impl::command_0e(resources, cdrom_backend, command_iteration),
-            0x15 => command_impl::command_15(resources, cdrom_backend, command_iteration),
-            0x19 => command_impl::command_19(resources, cdrom_backend, command_iteration),
-            0x1A => command_impl::command_1a(resources, cdrom_backend, command_iteration),
-            _ => unimplemented!("Command not implemented: 0x{:X}", command_index),
-        };
+        let handler = get_handler_fn(command_index);
 
-        debug!("Command {:X} iteration {}", command_index, command_iteration);
+        let parameter_count = resources.cdrom.parameter.read_available();
+        if parameter_count < (handler.0)(command_iteration) {
+            return;
+        }
+
+        assert!(resources.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
+
+        let finished = (handler.1)(resources, cdrom_backend, command_iteration);
 
         if !finished {
             resources.cdrom.command_iteration += 1;
         } else {
             resources.cdrom.command_index = None;
         }
+
+        assert!(resources.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
     }
 }
 
@@ -81,7 +84,7 @@ fn handle_reading(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) -
     let response = &mut resources.cdrom.response;
 
     // Let the BIOS read a bit of data before filling the FIFO up again.
-    if response.write_available() < 32 {
+    if response.write_available() < 12 {
         return false;
     }
 
@@ -112,4 +115,17 @@ fn handle_reading(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) -
 
     raise_irq(resources, 1);
     true
+}
+
+fn get_handler_fn(command_index: u8) -> (LengthFn, HandlerFn) {
+    match command_index {
+        0x01 => (command_impl::command_01_length, command_impl::command_01_handler),
+        0x02 => (command_impl::command_02_length, command_impl::command_02_handler),
+        0x06 => (command_impl::command_06_length, command_impl::command_06_handler),
+        0x0E => (command_impl::command_0e_length, command_impl::command_0e_handler),
+        0x15 => (command_impl::command_15_length, command_impl::command_15_handler),
+        0x19 => (command_impl::command_19_length, command_impl::command_19_handler),
+        0x1A => (command_impl::command_1a_length, command_impl::command_1a_handler),
+        _ => unimplemented!("Command not implemented: 0x{:0X}", command_index),
+    }
 }

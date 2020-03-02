@@ -1,4 +1,3 @@
-use log::debug;
 use crate::resources::Resources;
 use crate::resources::cdrom::*;
 
@@ -21,6 +20,5 @@ pub fn raise_irq(resources: &mut Resources, irq_line: usize) {
         use crate::resources::intc::register::Line;
         let stat = &resources.intc.stat;
         stat.assert_line(Line::Cdrom);
-        debug!("Raised CDROM IRQ");
     }
 }

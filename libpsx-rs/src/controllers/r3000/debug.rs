@@ -3,8 +3,7 @@ pub mod disassembler;
 pub mod register;
 
 use std::fmt::UpperHex;
-use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
-use std::ffi::CStr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::cmp::max;
 use log::trace;
 use log::debug;
@@ -19,23 +18,25 @@ use crate::resources::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
-const ENABLE_DETECT_SYSTEMERROR: bool = true;
-const ENABLE_PRINTF_TRACE: bool = true;
+const ENABLE_STDOUT_PUTCHAR_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
-pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(true);
-const ENABLE_SYSCALL_TRACING: bool = true;
+pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
+const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = true;
 const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
 pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(false);
 pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
 pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
+const ENABLE_BIOS_CALL_TRACING: bool = false;
 
 const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1800;
 const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1810; 
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 pub static mut DEBUG_TICK_COUNT: usize = 0;
+static mut DEBUG_BIOS_CALL_COUNT: usize = 0;
+static mut DEBUG_CRITICAL_SECTION_REFCOUNT: isize = 0;
 
 pub fn trace_state(resources: &Resources) {
     unsafe { 
@@ -48,10 +49,10 @@ pub fn trace_state(resources: &Resources) {
         let tick_count = DEBUG_TICK_COUNT;
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
     
-        let start = 0x7684159;
-        let end = 0x7686159;
-        if (start..=end).contains(&tick_count) {
-        // if true {
+        // let start = 1195;
+        // let end = 1196;
+        // if (start..=end).contains(&DEBUG_BIOS_CALL_COUNT) {
+        if true {
             let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
             let branching = resources.r3000.branch_delay.branching();
             debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
@@ -98,17 +99,18 @@ pub fn trace_interrupt(resources: &Resources) {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32();
         let branching = resources.r3000.branch_delay.branching();
-        if is_pending(resources, line) {
-            trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}", debug_tick_count, pc_va, branching, line_name);
+        if false {
+            if is_pending(resources, line) {
+                trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}", debug_tick_count, pc_va, branching, line_name);
+            }
+        } else {
+            trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
+            crate::controllers::intc::debug::trace_intc(resources, true, true);
         }
-        //trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
-        //crate::controllers::intc::debug::trace_intc(resources, true, true);
     }
 }
 
 pub fn trace_syscall(resources: &Resources) {
-    static CRITIAL_SECTION_REFCOUNT: AtomicIsize = AtomicIsize::new(0);
-
     if ENABLE_SYSCALL_TRACING {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
@@ -116,12 +118,16 @@ pub fn trace_syscall(resources: &Resources) {
         let opcode = match resources.r3000.gpr[4].read_u32() {
             0 => "NoFunction".to_owned(),
             1 => { 
-                let count = CRITIAL_SECTION_REFCOUNT.fetch_update(|x| Some(x + 1), Ordering::Relaxed, Ordering::Relaxed).unwrap() + 1; 
-                format!("EnterCriticalSection [{}]", count) 
+                unsafe { 
+                    DEBUG_CRITICAL_SECTION_REFCOUNT += 1;
+                    format!("EnterCriticalSection [{}]", DEBUG_CRITICAL_SECTION_REFCOUNT) 
+                }
             },
             2 => { 
-                let count = max(0, CRITIAL_SECTION_REFCOUNT.fetch_update(|x| Some(max(0, x - 1)), Ordering::Relaxed, Ordering::Relaxed).unwrap() - 1); 
-                format!("ExitCriticalSection [{}]", count) 
+                unsafe {
+                    DEBUG_CRITICAL_SECTION_REFCOUNT = max(DEBUG_CRITICAL_SECTION_REFCOUNT - 1, 0);
+                    format!("ExitCriticalSection [{}]", DEBUG_CRITICAL_SECTION_REFCOUNT) 
+                }
             },
             3 => "ChangeThreadSubFunction".to_owned(),
             _ => "DeliverEvent".to_owned(),
@@ -168,7 +174,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
 
     let count = memory::update_state_read(physical_address);
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -206,7 +212,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
 
     let count = memory::update_state_write(physical_address);
 
-    if true {
+    if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = resources.r3000.pc.read_u32();
@@ -248,9 +254,11 @@ fn trace_memory_spin_loop_detection_write(resources: &Resources, physical_addres
     }
 }
 
-pub fn trace_printf(resources: &Resources) {
-    // BIOS call 0xA0, $t1 = 0x3F.
-    if !ENABLE_PRINTF_TRACE {
+pub fn trace_stdout_putchar(resources: &Resources) {
+    static mut BUFFER: String = String::new();
+
+    // BIOS call 0xA0, $t1 = 0x3C.
+    if !ENABLE_STDOUT_PUTCHAR_TRACE {
         return;
     }
     
@@ -258,49 +266,105 @@ pub fn trace_printf(resources: &Resources) {
     pc = translate_address(pc);
     let t1 = resources.r3000.gpr[9].read_u32();
 
-    if (pc == 0xA0) && (t1 == 0x3F) {
+    if ((pc == 0xA0) && (t1 == 0x3C)) || ((pc == 0xB0) && (t1 == 0x3D)) {
         unsafe {
-            let mut fmt_string_ptr = resources.r3000.gpr[4].read_u32();
-            fmt_string_ptr = translate_address(fmt_string_ptr);
+            let a1 = resources.r3000.gpr[4].read_u32();
+            assert!(a1 < 128, format!("stdout putchar a1 = 0x{:08X}", a1)); // Assumed to be ASCII encoding.
 
-            let a1 = resources.r3000.gpr[5].read_u32();
-            let a2 = resources.r3000.gpr[6].read_u32();
-            let a3 = resources.r3000.gpr[7].read_u32();
+            let ch = a1 as u8 as char;
 
-            let memory_offset;
-            let memory = match fmt_string_ptr {
-                0..=0x1F_FFFF => {
-                    memory_offset = fmt_string_ptr;
-                    &resources.main_memory.memory
-                },
-                0x1FC0_0000..=0x1FC7_FFFF => {
-                    memory_offset = fmt_string_ptr - 0x1FC0_0000;
-                    &resources.bios.memory
-                },
-                _ => panic!("fmt_string_ptr = 0x{:08X} is not inside memory", fmt_string_ptr)
-            };
-    
-            let ptr = &memory[memory_offset as usize] as *const u8 as *const i8;
-            let string = CStr::from_ptr(ptr).to_string_lossy().to_owned();
-            let string_trimmed = string.trim();
-            let tick_count = DEBUG_TICK_COUNT;
-            let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
-            trace!("[{:X}] printf call: iec: {}, fmt: {}, a1 = 0x{:X}, a2 = 0x{:X}, a3 = 0x{:X}", tick_count, iec, string_trimmed, a1, a2, a3);       
+            if ch != '\n' {
+                BUFFER.push(ch);
+            } else {
+                let tick_count = DEBUG_TICK_COUNT;
+                let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
+                trace!("[{:X}] stdout newline: iec = {}, string = {}", tick_count, iec, &BUFFER); 
+                BUFFER.clear();
+            }
         }
     }
 }
 
-pub fn detect_systemerror(resources: &Resources) {
-    // BIOS call 0xC0, $t1 = 0x0B.
-    if !ENABLE_DETECT_SYSTEMERROR {
+pub fn trace_bios_call(resources: &Resources) {
+    if !ENABLE_BIOS_CALL_TRACING {
         return;
     }
-    
+
     let mut pc = resources.r3000.pc.read_u32();
     pc = translate_address(pc);
     let t1 = resources.r3000.gpr[9].read_u32();
+    
+    let string = match pc {
+        0xA0 => {
+            let opcode = match t1 {
+                0x13 => "SaveState".to_owned(),
+                0x17 => "strcmp".to_owned(),
+                0x1B => "strlen".to_owned(),
+                0x25 => "toupper".to_owned(),
+                0x28 => "bzero".to_owned(),
+                0x2A => "memcpy".to_owned(),
+                0x2F => "rand".to_owned(),
+                0x33 => "malloc".to_owned(),
+                0x39 => "InitHeap".to_owned(),
+                0x3C => "std_out_putchar".to_owned(),
+                0x3F => "printf".to_owned(),
+                0x44 => "FlushCache".to_owned(),
+                0x49 => "GPU_cw".to_owned(),
+                0x56 => "CdRemove".to_owned(),
+                0x72 => "CdRemove".to_owned(),
+                0x96 => "AddCDROMDevice".to_owned(),
+                0x97 => "AddMemCardDevice".to_owned(),
+                0x99 => "AddDummyTtyDevice".to_owned(),
+                0xA3 => "DequeueCdIntr".to_owned(),
+                _ => format!("{:X}", t1),
+            };
+            format!("0xA0({})", opcode)
+        },
+        0xB0 => {
+            let opcode = match t1 {
+                0x00 => "alloc_kernel_memory".to_owned(),
+                0x07 => "DeliverEvent".to_owned(),
+                0x08 => "OpenEvent".to_owned(),
+                0x09 => "CloseEvent".to_owned(),
+                0x0B => "TestEvent".to_owned(),
+                0x0C => "EnableEvent".to_owned(),
+                0x12 => "InitPad".to_owned(),
+                0x13 => "StartPad".to_owned(),
+                0x17 => "ReturnFromException".to_owned(),
+                0x18 => "SetDefaultExitFromException".to_owned(),
+                0x19 => "SetCustomExitFromException".to_owned(),
+                0x3D => "std_out_putchar".to_owned(),
+                0x47 => "AddDevice".to_owned(),
+                0x5B => "ChangeClearPad".to_owned(),
+                _ => format!("{:X}", t1),
+            };
+            format!("0xB0({})", opcode)
+        },
+        0xC0 => {
+            let opcode = match t1 {
+                0x00 => "EnqueueTimerAndVblankIrqs".to_owned(),
+                0x01 => "EnqueueSyscallHandler".to_owned(),
+                0x02 => "SysEnqIntRP".to_owned(),
+                0x03 => "SysDeqIntRP".to_owned(),
+                0x07 => "InstallExceptionHandlers".to_owned(),
+                0x08 => "SysInitMemory".to_owned(),
+                0x09 => "SysInitKernelVariables".to_owned(),
+                0x0A => "ChangeClearRCnt".to_owned(),
+                0x0B => panic!("BIOS SystemError C0(0x0B) call detected"),
+                0x0C => "InitDefInt".to_owned(),
+                0x12 => "InstallDevices".to_owned(),
+                0x1C => "AdjustA0Table".to_owned(),
+                _ => format!("{:X}", t1),
+            };
+            format!("0xC0({})", &opcode)
+        },
+        _ => return,
+    };
 
-    if (pc == 0xC0) && (t1 == 0x0B) {
-        panic!("BIOS SystemError C0(0x0B) call detected");
+    let ra = resources.r3000.gpr[31].read_u32();
+
+    unsafe { 
+        DEBUG_BIOS_CALL_COUNT += 1;
+        trace!("[{:X}] BIOS call {} {}, ra = 0x{:08X}", DEBUG_TICK_COUNT, DEBUG_BIOS_CALL_COUNT, &string, ra);
     }
 }

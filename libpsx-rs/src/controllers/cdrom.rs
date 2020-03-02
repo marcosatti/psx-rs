@@ -14,10 +14,11 @@ use crate::resources::cdrom::*;
 pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
     handle_interrupt_enable(resources);
     handle_interrupt_flags(resources);
-    handle_parameter_fifo(resources);
-    handle_response_fifo(resources);
     
     handle_command(resources, cdrom_backend);
+
+    handle_parameter_fifo(resources);
+    handle_response_fifo(resources);
 }
 
 fn handle_interrupt_enable(resources: &mut Resources) {
@@ -37,7 +38,10 @@ fn handle_interrupt_flags(resources: &mut Resources) {
     }
 
     if int_flag.parameter_reset.load(Ordering::Acquire) {
-        resources.cdrom.parameter.clear();
+        // TODO: actually performing a reset causes problems, where the BIOS is writing the clear bit and the parameters at the same time,
+        // before the controller gets a chance to run - this is an emulator level issue. There are asserts in the command handler that 
+        // check if the parameter is empty after a command has been run (which it should be).
+        //resources.cdrom.parameter.clear();
         int_flag.parameter_reset.store(false, Ordering::Release);
     }
 }

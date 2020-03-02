@@ -8,3 +8,4 @@
 perf*
 .vs/
 .cargo/
+.vscode/

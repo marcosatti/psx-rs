@@ -4,7 +4,11 @@ use crate::constants::cdrom::*;
 use crate::controllers::cdrom::libmirage;
 use crate::controllers::cdrom::interrupt::*;
 
-pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_01_length(_command_iteration: usize) -> usize {
+    0
+}
+
+pub fn command_01_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // GetStat
     
     assert_eq!(command_iteration, 0);
@@ -31,7 +35,11 @@ pub fn command_01(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     true
 }
 
-pub fn command_02(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_02_length(_command_iteration: usize) -> usize {
+    3
+}
+
+pub fn command_02_handler(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // Setloc
 
     // TODO: Assumed to be absolute addressing?
@@ -56,7 +64,11 @@ pub fn command_02(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, c
     true
 }
 
-pub fn command_06(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_06_length(_command_iteration: usize) -> usize {
+    0
+}
+
+pub fn command_06_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // ReadN
 
     assert_eq!(command_iteration, 0);
@@ -70,7 +82,11 @@ pub fn command_06(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     true
 }
 
-pub fn command_0e(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_0e_length(_command_iteration: usize) -> usize {
+    1
+}
+
+pub fn command_0e_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // Setmode
     
     assert_eq!(command_iteration, 0);
@@ -84,7 +100,11 @@ pub fn command_0e(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     true
 }
 
-pub fn command_15(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_15_length(_command_iteration: usize) -> usize {
+    0
+}
+
+pub fn command_15_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // SeekL
     
     match command_iteration {
@@ -104,7 +124,11 @@ pub fn command_15(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     }
 }
 
-pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_19_length(_command_iteration: usize) -> usize {
+    1
+}
+
+pub fn command_19_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // Test
 
     assert_eq!(command_iteration, 0);
@@ -128,7 +152,11 @@ pub fn command_19(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, 
     true
 }
 
-pub fn command_1a(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+pub fn command_1a_length(_command_iteration: usize) -> usize {
+    0
+}
+
+pub fn command_1a_handler(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
     // GetID
 
     match command_iteration {

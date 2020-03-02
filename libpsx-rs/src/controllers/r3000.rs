@@ -34,9 +34,15 @@ fn run_time(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, duratio
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     
     while ticks > 0 {
-        ticks -= tick(resources); 
-        // Synchronous controllers - timing is way off when done asynchronously, causing problems.
-        tick_cdrom(resources, cdrom_backend);
+        let cycles = tick(resources); 
+        for _ in 0..cycles {
+            ticks -= 1;
+        
+            // Synchronous controllers - timing is way off when done asynchronously, causing problems.
+            if ticks % 128 == 0 {
+                tick_cdrom(resources, cdrom_backend);
+            }
+        } 
     }
 }
 
@@ -54,8 +60,8 @@ fn tick(resources: &mut Resources) -> i64 {
         resources.r3000.pc.write_u32(target);
     }
     
-    debug::detect_systemerror(resources);
-    debug::trace_printf(resources);
+    debug::trace_bios_call(resources);
+    debug::trace_stdout_putchar(resources);
 
     let pc_va = resources.r3000.pc.read_u32();
     let pc_pa = translate_address(pc_va);

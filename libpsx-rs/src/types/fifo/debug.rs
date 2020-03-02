@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use log::trace;
 use crate::types::fifo::*;
 
-const ENABLE_READ_TRACE: bool = true;
-const ENABLE_WRITE_TRACE: bool = true;
+const ENABLE_READ_TRACE: bool = false;
+const ENABLE_WRITE_TRACE: bool = false;
 
 pub struct DebugState {
     pub identifier: &'static str,

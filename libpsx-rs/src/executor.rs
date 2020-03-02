@@ -13,48 +13,25 @@ use crate::controllers::spu::run as run_spu;
 use crate::controllers::padmc::run as run_padmc;
 use crate::controllers::timers::run as run_timers;
 
+const USE_MULTITHREADED: bool = true;
+
 pub fn atomic_broadcast(executor: &ThreadPool, state: &State, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
 
     fence(Ordering::Acquire);
-    
-    executor.scope(|scope| {
-        scope.spawn(|_| {
-            let elapsed = atomic_run(run_r3000, &state, event);
-            benchmark_results.add_result("r3000", elapsed);
-        });
-        scope.spawn(|_| {
-            let elapsed = atomic_run(run_dmac, &state, event);
-            benchmark_results.add_result("dmac", elapsed);
-        });
-        scope.spawn(|_| {
-            let elapsed = atomic_run(run_gpu, &state, event);
-            benchmark_results.add_result("gpu", elapsed);
-        });
-        scope.spawn(|_| {
-            let elapsed = atomic_run(run_spu, &state, event);
-            benchmark_results.add_result("spu", elapsed);
-        });
-        scope.spawn(|_| { 
-            let elapsed = atomic_run(run_intc, &state, event);
-            benchmark_results.add_result("intc", elapsed);
-        });
-        scope.spawn(|_| { 
-            let elapsed = atomic_run(run_padmc, &state, event);
-            benchmark_results.add_result("padmc", elapsed);
-        });
-        scope.spawn(|_| { 
-            let elapsed = atomic_run(run_timers, &state, event);
-            benchmark_results.add_result("timers", elapsed);
-        });
-    });
+
+    if USE_MULTITHREADED {
+        run_multi_threaded_broadcast(executor, state, event, &benchmark_results);
+    } else {
+        run_single_threaded_broadcast(state, event, &benchmark_results);
+    }
 
     fence(Ordering::Release);
 
     benchmark_results
 }
 
-pub fn atomic_run(controller_fn: fn(&mut ControllerState, Event) -> (), state: &State, event: Event) -> Duration {
+fn atomic_run(controller_fn: fn(&mut ControllerState, Event) -> (), state: &State, event: Event) -> Duration {
     let timer = Instant::now();
     
     fence(Ordering::Acquire);
@@ -67,4 +44,54 @@ pub fn atomic_run(controller_fn: fn(&mut ControllerState, Event) -> (), state: &
     fence(Ordering::Release);
 
     timer.elapsed()
+}
+
+fn run_single_threaded_broadcast(state: &State, event: Event, benchmark_results: &BenchmarkResults) {
+    let elapsed = atomic_run(run_r3000, state, event);
+    benchmark_results.add_result("r3000", elapsed);
+    let elapsed = atomic_run(run_dmac, state, event);
+    benchmark_results.add_result("dmac", elapsed);
+    let elapsed = atomic_run(run_gpu, state, event);
+    benchmark_results.add_result("gpu", elapsed);
+    let elapsed = atomic_run(run_spu, state, event);
+    benchmark_results.add_result("spu", elapsed);
+    let elapsed = atomic_run(run_intc, state, event);
+    benchmark_results.add_result("intc", elapsed);
+    let elapsed = atomic_run(run_padmc, state, event);
+    benchmark_results.add_result("padmc", elapsed);
+    let elapsed = atomic_run(run_timers, state, event);
+    benchmark_results.add_result("timers", elapsed);
+}
+
+fn run_multi_threaded_broadcast(executor: &ThreadPool, state: &State, event: Event, benchmark_results: &BenchmarkResults) {
+    executor.scope(|scope| {
+        scope.spawn(|_| {
+            let elapsed = atomic_run(run_r3000, state, event);
+            benchmark_results.add_result("r3000", elapsed);
+        });
+        scope.spawn(|_| {
+            let elapsed = atomic_run(run_dmac, state, event);
+            benchmark_results.add_result("dmac", elapsed);
+        });
+        scope.spawn(|_| {
+            let elapsed = atomic_run(run_gpu, state, event);
+            benchmark_results.add_result("gpu", elapsed);
+        });
+        scope.spawn(|_| {
+            let elapsed = atomic_run(run_spu, state, event);
+            benchmark_results.add_result("spu", elapsed);
+        });
+        scope.spawn(|_| { 
+            let elapsed = atomic_run(run_intc, state, event);
+            benchmark_results.add_result("intc", elapsed);
+        });
+        scope.spawn(|_| { 
+            let elapsed = atomic_run(run_padmc, state, event);
+            benchmark_results.add_result("padmc", elapsed);
+        });
+        scope.spawn(|_| { 
+            let elapsed = atomic_run(run_timers, state, event);
+            benchmark_results.add_result("timers", elapsed);
+        });
+    });
 }
