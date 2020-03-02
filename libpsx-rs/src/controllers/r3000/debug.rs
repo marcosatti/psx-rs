@@ -278,7 +278,7 @@ pub fn trace_stdout_putchar(resources: &Resources) {
             } else {
                 let tick_count = DEBUG_TICK_COUNT;
                 let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
-                trace!("[{:X}] stdout newline: iec = {}, string = {}", tick_count, iec, &BUFFER); 
+                trace!("[{:X}] stdout: iec = {}, string = {}", tick_count, iec, &BUFFER); 
                 BUFFER.clear();
             }
         }

@@ -30,7 +30,7 @@ pub fn trace_timer(resources: &mut Resources, timer_id: usize) {
 pub fn trace_mode(resources: &mut Resources, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
 
-    let sync_enable = mode.register.read_bitfield(MODE_SYNC_EN) > 0;
+    let sync_enable = mode.register.read_bitfield(MODE_SYNC_EN);
     let sync_mode = mode.register.read_bitfield(MODE_SYNC_MODE);
     let reset = mode.register.read_bitfield(MODE_RESET);
     let irq_target = mode.register.read_bitfield(MODE_IRQ_TARGET);
@@ -38,9 +38,9 @@ pub fn trace_mode(resources: &mut Resources, timer_id: usize) {
     let irq_repeat = mode.register.read_bitfield(MODE_IRQ_REPEAT);
     let irq_pulse = mode.register.read_bitfield(MODE_IRQ_PULSE);
     let clk_src = mode.register.read_bitfield(MODE_CLK_SRC);
-    let irq_status = mode.register.read_bitfield(MODE_IRQ_STATUS) == 0;
-    let target_hit = mode.register.read_bitfield(MODE_TARGET_HIT) > 0;
-    let overflow_hit = mode.register.read_bitfield(MODE_OVERFLOW_HIT) > 0;
+    let irq_status = mode.register.read_bitfield(MODE_IRQ_STATUS);
+    let target_hit = mode.register.read_bitfield(MODE_TARGET_HIT);
+    let overflow_hit = mode.register.read_bitfield(MODE_OVERFLOW_HIT);
 
     trace!("Timer {} mode details:", timer_id);
     trace!("sync_enable = {}, sync_mode = {}, reset = {}, irq_target = {}", sync_enable, sync_mode, reset, irq_target);

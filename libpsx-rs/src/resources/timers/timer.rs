@@ -12,6 +12,7 @@ pub struct TimerState {
     pub clock_source: ClockSource,
     pub current_elapsed: Duration,
     pub acknowledged_elapsed: Duration,
+    pub irq_raised: bool,
 }
 
 impl TimerState {
@@ -20,6 +21,7 @@ impl TimerState {
             clock_source: ClockSource::System,
             current_elapsed: Duration::from_secs(0),
             acknowledged_elapsed: Duration::from_secs(0),
+            irq_raised: false,
         }
     }
 }

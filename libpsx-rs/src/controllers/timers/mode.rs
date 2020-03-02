@@ -18,9 +18,14 @@ pub fn handle_mode_write(resources: &mut Resources, timer_id: usize) {
         unimplemented!("Sync via bit1-2 not implemented: {}, timer_id = {}", sync_mode, timer_id);
     }
 
+    mode.register.write_bitfield(MODE_IRQ_PULSE, 1);
+
     handle_count_clear(resources, timer_id);
+
+    // Internal state initialization.
     handle_duration_clear(resources, timer_id);
     handle_clock_source(resources, timer_id);
+    handle_oneshot_clear(resources, timer_id);
 
     debug::trace_mode_write(resources, timer_id);
 
@@ -76,4 +81,10 @@ pub fn handle_clock_source(resources: &mut Resources, timer_id: usize) {
     };
 
     state.clock_source = clock_source;
+}
+
+
+pub fn handle_oneshot_clear(resources: &mut Resources, timer_id: usize) {
+    let state = get_state(resources, timer_id);
+    state.irq_raised = false;
 }
