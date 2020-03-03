@@ -3,22 +3,65 @@ pub mod command;
 pub mod command_impl;
 pub mod interrupt;
 pub mod debug;
+pub mod read;
 
 use std::sync::atomic::Ordering;
 use crate::utilities::bool_to_flag;
 use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::controllers::cdrom::command::*;
+use crate::controllers::cdrom::read::*;
 use crate::resources::cdrom::*;
 
 pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
     handle_interrupt_enable(resources);
     handle_interrupt_flags(resources);
-    
-    handle_command(resources, cdrom_backend);
+    handle_request(resources);
+
+    handle_state(resources, cdrom_backend);
 
     handle_parameter_fifo(resources);
     handle_response_fifo(resources);
+    handle_data_fifo(resources);
+}
+
+fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
+    // Don't run anything until all previous interrupts have been acknowledged, otherwise new ones could be missed.
+    {
+        let int_flag = &resources.cdrom.int_flag;
+        if int_flag.register.read_bitfield(INTERRUPT_FLAGS) != 0 {
+            return;
+        }
+    }
+
+    // Can only do one action per cycle.
+    // Commands get priority over anything else.
+    let mut handled = false;
+    
+    if !handled {
+        handled = handle_command(resources, cdrom_backend);
+    }
+
+    if !handled {
+        handled = handle_reading(resources, cdrom_backend);
+    }
+}
+
+fn handle_request(resources: &mut Resources) {
+    let request = &mut resources.cdrom.request;
+
+    if request.write_latch.load(Ordering::Acquire) {
+        assert!(request.register.read_bitfield(REQUEST_SMEN) == 0);
+        assert!(request.register.read_bitfield(REQUEST_BFRD) == 0);
+
+        let reset_data_fifo = request.register.read_bitfield(REQUEST_BFRD) == 0;
+        if reset_data_fifo {
+            resources.cdrom.data.clear();
+            log::debug!("Reset CDROM data FIFO");
+        }
+
+        request.write_latch.store(false, Ordering::Release);
+    }
 }
 
 fn handle_interrupt_enable(resources: &mut Resources) {
@@ -63,4 +106,12 @@ fn handle_response_fifo(resources: &mut Resources) {
 
     let ready_bit = bool_to_flag(!fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_RSLRRDY, ready_bit);
+}
+
+fn handle_data_fifo(resources: &mut Resources) {
+    let status = &mut resources.cdrom.status;
+    let fifo = &mut resources.cdrom.response;
+
+    let empty_bit = bool_to_flag(!fifo.is_empty()) as u8;
+    status.write_bitfield(STATUS_DRQSTS, empty_bit);
 }

@@ -20,6 +20,10 @@ pub const STATUS_BUSYSTS: Bitfield = Bitfield::new(7, 1);
 
 pub const INT_FLAG_CLRPRM: Bitfield = Bitfield::new(6, 1);
 
+pub const REQUEST_SMEN: Bitfield = Bitfield::new(5, 1);
+pub const REQUEST_BFWR: Bitfield = Bitfield::new(6, 1);
+pub const REQUEST_BFRD: Bitfield = Bitfield::new(7, 1);
+
 pub const INTERRUPT_FLAGS: Bitfield = Bitfield::new(0, 5);
 
 pub struct Cdrom {
@@ -30,7 +34,7 @@ pub struct Cdrom {
     pub data: Fifo<u8>,
     pub int_enable: IntEnable,
     pub int_flag: IntFlag,
-    pub request: B8Register,
+    pub request: Request,
     pub cdrom1801: Cdrom1801,
     pub cdrom1802: Cdrom1802,
     pub cdrom1803: Cdrom1803,
@@ -55,7 +59,7 @@ impl Cdrom {
             data: Fifo::new(16, Some(DebugState::new("CDROM DATA", true, true))),
             int_enable: IntEnable::new(),
             int_flag: IntFlag::new(),
-            request: B8Register::new(),
+            request: Request::new(),
             cdrom1801: Cdrom1801::new(),
             cdrom1802: Cdrom1802::new(),
             cdrom1803: Cdrom1803::new(),
