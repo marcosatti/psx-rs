@@ -79,6 +79,9 @@ pub fn command_06_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     let response = &mut resources.cdrom.response;
     response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
     raise_irq(resources, 3);
+
+    log::debug!("Command 06 run");
+    
     true
 }
 

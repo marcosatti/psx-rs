@@ -64,8 +64,8 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new() -> IntEnable {
-        IntEnable {
+    pub fn new() -> Request {
+        Request {
             register: B8Register::new(),
             write_latch: AtomicBool::new(false),
         }
@@ -78,9 +78,9 @@ impl B8MemoryMap for Request {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
+        //assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         self.write_latch.store(true, Ordering::Release);
-        B8MemoryMap::write_u8(&mut self.register, offset, register_value)
+        B8MemoryMap::write_u8(&mut self.register, offset, value)
     }
 }
 
@@ -226,14 +226,16 @@ impl B8MemoryMap for Cdrom1802 {
 
 pub struct Cdrom1803 {
     pub status: Option<NonNull<B8Register>>,
+    pub int_enable: Option<NonNull<IntEnable>>,
     pub int_flag: Option<NonNull<IntFlag>>,
-    pub request: Option<NonNull<B8Register>>,
+    pub request: Option<NonNull<Request>>,
 }
 
 impl Cdrom1803 {
     pub fn new() -> Cdrom1803 {
         Cdrom1803 {
             status: None,
+            int_enable: None,
             int_flag: None,
             request: None,
         }
@@ -246,7 +248,7 @@ impl B8MemoryMap for Cdrom1803 {
             assert!(offset == 0, "Invalid offset");
             let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
             match index {
-                0 => unimplemented!(),
+                0 => B8MemoryMap::read_u8(self.int_enable.as_mut().unwrap().as_mut(), offset),
                 1 => B8MemoryMap::read_u8(self.int_flag.as_mut().unwrap().as_mut(), offset),
                 2 => unimplemented!(),
                 3 => unimplemented!(),

@@ -43,7 +43,11 @@ fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
     }
 
     if !handled {
-        handled = handle_reading(resources, cdrom_backend);
+        handled = handle_read(resources, cdrom_backend);
+    }
+
+    if !handled {
+        // ...
     }
 }
 
@@ -52,7 +56,7 @@ fn handle_request(resources: &mut Resources) {
 
     if request.write_latch.load(Ordering::Acquire) {
         assert!(request.register.read_bitfield(REQUEST_SMEN) == 0);
-        assert!(request.register.read_bitfield(REQUEST_BFRD) == 0);
+        assert!(request.register.read_bitfield(REQUEST_BFWR) == 0);
 
         let reset_data_fifo = request.register.read_bitfield(REQUEST_BFRD) == 0;
         if reset_data_fifo {

@@ -3,14 +3,12 @@ use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::resources::cdrom::*;
 use crate::controllers::cdrom::command_impl;
-use crate::controllers::cdrom::libmirage;
-use crate::controllers::cdrom::interrupt::*;
 
 type LengthFn = fn(usize) -> usize;
 
 type HandlerFn = fn(&mut Resources, &CdromBackend, usize) -> bool;
 
-pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
+pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) -> bool {
     if resources.cdrom.command_index.is_none() {
         // Read a new command if available.
         if !resources.cdrom.command.write_latch.load(Ordering::Acquire) {
