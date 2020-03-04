@@ -4,6 +4,7 @@ pub mod command_impl;
 pub mod interrupt;
 pub mod debug;
 pub mod read;
+pub mod state;
 
 use std::sync::atomic::Ordering;
 use crate::utilities::bool_to_flag;

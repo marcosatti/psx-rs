@@ -39,14 +39,17 @@ pub struct Cdrom {
     pub cdrom1802: Cdrom1802,
     pub cdrom1803: Cdrom1803,
 
+    /// Command state.
     pub command_index: Option<u8>,
     pub command_iteration: usize,
 
-    /// Current LBA address.
-    pub lba_address: usize, 
+    /// Seeking status.
+    pub seeking: bool,
     /// Reading status.
     pub reading: bool,
     pub read_buffer: VecDeque<u8>,
+    /// Current LBA address.
+    pub lba_address: usize, 
 }
 
 impl Cdrom {
@@ -65,9 +68,10 @@ impl Cdrom {
             cdrom1803: Cdrom1803::new(),
             command_index: None,
             command_iteration: 0,
-            lba_address: 0,
+            seeking: false,
             reading: false,
             read_buffer: VecDeque::with_capacity(2048),
+            lba_address: 0,
         }
     }
 }

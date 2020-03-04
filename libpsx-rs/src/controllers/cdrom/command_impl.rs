@@ -3,6 +3,7 @@ use crate::resources::Resources;
 use crate::constants::cdrom::*;
 use crate::controllers::cdrom::libmirage;
 use crate::controllers::cdrom::interrupt::*;
+use crate::controllers::cdrom::state::*;
 
 pub fn command_01_length(_command_iteration: usize) -> usize {
     0
@@ -12,8 +13,6 @@ pub fn command_01_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     // GetStat
     
     assert_eq!(command_iteration, 0);
-
-    let response = &mut resources.cdrom.response;
 
     // No CD inserted.
     // match command_iteration {
@@ -30,7 +29,9 @@ pub fn command_01_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     //     _ => panic!(),
     // }
 
-    response.write_one(0b0000_0010).unwrap(); // Motor on
+    let stat_value = stat_value(resources);
+    let response = &mut resources.cdrom.response;
+    response.write_one(stat_value).unwrap();
     raise_irq(resources, 3);
     true
 }
@@ -46,7 +47,6 @@ pub fn command_02_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
     
     assert_eq!(command_iteration, 0);
     let parameter = &resources.cdrom.parameter;
-    let response = &mut resources.cdrom.response;
 
     let minute = parameter.read_one().unwrap();
     let second = parameter.read_one().unwrap();
@@ -59,7 +59,9 @@ pub fn command_02_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
 
     resources.cdrom.lba_address = lba_address;
 
-    response.write_one(0b0000_0010).unwrap(); // Motor on
+    let stat_value = stat_value(resources);
+    let response = &mut resources.cdrom.response;
+    response.write_one(stat_value).unwrap();
     raise_irq(resources, 3);
     true
 }
@@ -76,13 +78,42 @@ pub fn command_06_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     // Set CDROM controller state to reading.
     resources.cdrom.reading = true;
 
+    let stat_value = stat_value(resources);
     let response = &mut resources.cdrom.response;
-    response.write_one(0b0010_0010).unwrap(); // Motor on | Reading
+    response.write_one(stat_value).unwrap();
     raise_irq(resources, 3);
 
-    log::debug!("Command 06 run");
-    
     true
+}
+
+pub fn command_09_length(_command_iteration: usize) -> usize {
+    0
+}
+
+pub fn command_09_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend<'_>, command_iteration: usize) -> bool {
+    // Pause
+    
+    match command_iteration {
+        0 => {
+            let stat_value = stat_value(resources);
+            let response = &mut resources.cdrom.response;
+            response.write_one(stat_value).unwrap();
+            raise_irq(resources, 3);
+
+            resources.cdrom.reading = false;
+            //resources.cdrom.playing = false;
+
+            false
+        },
+        1 => {
+            let stat_value = stat_value(resources);
+            let response = &mut resources.cdrom.response;
+            response.write_one(stat_value).unwrap();
+            raise_irq(resources, 2);
+            true
+        },
+        _ => panic!(),
+    }
 }
 
 pub fn command_0e_length(_command_iteration: usize) -> usize {
@@ -94,11 +125,12 @@ pub fn command_0e_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     
     assert_eq!(command_iteration, 0);
     let parameter = &resources.cdrom.parameter;
-    let response = &mut resources.cdrom.response;
 
     let _mode = parameter.read_one().unwrap();
 
-    response.write_one(0b0000_0010).unwrap(); // Motor on
+    let stat_value = stat_value(resources);
+    let response = &mut resources.cdrom.response;
+    response.write_one(stat_value).unwrap();
     raise_irq(resources, 3);
     true
 }
@@ -112,14 +144,22 @@ pub fn command_15_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     
     match command_iteration {
         0 => {
+            // Set CDROM controller state to seeking, but we don't actually have to do anything.
+            // Unset upon next command iteration...
+            resources.cdrom.seeking = true;
+
+            let stat_value = stat_value(resources);
             let response = &mut resources.cdrom.response;
-            response.write_one(0b0100_0010).unwrap(); // Motor on | Seek
+            response.write_one(stat_value).unwrap();
             raise_irq(resources, 3);
             false
         },
         1 => {
+            resources.cdrom.seeking = false;
+
+            let stat_value = stat_value(resources);
             let response = &mut resources.cdrom.response;
-            response.write_one(0b0000_0010).unwrap(); // Motor on
+            response.write_one(stat_value).unwrap();
             raise_irq(resources, 2);
             true
         },
@@ -164,8 +204,9 @@ pub fn command_1a_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
 
     match command_iteration {
         0 => {
+            let stat_value = stat_value(resources);
             let response = &resources.cdrom.response;
-            response.write_one(0b0000_0010).unwrap(); // Motor on
+            response.write_one(stat_value).unwrap();
             raise_irq(resources, 3);
             false
         },

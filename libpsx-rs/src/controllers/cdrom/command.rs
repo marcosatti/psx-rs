@@ -55,6 +55,7 @@ fn get_handler_fn(command_index: u8) -> (LengthFn, HandlerFn) {
         0x01 => (command_impl::command_01_length, command_impl::command_01_handler),
         0x02 => (command_impl::command_02_length, command_impl::command_02_handler),
         0x06 => (command_impl::command_06_length, command_impl::command_06_handler),
+        0x09 => (command_impl::command_09_length, command_impl::command_09_handler),
         0x0E => (command_impl::command_0e_length, command_impl::command_0e_handler),
         0x15 => (command_impl::command_15_length, command_impl::command_15_handler),
         0x19 => (command_impl::command_19_length, command_impl::command_19_handler),

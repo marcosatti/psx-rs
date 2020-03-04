@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::fmt::{Display, UpperHex};
 use log::trace;
 use crate::resources::Resources;
 use crate::types::fifo::Fifo;
@@ -52,7 +53,7 @@ pub fn transfer_end(resources: &mut Resources, channel: usize) {
     );
 }
 
-pub fn trace_hazard_empty(fifo: &Fifo<u32>) {
+pub fn trace_hazard_empty<T: Copy + Default + Display + UpperHex>(fifo: &Fifo<T>) {
     if !ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE {
         return;
     }

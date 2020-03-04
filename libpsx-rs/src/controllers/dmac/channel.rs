@@ -2,7 +2,6 @@ use log::warn;
 use crate::resources::Resources;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
-use crate::types::fifo::Fifo;
 use crate::resources::dmac::channel::*;
 use crate::resources::dmac::register::*;
 use crate::resources::dmac::*;
@@ -76,56 +75,51 @@ pub fn get_transfer_state<'a, 'b>(resources: &'a mut Resources, channel: usize) 
     }
 }
 
-pub fn get_fifo<'a>(resources: &'a Resources, channel: usize, writing: bool) -> &'a Fifo<u32> {
-    match channel {
-        0 => unimplemented!("Unhandled DMAC channel 0"),
-        1 => unimplemented!("Unhandled DMAC channel 1"),
-        2 => {
-            if writing {
-                &resources.gpu.gpu1810.gp0
-            } else {
-                &resources.gpu.gpu1810.read
-            }
-        },
-        3 => unimplemented!("Unhandled DMAC channel 3"),
-        4 => unimplemented!("Unhandled DMAC channel 4"),
-        5 => unimplemented!("Unhandled DMAC channel 5"),
-        6 => panic!("DMAC channel 6 is not attached to a physical FIFO"),
-        _ => unreachable!("Invalid DMAC channel"),
+fn get_otc_value(madr_value: u32, last_transfer: bool) -> u32 {
+    if !last_transfer { 
+        (madr_value - 4) & 0x00FF_FFFF 
+    } else { 
+        0x00FF_FFFF 
     }
 }
 
 pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
-        0..=5 => {
-            let fifo = get_fifo(resources, channel, false);
-            let result = fifo.read_one();
-
-            if result.is_err() {
-                debug::trace_hazard_empty(fifo);
-            }
-
-            result
+        0 => unimplemented!("Unhandled DMAC channel 0"),
+        1 => unimplemented!("Unhandled DMAC channel 1"),
+        2 => {
+            let fifo = &resources.gpu.gpu1810.read;
+            let handle_error = |e| { debug::trace_hazard_empty(fifo); e };
+            fifo.read_one().map_err(handle_error)
         },
-        6 => {
-            Ok(if !last_transfer { (madr - 4) & 0x00FF_FFFF } else { 0x00FF_FFFF })
+        3 => {        
+            let fifo = &resources.cdrom.data;
+            let handle_error = |e| { debug::trace_hazard_empty(fifo); e };
+            let result1 = fifo.read_one().map_err(handle_error)?;
+            let result2 = fifo.read_one().map_err(handle_error)?;
+            let result3 = fifo.read_one().map_err(handle_error)?;
+            let result4 = fifo.read_one().map_err(handle_error)?;
+            Ok(u32::from_le_bytes([result1, result2, result3, result4]))
         },
+        4 => unimplemented!("Unhandled DMAC channel 4"),
+        5 => unimplemented!("Unhandled DMAC channel 5"),
+        6 => Ok(get_otc_value(madr, last_transfer)),
         _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
 pub fn push_channel_data(resources: &Resources, channel: usize, value: u32) -> Result<(), ()> {
     match channel {
-        0..=5 => {
-            let fifo = get_fifo(resources, channel, true);
-            let result = fifo.write_one(value);
-            
-            if result.is_err() {
-                debug::trace_hazard_full(fifo);
-            }
-
-            result
+        0 => unimplemented!("Unhandled DMAC channel 0"),
+        1 => unimplemented!("Unhandled DMAC channel 1"),
+        2 => {
+            let fifo = &resources.gpu.gpu1810.gp0;
+            let handle_error = |e| { debug::trace_hazard_full(fifo); e };
+            fifo.write_one(value).map_err(handle_error)
         },
+        3 => unimplemented!("Unhandled DMAC channel 3"),
+        4 => unimplemented!("Unhandled DMAC channel 4"),
+        5 => unimplemented!("Unhandled DMAC channel 5"),
         6 => panic!("Channel 6 cannot recieve data (OTC)"),
         _ => unreachable!("Invalid DMAC channel"),
     }
