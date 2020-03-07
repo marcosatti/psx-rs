@@ -22,35 +22,56 @@ pub fn run(state: &mut ControllerState, event: Event) {
 }
 
 fn run_time(resources: &mut Resources, duration: Duration) {
-    let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
-
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 
+    // Don't run if the CPU needs to use the bus.
+    if resources.dmac.cooloff_runs > 0 {
+        resources.bus_locked.store(false, Ordering::Release);
+        resources.dmac.cooloff_runs -= 1;
+        return;
+    }
+
+    handle_bus_lock(resources);
+
+    let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     let mut channel_id: usize = 6;
-
+    let mut cooloff = false;
     while ticks > 0 {
-        let channel_ticks = tick(resources, channel_id, ticks as usize);
-
-        if channel_ticks == 0 {
-            ticks -= 16;
-
-            if channel_id == 0 {
-                channel_id = 6;
-            } else {
-                channel_id -= 1;
-            }
-
-            handle_irq_check(resources);
-        } else {
-            ticks -= channel_ticks as i64;
+        match tick(resources, channel_id, ticks as usize) {
+            Ok(channel_ticks) => {
+                if channel_ticks == 0 {
+                    ticks -= 16;
+        
+                    if channel_id == 0 {
+                        channel_id = 6;
+                    } else {
+                        channel_id -= 1;
+                    }
+                } else {
+                    ticks -= channel_ticks as i64;
+                }
+            },
+            Err(channel_ticks) => {
+                if channel_ticks == 0 {
+                    cooloff = true;
+                    break;
+                } else {
+                    ticks -= channel_ticks as i64;
+                }
+            },
         }
     }
+
+    if cooloff {
+        resources.dmac.cooloff_runs = 4;
+    }
     
+    handle_bus_unlock(resources);
+
     handle_irq_check(resources);
-    handle_bus_lock(resources);
 }
 
-fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) -> usize {
+fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) -> Result<usize, usize> {
     // Number of ticks per word transfer.
     const TICK_WORD_RATIO: usize = 2;
 
@@ -66,14 +87,26 @@ fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) ->
     let word_transfers_actual = if dpcr.read_bitfield(enable) != 0 {
         handle_transfer(resources, channel_id, word_transfers_allowed)
     } else {
-        0
+        Ok(0)
     };
 
-    word_transfers_actual * TICK_WORD_RATIO
+    word_transfers_actual.map(|v| v * TICK_WORD_RATIO).map_err(|v| v * TICK_WORD_RATIO)
+}
+
+/// Check if any channels are in progress, and acquires the bus lock if true.
+fn handle_bus_lock(resources: &mut Resources) {
+    for channel_id in 0..6 {
+        let transfer_state = get_transfer_state(resources, channel_id);
+        
+        if transfer_state.started {
+            resources.bus_locked.store(true, Ordering::Release);
+            return;
+        }
+    }
 }
 
 /// Check if all channels are finished, and release the bus lock if true.
-fn handle_bus_lock(resources: &mut Resources) {
+fn handle_bus_unlock(resources: &mut Resources) {
     for channel_id in 0..6 {
         let transfer_state = get_transfer_state(resources, channel_id);
         

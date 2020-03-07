@@ -27,7 +27,6 @@ pub struct GteInstruction {
 
 impl GteInstruction {
     pub fn new(instruction: Instruction) -> GteInstruction {
-        assert!(instruction.opcode() == 0b0100101);
         GteInstruction { 
             instruction: instruction,
         }

@@ -91,6 +91,10 @@ pub struct Dmac {
     pub otc_bcr: B32Register,
     pub otc_chcr: OtcChcr,
     pub otc_transfer_state: TransferState,
+
+    /// Number of runs to cool off (not run).
+    /// Intended for cases where the DMAC is holding the bus preventing the CPU from doing any work.
+    pub cooloff_runs: usize,
 }
 
 impl Dmac {
@@ -126,6 +130,7 @@ impl Dmac {
             otc_bcr: B32Register::new(),
             otc_chcr: OtcChcr::new(),         
             otc_transfer_state: TransferState::reset(),   
+            cooloff_runs: 0,
         }
     }
 }

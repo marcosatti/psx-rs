@@ -1,0 +1,20 @@
+CDROM Notes
+
+Reading sequence:
+
+1. Setup MSF etc.
+2. Sends read command (int #1).
+3. Reads sector into local buffer, when done, sends interrupt (read command int #2).
+   - Data FIFO not filled yet.
+4. CPU sends pause (int #1).
+5. Data FIFO filled with buffer contents [repeat].
+6. Wait until buffer exhausted AND data FIFO is empty.
+7. Send pause command int #2.
+
+Subsequent sectors follow same procedure. 
+
+Somehow need to ensure these conditions before raising the pause command int #2:
+- DMAC has fully read the Data FIFO; AND
+- DMAC has stopped the CDROM transfer.
+This is because the CPU immediately tries to start reading another sector after the pause command int #2 is raised, which is a problem if the DMAC is still reading the last few bytes out of the FIFO (ie: CDROM channel still started). There is a very small window for a race condition.
+
