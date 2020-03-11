@@ -36,8 +36,6 @@ fn handle_transfer_start(resources: &mut Resources, channel_id: usize) {
         assert!(!transfer_state.started, format!("DMA transfer already started, channel_id = {}", channel_id));
 
         if chcr.register.read_bitfield(CHCR_STARTBUSY) != 0 {
-            if channel_id == 3 { log::debug!("CDROM starting"); }
-
             if chcr.register.read_bitfield(CHCR_CHOPPING) != 0 {
                 unimplemented!("DMAC transfer logic not done yet (CHCR_CHOPPING, channel_id = {})", channel_id);
             }
@@ -59,8 +57,6 @@ fn handle_transfer_finish(resources: &mut Resources, channel_id: usize, bcr_valu
     let bcr = get_bcr(resources, channel_id);
     let transfer_state = get_transfer_state(resources, channel_id);
     
-    if channel_id == 3 { log::debug!("CDROM finishing"); }
-
     transfer_state.started = false;
 
     chcr.register.write_bitfield(CHCR_STARTBUSY, 0);
@@ -90,14 +86,7 @@ fn handle_continuous_transfer(state: &mut ContinuousState, resources: &mut Resou
         match transfer_direction {
             TransferDirection::FromChannel => {
                 let last_transfer = state.transfers_remaining() == 1;
-                let value = { 
-                    let result = pop_channel_data(resources, channel_id, state.current_address, last_transfer).map_err(|_| word_transfers_count);
-                    if result.is_err() {
-                        log::debug!("error, transfers remaining = {}, this count = {}", state.transfers_remaining(), word_transfers_count);
-                        return Err(result.unwrap_err());
-                    }
-                    result.unwrap()
-                };
+                let value = pop_channel_data(resources, channel_id, state.current_address, last_transfer).map_err(|_| word_transfers_count)?;
                 resources.main_memory.write_u32(state.current_address, value);
             },
             TransferDirection::ToChannel => {
@@ -109,8 +98,6 @@ fn handle_continuous_transfer(state: &mut ContinuousState, resources: &mut Resou
         state.increment(madr_step_direction);
         word_transfers_count += 1;
     }
-
-    log::debug!("transfers remaining: {}", state.transfers_remaining());
 
     if state.transfers_remaining() == 0 {
         handle_transfer_finish(resources, channel_id, None, None);

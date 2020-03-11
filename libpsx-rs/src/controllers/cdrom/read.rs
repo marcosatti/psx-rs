@@ -28,7 +28,7 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
         
         // Make sure FIFO is empty.
         if !resources.cdrom.data.is_empty() {
-            log::debug!("Waiting on FIFO");
+            //log::debug!("Waiting on FIFO");
             return true;
         }
 
@@ -44,6 +44,8 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
             CdromBackend::Libmirage(ref params) => libmirage::read_sector(params, resources.cdrom.lba_address),
         };
 
+        assert_eq!(data_block.len(), 2048);
+
         resources.cdrom.lba_address += 1;
         resources.cdrom.read_buffer.extend(&data_block);
 
@@ -52,10 +54,9 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
         let response = &mut resources.cdrom.response;
         response.write_one(stat_value).unwrap();
         raise_irq(resources, 1);
-        log::debug!("Read sector; raised data IRQ");
     }
 
-    unsafe { TEST = 1000000; }
+    unsafe { TEST = 100000; }
 
     // Check if the CPU is ready for data and send it.
     let request = &mut resources.cdrom.request;
@@ -63,7 +64,7 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
     if load_data {
         let read_buffer = &mut resources.cdrom.read_buffer;
         let data = &mut resources.cdrom.data;
-    
+
         loop {
             if data.is_full() {
                 break;

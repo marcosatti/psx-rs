@@ -52,8 +52,6 @@ pub fn command_02_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
 
-    log::debug!("m {}, s {}, f {}", minute, second, frame);
-
     let lba_address = match cdrom_backend {
         CdromBackend::None => panic!(),
         CdromBackend::Libmirage(ref params) => libmirage::msf_to_lba_address(params, minute, second, frame),
@@ -80,8 +78,6 @@ pub fn command_06_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     // Set CDROM controller state to reading.
     resources.cdrom.reading = true;
     
-    log::debug!("Reading");
-
     let stat_value = stat_value(resources);
     let response = &mut resources.cdrom.response;
     response.write_one(stat_value).unwrap();
@@ -100,7 +96,6 @@ pub fn command_09_handler(resources: &mut Resources, _cdrom_backend: &CdromBacke
     assert_eq!(command_iteration, 0);
 
     resources.cdrom.pausing = true;
-    log::debug!("Pausing");
 
     let stat_value = stat_value(resources);
     let response = &mut resources.cdrom.response;

@@ -7,6 +7,7 @@ pub mod read;
 pub mod state;
 
 use std::sync::atomic::Ordering;
+use log::warn;
 use crate::utilities::bool_to_flag;
 use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
@@ -61,8 +62,9 @@ fn handle_request(resources: &mut Resources) {
 
         let reset_data_fifo = request.register.read_bitfield(REQUEST_BFRD) == 0;
         if reset_data_fifo {
-            resources.cdrom.data.clear();
-            log::debug!("Reset CDROM data FIFO");
+            let count = resources.cdrom.data.read_available();
+            //resources.cdrom.data.clear();
+            warn!("Ignored Reset CDROM data FIFO (has {} bytes)", count);
         }
 
         request.write_latch.store(false, Ordering::Release);

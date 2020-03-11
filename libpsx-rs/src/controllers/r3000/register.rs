@@ -43,3 +43,10 @@ pub fn handle_cp2_flag_error_bit(resources: &mut Resources) {
         resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(31, 1), 1);
     }
 }
+
+pub fn handle_cp2_push_rgb(resources: &mut Resources) {
+    let rgb1_value = resources.r3000.cp2.gd[21].read_u32();
+    let rgb2_value = resources.r3000.cp2.gd[22].read_u32();
+    resources.r3000.cp2.gd[20].write_u32(rgb1_value); // RGB0 = RGB1
+    resources.r3000.cp2.gd[13].write_u32(rgb2_value); // RGB1 = RGB2
+}

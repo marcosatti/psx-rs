@@ -12,10 +12,10 @@ use crate::controllers::r3000::register::*;
 use crate::resources::r3000::cp0::STATUS_ISC;
 use crate::utilities::*;
 
-fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_: u32) {
-    // Note: probably ok to disregard SRA != division by 2^N (https://en.wikipedia.org/wiki/Arithmetic_shift), as it just results in a small rounding error.
-    // In practice, this means its ok to perform the SRA's as divisions by 4096 below.
+// Note: probably ok to disregard SRA != division by 2^N (https://en.wikipedia.org/wiki/Arithmetic_shift), as it just results in a small rounding error.
+// In practice, this means its ok to perform the SRA's as divisions by 4096, etc below.
 
+fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_: u32) {
     handle_cp2_flag_reset(resources);
 
     let trx_value = resources.r3000.cp2.gc[5].read_u32() as i32 as f64;
@@ -124,6 +124,139 @@ fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_
 
     handle_cp2_flag_error_bit(resources);
     handle_cp2_sxyp_mirror(resources);
+}
+
+fn normal_color(resources: &mut Resources, shift: bool, color: bool, depth: bool, lm: bool, vector_xy: u32, vector_z_: u32) {
+    if depth {
+        assert!(color, "Depth calculation shouldn't be set without color calculation");
+    }
+
+    handle_cp2_flag_reset(resources);
+
+    let (llm11_value, llm12_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[8].read_u32());
+    let (llm13_value, llm21_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[9].read_u32());
+    let (llm22_value, llm23_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[10].read_u32());
+    let (llm31_value, llm32_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[11].read_u32());
+    let (llm33_value, _) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[12].read_u32());
+
+    let (vx0_value, vy0_value) = split_32_i16_f64(vector_xy);
+    let (vz0_value, _) = split_32_i16_f64(vector_z_);
+
+    let mut ir1_value = (vx0_value * llm11_value) + (vy0_value * llm12_value) + (vz0_value * llm13_value);
+    let mut ir2_value = (vx0_value * llm21_value) + (vy0_value * llm22_value) + (vz0_value * llm23_value);
+    let mut ir3_value = (vx0_value * llm31_value) + (vy0_value * llm32_value) + (vz0_value * llm33_value);
+
+    if shift {
+        ir1_value /= 4096.0;
+        ir2_value /= 4096.0;
+        ir3_value /= 4096.0;
+    }
+
+    let (lcm11_value, lcm12_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[16].read_u32());
+    let (lcm13_value, lcm21_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[17].read_u32());
+    let (lcm22_value, lcm23_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[18].read_u32());
+    let (lcm31_value, lcm32_value) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[19].read_u32());
+    let (lcm33_value, _) = split_32_fixedi16_f64::<U12>(resources.r3000.cp2.gc[20].read_u32());
+
+    let rbk_value = f64::from_fixed_bits_i32::<U12>(resources.r3000.cp2.gc[13].read_u32() as i32);
+    let gbk_value = f64::from_fixed_bits_i32::<U12>(resources.r3000.cp2.gc[14].read_u32() as i32);
+    let bbk_value = f64::from_fixed_bits_i32::<U12>(resources.r3000.cp2.gc[15].read_u32() as i32);
+
+    let lcm1_value = (ir1_value * lcm11_value) + (ir2_value * lcm12_value) + (ir3_value * lcm13_value);
+    let lcm2_value = (ir1_value * lcm21_value) + (ir2_value * lcm22_value) + (ir3_value * lcm23_value);
+    let lcm3_value = (ir1_value * lcm31_value) + (ir2_value * lcm32_value) + (ir3_value * lcm33_value);
+
+    ir1_value = (rbk_value * 4096.0) + lcm1_value;
+    ir2_value = (gbk_value * 4096.0) + lcm2_value;
+    ir3_value = (bbk_value * 4096.0) + lcm3_value;
+
+    if shift {
+        ir1_value /= 4096.0;
+        ir2_value /= 4096.0;
+        ir3_value /= 4096.0;
+    }
+
+    let mut mac1_value = ir1_value;
+    let mut mac2_value = ir2_value;
+    let mut mac3_value = ir3_value;
+
+    if color {
+        let r_value = resources.r3000.cp2.gd[6].read_u8(0) as f64;
+        let g_value = resources.r3000.cp2.gd[6].read_u8(1) as f64;
+        let b_value = resources.r3000.cp2.gd[6].read_u8(2) as f64;
+
+        mac1_value = (r_value * ir1_value) * 16.0;
+        mac2_value = (g_value * ir2_value) * 16.0;
+        mac3_value = (b_value * ir3_value) * 16.0;
+
+        if depth {
+            let rfc_value = f64::from_fixed_bits_i32::<U4>(resources.r3000.cp2.gc[21].read_u32() as i32);
+            let gfc_value = f64::from_fixed_bits_i32::<U4>(resources.r3000.cp2.gc[22].read_u32() as i32);
+            let bfc_value = f64::from_fixed_bits_i32::<U4>(resources.r3000.cp2.gc[23].read_u32() as i32);
+            let (ir0_value, _) = split_32_i16_f64(resources.r3000.cp2.gd[8].read_u32());
+
+            mac1_value = mac1_value + ((rfc_value - mac1_value) * ir0_value);
+            mac2_value = mac2_value + ((gfc_value - mac2_value) * ir0_value);
+            mac3_value = mac3_value + ((bfc_value - mac3_value) * ir0_value);
+        }
+
+        if shift {
+            mac1_value /= 4096.0;
+            mac2_value /= 4096.0;
+            mac3_value /= 4096.0;
+        }
+    }
+
+    let mut ir_clamp_min = 0;
+    if !lm {
+        ir_clamp_min = std::i16::MIN;
+    }
+
+    let (ir1_value, ir1_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir2_value, ir2_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir3_value, ir3_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+
+    mac1_value /= 16.0;
+    mac2_value /= 16.0;
+    mac3_value /= 16.0;
+
+    let mac1_overflow_flag = f64::abs(mac1_value) >= ((1u64 << 44) as f64);
+    let mac1_negative_flag = mac1_value < 0.0;
+    let mac2_overflow_flag = f64::abs(mac2_value) >= ((1u64 << 44) as f64);
+    let mac2_negative_flag = mac2_value < 0.0;
+    let mac3_overflow_flag = f64::abs(mac3_value) >= ((1u64 << 44) as f64);
+    let mac3_negative_flag = mac3_value < 0.0;
+
+    let rgb1_value = checked_clamp(mac1_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
+    let rgb2_value = checked_clamp(mac2_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
+    let rgb3_value = checked_clamp(mac3_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
+    let code_value = resources.r3000.cp2.gd[6].read_u8(3);
+
+    // Write back.
+    handle_cp2_push_rgb(resources);
+    resources.r3000.cp2.gd[22].write_u8(0, rgb1_value as u8);
+    resources.r3000.cp2.gd[22].write_u8(1, rgb2_value as u8);
+    resources.r3000.cp2.gd[22].write_u8(2, rgb3_value as u8);
+    resources.r3000.cp2.gd[22].write_u8(3, code_value as u8);
+    resources.r3000.cp2.gd[25].write_u32(mac1_value as i32 as u32);
+    resources.r3000.cp2.gd[9].write_u32(ir1_value as i32 as u32);
+    resources.r3000.cp2.gd[26].write_u32(mac2_value as i32 as u32);
+    resources.r3000.cp2.gd[10].write_u32(ir2_value as i32 as u32);
+    resources.r3000.cp2.gd[27].write_u32(mac3_value as i32 as u32);
+    resources.r3000.cp2.gd[11].write_u32(ir3_value as i32 as u32);
+
+    // Flag register.
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    resources.r3000.cp2.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+
+    handle_cp2_flag_error_bit(resources);
 }
 
 pub fn lwc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
@@ -242,9 +375,12 @@ pub fn mvmva(_resources: &mut Resources, instruction: Instruction) -> InstResult
     unimplemented!("Instruction mvmva not implemented");
 }
 
-pub fn ncds(_resources: &mut Resources, instruction: Instruction) -> InstResult {
-    let _instruction = GteInstruction::new(instruction);
-    log::debug!("Instruction ncds not implemented");
+pub fn ncds(resources: &mut Resources, instruction: Instruction) -> InstResult {    
+    // Operates on V0.
+    let instruction = GteInstruction::new(instruction);
+    let vector_0_xy = resources.r3000.cp2.gd[0].read_u32();
+    let vector_0_z_ = resources.r3000.cp2.gd[1].read_u32();
+    normal_color(resources, instruction.sf(), true, true, instruction.lm(), vector_0_xy, vector_0_z_);
     Ok(())
 }
 

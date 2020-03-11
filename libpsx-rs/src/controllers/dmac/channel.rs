@@ -102,7 +102,6 @@ pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_t
             let result2 = fifo.read_one().unwrap();
             let result3 = fifo.read_one().unwrap();
             let result4 = fifo.read_one().unwrap();
-            log::debug!("bytes remaining: {}", fifo.read_available());
             Ok(u32::from_le_bytes([result1, result2, result3, result4]))
         },
         4 => unimplemented!("Unhandled DMAC channel 4"),

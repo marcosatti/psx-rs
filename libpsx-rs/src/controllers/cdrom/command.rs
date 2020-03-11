@@ -35,7 +35,6 @@ pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_
 
     assert!(resources.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
 
-    log::debug!("Running command {:X}, iter = {}", command_index, command_iteration);
     let finished = (handler.1)(resources, cdrom_backend, command_iteration);
 
     if !finished {

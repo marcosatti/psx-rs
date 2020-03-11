@@ -20,7 +20,7 @@ use crate::debug::DEBUG_CORE_EXIT;
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_STDOUT_PUTCHAR_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = true;
-pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(true);
+pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = true;
@@ -99,7 +99,7 @@ pub fn trace_interrupt(resources: &Resources) {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
         let pc_va = resources.r3000.pc.read_u32();
         let branching = resources.r3000.branch_delay.branching();
-        if true {
+        if false {
             if is_pending(resources, line) {
                 trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}", debug_tick_count, pc_va, branching, line_name);
             }

@@ -13,8 +13,6 @@ Reading sequence:
 
 Subsequent sectors follow same procedure. 
 
-Somehow need to ensure these conditions before raising the pause command int #2:
+Need to ensure these conditions before raising the pause command int #2:
 - DMAC has fully read the Data FIFO; AND
 - DMAC has stopped the CDROM transfer.
-This is because the CPU immediately tries to start reading another sector after the pause command int #2 is raised, which is a problem if the DMAC is still reading the last few bytes out of the FIFO (ie: CDROM channel still started). There is a very small window for a race condition.
-
