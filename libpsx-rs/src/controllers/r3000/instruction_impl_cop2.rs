@@ -36,7 +36,6 @@ fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_
     let mut mac3_value = trz_value * 4096.0 + rt31_value * vx0_value + rt32_value * vy0_value + rt33_value * vz0_value;
     
     if shift {
-        // Equivilant to SAR 12. 
         mac1_value /= 4096.0;
         mac2_value /= 4096.0;
         mac3_value /= 4096.0;
@@ -56,7 +55,6 @@ fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_
     let mut sz3_value = mac3_value;
 
     if !shift {
-        // Equivilant to SAR 12.
         sz3_value /= 4096.0;
     }
 
@@ -126,7 +124,7 @@ fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_
     handle_cp2_sxyp_mirror(resources);
 }
 
-fn normal_color(resources: &mut Resources, shift: bool, color: bool, depth: bool, lm: bool, vector_xy: u32, vector_z_: u32) {
+fn normal_color(resources: &mut Resources, shift: bool, lm: bool, color: bool, depth: bool, vector_xy: u32, vector_z_: u32) {
     if depth {
         assert!(color, "Depth calculation shouldn't be set without color calculation");
     }
@@ -380,7 +378,7 @@ pub fn ncds(resources: &mut Resources, instruction: Instruction) -> InstResult {
     let instruction = GteInstruction::new(instruction);
     let vector_0_xy = resources.r3000.cp2.gd[0].read_u32();
     let vector_0_z_ = resources.r3000.cp2.gd[1].read_u32();
-    normal_color(resources, instruction.sf(), true, true, instruction.lm(), vector_0_xy, vector_0_z_);
+    normal_color(resources, instruction.sf(), instruction.lm(), true, true, vector_0_xy, vector_0_z_);
     Ok(())
 }
 

@@ -5,8 +5,6 @@ use crate::controllers::cdrom::interrupt::*;
 use crate::controllers::cdrom::state::*;
 use crate::resources::cdrom::*;
 
-static mut TEST: usize = 0;
-
 pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) -> bool {
     // Buffer some data first (INT1 means ready to send data?).
     // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the BIOS expects it...
@@ -28,15 +26,7 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
         
         // Make sure FIFO is empty.
         if !resources.cdrom.data.is_empty() {
-            //log::debug!("Waiting on FIFO");
             return true;
-        }
-
-        unsafe {
-            if TEST > 0 {
-                TEST -= 1;
-                return true;
-            }
         }
 
         let data_block = match cdrom_backend {
@@ -55,8 +45,6 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
         response.write_one(stat_value).unwrap();
         raise_irq(resources, 1);
     }
-
-    unsafe { TEST = 100000; }
 
     // Check if the CPU is ready for data and send it.
     let request = &mut resources.cdrom.request;
