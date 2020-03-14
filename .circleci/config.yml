@@ -1,9 +1,6 @@
 version: 2.1
 jobs:
   build:
-    branches:
-      only:
-        - master
     docker:
       - image: rustlang/rust:nightly-slim
     steps:
@@ -57,6 +54,10 @@ jobs:
           command: cargo build
 workflows:
   version: 2
-  Main:
+  main:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only:
+                - master
