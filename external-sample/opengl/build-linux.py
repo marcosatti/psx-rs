@@ -3,15 +3,23 @@ import subprocess
 
 include_paths = []
 header_paths = [
-    '/usr/include/AL/al.h',
-    '/usr/include/AL/alc.h',
+    '/usr/include/GL/glcorearb.h',
 ]
 library_search_paths = []
 library_names = []
-defines = []
+defines = [
+    'GL_GLEXT_PROTOTYPES=1',
+    'GL_VERSION_4_0=0',
+    'GL_VERSION_4_1=0',
+    'GL_VERSION_4_2=0',
+    'GL_VERSION_4_3=0',
+    'GL_VERSION_4_4=0',
+    'GL_VERSION_4_5=0',
+    'GL_VERSION_4_6=0',
+]
 
 process = subprocess.run(
-    ['pkgconf', 'openal', '--cflags', '--libs'], 
+    ['pkgconf', 'gl', '--cflags', '--libs'], 
     check=True, 
     capture_output=True, 
     text=True
