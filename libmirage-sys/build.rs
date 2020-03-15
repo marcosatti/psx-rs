@@ -1,3 +1,4 @@
+use build_macros::external_build;
 use bindgen::callbacks::ParseCallbacks;
 
 #[derive(Debug)]
@@ -13,8 +14,6 @@ impl ParseCallbacks for ParsingCallback {
     }
 }
 
-include!("../utilities/external_build.rs");
-
 fn main() {
     let callback = ParsingCallback(vec![
         "FP_INFINITE", 
@@ -24,5 +23,5 @@ fn main() {
         "FP_ZERO"
     ]);
 
-    external_build!("libmirage", "libmirage_sys_bindgen", callback);
+    external_build("libmirage", "libmirage_sys_bindgen", callback);
 }

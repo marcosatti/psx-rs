@@ -5,6 +5,5 @@ authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 
 [build-dependencies]
-bindgen = "0.42"
-serde = { version = "1.0" , features = ["derive"] }
-serde_json = "1.0"
+build-macros = { path = "../build-macros" }
+bindgen = "0.53"
