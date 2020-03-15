@@ -14,3 +14,7 @@ opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }
 libpsx-rs = { path = "../libpsx-rs" }
+
+[build-dependencies]
+serde = { version = "1.0" , features = ["derive"] }
+serde_json = "1.0"
