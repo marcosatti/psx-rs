@@ -20,9 +20,11 @@ stdout = stdout.split()
 
 for token in stdout:
     if token.startswith('-L'):
-        include_paths.append(token[2:])
+        library_search_paths.append(token[2:])
     elif token.startswith('-l'):
         library_names.append(token[2:])
+    elif token.startswith('-I'):
+        include_paths.append(token[2:])
 
 print(json.dumps({
     'include_paths': include_paths,

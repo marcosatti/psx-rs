@@ -1,12 +1,11 @@
 macro_rules! external_build {
-    ($external_folder:literal, $out_file_name:literal, $ignore_macros:expr) => {
+    ($external_folder:literal, $out_file_name:literal, $parsing_callback:expr) => {
         {
             use std::env;
             use std::path::PathBuf;
             use std::process::Command;
             use bindgen::Builder;
             use serde::Deserialize;
-            use bindgen::callbacks::{ParseCallbacks, MacroParsingBehavior};
     
             #[derive(Deserialize, Debug)]
             struct Output {
@@ -17,19 +16,6 @@ macro_rules! external_build {
                 defines: Vec<String>,
             }
 
-            #[derive(Debug)]
-            struct ParsingOptions(Vec<&'static str>);
-
-            impl ParseCallbacks for ParsingOptions {
-                fn will_parse_macro(&self, name: &str) -> MacroParsingBehavior {
-                    if self.0.contains(&name) {
-                        MacroParsingBehavior::Ignore
-                    } else {
-                        MacroParsingBehavior::Default
-                    }
-                }
-            }
-    
             let output = Command::new("python")
                 .current_dir(PathBuf::from(".."))
                 .arg(concat!("external/", $external_folder, "/build.py"))
@@ -43,10 +29,14 @@ macro_rules! external_build {
                 panic!("Non-success return code: \nstdout: \n{}\nstderr: \n{}\n", &output_str_stdout, &output_str_stderr);
             }
     
+            if false {
+                panic!("Debug\nstdout: \n{}\nstderr: \n{}\n", output_str_stdout, output_str_stderr);
+            }
+
             let output: Output = serde_json::from_str(&output_str_stdout).unwrap();
     
             let mut builder = Builder::default();
-            builder = builder.parse_callbacks(Box::new(ParsingOptions(ignore_macros)));
+            builder = builder.parse_callbacks(Box::new($parsing_callback));
             builder = builder.rustfmt_bindings(false);
             builder = builder.derive_debug(false);
     
