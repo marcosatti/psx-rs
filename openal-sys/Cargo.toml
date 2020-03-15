@@ -5,5 +5,5 @@ authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 
 [build-dependencies]
-build-macros = { path = "../build-macros" }
+build-tools = { path = "../build-tools" }
 bindgen = "0.53"

@@ -14,7 +14,7 @@ struct Output {
     defines: Vec<String>,
 }
 
-pub fn external_build<T: ParseCallbacks>(external_folder: &str, out_file_name: &str, parsing_callback: T) {
+pub fn external_build<T: 'static + ParseCallbacks>(external_folder: &str, out_file_name: &str, parsing_callback: T) {
     let output = Command::new("python")
         .current_dir(PathBuf::from(".."))
         .arg(format!("external/{}/build.py", external_folder))
@@ -36,7 +36,7 @@ pub fn external_build<T: ParseCallbacks>(external_folder: &str, out_file_name: &
 
     let mut builder = Builder::default();
     builder = builder.parse_callbacks(Box::new(parsing_callback));
-    builder = builder.rustfmt_bindings(false);
+    builder = builder.rustfmt_bindings(true);
     builder = builder.derive_debug(false);
 
     // Add in defines.

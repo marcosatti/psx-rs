@@ -1,5 +1,5 @@
 [package]
-name = "build-macros"
+name = "build-tools"
 version = "1.0.0"
 authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"

@@ -1,4 +1,4 @@
-use build_macros::external_build;
+use build_tools::external_build;
 use bindgen::callbacks::ParseCallbacks;
 
 #[derive(Debug)]

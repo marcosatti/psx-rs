@@ -1,8 +1,8 @@
-use build_macros::external_build;
+use build_tools::external_build;
 use bindgen::callbacks::ParseCallbacks;
 
-#[derive(Debug)]
-struct ParsingCallback(Vec<&'static str>);
+#[derive(Copy, Clone, Debug)]
+struct ParsingCallback(&'static [&'static str]);
 
 impl ParseCallbacks for ParsingCallback {
     fn will_parse_macro(&self, name: &str) -> bindgen::callbacks::MacroParsingBehavior {
@@ -14,14 +14,14 @@ impl ParseCallbacks for ParsingCallback {
     }
 }
 
-fn main() {
-    let callback = ParsingCallback(vec![
-        "FP_INFINITE", 
-        "FP_NAN", 
-        "FP_NORMAL", 
-        "FP_SUBNORMAL", 
-        "FP_ZERO"
-    ]);
+static CALLBACK: ParsingCallback = ParsingCallback(&[
+    "FP_INFINITE", 
+    "FP_NAN", 
+    "FP_NORMAL", 
+    "FP_SUBNORMAL", 
+    "FP_ZERO"
+]);
 
-    external_build("libmirage", "libmirage_sys_bindgen", callback);
+fn main() {
+    external_build("libmirage", "libmirage_sys_bindgen", CALLBACK);
 }

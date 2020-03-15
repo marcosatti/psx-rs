@@ -16,4 +16,4 @@ libmirage-sys = { path = "../libmirage-sys" }
 libpsx-rs = { path = "../libpsx-rs" }
 
 [build-dependencies]
-build-macros = { path = "../build-macros" }
+build-tools = { path = "../build-tools" }
