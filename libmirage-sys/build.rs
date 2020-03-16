@@ -23,5 +23,5 @@ static CALLBACK: ParsingCallback = ParsingCallback(&[
 ]);
 
 fn main() {
-    external_build("libmirage", "libmirage_sys_bindgen", CALLBACK);
+    external_build("libmirage", CALLBACK);
 }

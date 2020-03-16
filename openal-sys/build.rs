@@ -6,5 +6,5 @@ struct ParsingCallback();
 impl ParseCallbacks for ParsingCallback {}
 
 fn main() {
-    external_build("openal", "openal_sys_bindgen", ParsingCallback());
+    external_build("openal", ParsingCallback());
 }

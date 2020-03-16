@@ -1,3 +1,3 @@
 #![allow(warnings)]
 
-include!(concat!(env!("OUT_DIR"), "/opengl_sys_bindgen.rs"));
+include!(env!("EXTERNAL_INCLUDE"));

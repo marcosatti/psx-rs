@@ -7,10 +7,10 @@ struct Output {
     enable: bool,
 }
 
-pub fn external_check(external_folder: &str, cfg_name: &str) {
+pub fn external_check(external_name: &str) {
     let output = Command::new("python")
         .current_dir(PathBuf::from(".."))
-        .arg(format!("external/{}/check.py", external_folder))
+        .arg(format!("external/{}/check.py", external_name))
         .output()
         .unwrap();
 
@@ -28,6 +28,6 @@ pub fn external_check(external_folder: &str, cfg_name: &str) {
     let output: Output = serde_json::from_str(&output_str_stdout).unwrap();
 
     if output.enable {
-        println!("cargo:rustc-cfg={}", cfg_name);
+        println!("cargo:rustc-cfg={}", external_name);
     }
 }

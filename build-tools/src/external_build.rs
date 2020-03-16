@@ -14,10 +14,10 @@ struct Output {
     defines: Vec<String>,
 }
 
-pub fn external_build<T: 'static + ParseCallbacks>(external_folder: &str, out_file_name: &str, parsing_callback: T) {
+pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_callback: T) {
     let output = Command::new("python")
         .current_dir(PathBuf::from(".."))
-        .arg(format!("external/{}/build.py", external_folder))
+        .arg(format!("external/{}/build.py", external_name))
         .output()
         .unwrap();
 
@@ -55,12 +55,16 @@ pub fn external_build<T: 'static + ParseCallbacks>(external_folder: &str, out_fi
     }
 
     // Generate bindings.
-    let out_file = PathBuf::from(env::var("OUT_DIR").unwrap()).join(format!("{}.rs", out_file_name));
+    let out_file_name = format!("{}_build.rs", external_name);
+    let out_file_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join(out_file_name);
+
     builder
         .generate()
         .unwrap()
-        .write_to_file(out_file)
+        .write_to_file(&out_file_path)
         .unwrap();
+    
+    println!("cargo:rustc-env=EXTERNAL_INCLUDE={}", out_file_path.to_str().unwrap());
 
     // Add library search paths.
     for library_search_path in output.library_search_paths {

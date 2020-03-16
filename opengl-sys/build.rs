@@ -6,5 +6,5 @@ struct ParsingCallback();
 impl ParseCallbacks for ParsingCallback {}
 
 fn main() {
-    external_build("opengl", "opengl_sys_bindgen", ParsingCallback());
+    external_build("opengl", ParsingCallback());
 }
