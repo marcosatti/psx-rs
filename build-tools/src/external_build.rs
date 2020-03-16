@@ -1,9 +1,11 @@
 use std::env;
 use std::path::PathBuf;
 use std::process::Command;
+use std::fs::write;
 use bindgen::Builder;
 use bindgen::callbacks::ParseCallbacks;
 use serde::Deserialize;
+use crate::external_check::external_check_inner;
 
 #[derive(Deserialize, Debug)]
 struct Output {
@@ -15,6 +17,15 @@ struct Output {
 }
 
 pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_callback: T) {
+    let out_file_name = format!("{}_build.rs", external_name);
+    let out_file_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join(out_file_name);
+    println!("cargo:rustc-env=EXTERNAL_INCLUDE={}", out_file_path.to_str().unwrap());
+
+    if !external_check_inner(external_name).enable {
+        write(out_file_path, b"").unwrap();
+        return;
+    }
+
     let output = Command::new("python")
         .current_dir(PathBuf::from(".."))
         .arg(format!("external/{}/build.py", external_name))
@@ -55,16 +66,11 @@ pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_
     }
 
     // Generate bindings.
-    let out_file_name = format!("{}_build.rs", external_name);
-    let out_file_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join(out_file_name);
-
     builder
         .generate()
         .unwrap()
         .write_to_file(&out_file_path)
         .unwrap();
-    
-    println!("cargo:rustc-env=EXTERNAL_INCLUDE={}", out_file_path.to_str().unwrap());
 
     // Add library search paths.
     for library_search_path in output.library_search_paths {
