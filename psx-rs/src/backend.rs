@@ -1,4 +1,3 @@
-use log::info;
 use sdl2::VideoSubsystem;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
@@ -29,7 +28,7 @@ pub(crate) fn initialize_video_backend<'a>(video_subsystem: &'a VideoSubsystem) 
     let opengl_vendor_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_version_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VERSION as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_renderer_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_RENDERER as GLenum) as *const i8).to_string_lossy().into_owned() };
-    info!("Video initialized: {}, {}, {}", opengl_vendor_string, opengl_version_string, opengl_renderer_string);
+    log::info!("Video initialized: {}, {}, {}", opengl_vendor_string, opengl_version_string, opengl_renderer_string);
     unsafe { glClearColor(0.0, 0.0, 0.0, 1.0); }
     unsafe { glClear(GL_COLOR_BUFFER_BIT); }
     opengl_release_context();
@@ -86,7 +85,7 @@ pub(crate) fn initialize_audio_backend<'a>() -> AudioBackend<'a> {
     let openal_vendor_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VENDOR as ALenum)).to_string_lossy().into_owned() };
     let openal_version_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VERSION as ALenum)).to_string_lossy().into_owned() };
     let openal_renderer_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_RENDERER as ALenum)).to_string_lossy().into_owned() };
-    info!("Audio initialized: {}, {}, {}", openal_vendor_string, openal_version_string, openal_renderer_string);
+    log::info!("Audio initialized: {}, {}, {}", openal_vendor_string, openal_version_string, openal_renderer_string);
     openal_release_context();
 
     AudioBackend::Openal(
@@ -137,7 +136,7 @@ pub(crate) fn initialize_cdrom_backend<'a>() -> CdromBackend<'a> {
     let libmirage_acquire_context = || { unsafe { &LIBMIRAGE_CONTEXT } };
     let libmirage_release_context = || { };
     let libmirage_version_string = unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
-    info!("CDROM initialized: libmirage {}", libmirage_version_string);
+    log::info!("CDROM initialized: libmirage {}", libmirage_version_string);
 
     CdromBackend::Libmirage(
         libmirage::BackendParams {

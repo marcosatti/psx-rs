@@ -6,7 +6,6 @@ use std::env::args;
 use std::time::Duration;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::time::Instant;
-use log::{error, info, debug};
 use sdl2::EventPump;
 use libpsx_rs::{Core, Config};
 use libpsx_rs::controllers::r3000::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
@@ -26,12 +25,12 @@ fn main() {
     let logs_path = workspace_path.join(r"logs/");
     let log_file_path = setup_log_file(&logs_path);
     setup_logger(&log_file_path);
-    info!("Logging initialized");
+    log::info!("Logging initialized");
 
     // Initialize SDL
     let sdl_context = sdl2::init().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
-    info!("SDL initialized");
+    log::info!("SDL initialized");
 
     // Initialize window & video backend
     let video_subsystem = sdl_context.video().unwrap();
@@ -95,12 +94,12 @@ fn setup_logger(log_file_path: &Path) {
 
 fn main_inner(event_pump: &mut EventPump, config: Config) {
     let mut core = Core::new(config);
-    info!("Core initialized");
+    log::info!("Core initialized");
 
     let disc_path_raw = args().nth(1).expect("No disc file path specified");
     let disc_path = Path::new(&disc_path_raw);
     core.change_disc(disc_path);
-    info!("Changed disc to {}", disc_path.display());
+    log::info!("Changed disc to {}", disc_path.display());
 
     // Do event loop
     let result = panic::catch_unwind(
@@ -124,7 +123,7 @@ fn main_inner(event_pump: &mut EventPump, config: Config) {
     );
 
     if result.is_err() {
-        error!("Panic occurred, exiting");
+        log::error!("Panic occurred, exiting");
     }
 
     // Post mortem
@@ -156,5 +155,5 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
 
 fn toggle_debug_option(flag: &'static AtomicBool, identifier: &str) {
     let old_value = flag.fetch_xor(true, Ordering::AcqRel);
-    debug!("Toggled {} from {} to {}", identifier, old_value, !old_value);
+    log::debug!("Toggled {} from {} to {}", identifier, old_value, !old_value);
 }
