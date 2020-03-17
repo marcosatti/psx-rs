@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "build-tools",
     "opengl-sys",
     "openal-sys",
     "libmirage-sys",

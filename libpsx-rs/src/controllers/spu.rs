@@ -2,7 +2,7 @@ pub mod voice;
 pub mod transfer;
 pub mod adpcm;
 pub mod sound;
-pub mod openal;
+pub mod backend_dispatch;
 pub mod dac;
 pub mod volume;
 pub mod adsr;

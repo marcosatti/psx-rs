@@ -9,7 +9,7 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
-        assert!(!DISC.is_null());
+        assert!(!DISC.is_null(), "No disc loaded");
 
         let mut _error: *mut GError = std::ptr::null_mut();
         let track = mirage_disc_get_track_by_index(DISC, 0, &mut _error as *mut *mut GError);
@@ -36,7 +36,7 @@ pub fn read_sector(backend_params: &BackendParams, lba_address: usize) -> Vec<u8
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
-        assert!(!DISC.is_null());
+        assert!(!DISC.is_null(), "No disc loaded");
 
         let mut error: *mut GError = std::ptr::null_mut();
         

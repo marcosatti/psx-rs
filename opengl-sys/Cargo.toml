@@ -5,4 +5,5 @@ authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 
 [build-dependencies]
-bindgen = "0.42"
+build-tools = { path = "../build-tools" }
+bindgen = "0.53"

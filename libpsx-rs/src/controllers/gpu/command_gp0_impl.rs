@@ -1,13 +1,12 @@
-//use log::warn;
 use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
 use crate::resources::Resources;
 use crate::resources::gpu::*;
 use crate::backends::video::VideoBackend;
-use crate::controllers::gpu::opengl;
 use crate::controllers::gpu::data::*;
 use crate::controllers::gpu::debug;
+use crate::controllers::gpu::backend_dispatch;
 
 pub fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
@@ -43,12 +42,7 @@ pub fn command_02_handler(_resources: &mut Resources, video_backend: &VideoBacke
         Point2D::new(base_point.x + size.width, base_point.y - size.height),
     ];
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_solid(backend_params, positions, color);
-        },
-    }
+    backend_dispatch::draw_polygon_4_solid(video_backend, positions, color);
 }
 
 pub fn command_05_length(_data: &[u32]) -> Option<usize> {
@@ -83,14 +77,9 @@ pub fn command_28_handler(_resources: &mut Resources, video_backend: &VideoBacke
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
     
     let color = extract_color_rgb(data[0], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
     
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_solid(backend_params, vertices, color);
-        },
-    }
+    backend_dispatch::draw_polygon_4_solid(video_backend, positions, color);
 }
 
 pub fn command_2c_length(_data: &[u32]) -> Option<usize> {
@@ -104,18 +93,13 @@ pub fn command_2c_handler(_resources: &mut Resources, video_backend: &VideoBacke
     // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
 
     let _color = extract_color_rgb(data[0], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
     let _clut = extract_clut_base_normalized(data[2]);
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_textured_framebuffer(backend_params, vertices, texcoords);
-        },
-    }
+    backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
 }
 
 pub fn command_2d_length(_data: &[u32]) -> Option<usize> {
@@ -128,18 +112,13 @@ pub fn command_2d_handler(_resources: &mut Resources, video_backend: &VideoBacke
     // TODO: implement this properly - need to make a shader to do this I think...
     // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
 
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
     let _clut = extract_clut_base_normalized(data[2]);
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_textured_framebuffer(backend_params, vertices, texcoords);
-        },
-    }
+    backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
 }
 
 pub fn command_30_length(_data: &[u32]) -> Option<usize> {
@@ -150,14 +129,9 @@ pub fn command_30_handler(_resources: &mut Resources, video_backend: &VideoBacke
     debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
-    let vertices = extract_vertices_3_normalized([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = extract_vertices_3_normalized([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_3_shaded(backend_params, vertices, colors);
-        },
-    }
+    backend_dispatch::draw_polygon_3_shaded(video_backend, positions, colors);
 }
 
 pub fn command_38_length(_data: &[u32]) -> Option<usize> {
@@ -168,14 +142,9 @@ pub fn command_38_handler(_resources: &mut Resources, video_backend: &VideoBacke
     debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
     
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
-    let vertices = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_shaded(backend_params, vertices, colors);
-        },
-    }
+    backend_dispatch::draw_polygon_4_shaded(video_backend, positions, colors);
 }
 
 pub fn command_3c_length(_data: &[u32]) -> Option<usize> {
@@ -216,19 +185,14 @@ pub fn command_65_handler(resources: &mut Resources, video_backend: &VideoBacken
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let _clut = extract_clut_base_normalized(data[2]);
 
-    let positions = [
+    let positions: [Point2D<f32, Normalized>; 4] = [
         Point2D::new(base_point.x, base_point.y),
         Point2D::new(base_point.x + size.width, base_point.y),
         Point2D::new(base_point.x, base_point.y - size.height),
         Point2D::new(base_point.x + size.width, base_point.y - size.height),
     ];
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_textured_framebuffer(backend_params, positions, texcoords);
-        },
-    }
+    backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
 }
 
 pub fn command_6f_length(_data: &[u32]) -> Option<usize> {
@@ -268,14 +232,14 @@ pub fn command_a0_handler(_resources: &mut Resources, video_backend: &VideoBacke
     let texture_width = Bitfield::new(0, 16).extract_from(data[2]) as usize;
     let texture_height = Bitfield::new(16, 16).extract_from(data[2]) as usize;
 
-    let positions = [
+    let positions: [Point2D<f32, Normalized>; 4] = [
         Point2D::new(base_point.x, base_point.y),
         Point2D::new(base_point.x + size.width, base_point.y),
         Point2D::new(base_point.x, base_point.y - size.height),
         Point2D::new(base_point.x + size.width, base_point.y - size.height),
     ];
 
-    let texcoords = [
+    let texcoords: [Point2D<f32, Normalized>; 4] = [
         Point2D::new(0.0, 0.0),
         Point2D::new(1.0, 0.0),
         Point2D::new(0.0, 1.0),
@@ -300,12 +264,7 @@ pub fn command_a0_handler(_resources: &mut Resources, video_backend: &VideoBacke
         }
     }
 
-    match video_backend {
-        VideoBackend::None => { unimplemented!("") },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::draw_polygon_4_textured(backend_params, positions, texcoords, texture_width, texture_height, &texture_colors);
-        },
-    }
+    backend_dispatch::draw_polygon_4_textured(video_backend, positions, texcoords, texture_width, texture_height, &texture_colors);
 }
 
 pub fn command_c0_length(_data: &[u32]) -> Option<usize> {
@@ -326,12 +285,7 @@ pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBacken
 
     let fifo_words = (count + 1) / 2;
 
-    let mut data = match video_backend {
-        VideoBackend::None => { unimplemented!() },
-        VideoBackend::Opengl(ref backend_params) => {
-            opengl::read_framebuffer_5551(backend_params, origin, size)
-        },
-    };
+    let mut data = backend_dispatch::read_framebuffer_5551(video_backend, origin, size);
 
     // Data is to be packed from 2 x u16 into u32.
     // Pad the last u16 if its an odd amount.

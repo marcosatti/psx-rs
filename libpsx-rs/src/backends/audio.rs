@@ -1,22 +1,27 @@
+#[cfg(openal)]
 pub mod openal;
-
-use crate::backends::audio::openal::*;
 
 pub enum AudioBackend<'a> {
     None,
-    Openal(BackendParams<'a>),
+    #[cfg(openal)]
+    Openal(openal::BackendParams<'a>),
+    _Phantom(std::marker::PhantomData<&'a ()>),
 }
 
 pub fn setup(audio_backend: &AudioBackend) {
     match audio_backend {
         AudioBackend::None => {},
+        #[cfg(openal)]
         AudioBackend::Openal(ref params) => openal::setup(params),
+        _ => unimplemented!(),
     }
 }
 
 pub fn teardown(audio_backend: &AudioBackend) {
     match audio_backend {
         AudioBackend::None => {},
+        #[cfg(openal)]
         AudioBackend::Openal(ref params) => openal::teardown(params),
+        _ => unimplemented!(),
     }
 }

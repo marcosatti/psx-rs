@@ -1,6 +1,6 @@
 use crate::resources::Resources;
 use crate::backends::video::VideoBackend;
-use crate::controllers::gpu::crtc::opengl::*;
+use crate::controllers::gpu::crtc::backend_dispatch;
 use crate::resources::gpu::*;
 
 pub fn handle_render(resources: &Resources, video_backend: &VideoBackend) {
@@ -15,8 +15,5 @@ pub fn handle_render(resources: &Resources, video_backend: &VideoBackend) {
 }
 
 fn render(video_backend: &VideoBackend) {
-    match video_backend {
-        VideoBackend::None => { unimplemented!() },
-        VideoBackend::Opengl(ref params) => render_opengl(params),
-    }
+    backend_dispatch::render(video_backend);
 }

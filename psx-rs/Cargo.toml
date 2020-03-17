@@ -14,3 +14,6 @@ opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }
 libpsx-rs = { path = "../libpsx-rs" }
+
+[build-dependencies]
+build-tools = { path = "../build-tools" }

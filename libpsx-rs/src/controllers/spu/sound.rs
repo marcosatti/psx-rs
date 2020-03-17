@@ -4,7 +4,7 @@ use crate::backends::audio::AudioBackend;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::spu::voice::*;
 use crate::controllers::spu::adpcm::*;
-use crate::controllers::spu::openal;
+use crate::controllers::spu::backend_dispatch;
 use crate::controllers::spu::volume::*;
 use crate::controllers::spu::adsr::*;
 use crate::controllers::spu::interpolation::*;
@@ -103,12 +103,7 @@ fn handle_play_sound_buffer(resources: &mut Resources, audio_backend: &AudioBack
         let unmuted = control.read_bitfield(CONTROL_UNMUTE) != 0;
 
         if unmuted {
-            match audio_backend {
-                AudioBackend::None => {},
-                AudioBackend::Openal(ref backend_params) => {
-                    openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id);
-                },
-            }
+            backend_dispatch::play_pcm_samples(audio_backend, &play_state.sample_buffer, voice_id);
         }
 
         play_state.sample_buffer.clear();
