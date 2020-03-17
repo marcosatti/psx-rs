@@ -27,7 +27,7 @@ pub(crate) fn read_sector(cdrom_backend: &CdromBackend, lba_address: usize) -> V
     match cdrom_backend {
         CdromBackend::None => panic!(),
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => libmirage::read_sector(params, resources.cdrom.lba_address),
+        CdromBackend::Libmirage(ref params) => libmirage::read_sector(params, lba_address),
         _ => unimplemented!(),
     }
 }

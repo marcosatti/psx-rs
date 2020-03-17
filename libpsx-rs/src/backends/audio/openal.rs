@@ -4,7 +4,7 @@ use openal_sys::*;
 use crate::backends::context::*;
 
 pub struct BackendParams<'a> {
-    pub context: BackendContext<'a, *mut ALCcontext>,
+    pub context: BackendContext<'a, ()>,
 }
 
 pub fn setup(backend_params: &BackendParams) {

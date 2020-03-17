@@ -10,7 +10,7 @@ pub(crate) fn play_pcm_samples(audio_backend: &AudioBackend, sample_buffer: &[St
     match audio_backend {
         AudioBackend::None => {},
         #[cfg(openal)]
-        AudioBackend::Openal(ref backend_params) => openal::play_pcm_samples(backend_params, &play_state.sample_buffer, voice_id),
+        AudioBackend::Openal(ref backend_params) => openal::play_pcm_samples(backend_params, sample_buffer, voice_id),
         _ => unimplemented!(),
     }
 }

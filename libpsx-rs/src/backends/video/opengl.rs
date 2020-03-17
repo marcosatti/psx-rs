@@ -7,7 +7,7 @@ use crate::backends::context::*;
 use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
 pub struct BackendParams<'a> {
-    pub context: BackendContext<'a, sdl2::video::GLContext>,
+    pub context: BackendContext<'a, ()>,
 }
 
 pub fn setup(backend_params: &BackendParams) {

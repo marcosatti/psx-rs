@@ -58,11 +58,14 @@ fn main() {
     
     main_inner(&mut event_pump, config);
 
-    // Libmirage teardown
+    // CDROM teardown
     backend::terminate_cdrom_backend();
 
     // Audio teardown
     backend::terminate_audio_backend();
+
+    // Video teardown
+    backend::terminate_video_backend();
 }
 
 fn setup_log_file(logs_path: &Path) -> PathBuf {

@@ -1,7 +1,10 @@
+use log::info;
 use sdl2::VideoSubsystem;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
 use libpsx_rs::backends::cdrom::*;
+
+/// Video
 
 #[cfg(opengl)]
 pub(crate) fn initialize_video_backend<'a>(video_subsystem: &'a VideoSubsystem) -> VideoBackend<'a> {
@@ -16,9 +19,12 @@ pub(crate) fn initialize_video_backend<'a>(video_subsystem: &'a VideoSubsystem) 
     gl_attr.set_context_flags().debug().set();
 
     let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().opengl().build().unwrap();
-    let opengl_context = window.gl_create_context().unwrap();
-    let opengl_acquire_context = || { window.gl_make_current(&opengl_context).unwrap(); &opengl_context };
-    let opengl_release_context = || { window.subsystem().gl_release_current_context().unwrap(); };
+    let _opengl_context = window.gl_create_context().unwrap();
+
+    // TODO: need to consider multithreading? It's a bit unclear, but doesn't look like it - probably implementation dependant...
+    let opengl_acquire_context = || { &() };
+    let opengl_release_context = || { };
+
     opengl_acquire_context();
     let opengl_vendor_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_version_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VERSION as GLenum) as *const i8).to_string_lossy().into_owned() };
@@ -30,7 +36,7 @@ pub(crate) fn initialize_video_backend<'a>(video_subsystem: &'a VideoSubsystem) 
 
     VideoBackend::Opengl(
         opengl::BackendParams {
-            context: BackendContext::new(&opengl_acquire_context, &opengl_release_context),
+            context: BackendContext::new(Box::new(opengl_acquire_context), Box::new(opengl_release_context)),
         }
     )
 }
@@ -40,15 +46,39 @@ pub(crate) fn initialize_video_backend<'a>(_video_subsystem: &'a VideoSubsystem)
     VideoBackend::None
 }
 
+#[cfg(opengl)]
+pub(crate) fn terminate_video_backend() {
+}
+
+#[cfg(not(opengl))]
+pub(crate) fn terminate_video_backend() {
+}
+
+
+/// Audio
+
+#[cfg(openal)]
+static mut OPENAL_DEVICE: *mut openal_sys::ALCdevice = std::ptr::null_mut();
+
+#[cfg(openal)]
+static mut OPENAL_CONTEXT: *mut openal_sys::ALCcontext = std::ptr::null_mut();
+
 #[cfg(openal)]
 pub(crate) fn initialize_audio_backend<'a>() -> AudioBackend<'a> {
     use openal_sys::*;
     use libpsx_rs::backends::context::BackendContext;
 
-    let openal_device = unsafe { alcOpenDevice(std::ptr::null()) };
-    let openal_context = unsafe { alcCreateContext(openal_device, std::ptr::null()) };
-    let openal_acquire_context = || { unsafe { alcMakeContextCurrent(openal_context); &openal_context } };
-    let openal_release_context = || { unsafe { alcMakeContextCurrent(std::ptr::null_mut()); } };
+    unsafe {
+        OPENAL_DEVICE = alcOpenDevice(std::ptr::null());
+        assert!(!OPENAL_DEVICE.is_null());
+        OPENAL_CONTEXT = alcCreateContext(OPENAL_DEVICE, std::ptr::null());
+        assert!(!OPENAL_CONTEXT.is_null());
+    }
+
+    // TODO: need to consider multithreading? It's a bit unclear, but doesn't look like it - probably implementation dependant...
+    let openal_acquire_context = || { &() };
+    let openal_release_context = || { };
+
     openal_acquire_context();
     unsafe { alListener3f(AL_POSITION as ALenum, 0.0, 0.0, 0.0) };
     unsafe { alListener3f(AL_VELOCITY as ALenum, 0.0, 0.0, 0.0) };
@@ -61,7 +91,7 @@ pub(crate) fn initialize_audio_backend<'a>() -> AudioBackend<'a> {
 
     AudioBackend::Openal(
         openal::BackendParams {
-            context: BackendContext::new(&openal_acquire_context, &openal_release_context),
+            context: BackendContext::new(Box::new(openal_acquire_context), Box::new(openal_release_context)),
         }
     )
 }
@@ -75,29 +105,43 @@ pub(crate) fn initialize_audio_backend<'a>() -> AudioBackend<'a> {
 pub(crate) fn terminate_audio_backend() {
     use openal_sys::*;
     
-    unsafe { alcDestroyContext(openal_context) };
-    unsafe { alcCloseDevice(openal_device) };
+    unsafe {
+        assert!(!OPENAL_CONTEXT.is_null());
+        alcDestroyContext(OPENAL_CONTEXT);
+        assert!(!OPENAL_DEVICE.is_null());
+        alcCloseDevice(OPENAL_DEVICE);
+    }
 }
 
 #[cfg(not(openal))]
 pub(crate) fn terminate_audio_backend() {
 }
 
+
+/// CDROM
+
+#[cfg(libmirage)]
+static mut LIBMIRAGE_CONTEXT: *mut libmirage_sys::MirageContext = std::ptr::null_mut();
+
 #[cfg(libmirage)]
 pub(crate) fn initialize_cdrom_backend<'a>() -> CdromBackend<'a> {
     use libmirage_sys::*;
     use libpsx_rs::backends::context::BackendContext;
 
-    unsafe { mirage_initialize(std::ptr::null_mut()) };
-    let mut libmirage_context = unsafe { g_object_new(mirage_context_get_type(), std::ptr::null()) as *mut MirageContext };
-    let libmirage_acquire_context = || { &libmirage_context };
+    unsafe {
+        mirage_initialize(std::ptr::null_mut());
+        LIBMIRAGE_CONTEXT = g_object_new(mirage_context_get_type(), std::ptr::null()) as *mut MirageContext;
+        assert!(!LIBMIRAGE_CONTEXT.is_null());
+    }
+    
+    let libmirage_acquire_context = || { unsafe { &LIBMIRAGE_CONTEXT } };
     let libmirage_release_context = || { };
     let libmirage_version_string = unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
     info!("CDROM initialized: libmirage {}", libmirage_version_string);
 
     CdromBackend::Libmirage(
         libmirage::BackendParams {
-            context: BackendContext::new(&libmirage_acquire_context, &libmirage_release_context),
+            context: BackendContext::new(Box::new(libmirage_acquire_context), Box::new(libmirage_release_context)),
         }
     )
 }
@@ -111,7 +155,10 @@ pub(crate) fn initialize_cdrom_backend<'a>() -> CdromBackend<'a> {
 pub(crate) fn terminate_cdrom_backend() {
     use libmirage_sys::*;
 
-    unsafe { g_clear_object((&mut libmirage_context as *mut *mut MirageContext) as *mut *mut GObject) };
+    unsafe { 
+        assert!(!LIBMIRAGE_CONTEXT.is_null());
+        g_clear_object((&mut LIBMIRAGE_CONTEXT as *mut *mut MirageContext) as *mut *mut GObject);
+    }
 }
 
 #[cfg(not(libmirage))]
