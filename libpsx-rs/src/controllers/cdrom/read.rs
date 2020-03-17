@@ -1,6 +1,6 @@
 use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
-use crate::controllers::cdrom::libmirage;
+use crate::controllers::cdrom::backend_dispatch;
 use crate::controllers::cdrom::interrupt::*;
 use crate::controllers::cdrom::state::*;
 use crate::resources::cdrom::*;
@@ -29,11 +29,7 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
             return true;
         }
 
-        let data_block = match cdrom_backend {
-            CdromBackend::None => panic!(),
-            CdromBackend::Libmirage(ref params) => libmirage::read_sector(params, resources.cdrom.lba_address),
-        };
-
+        let data_block = backend_dispatch::read_sector(cdrom_backend, resources.cdrom.lba_address);
         assert_eq!(data_block.len(), 2048);
 
         resources.cdrom.lba_address += 1;

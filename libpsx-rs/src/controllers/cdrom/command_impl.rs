@@ -1,7 +1,7 @@
 use crate::backends::cdrom::CdromBackend;
 use crate::resources::Resources;
 use crate::constants::cdrom::*;
-use crate::controllers::cdrom::libmirage;
+use crate::controllers::cdrom::backend_dispatch;
 use crate::controllers::cdrom::interrupt::*;
 use crate::controllers::cdrom::state::*;
 
@@ -52,10 +52,7 @@ pub fn command_02_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
 
-    let lba_address = match cdrom_backend {
-        CdromBackend::None => panic!(),
-        CdromBackend::Libmirage(ref params) => libmirage::msf_to_lba_address(params, minute, second, frame),
-    };
+    let lba_address = backend_dispatch::msf_to_lba(cdrom_backend, minute, second, frame);
 
     resources.cdrom.lba_address = lba_address;
 
@@ -203,10 +200,7 @@ pub fn command_1a_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
             let response = &resources.cdrom.response;
 
             // Determine disc mode type.
-            let mode = match cdrom_backend {
-                CdromBackend::None => panic!(),
-                CdromBackend::Libmirage(ref params) => libmirage::disc_mode(params),
-            };
+            let mode = backend_dispatch::disc_mode(cdrom_backend);
 
             match mode {
                 2 => {

@@ -1,7 +1,7 @@
 use opengl_sys::*;
 use crate::backends::video::opengl;
 
-pub fn render_opengl(backend_params: &opengl::BackendParams) {
+pub fn render(backend_params: &opengl::BackendParams) {
     static mut PROGRAM_CONTEXT: Option<opengl::rendering::ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();

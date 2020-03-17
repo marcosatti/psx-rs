@@ -18,6 +18,8 @@ There are 2 types of build scripts that are looked for within each external libr
 - build.py: to gather build information.
 
 ## Remarks
-opengl-sys is currently set up NOT to dynamically find the needed function calls (ie: does not use glXGetProcAddress, wglGetProcAddress etc), as it assumes mesa is used - specifically the software renderer llvmpipe, which supports OpenGL 3.3 fully (and exports all needed symbols already). If when building it complains it can't find or link to symbols, then you are probably not using mesa.
+SDL2 strictly speaking is not required to use libpsx-rs, but the executable psx-rs does expect it to be available. You can omit this dependency if you build your own wrapper.
 
-opengl-sys and SDL2 both are required to do anything useful with the emulator. If run without them, the emulator will shortly panic upon start, as it needs to render to a screen buffer. It's only really useful to exclude them if testing the build process (ie: just building libpsx-rs).
+opengl-sys is required to do anything useful with the emulator. If run without, the emulator will shortly panic upon start, as it needs to render to a screen buffer. It's only really useful to exclude it if testing the build process (ie: just building libpsx-rs).
+
+opengl-sys is currently set up NOT to dynamically find the needed function calls (ie: does not use glXGetProcAddress, wglGetProcAddress etc), as it assumes mesa is used - specifically the software renderer llvmpipe, which supports OpenGL 3.3 fully (and exports all needed symbols already). If when building it complains it can't find or link to symbols, then you are probably not using mesa.

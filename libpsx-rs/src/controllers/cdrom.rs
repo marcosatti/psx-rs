@@ -1,4 +1,4 @@
-pub mod libmirage;
+pub mod backend_dispatch;
 pub mod command;
 pub mod command_impl;
 pub mod interrupt;
