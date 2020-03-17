@@ -1,15 +1,22 @@
+#[cfg(opengl)]
 pub mod opengl;
 
-use crate::backends::video::opengl::*;
-
+#[cfg(any(opengl)]
 pub enum VideoBackend<'a> {
     None,
-    Opengl(BackendParams<'a>),
+    #[cfg(opengl)]
+    Opengl(opengl::BackendParams<'a>),
+}
+
+#[cfg(not(any(opengl)))]
+pub enum VideoBackend {
+    None,
 }
 
 pub fn setup(video_backend: &VideoBackend) {
     match video_backend {
         VideoBackend::None => unimplemented!(),
+        #[cfg(opengl)]
         VideoBackend::Opengl(ref params) => opengl::setup(params),
     }
 }
@@ -17,6 +24,7 @@ pub fn setup(video_backend: &VideoBackend) {
 pub fn teardown(video_backend: &VideoBackend) {
     match video_backend {
         VideoBackend::None => unimplemented!(),
+        #[cfg(opengl)]
         VideoBackend::Opengl(ref params) => opengl::teardown(params),
     }
 }
