@@ -6,6 +6,7 @@ use bindgen::Builder;
 use bindgen::callbacks::ParseCallbacks;
 use serde::Deserialize;
 use crate::external_check::external_check_inner;
+use crate::python;
 
 #[derive(Deserialize, Debug)]
 struct Output {
@@ -26,7 +27,7 @@ pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_
         return;
     }
 
-    let output = Command::new("python")
+    let output = Command::new(python::bin_name())
         .current_dir(PathBuf::from(".."))
         .arg(format!("external/{}/build.py", external_name))
         .output()

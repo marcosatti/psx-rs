@@ -3,6 +3,8 @@ jobs:
   build:
     docker:
       - image: rustlang/rust:nightly-slim
+    environment:
+      CI_PYTHON_BIN_NAME: python3
     steps:
       - run:
           name: APT update
@@ -12,10 +14,6 @@ jobs:
           name: Install Python 3
           command: |
             apt install -y python3
-      - run:
-          name: Alias Python3
-          command: |
-            alias python=python3
       - checkout
       - run:
           name: Make external directory structure

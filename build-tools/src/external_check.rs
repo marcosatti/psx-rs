@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 use serde::Deserialize;
+use crate::python;
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct Output {
@@ -8,7 +9,7 @@ pub(crate) struct Output {
 }
 
 pub(crate) fn external_check_inner(external_name: &str) -> Output {
-    let output = Command::new("python")
+    let output = Command::new(python::bin_name())
         .current_dir(PathBuf::from(".."))
         .arg(format!("external/{}/check.py", external_name))
         .output()
