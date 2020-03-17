@@ -11,7 +11,7 @@ jobs:
             cd libpsx-rs
       - run:
           name: Build
-          command: cargo build --features ''
+          command: cargo build
 workflows:
   version: 2
   main:
