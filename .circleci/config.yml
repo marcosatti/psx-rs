@@ -4,6 +4,18 @@ jobs:
     docker:
       - image: rustlang/rust:nightly-slim
     steps:
+      - run:
+          name: APT update
+          command: |
+            apt update
+      - run:
+          name: Install Python 3
+          command: |
+            apt install -y python3
+      - run:
+          name: Alias Python3
+          command: |
+            alias python=python3
       - checkout
       - run:
           name: Make external directory structure
