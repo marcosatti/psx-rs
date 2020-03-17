@@ -34,12 +34,10 @@ jobs:
             cp external-sample/check-disable.py external/opengl/check.py
             cp external-sample/check-disable.py external/libmirage/check.py
       - run:
-          name: Change directory (libpsx-rs)
+          name: Build
           command: |
             cd libpsx-rs
-      - run:
-          name: Build
-          command: cargo build
+            cargo build
 workflows:
   version: 2
   main:
