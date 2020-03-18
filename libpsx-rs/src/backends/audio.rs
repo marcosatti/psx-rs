@@ -1,11 +1,11 @@
 #[cfg(openal)]
 pub mod openal;
 
-pub enum AudioBackend<'a> {
+pub enum AudioBackend<'a: 'b, 'b> {
     None,
     #[cfg(openal)]
-    Openal(openal::BackendParams<'a>),
-    _Phantom(std::marker::PhantomData<&'a ()>),
+    Openal(openal::BackendParams<'a, 'b>),
+    _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
 pub fn setup(audio_backend: &AudioBackend) {

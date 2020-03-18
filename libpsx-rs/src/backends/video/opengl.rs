@@ -6,14 +6,18 @@ use opengl_sys::*;
 use crate::backends::context::*;
 use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
-pub struct BackendParams<'a> {
-    pub context: BackendContext<'a, ()>,
+static mut INITIALIZED: bool = false;
+
+pub struct BackendParams<'a: 'b, 'b> {
+    pub context: BackendContext<'a, 'b, ()>,
 }
 
 pub fn setup(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
+        assert_eq!(INITIALIZED, false);
+
         // Debug
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
         glDebugMessageCallbackARB(Some(debug::debug_callback), std::ptr::null());
@@ -53,6 +57,8 @@ pub fn setup(backend_params: &BackendParams) {
         if glGetError() != GL_NO_ERROR {
             panic!("Error initializing OpenGL video backend");
         }
+
+        INITIALIZED = true;
     }
 }
 
@@ -62,38 +68,42 @@ pub fn teardown(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
-        // RBO
-        let mut param = 0;
-        glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
-        assert!(param == (GL_RENDERBUFFER as GLint));
-        glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
+        if INITIALIZED {
+            // RBO
+            let mut param = 0;
+            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
+            assert!(param == (GL_RENDERBUFFER as GLint));
+            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
 
-        let rbo = param as GLuint;
-        glDeleteRenderbuffers(1, &rbo);
+            let rbo = param as GLuint;
+            glDeleteRenderbuffers(1, &rbo);
 
-        // Texture
-        let mut param = 0;
-        glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
-        assert!(param == (GL_TEXTURE as GLint));
-        glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
+            // Texture
+            let mut param = 0;
+            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
+            assert!(param == (GL_TEXTURE as GLint));
+            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
 
-        let texture = param as GLuint;
-        glDeleteTextures(1, &texture);
+            let texture = param as GLuint;
+            glDeleteTextures(1, &texture);
 
-        // FBO
-        let mut fbo_int = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo_int);
-        let fbo = fbo_int as GLuint;
-        glDeleteFramebuffers(1, &fbo);
+            // FBO
+            let mut fbo_int = 0;
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo_int);
+            let fbo = fbo_int as GLuint;
+            glDeleteFramebuffers(1, &fbo);
 
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rendering::WINDOW_FBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rendering::WINDOW_FBO);
 
-        // Debug
-        glDebugMessageCallbackARB(None, std::ptr::null());
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_FALSE as GLboolean);
+            // Debug
+            glDebugMessageCallbackARB(None, std::ptr::null());
+            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_FALSE as GLboolean);
 
-        if glGetError() != GL_NO_ERROR {
-            panic!("Error tearing down OpenGL video backend");
+            if glGetError() != GL_NO_ERROR {
+                panic!("Error tearing down OpenGL video backend");
+            }
         }
+
+        INITIALIZED = false;
     }
 }

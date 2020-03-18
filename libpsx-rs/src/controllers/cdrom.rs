@@ -15,7 +15,7 @@ use crate::controllers::cdrom::command::*;
 use crate::controllers::cdrom::read::*;
 use crate::resources::cdrom::*;
 
-pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
+pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend) {
     handle_interrupt_enable(resources);
     handle_interrupt_flags(resources);
     handle_request(resources);
@@ -27,7 +27,7 @@ pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
     handle_data_fifo(resources);
 }
 
-fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) {
+fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend) {
     // Don't run anything until all previous interrupts have been acknowledged, otherwise new ones could be missed.
     {
         let int_flag = &resources.cdrom.int_flag;

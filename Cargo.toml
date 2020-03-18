@@ -6,6 +6,7 @@ members = [
     "libmirage-sys",
     "libpsx-rs",
     "psx-rs",
+    "psx-rs-cli",
 ]
 
 [profile.dev]

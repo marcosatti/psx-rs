@@ -8,7 +8,7 @@ type LengthFn = fn(usize) -> usize;
 
 type HandlerFn = fn(&mut Resources, &CdromBackend, usize) -> bool;
 
-pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) -> bool {
+pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend) -> bool {
     if resources.cdrom.command_index.is_none() {
         // Read a new command if available.
         if !resources.cdrom.command.write_latch.load(Ordering::Acquire) {

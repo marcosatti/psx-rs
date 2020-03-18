@@ -5,7 +5,7 @@ use crate::controllers::cdrom::interrupt::*;
 use crate::controllers::cdrom::state::*;
 use crate::resources::cdrom::*;
 
-pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) -> bool {
+pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend) -> bool {
     // Buffer some data first (INT1 means ready to send data?).
     // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the BIOS expects it...
     if resources.cdrom.read_buffer.is_empty() {
@@ -29,7 +29,7 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>) 
             return true;
         }
 
-        let data_block = backend_dispatch::read_sector(cdrom_backend, resources.cdrom.lba_address);
+        let data_block = backend_dispatch::read_sector(cdrom_backend, resources.cdrom.lba_address).unwrap_or_else(|_| unimplemented!());
         assert_eq!(data_block.len(), 2048);
 
         resources.cdrom.lba_address += 1;

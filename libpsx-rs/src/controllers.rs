@@ -14,15 +14,15 @@ use crate::backends::video::VideoBackend;
 use crate::backends::audio::AudioBackend;
 use crate::backends::cdrom::CdromBackend;
 
-pub struct ControllerState<'b, 'a: 'b> {
-    resources: &'b mut Resources,
-    video_backend: &'b VideoBackend<'a>,
-    audio_backend: &'b AudioBackend<'a>,
-    cdrom_backend: &'b CdromBackend<'a>,
+pub struct ControllerState<'a: 'b, 'b: 'c, 'c> {
+    resources: &'c mut Resources,
+    video_backend: &'c VideoBackend<'a, 'b>,
+    audio_backend: &'c AudioBackend<'a, 'b>,
+    cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
-impl<'b, 'a: 'b> ControllerState<'b, 'a> {
-    pub unsafe fn from_core_state(state: &State<'b, 'a>) -> ControllerState<'b, 'a> {
+impl<'a: 'b, 'b: 'c, 'c> ControllerState<'a, 'b, 'c> {
+    pub unsafe fn from_core_state(state: &State<'a, 'b, 'c>) -> ControllerState<'a, 'b, 'c> {
         ControllerState {
             resources: state.resources.as_mut().unwrap(),
             video_backend: state.video_backend,

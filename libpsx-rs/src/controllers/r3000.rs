@@ -30,7 +30,7 @@ pub fn run(state: &mut ControllerState, event: Event) {
     }
 }
 
-fn run_time(resources: &mut Resources, cdrom_backend: &CdromBackend<'_>, duration: Duration) {
+fn run_time(resources: &mut Resources, cdrom_backend: &CdromBackend, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     
     while ticks > 0 {

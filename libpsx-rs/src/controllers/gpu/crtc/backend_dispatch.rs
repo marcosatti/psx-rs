@@ -5,11 +5,11 @@ mod opengl;
 
 use crate::backends::video::VideoBackend;
 
-pub(crate) fn render(video_backend: &VideoBackend) {
+pub(crate) fn render(video_backend: &VideoBackend) -> Result<(), ()> {
     match video_backend {
-        VideoBackend::None => panic!(),
+        VideoBackend::None => Err(()),
         #[cfg(opengl)]
-        VideoBackend::Opengl(ref params) => opengl::render(params),
+        VideoBackend::Opengl(ref params) => Ok(opengl::render(params)),
         _ => unimplemented!(),
     }
 }

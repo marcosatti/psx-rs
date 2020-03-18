@@ -15,5 +15,5 @@ pub fn handle_render(resources: &Resources, video_backend: &VideoBackend) {
 }
 
 fn render(video_backend: &VideoBackend) {
-    backend_dispatch::render(video_backend);
+    let _ = backend_dispatch::render(video_backend);
 }
