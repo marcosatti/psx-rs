@@ -48,7 +48,7 @@ pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_
 
     let mut builder = Builder::default();
     builder = builder.parse_callbacks(Box::new(parsing_callback));
-    builder = builder.rustfmt_bindings(true);
+    builder = builder.rustfmt_bindings(false);
     builder = builder.derive_debug(false);
 
     // Add in defines.

@@ -29,7 +29,7 @@ pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend) -> b
             return true;
         }
 
-        let data_block = backend_dispatch::read_sector(cdrom_backend, resources.cdrom.lba_address).unwrap_or_else(|_| unimplemented!());
+        let data_block = backend_dispatch::read_sector(cdrom_backend, resources.cdrom.lba_address).expect("Tried to read a sector when no backend is available");
         assert_eq!(data_block.len(), 2048);
 
         resources.cdrom.lba_address += 1;

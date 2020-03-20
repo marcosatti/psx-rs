@@ -9,31 +9,38 @@ pub fn command_01_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_01_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub fn command_01_handler(resources: &mut Resources, cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // GetStat
-    
-    assert_eq!(command_iteration, 0);
 
-    // No CD inserted.
-    // match command_iteration {
-    //     0 => {
-    //         response.write_one(0x1).unwrap();
-    //         int_flag.set_interrupt(3);
-    //         false
-    //     },
-    //     1 => {
-    //         response.write_one(0x80).unwrap();
-    //         int_flag.set_interrupt(5);
-    //         true
-    //     },
-    //     _ => panic!(),
-    // }
+    let response = &resources.cdrom.response;
+    let int_flag = &mut resources.cdrom.int_flag;
 
-    let stat_value = stat_value(resources);
-    let response = &mut resources.cdrom.response;
-    response.write_one(stat_value).unwrap();
-    raise_irq(resources, 3);
-    true
+    let disc_loaded = match backend_dispatch::disc_loaded(cdrom_backend) {
+        Ok(disc_loaded) => disc_loaded,
+        Err(()) => false,
+    };
+
+    if disc_loaded {
+        assert_eq!(command_iteration, 0);
+        let stat_value = stat_value(resources);
+        response.write_one(stat_value).unwrap();
+        raise_irq(resources, 3);
+        true
+    } else {
+        match command_iteration {
+            0 => {
+                response.write_one(0x1).unwrap();
+                int_flag.set_interrupt(3);
+                false
+            },
+            1 => {
+                response.write_one(0x80).unwrap();
+                int_flag.set_interrupt(5);
+                true
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 pub fn command_02_length(_command_iteration: usize) -> usize {
@@ -52,7 +59,7 @@ pub fn command_02_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
 
-    let lba_address = backend_dispatch::msf_to_lba(cdrom_backend, minute, second, frame).unwrap_or_else(|_| unimplemented!());
+    let lba_address = backend_dispatch::msf_to_lba(cdrom_backend, minute, second, frame).expect("SetLoc was called when no backend is available");
 
     resources.cdrom.lba_address = lba_address;
 
@@ -200,7 +207,7 @@ pub fn command_1a_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
             let response = &resources.cdrom.response;
 
             // Determine disc mode type.
-            let mode = backend_dispatch::disc_mode(cdrom_backend).unwrap_or_else(|_| unimplemented!());
+            let mode = backend_dispatch::disc_mode(cdrom_backend).expect("GetID was called when no backend is available");
 
             match mode {
                 2 => {

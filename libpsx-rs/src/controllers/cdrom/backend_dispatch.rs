@@ -5,6 +5,15 @@ mod libmirage;
 
 use crate::backends::cdrom::CdromBackend;
 
+pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> Result<bool, ()> {
+    match cdrom_backend {
+        CdromBackend::None => Err(()),
+        #[cfg(libmirage)]
+        CdromBackend::Libmirage(ref params) => Ok(libmirage::disc_loaded(params)),
+        _ => unimplemented!(),
+    }
+}
+
 pub(crate) fn msf_to_lba(cdrom_backend: &CdromBackend, minute: u8, second: u8, frame: u8) -> Result<usize, ()> {
     match cdrom_backend {
         CdromBackend::None => Err(()),
