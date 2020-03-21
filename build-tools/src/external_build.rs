@@ -15,6 +15,10 @@ struct Output {
     library_search_paths: Vec<String>,
     library_names: Vec<String>,
     defines: Vec<String>,
+    blacklist_item_regexes: Vec<String>,
+    whitelist_function_regexes: Vec<String>,
+    whitelist_type_regexes: Vec<String>,
+    whitelist_variable_regexes: Vec<String>,
 }
 
 pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_callback: T) {
@@ -50,35 +54,47 @@ pub fn external_build<T: 'static + ParseCallbacks>(external_name: &str, parsing_
     builder = builder.parse_callbacks(Box::new(parsing_callback));
     builder = builder.rustfmt_bindings(false);
     builder = builder.derive_debug(false);
+    builder = builder.layout_tests(false);
+    builder = builder.generate_comments(false);
 
-    // Add in defines.
     for define in output.defines {
         builder = builder.clang_arg(&format!("-D{}", &define));
     }
 
-    // Add include paths.
     for path in output.include_paths {
         builder = builder.clang_arg(&format!("-I{}", &path));
     }
 
-    // Add headers.
     for header_path in output.header_paths {
         builder = builder.header(&header_path);
     }
 
-    // Generate bindings.
+    for blacklist_item_regex in output.blacklist_item_regexes {
+        builder = builder.blacklist_item(blacklist_item_regex);
+    }
+
+    for whitelist_function_regex in output.whitelist_function_regexes {
+        builder = builder.whitelist_function(whitelist_function_regex);
+    }
+
+    for whitelist_type_regex in output.whitelist_type_regexes {
+        builder = builder.whitelist_type(whitelist_type_regex);
+    }
+
+    for whitelist_variable_regex in output.whitelist_variable_regexes {
+        builder = builder.whitelist_var(whitelist_variable_regex);
+    }
+
     builder
         .generate()
         .unwrap()
         .write_to_file(&out_file_path)
         .unwrap();
 
-    // Add library search paths.
     for library_search_path in output.library_search_paths {
         println!("cargo:rustc-link-search={}", &library_search_path);
     }
     
-    // Add library names.
     for library_name in output.library_names {
         println!("cargo:rustc-link-lib={}", &library_name);
     }
