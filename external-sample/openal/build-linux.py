@@ -4,7 +4,8 @@ import subprocess
 include_paths = [
 ]
 header_paths = [
-    '/usr/include/libmirage-3.2/mirage/mirage.h',
+    '/usr/include/AL/al.h',
+    '/usr/include/AL/alc.h',
 ]
 library_search_paths = [
 ]
@@ -15,21 +16,17 @@ defines = [
 blacklist_item_regexes = [
 ]
 whitelist_function_regexes = [
-    r'mirage\w+',
-    r'g_\w+',
+    r'al\w+',
 ]
 whitelist_type_regexes = [
-    r'GObject',
-    r'GError',
-    r'Mirage\w+',
+    r'AL\w+',
 ]
 whitelist_variable_regexes = [
-    r'MIRAGE\w+',
-    r'mirage\w+',
+    r'AL\w+'
 ]
 
 process = subprocess.run(
-    ['pkgconf', 'libmirage', '--cflags', '--libs'], 
+    ['pkgconf', 'openal', '--cflags', '--libs'], 
     check=True, 
     capture_output=True, 
     text=True
