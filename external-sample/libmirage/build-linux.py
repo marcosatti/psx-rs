@@ -1,13 +1,32 @@
 import json
 import subprocess
 
-include_paths = []
+include_paths = [
+]
 header_paths = [
     '/usr/include/libmirage-3.2/mirage/mirage.h',
 ]
-library_search_paths = []
-library_names = []
-defines = []
+library_search_paths = [
+]
+library_names = [
+]
+defines = [
+]
+blacklist_item_regexes = [
+]
+whitelist_function_regexes = [
+    r'mirage\w+',
+    r'g_\w+',
+]
+whitelist_type_regexes = [
+    r'GObject',
+    r'GError',
+    r'Mirage\w+',
+]
+whitelist_variable_regexes = [
+    r'MIRAGE\w+',
+    r'mirage\w+',
+]
 
 process = subprocess.run(
     ['pkgconf', 'libmirage', '--cflags', '--libs'], 
@@ -32,4 +51,8 @@ print(json.dumps({
     'library_search_paths': library_search_paths,
     'library_names': library_names,
     'defines': defines,
+    'blacklist_item_regexes': blacklist_item_regexes,
+    'whitelist_function_regexes': whitelist_function_regexes,
+    'whitelist_type_regexes': whitelist_type_regexes,
+    'whitelist_variable_regexes': whitelist_variable_regexes,
 }))

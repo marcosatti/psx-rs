@@ -4,7 +4,7 @@ use libmirage_sys::*;
 use crate::backends::cdrom::libmirage::*;
 use crate::backends::cdrom::libmirage::state::*;
 
-pub(crate) fn disc_loaded(backend_params: &BackendParams) -> usize {
+pub(crate) fn disc_loaded(backend_params: &BackendParams) -> bool {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
