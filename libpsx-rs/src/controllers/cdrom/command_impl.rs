@@ -9,38 +9,16 @@ pub fn command_01_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_01_handler(resources: &mut Resources, cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub fn command_01_handler(resources: &mut Resources, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // GetStat
 
     let response = &resources.cdrom.response;
-    let int_flag = &mut resources.cdrom.int_flag;
 
-    let disc_loaded = match backend_dispatch::disc_loaded(cdrom_backend) {
-        Ok(disc_loaded) => disc_loaded,
-        Err(()) => false,
-    };
-
-    if disc_loaded {
-        assert_eq!(command_iteration, 0);
-        let stat_value = stat_value(resources);
-        response.write_one(stat_value).unwrap();
-        raise_irq(resources, 3);
-        true
-    } else {
-        match command_iteration {
-            0 => {
-                response.write_one(0x1).unwrap();
-                int_flag.set_interrupt(3);
-                false
-            },
-            1 => {
-                response.write_one(0x80).unwrap();
-                int_flag.set_interrupt(5);
-                true
-            },
-            _ => panic!(),
-        }
-    }
+    assert_eq!(command_iteration, 0);
+    let stat_value = stat_value(resources);
+    response.write_one(stat_value).unwrap();
+    raise_irq(resources, 3);
+    true
 }
 
 pub fn command_02_length(_command_iteration: usize) -> usize {
@@ -206,24 +184,40 @@ pub fn command_1a_handler(resources: &mut Resources, cdrom_backend: &CdromBacken
         1 => {
             let response = &resources.cdrom.response;
 
-            // Determine disc mode type.
-            let mode = backend_dispatch::disc_mode(cdrom_backend).expect("GetID was called when no backend is available");
+            let disc_loaded = match backend_dispatch::disc_loaded(cdrom_backend) {
+                Ok(disc_loaded) => disc_loaded,
+                Err(()) => false,
+            };
 
-            match mode {
-                2 => {
-                    response.write_one(0x02).unwrap(); 
-                    response.write_one(0x00).unwrap(); 
-                    response.write_one(0x20).unwrap(); 
-                    response.write_one(0x00).unwrap(); 
-                    response.write_one(0x53).unwrap(); 
-                    response.write_one(0x43).unwrap(); 
-                    response.write_one(0x45).unwrap(); 
-                    response.write_one(0x41).unwrap(); // SCEx: ASCII A = 0x41, E = 0x45, I = 0x49 
-                },
-                _ => unimplemented!("Disc mode {} not handled", mode),
+            if disc_loaded {
+                let mode = backend_dispatch::disc_mode(cdrom_backend).expect("GetID was called when no backend is available");
+                match mode {
+                    2 => {
+                        response.write_one(0x02).unwrap(); 
+                        response.write_one(0x00).unwrap(); 
+                        response.write_one(0x20).unwrap(); 
+                        response.write_one(0x00).unwrap(); 
+                        response.write_one(0x53).unwrap(); 
+                        response.write_one(0x43).unwrap(); 
+                        response.write_one(0x45).unwrap(); 
+                        // SCEx: ASCII A = 0x41, E = 0x45, I = 0x49 
+                        response.write_one(0x41).unwrap(); 
+                    },
+                    _ => unimplemented!("Disc mode {} not handled", mode),
+                }
+                raise_irq(resources, 2);
+            } else {
+                response.write_one(0x08).unwrap(); 
+                response.write_one(0x40).unwrap(); 
+                response.write_one(0x00).unwrap(); 
+                response.write_one(0x00).unwrap(); 
+                response.write_one(0x00).unwrap(); 
+                response.write_one(0x00).unwrap(); 
+                response.write_one(0x00).unwrap(); 
+                response.write_one(0x00).unwrap(); 
+                raise_irq(resources, 5);
             }
-            
-            raise_irq(resources, 2);
+
             true
         },
         _ => panic!(),
