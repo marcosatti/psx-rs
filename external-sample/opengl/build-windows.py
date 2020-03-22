@@ -7,7 +7,7 @@ header_paths = [
     r'C:\Devel\mesa\include\GL\glcorearb.h',
 ]
 library_search_paths = [
-    r'C:\Devel\mesa3d-20.0.1-development-pack-msvc\lib\x64\src\gallium\targets\libgl-gdi',
+    r'C:\Devel\mesa3d-20.0.2-development-pack-msvc\lib\x64\src\gallium\targets\libgl-gdi',
 ]
 library_names = [
     'opengl32',
@@ -22,6 +22,17 @@ defines = [
     'GL_VERSION_4_5=0',
     'GL_VERSION_4_6=0',
 ]
+blacklist_item_regexes = [
+]
+whitelist_function_regexes = [
+    r'gl\w+',
+]
+whitelist_type_regexes = [
+    r'GL\w+',
+]
+whitelist_variable_regexes = [
+    r'GL\w+'
+]
 
 print(json.dumps({
     'include_paths': include_paths,
@@ -29,4 +40,8 @@ print(json.dumps({
     'library_search_paths': library_search_paths,
     'library_names': library_names,
     'defines': defines,
+    'blacklist_item_regexes': blacklist_item_regexes,
+    'whitelist_function_regexes': whitelist_function_regexes,
+    'whitelist_type_regexes': whitelist_type_regexes,
+    'whitelist_variable_regexes': whitelist_variable_regexes,
 }))

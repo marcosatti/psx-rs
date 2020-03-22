@@ -5,11 +5,11 @@ pub mod libmirage;
 
 use std::path::Path;
 
-pub enum CdromBackend<'a> {
+pub enum CdromBackend<'a: 'b, 'b> {
     None,
     #[cfg(libmirage)]
-    Libmirage(libmirage::BackendParams<'a>),
-    _Phantom(std::marker::PhantomData<&'a ()>),
+    Libmirage(libmirage::BackendParams<'a, 'b>),
+    _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
 pub fn setup(cdrom_backend: &CdromBackend) {

@@ -1,4 +1,4 @@
-use sdl2::VideoSubsystem;
+use sdl2::video::Window;
 use libpsx_rs::backends::video::*;
 use libpsx_rs::backends::audio::*;
 use libpsx_rs::backends::cdrom::*;
@@ -6,31 +6,29 @@ use libpsx_rs::backends::cdrom::*;
 /// Video
 
 #[cfg(opengl)]
-pub(crate) fn initialize_video_backend<'a>(video_subsystem: &'a VideoSubsystem) -> VideoBackend<'a> {
-    use sdl2::video::GLProfile;
+static mut OPENGL_CONTEXT: Option<sdl2::video::GLContext> = None; 
+
+#[cfg(opengl)]
+pub(crate) fn initialize_video_backend<'a: 'b, 'b>(window: &'a Window) -> VideoBackend<'a, 'b> {
     use opengl_sys::*;
     use libpsx_rs::backends::context::BackendContext;
 
-    let gl_attr = video_subsystem.gl_attr();
-    gl_attr.set_context_profile(GLProfile::Core);
-    gl_attr.set_context_version(3, 3);
-    gl_attr.set_double_buffer(false);
-    gl_attr.set_context_flags().debug().set();
-
-    let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().opengl().build().unwrap();
-    let _opengl_context = window.gl_create_context().unwrap();
+    unsafe {
+        OPENGL_CONTEXT = Some(window.gl_create_context().unwrap());
+        window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
+    }
 
     // TODO: need to consider multithreading? It's a bit unclear, but doesn't look like it - probably implementation dependant...
-    let opengl_acquire_context = || { &() };
+    let opengl_acquire_context = move || { unsafe { window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap(); } &() };
     let opengl_release_context = || { };
 
     opengl_acquire_context();
     let opengl_vendor_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_version_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VERSION as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_renderer_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_RENDERER as GLenum) as *const i8).to_string_lossy().into_owned() };
-    log::info!("Video initialized: {}, {}, {}", opengl_vendor_string, opengl_version_string, opengl_renderer_string);
     unsafe { glClearColor(0.0, 0.0, 0.0, 1.0); }
     unsafe { glClear(GL_COLOR_BUFFER_BIT); }
+    log::info!("Video initialized: {}, {}, {}", opengl_vendor_string, opengl_version_string, opengl_renderer_string);
     opengl_release_context();
 
     VideoBackend::Opengl(
@@ -41,12 +39,15 @@ pub(crate) fn initialize_video_backend<'a>(video_subsystem: &'a VideoSubsystem) 
 }
 
 #[cfg(not(opengl))]
-pub(crate) fn initialize_video_backend<'a>(_video_subsystem: &'a VideoSubsystem) -> VideoBackend<'a> {
+pub(crate) fn initialize_video_backend<'a: 'b, 'b>(_window: &'a Window) -> VideoBackend<'a, 'b> {
     VideoBackend::None
 }
 
 #[cfg(opengl)]
 pub(crate) fn terminate_video_backend() {
+    unsafe {
+        OPENGL_CONTEXT = None;
+    }
 }
 
 #[cfg(not(opengl))]
@@ -57,58 +58,69 @@ pub(crate) fn terminate_video_backend() {
 /// Audio
 
 #[cfg(openal)]
+const MUTED: bool = true;
+
+#[cfg(openal)]
 static mut OPENAL_DEVICE: *mut openal_sys::ALCdevice = std::ptr::null_mut();
 
 #[cfg(openal)]
 static mut OPENAL_CONTEXT: *mut openal_sys::ALCcontext = std::ptr::null_mut();
 
 #[cfg(openal)]
-pub(crate) fn initialize_audio_backend<'a>() -> AudioBackend<'a> {
-    use openal_sys::*;
-    use libpsx_rs::backends::context::BackendContext;
-
-    unsafe {
-        OPENAL_DEVICE = alcOpenDevice(std::ptr::null());
-        assert!(!OPENAL_DEVICE.is_null());
-        OPENAL_CONTEXT = alcCreateContext(OPENAL_DEVICE, std::ptr::null());
-        assert!(!OPENAL_CONTEXT.is_null());
-    }
-
-    // TODO: need to consider multithreading? It's a bit unclear, but doesn't look like it - probably implementation dependant...
-    let openal_acquire_context = || { &() };
-    let openal_release_context = || { };
-
-    openal_acquire_context();
-    unsafe { alListener3f(AL_POSITION as ALenum, 0.0, 0.0, 0.0) };
-    unsafe { alListener3f(AL_VELOCITY as ALenum, 0.0, 0.0, 0.0) };
-    unsafe { alListenerfv(AL_ORIENTATION as ALenum, [0.0, 0.0, -1.0, 0.0, 1.0, 0.0].as_ptr()) };
-    let openal_vendor_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VENDOR as ALenum)).to_string_lossy().into_owned() };
-    let openal_version_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VERSION as ALenum)).to_string_lossy().into_owned() };
-    let openal_renderer_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_RENDERER as ALenum)).to_string_lossy().into_owned() };
-    log::info!("Audio initialized: {}, {}, {}", openal_vendor_string, openal_version_string, openal_renderer_string);
-    openal_release_context();
-
-    AudioBackend::Openal(
-        openal::BackendParams {
-            context: BackendContext::new(Box::new(openal_acquire_context), Box::new(openal_release_context)),
+pub(crate) fn initialize_audio_backend<'a: 'b, 'b>() -> AudioBackend<'a, 'b> {
+    if !MUTED {
+        use openal_sys::*;
+        use libpsx_rs::backends::context::BackendContext;
+    
+        unsafe {
+            OPENAL_DEVICE = alcOpenDevice(std::ptr::null());
+            assert!(!OPENAL_DEVICE.is_null());
+            OPENAL_CONTEXT = alcCreateContext(OPENAL_DEVICE, std::ptr::null());
+            assert!(!OPENAL_CONTEXT.is_null());
+            alcMakeContextCurrent(OPENAL_CONTEXT);
         }
-    )
+    
+        // TODO: need to consider multithreading? It's a bit unclear, but doesn't look like it - probably implementation dependant...
+        let openal_acquire_context = || { &() };
+        let openal_release_context = || { };
+    
+        openal_acquire_context();
+        unsafe { alListener3f(AL_POSITION as ALenum, 0.0, 0.0, 0.0) };
+        unsafe { alListener3f(AL_VELOCITY as ALenum, 0.0, 0.0, 0.0) };
+        unsafe { alListenerfv(AL_ORIENTATION as ALenum, [0.0, 0.0, -1.0, 0.0, 1.0, 0.0].as_ptr()) };
+        let openal_vendor_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VENDOR as ALenum)).to_string_lossy().into_owned() };
+        let openal_version_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VERSION as ALenum)).to_string_lossy().into_owned() };
+        let openal_renderer_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_RENDERER as ALenum)).to_string_lossy().into_owned() };
+        log::info!("Audio initialized: {}, {}, {}", openal_vendor_string, openal_version_string, openal_renderer_string);
+        openal_release_context();
+    
+        AudioBackend::Openal(
+            openal::BackendParams {
+                context: BackendContext::new(Box::new(openal_acquire_context), Box::new(openal_release_context)),
+            }
+        )
+    } else {
+        AudioBackend::None
+    }
 }
 
 #[cfg(not(openal))]
-pub(crate) fn initialize_audio_backend<'a>() -> AudioBackend<'a> {
+pub(crate) fn initialize_audio_backend<'a: 'b, 'b>() -> AudioBackend<'a, 'b> {
     AudioBackend::None
 }
 
 #[cfg(openal)]
 pub(crate) fn terminate_audio_backend() {
-    use openal_sys::*;
+    if !MUTED {
+        use openal_sys::*;
     
-    unsafe {
-        assert!(!OPENAL_CONTEXT.is_null());
-        alcDestroyContext(OPENAL_CONTEXT);
-        assert!(!OPENAL_DEVICE.is_null());
-        alcCloseDevice(OPENAL_DEVICE);
+        unsafe {
+            assert!(!OPENAL_CONTEXT.is_null());
+            alcDestroyContext(OPENAL_CONTEXT);
+            assert!(!OPENAL_DEVICE.is_null());
+            alcCloseDevice(OPENAL_DEVICE);
+        }
+    } else {
     }
 }
 
@@ -123,7 +135,7 @@ pub(crate) fn terminate_audio_backend() {
 static mut LIBMIRAGE_CONTEXT: *mut libmirage_sys::MirageContext = std::ptr::null_mut();
 
 #[cfg(libmirage)]
-pub(crate) fn initialize_cdrom_backend<'a>() -> CdromBackend<'a> {
+pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
     use libmirage_sys::*;
     use libpsx_rs::backends::context::BackendContext;
 
@@ -146,7 +158,7 @@ pub(crate) fn initialize_cdrom_backend<'a>() -> CdromBackend<'a> {
 }
 
 #[cfg(not(libmirage))]
-pub(crate) fn initialize_cdrom_backend<'a>() -> CdromBackend<'a> {
+pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
     CdromBackend::None
 }
 

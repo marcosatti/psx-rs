@@ -1,12 +1,15 @@
 import json
 import subprocess
 
-include_paths = []
+include_paths = [
+]
 header_paths = [
     '/usr/include/GL/glcorearb.h',
 ]
-library_search_paths = []
-library_names = []
+library_search_paths = [
+]
+library_names = [
+]
 defines = [
     'GL_GLEXT_PROTOTYPES=1',
     'GL_VERSION_4_0=0',
@@ -16,6 +19,17 @@ defines = [
     'GL_VERSION_4_4=0',
     'GL_VERSION_4_5=0',
     'GL_VERSION_4_6=0',
+]
+blacklist_item_regexes = [
+]
+whitelist_function_regexes = [
+    r'gl\w+',
+]
+whitelist_type_regexes = [
+    r'GL\w+',
+]
+whitelist_variable_regexes = [
+    r'GL\w+'
 ]
 
 process = subprocess.run(
@@ -41,4 +55,8 @@ print(json.dumps({
     'library_search_paths': library_search_paths,
     'library_names': library_names,
     'defines': defines,
+    'blacklist_item_regexes': blacklist_item_regexes,
+    'whitelist_function_regexes': whitelist_function_regexes,
+    'whitelist_type_regexes': whitelist_type_regexes,
+    'whitelist_variable_regexes': whitelist_variable_regexes,
 }))

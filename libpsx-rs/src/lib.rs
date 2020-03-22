@@ -21,33 +21,33 @@ use crate::backends::cdrom::{self, CdromBackend};
 use crate::resources::Resources;
 use crate::controllers::Event;
 
-pub struct State<'b, 'a: 'b> {
+pub struct State<'a: 'b, 'b: 'c, 'c> {
     pub resources: *mut Resources,
-    pub video_backend: &'b VideoBackend<'a>,
-    pub audio_backend: &'b AudioBackend<'a>,
-    pub cdrom_backend: &'b CdromBackend<'a>,
+    pub video_backend: &'c VideoBackend<'a, 'b>,
+    pub audio_backend: &'c AudioBackend<'a, 'b>,
+    pub cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
-unsafe impl<'b, 'a> Sync for State<'b, 'a> {}
+unsafe impl<'a: 'b, 'b: 'c, 'c> Sync for State<'a, 'b, 'c> {}
 
-pub struct Config<'a> {
+pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
     pub bios_filename: String,
-    pub video_backend: VideoBackend<'a>,
-    pub audio_backend: AudioBackend<'a>,
-    pub cdrom_backend: CdromBackend<'a>,
+    pub video_backend: VideoBackend<'a, 'b>,
+    pub audio_backend: AudioBackend<'a, 'b>,
+    pub cdrom_backend: CdromBackend<'a, 'b>,
     pub time_delta: Duration,
     pub worker_threads: usize,
 }
 
-pub struct Core<'a> {
+pub struct Core<'a: 'b, 'b> {
     pub resources: Pin<Box<Resources>>,
     task_executor: ThreadPool,
-    config: Config<'a>,
+    config: Config<'a, 'b>,
 }
 
-impl<'a> Core<'a> {
-    pub fn new(config: Config) -> Core {
+impl<'a: 'b, 'b> Core<'a, 'b> {
+    pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
         info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
         info!("Main thread ID: {}", thread_id::get());
 
@@ -108,7 +108,7 @@ impl<'a> Core<'a> {
     }
 }
 
-impl<'a> Drop for Core<'a> {
+impl<'a: 'b, 'b> Drop for Core<'a, 'b> {
     fn drop(&mut self) {
         video::teardown(&self.config.video_backend);
         audio::teardown(&self.config.audio_backend);

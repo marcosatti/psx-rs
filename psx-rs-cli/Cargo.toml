@@ -1,0 +1,12 @@
+[package]
+name = "psx-rs-cli"
+version = "1.0.0"
+authors = ["Marco Satti <marcosatti@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+chrono = "*"
+fern = "*"
+log = "*"
+ctrlc = "*"
+libpsx-rs = { path = "../libpsx-rs" }

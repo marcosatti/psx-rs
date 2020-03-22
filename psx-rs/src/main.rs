@@ -7,6 +7,7 @@ use std::time::Duration;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::time::Instant;
 use sdl2::EventPump;
+use sdl2::video::GLProfile;
 use libpsx_rs::{Core, Config};
 use libpsx_rs::controllers::r3000::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
 use libpsx_rs::controllers::gpu::debug::{ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL};
@@ -30,11 +31,17 @@ fn main() {
     // Initialize SDL
     let sdl_context = sdl2::init().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let gl_attr = video_subsystem.gl_attr();
+    gl_attr.set_context_profile(GLProfile::Core);
+    gl_attr.set_context_version(3, 3);
+    gl_attr.set_double_buffer(false);
+    gl_attr.set_context_flags().debug().set();
+    let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().opengl().build().unwrap();
     log::info!("SDL initialized");
 
-    // Initialize window & video backend
-    let video_subsystem = sdl_context.video().unwrap();
-    let video_backend = backend::initialize_video_backend(&video_subsystem);
+    // Initialize video
+    let video_backend = backend::initialize_video_backend(&window);
 
     // Initialize audio
     let audio_backend = backend::initialize_audio_backend();
@@ -96,10 +103,14 @@ fn main_inner(event_pump: &mut EventPump, config: Config) {
     let mut core = Core::new(config);
     log::info!("Core initialized");
 
-    let disc_path_raw = args().nth(1).expect("No disc file path specified");
-    let disc_path = Path::new(&disc_path_raw);
-    core.change_disc(disc_path);
-    log::info!("Changed disc to {}", disc_path.display());
+    match args().nth(1) {
+        Some(disc_path_raw) => {
+            let disc_path = Path::new(&disc_path_raw);
+            core.change_disc(disc_path);
+            log::info!("Changed disc to {}", disc_path.display());
+        },
+        None => {},
+    }
 
     // Do event loop
     let result = panic::catch_unwind(

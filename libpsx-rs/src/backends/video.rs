@@ -1,11 +1,11 @@
 #[cfg(opengl)]
 pub mod opengl;
 
-pub enum VideoBackend<'a> {
+pub enum VideoBackend<'a: 'b, 'b> {
     None,
     #[cfg(opengl)]
-    Opengl(opengl::BackendParams<'a>),
-    _Phantom(std::marker::PhantomData<&'a ()>),
+    Opengl(opengl::BackendParams<'a, 'b>),
+    _Phantom(std::marker::PhantomData<(&'a (), &'b())>),
 }
 
 pub fn setup(video_backend: &VideoBackend) {

@@ -11,7 +11,7 @@ use crate::controllers::spu::interpolation::*;
 use crate::resources::spu::*;
 use crate::resources::spu::voice::*;
 
-pub fn generate_sound(resources: &mut Resources, audio_backend: &AudioBackend<'_>) {
+pub fn generate_sound(resources: &mut Resources, audio_backend: &AudioBackend) {
     let pmon_value = resources.spu.voice_channel_fm.read_u32();
     if pmon_value > 0 {
         unimplemented!("Pitch modulation not implemented: 0x{:X}", pmon_value);
@@ -95,7 +95,7 @@ fn handle_key_off(resources: &mut Resources, voice_id: usize) {
     }
 }
 
-fn handle_play_sound_buffer(resources: &mut Resources, audio_backend: &AudioBackend<'_>, voice_id: usize) {
+fn handle_play_sound_buffer(resources: &mut Resources, audio_backend: &AudioBackend, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
     let control = &resources.spu.control;
 
@@ -103,7 +103,7 @@ fn handle_play_sound_buffer(resources: &mut Resources, audio_backend: &AudioBack
         let unmuted = control.read_bitfield(CONTROL_UNMUTE) != 0;
 
         if unmuted {
-            backend_dispatch::play_pcm_samples(audio_backend, &play_state.sample_buffer, voice_id);
+            let _ = backend_dispatch::play_pcm_samples(audio_backend, &play_state.sample_buffer, voice_id);
         }
 
         play_state.sample_buffer.clear();
