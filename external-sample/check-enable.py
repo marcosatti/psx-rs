@@ -1,5 +1,5 @@
 import json
 
 print(json.dumps({
-    'enable': False,
+    'enable': True,
 }))
