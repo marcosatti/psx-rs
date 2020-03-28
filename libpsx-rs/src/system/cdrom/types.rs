@@ -277,7 +277,7 @@ impl B8MemoryMap for Cdrom1803 {
     }
 }
 
-pub struct Cdrom {
+pub struct State {
     pub status: B8Register,
     pub command: Command,
     pub response: Fifo<u8>,
@@ -305,9 +305,9 @@ pub struct Cdrom {
     pub lba_address: usize, 
 }
 
-impl Cdrom {
-    pub fn new() -> Cdrom {
-        Cdrom {
+impl State {
+    pub fn new() -> State {
+        State {
             status: B8Register::new(),
             command: Command::new(),
             response: Fifo::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),

@@ -6,4 +6,5 @@ pub mod spu;
 pub mod cdrom;
 pub mod padmc;
 pub mod timers;
+pub mod memory_control;
 pub mod types;

@@ -1,13 +1,9 @@
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::system::Resources;
-use crate::system::timers::register::*;
-use crate::system::timers::timer::*;
-use crate::types::register::b32_register::B32Register;
-use crate::types::bitfield::Bitfield;
 use std::sync::atomic::{AtomicBool, Ordering};
-use crate::types::b8_memory_mapper::*;
-use crate::types::register::b32_register::B32Register;
 use std::time::Duration;
+use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::system::types::State as SystemState;
+use crate::types::register::b32_register::B32Register;
+use crate::types::b8_memory_mapper::*;
 
 #[derive(Copy, Clone, Debug)]
 pub enum ClockSource {
@@ -115,16 +111,16 @@ impl B8MemoryMap for Mode {
     }
 }
 
-pub fn initialize(resources: &mut Resources) {
-    resources.r3000.memory_mapper.map(0x1F80_1100, 4, &mut resources.timers.timer0_count as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1104, 4, &mut resources.timers.timer0_mode as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1108, 4, &mut resources.timers.timer0_target as *mut dyn B8MemoryMap);
+pub fn initialize(state: &mut SystemState) {
+    state.r3000.memory_mapper.map(0x1F80_1100, 4, &mut state.timers.timer0_count as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1104, 4, &mut state.timers.timer0_mode as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1108, 4, &mut state.timers.timer0_target as *mut dyn B8MemoryMap);
 
-    resources.r3000.memory_mapper.map(0x1F80_1110, 4, &mut resources.timers.timer1_count as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1114, 4, &mut resources.timers.timer1_mode as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1118, 4, &mut resources.timers.timer1_target as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1110, 4, &mut state.timers.timer1_count as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1114, 4, &mut state.timers.timer1_mode as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1118, 4, &mut state.timers.timer1_target as *mut dyn B8MemoryMap);
 
-    resources.r3000.memory_mapper.map(0x1F80_1120, 4, &mut resources.timers.timer2_count as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1124, 4, &mut resources.timers.timer2_mode as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1128, 4, &mut resources.timers.timer2_target as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1120, 4, &mut state.timers.timer2_count as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1124, 4, &mut state.timers.timer2_mode as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1128, 4, &mut state.timers.timer2_target as *mut dyn B8MemoryMap);
 }

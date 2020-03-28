@@ -2,7 +2,7 @@ use std::sync::atomic::{fence, Ordering};
 use std::time::{Instant, Duration};
 use rayon::ThreadPool;
 use crate::State;
-use crate::controllers::ControllerState;
+use crate::system::controllers::ControllerState;
 use crate::controllers::Event;
 use crate::debug::benchmark::BenchmarkResults;
 use crate::controllers::r3000::run as run_r3000;

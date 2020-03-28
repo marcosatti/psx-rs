@@ -215,7 +215,7 @@ impl LinkedListState {
     }
 }
 
-pub struct Dmac {
+pub struct State {
     pub dpcr: B32Register,
     pub dicr: Dicr,
 
@@ -259,9 +259,9 @@ pub struct Dmac {
     pub cooloff_runs: usize,
 }
 
-impl Dmac {
-    pub fn new() -> Dmac {
-        Dmac {
+impl State {
+    pub fn new() -> State {
+        State {
             dpcr: B32Register::new(),
             dicr: Dicr::new(),
             mdecin_madr: B32Register::new(),

@@ -4,13 +4,10 @@ use log::warn;
 use crate::types::register::b32_register::B32Register;
 use crate::types::register::b16_register::B16Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::bitfield::Bitfield;
 use crate::types::fifo::Fifo;
 use crate::types::fifo::debug::DebugState;
-use crate::system::State;
-use crate::system::padmc::register::*;
+use crate::system::types::State as SystemState;
 use crate::types::b8_memory_mapper::*;
-use crate::types::register::b16_register::B16Register;
 
 pub struct Ctrl {
     pub register: B16Register,
@@ -86,7 +83,7 @@ impl B8MemoryMap for Padmc1040 {
     }
 }
 
-pub struct Padmc {
+pub struct State {
     pub rx_fifo: Fifo<u8>,
     pub tx_fifo: Fifo<u8>,
     pub stat: B32Register,
@@ -96,9 +93,9 @@ pub struct Padmc {
     pub padmc1040: Padmc1040,
 }
 
-impl Padmc {
-    pub fn new() -> Padmc {
-        Padmc {
+impl State {
+    pub fn new() -> State {
+        State {
             rx_fifo: Fifo::new(16, Some(DebugState::new("PADMC RX", true, true))),
             tx_fifo: Fifo::new(16, Some(DebugState::new("PADMC TX", true, true))),
             stat: B32Register::new(),
@@ -110,13 +107,13 @@ impl Padmc {
     }
 }
 
-pub fn initialize(resources: &mut Resources) {
-    resources.padmc.padmc1040.tx_fifo = NonNull::new(&mut resources.padmc.tx_fifo as *mut Fifo<u8>);
-    resources.padmc.padmc1040.rx_fifo = NonNull::new(&mut resources.padmc.rx_fifo as *mut Fifo<u8>);
+pub fn initialize(state: &mut SystemState) {
+    state.padmc.padmc1040.tx_fifo = NonNull::new(&mut state.padmc.tx_fifo as *mut Fifo<u8>);
+    state.padmc.padmc1040.rx_fifo = NonNull::new(&mut state.padmc.rx_fifo as *mut Fifo<u8>);
 
-    resources.r3000.memory_mapper.map(0x1F80_1040, 4, &mut resources.padmc.padmc1040 as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1044, 4, &mut resources.padmc.stat as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1048, 2, &mut resources.padmc.mode as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_104A, 2, &mut resources.padmc.ctrl as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_104E, 2, &mut resources.padmc.baud_reload as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1040, 4, &mut state.padmc.padmc1040 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1044, 4, &mut state.padmc.stat as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1048, 2, &mut state.padmc.mode as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_104A, 2, &mut state.padmc.ctrl as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_104E, 2, &mut state.padmc.baud_reload as *mut dyn B8MemoryMap);
 }

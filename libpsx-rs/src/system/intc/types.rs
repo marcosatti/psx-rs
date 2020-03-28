@@ -1,12 +1,10 @@
 use std::sync::atomic::{Ordering, AtomicBool};
 use crate::utilities::bool_to_flag;
 use crate::types::b8_memory_mapper::*;
-use crate::system::intc::*;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::bitfield::Bitfield;
-use crate::system::Resources;
-use crate::system::intc::register::Stat;
+use crate::system::types::State as SystemState;
+use crate::system::intc::constants::*;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Line {
@@ -23,15 +21,15 @@ pub enum Line {
     Pio,
 }
 
-pub struct Intc {
+pub struct State {
     pub stat: Stat,
     pub mask: B32Register,
     pub old_masked_value: u32
 }
 
-impl Intc {
-    pub fn new() -> Intc {
-        Intc {
+impl State {
+    pub fn new() -> State {
+        State {
             stat: Stat::new(),
             mask: B32Register::new(),
             old_masked_value: 0,
@@ -144,7 +142,7 @@ impl B8MemoryMap for Stat {
     }
 }
 
-pub fn initialize(resources: &mut Resources) {
-    resources.r3000.memory_mapper.map(0x1F80_1070, 4, &mut resources.intc.stat as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1074, 4, &mut resources.intc.mask as *mut dyn B8MemoryMap);
+pub fn initialize(state: &mut SystemState) {
+    state.r3000.memory_mapper.map(0x1F80_1070, 4, &mut state.intc.stat as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1074, 4, &mut state.intc.mask as *mut dyn B8MemoryMap);
 }

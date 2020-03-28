@@ -1,4 +1,5 @@
 use std::time::Duration;
+use crate::types::bitfield::Bitfield;
 
 pub const CLOCK_SPEED: f64 = 33.8688 * 1e6;
 pub const DOTCLOCK_320_INTERVAL_NTSC: Duration = Duration::from_nanos(150); // 150.312650313 ns per dot (6.6528 MHz)

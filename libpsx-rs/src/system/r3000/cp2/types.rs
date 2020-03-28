@@ -1,5 +1,5 @@
 use crate::types::mips1::instruction::Instruction;
-use crate::system::Resources;
+use crate::system::types::State as SystemState;
 use crate::types::register::b32_register::B32Register;
 
 pub enum MultiplyMatrix {
@@ -97,5 +97,5 @@ impl State {
     }
 }
 
-pub fn initialize(_resources: &mut Resources) {
+pub fn initialize(_state: &mut SystemState) {
 }
