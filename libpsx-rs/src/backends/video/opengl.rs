@@ -4,7 +4,7 @@ pub mod debug;
 
 use opengl_sys::*;
 use crate::backends::context::*;
-use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
+use crate::system::gpu::constants::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
 static mut INITIALIZED: bool = false;
 

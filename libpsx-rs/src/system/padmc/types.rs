@@ -1,16 +1,14 @@
 use std::ptr::NonNull;
+use std::sync::atomic::{AtomicBool, Ordering};
+use log::warn;
 use crate::types::register::b32_register::B32Register;
 use crate::types::register::b16_register::B16Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::bitfield::Bitfield;
 use crate::types::fifo::Fifo;
 use crate::types::fifo::debug::DebugState;
-use crate::system::Resources;
+use crate::system::State;
 use crate::system::padmc::register::*;
-use std::ptr::NonNull;
-use std::sync::atomic::{AtomicBool, Ordering};
-use log::warn;
-use crate::types::fifo::Fifo;
 use crate::types::b8_memory_mapper::*;
 use crate::types::register::b16_register::B16Register;
 

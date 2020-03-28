@@ -1,12 +1,10 @@
 use std::collections::VecDeque;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::bitfield::Bitfield;
-use crate::system::Resources;
-use crate::system::gpu::crtc::Crtc;
-use crate::system::gpu::register::{Gpu1810, Gpu1814};
-use crate::system::gpu::data::*;
 use std::time::Duration;
 use log::warn;
+use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::bitfield::Bitfield;
+use crate::system::types::State as SystemState;
+use crate::system::gpu::crtc::Crtc;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::fifo::Fifo;

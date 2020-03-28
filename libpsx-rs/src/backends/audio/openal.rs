@@ -3,7 +3,7 @@ pub mod rendering;
 use openal_sys::*;
 use crate::backends::context::*;
 use crate::backends::audio::openal::rendering::*;
-use crate::constants::spu::dac::VOICES_COUNT;
+use crate::system::spu::constants::VOICES_COUNT;
 
 static mut INITIALIZED: bool = false;
 

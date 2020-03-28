@@ -7,6 +7,8 @@ use crate::types::fifo::Fifo;
 use crate::types::bitfield::Bitfield;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::fifo::debug::DebugState;
+use crate::system::types::State as SystemState;
+use crate::system::cdrom::constants::*;
 
 pub struct Command {
     pub register: B8Register,
@@ -328,26 +330,26 @@ impl Cdrom {
     }
 }
 
-pub fn initialize(resources: &mut Resources) {
-    resources.cdrom.int_enable.register.write_u8(0xE0);
-    resources.cdrom.int_flag.register.write_u8(0xE0);
+pub fn initialize(state: &mut SystemState) {
+    state.cdrom.int_enable.register.write_u8(0xE0);
+    state.cdrom.int_flag.register.write_u8(0xE0);
 
-    resources.cdrom.cdrom1801.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
-    resources.cdrom.cdrom1801.command = NonNull::new(&mut resources.cdrom.command as *mut Command);
-    resources.cdrom.cdrom1801.response = NonNull::new(&mut resources.cdrom.response as *mut Fifo<u8>);
+    state.cdrom.cdrom1801.status = NonNull::new(&mut state.cdrom.status as *mut B8Register);
+    state.cdrom.cdrom1801.command = NonNull::new(&mut state.cdrom.command as *mut Command);
+    state.cdrom.cdrom1801.response = NonNull::new(&mut state.cdrom.response as *mut Fifo<u8>);
 
-    resources.cdrom.cdrom1802.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
-    resources.cdrom.cdrom1802.parameter = NonNull::new(&mut resources.cdrom.parameter as *mut Fifo<u8>);
-    resources.cdrom.cdrom1802.data = NonNull::new(&mut resources.cdrom.data as *mut Fifo<u8>);
-    resources.cdrom.cdrom1802.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut IntEnable);
+    state.cdrom.cdrom1802.status = NonNull::new(&mut state.cdrom.status as *mut B8Register);
+    state.cdrom.cdrom1802.parameter = NonNull::new(&mut state.cdrom.parameter as *mut Fifo<u8>);
+    state.cdrom.cdrom1802.data = NonNull::new(&mut state.cdrom.data as *mut Fifo<u8>);
+    state.cdrom.cdrom1802.int_enable = NonNull::new(&mut state.cdrom.int_enable as *mut IntEnable);
 
-    resources.cdrom.cdrom1803.status = NonNull::new(&mut resources.cdrom.status as *mut B8Register);
-    resources.cdrom.cdrom1803.int_enable = NonNull::new(&mut resources.cdrom.int_enable as *mut IntEnable);
-    resources.cdrom.cdrom1803.int_flag = NonNull::new(&mut resources.cdrom.int_flag as *mut IntFlag);
-    resources.cdrom.cdrom1803.request = NonNull::new(&mut resources.cdrom.request as *mut Request);
+    state.cdrom.cdrom1803.status = NonNull::new(&mut state.cdrom.status as *mut B8Register);
+    state.cdrom.cdrom1803.int_enable = NonNull::new(&mut state.cdrom.int_enable as *mut IntEnable);
+    state.cdrom.cdrom1803.int_flag = NonNull::new(&mut state.cdrom.int_flag as *mut IntFlag);
+    state.cdrom.cdrom1803.request = NonNull::new(&mut state.cdrom.request as *mut Request);
 
-    resources.r3000.memory_mapper.map(0x1F80_1800, 1, &mut resources.cdrom.status as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1801, 1, &mut resources.cdrom.cdrom1801 as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1802, 1, &mut resources.cdrom.cdrom1802 as *mut dyn B8MemoryMap);
-    resources.r3000.memory_mapper.map(0x1F80_1803, 1, &mut resources.cdrom.cdrom1803 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1800, 1, &mut state.cdrom.status as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1801, 1, &mut state.cdrom.cdrom1801 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1802, 1, &mut state.cdrom.cdrom1802 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1803, 1, &mut state.cdrom.cdrom1803 as *mut dyn B8MemoryMap);
 }

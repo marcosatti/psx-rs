@@ -1,5 +1,5 @@
 use openal_sys::*;
-use crate::constants::spu::dac::VOICES_COUNT;
+use crate::system::spu::constants::VOICES_COUNT;
 
 pub static mut SOURCES: [ALuint; VOICES_COUNT] = [0; VOICES_COUNT];
 
