@@ -1,17 +1,17 @@
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::bitfield::Bitfield;
-use crate::resources::Resources;
-use crate::resources::dmac::register::*;
-use crate::resources::dmac::channel::*;
-use crate::resources::dmac::debug::*;
+use crate::system::Resources;
+use crate::system::dmac::register::*;
+use crate::system::dmac::channel::*;
+use crate::system::dmac::debug::*;
 use crate::constants::dmac::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 use parking_lot::Mutex;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::bitfield::Bitfield;
-use crate::resources::dmac::*;
+use crate::system::dmac::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TransferDirection {

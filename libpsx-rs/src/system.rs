@@ -6,4 +6,4 @@ pub mod spu;
 pub mod cdrom;
 pub mod padmc;
 pub mod timers;
-
+pub mod types;

@@ -1,7 +1,7 @@
 use log::trace;
-use crate::resources::timers::*;
+use crate::system::timers::*;
 use crate::controllers::timers::timer::*;
-use crate::resources::Resources;
+use crate::system::Resources;
 
 const ENABLE_MODE_WRITE_TRACE: bool = false;
 

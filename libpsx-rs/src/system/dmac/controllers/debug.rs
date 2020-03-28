@@ -1,11 +1,11 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::fmt::{Display, UpperHex};
 use log::trace;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::fifo::Fifo;
 use crate::controllers::dmac::channel::*;
-use crate::resources::dmac::*;
-use crate::resources::dmac::debug::*;
+use crate::system::dmac::*;
+use crate::system::dmac::debug::*;
 
 const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE: bool = false;

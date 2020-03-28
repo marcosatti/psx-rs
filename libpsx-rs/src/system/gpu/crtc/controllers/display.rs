@@ -1,7 +1,7 @@
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::backends::video::VideoBackend;
 use crate::controllers::gpu::crtc::backend_dispatch;
-use crate::resources::gpu::*;
+use crate::system::gpu::*;
 
 pub fn handle_render(resources: &Resources, video_backend: &VideoBackend) {
     let stat = &resources.gpu.gpu1814.stat;

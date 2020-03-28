@@ -9,7 +9,7 @@ pub mod timers;
 
 use std::time::Duration;
 use crate::State;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::backends::video::VideoBackend;
 use crate::backends::audio::AudioBackend;
 use crate::backends::cdrom::CdromBackend;

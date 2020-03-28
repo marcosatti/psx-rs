@@ -1,7 +1,7 @@
 use log::warn;
 use log::debug;
-use crate::resources::Resources;
-use crate::resources::timers::*;
+use crate::system::Resources;
+use crate::system::timers::*;
 use crate::controllers::timers::timer::*;
 
 pub fn handle_irq_trigger(resources: &mut Resources, timer_id: usize, irq_type: IrqType) {
@@ -62,7 +62,7 @@ pub fn handle_irq_raise(resources: &mut Resources, timer_id: usize) {
     }
 
     if raise_irq {
-        use crate::resources::intc::register::Line;
+        use crate::system::intc::register::Line;
 
         let irq_line = match timer_id {
             0 => Line::Tmr0,

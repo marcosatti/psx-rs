@@ -1,9 +1,9 @@
 use crate::backends::cdrom::CdromBackend;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::cdrom::backend_dispatch;
 use crate::controllers::cdrom::interrupt::*;
 use crate::controllers::cdrom::state::*;
-use crate::resources::cdrom::*;
+use crate::system::cdrom::*;
 
 pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend) -> bool {
     // Buffer some data first (INT1 means ready to send data?).

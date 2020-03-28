@@ -1,5 +1,5 @@
 use crate::constants::spu::dac::*;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::backends::audio::AudioBackend;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::spu::voice::*;
@@ -8,8 +8,8 @@ use crate::controllers::spu::backend_dispatch;
 use crate::controllers::spu::volume::*;
 use crate::controllers::spu::adsr::*;
 use crate::controllers::spu::interpolation::*;
-use crate::resources::spu::*;
-use crate::resources::spu::voice::*;
+use crate::system::spu::*;
+use crate::system::spu::voice::*;
 
 pub fn generate_sound(resources: &mut Resources, audio_backend: &AudioBackend) {
     let pmon_value = resources.spu.voice_channel_fm.read_u32();

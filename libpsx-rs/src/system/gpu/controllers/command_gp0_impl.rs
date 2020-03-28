@@ -1,8 +1,8 @@
 use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
-use crate::resources::Resources;
-use crate::resources::gpu::*;
+use crate::system::Resources;
+use crate::system::gpu::*;
 use crate::backends::video::VideoBackend;
 use crate::controllers::gpu::data::*;
 use crate::controllers::gpu::debug;

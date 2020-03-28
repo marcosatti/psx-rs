@@ -1,5 +1,5 @@
 use log::trace;
-use crate::resources::Resources;
+use crate::system::Resources;
 
 pub fn trace_cdrom(resources: &Resources) {
     let parameter_empty = resources.cdrom.parameter.is_empty();

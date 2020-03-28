@@ -1,4 +1,4 @@
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::bitfield::Bitfield;
 
 pub fn handle_zero(resources: &mut Resources) {

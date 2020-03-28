@@ -1,5 +1,5 @@
 use std::sync::atomic::Ordering;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::r3000::*;
 use crate::controllers::r3000::debug;
 

@@ -8,12 +8,12 @@ use std::sync::atomic::Ordering;
 use std::cmp::min;
 use log::debug;
 use crate::controllers::ControllerState;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::dmac::*;
 use crate::controllers::Event;
 use crate::controllers::dmac::channel::*;
 use crate::controllers::dmac::transfer::*;
-use crate::resources::dmac::*;
+use crate::system::dmac::*;
 
 pub fn run(state: &mut ControllerState, event: Event) {
     match event {
@@ -141,7 +141,7 @@ fn handle_irq_check(resources: &mut Resources) {
         if dicr.register.read_bitfield(DICR_IRQ_MASTER_FLAG) == 0 {
             dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 1);
 
-            use crate::resources::intc::register::Line;
+            use crate::system::intc::register::Line;
             let stat = &resources.intc.stat;
             stat.assert_line(Line::Dma);
         }

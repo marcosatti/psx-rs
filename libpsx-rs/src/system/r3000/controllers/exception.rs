@@ -1,8 +1,8 @@
 use std::intrinsics::unlikely;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::utilities::mips1::status_push_exception;
 use crate::constants::r3000::INSTRUCTION_SIZE;
-use crate::resources::r3000::cp0::*;
+use crate::system::r3000::cp0::*;
 use crate::controllers::r3000::debug;
 
 pub fn set_exception(resources: &mut Resources, exccode: usize) {

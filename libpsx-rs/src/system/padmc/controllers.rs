@@ -3,8 +3,8 @@ pub mod command;
 
 use std::sync::atomic::Ordering;
 use std::time::Duration;
-use crate::resources::Resources;
-use crate::resources::padmc::*;
+use crate::system::Resources;
+use crate::system::padmc::*;
 use crate::constants::padmc::*;
 use crate::controllers::{Event, ControllerState};
 

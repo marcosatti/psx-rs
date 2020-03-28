@@ -1,11 +1,11 @@
 use std::sync::atomic::Ordering;
 use std::cmp::min;
 use log::warn;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::dmac::channel::*;
 use crate::constants::dmac::*;
-use crate::resources::dmac::*;
-use crate::resources::dmac::channel::*;
+use crate::system::dmac::*;
+use crate::system::dmac::channel::*;
 use crate::controllers::dmac::debug;
 use crate::controllers::dmac::linked_list;
 

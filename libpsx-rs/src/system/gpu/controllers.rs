@@ -9,7 +9,7 @@ pub mod backend_dispatch;
 pub mod debug;
 
 use std::time::Duration;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::video::VideoBackend;
 use crate::controllers::ControllerState;
 use crate::constants::gpu::*;

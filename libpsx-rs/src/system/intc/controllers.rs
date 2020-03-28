@@ -2,10 +2,10 @@ pub mod debug;
 
 use std::time::Duration;
 use crate::controllers::ControllerState;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::intc::CLOCK_SPEED;
 use crate::controllers::Event;
-use crate::resources::r3000::cp0::register::IrqLine;
+use crate::system::r3000::cp0::register::IrqLine;
 
 pub fn run(state: &mut ControllerState, event: Event) {
     match event {

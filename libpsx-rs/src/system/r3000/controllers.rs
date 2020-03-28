@@ -12,7 +12,7 @@ use std::intrinsics::unlikely;
 use log::debug;
 use crate::backends::cdrom::CdromBackend;
 use crate::controllers::ControllerState;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::r3000::{CLOCK_SPEED, INSTRUCTION_SIZE};
 use crate::controllers::Event;
 use crate::controllers::r3000::hazard::*;

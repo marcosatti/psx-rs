@@ -1,5 +1,5 @@
-use crate::resources::Resources;
-use crate::resources::cdrom::*;
+use crate::system::Resources;
+use crate::system::cdrom::*;
 
 pub fn raise_irq(resources: &mut Resources, irq_line: usize) {
     let int_enable = &resources.cdrom.int_enable;
@@ -17,7 +17,7 @@ pub fn raise_irq(resources: &mut Resources, irq_line: usize) {
     }
     
     if (int_enable_value & int_flag_value) > 0 {
-        use crate::resources::intc::register::Line;
+        use crate::system::intc::register::Line;
         let stat = &resources.intc.stat;
         stat.assert_line(Line::Cdrom);
     }

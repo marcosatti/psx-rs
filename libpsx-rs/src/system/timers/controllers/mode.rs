@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
-use crate::resources::Resources;
-use crate::resources::timers::*;
-use crate::resources::timers::timer::*;
+use crate::system::Resources;
+use crate::system::timers::*;
+use crate::system::timers::timer::*;
 use crate::controllers::timers::timer::*;
 use crate::controllers::timers::count::*;
 use crate::controllers::timers::debug;

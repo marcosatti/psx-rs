@@ -1,5 +1,5 @@
 use crate::backends::cdrom::CdromBackend;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::cdrom::*;
 use crate::controllers::cdrom::backend_dispatch;
 use crate::controllers::cdrom::interrupt::*;

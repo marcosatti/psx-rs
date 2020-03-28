@@ -1,7 +1,7 @@
 use std::time::Duration;
-use crate::resources::Resources;
-use crate::resources::timers::register::*;
-use crate::resources::timers::timer::*;
+use crate::system::Resources;
+use crate::system::timers::register::*;
+use crate::system::timers::timer::*;
 use crate::types::register::b32_register::B32Register;
 
 #[derive(Copy, Clone, Debug)]

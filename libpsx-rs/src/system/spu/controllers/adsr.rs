@@ -1,10 +1,10 @@
 use std::cmp::{max, min};
 use log::warn;
 use num_traits::clamp;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::spu::voice::*;
-use crate::resources::spu::voice::*;
+use crate::system::spu::voice::*;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Direction {

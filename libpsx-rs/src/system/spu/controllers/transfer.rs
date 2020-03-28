@@ -1,8 +1,8 @@
 use std::sync::atomic::Ordering;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::spu::voice::*;
-use crate::resources::spu::*;
-use crate::resources::spu::register::*;
+use crate::system::spu::*;
+use crate::system::spu::register::*;
 
 pub fn handle_transfer(resources: &mut Resources) {
     let current_transfer_mode = resources.spu.current_transfer_mode;

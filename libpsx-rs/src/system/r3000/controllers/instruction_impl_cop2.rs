@@ -3,13 +3,13 @@ use typenum::*;
 use crate::types::bitfield::Bitfield;
 use crate::utilities::numeric::*;
 use crate::utilities::packed::*;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::mips1::instruction::Instruction;
-use crate::resources::r3000::cp2::instruction::GteInstruction;
+use crate::system::r3000::cp2::instruction::GteInstruction;
 use crate::controllers::r3000::InstResult;
 use crate::controllers::r3000::memory_controller::*;
 use crate::controllers::r3000::register::*;
-use crate::resources::r3000::cp0::STATUS_ISC;
+use crate::system::r3000::cp0::STATUS_ISC;
 use crate::utilities::*;
 
 // Note: probably ok to disregard SRA != division by 2^N (https://en.wikipedia.org/wiki/Arithmetic_shift), as it just results in a small rounding error.

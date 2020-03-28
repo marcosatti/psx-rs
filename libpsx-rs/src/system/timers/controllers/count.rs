@@ -1,9 +1,9 @@
 use std::time::Duration;
-use crate::resources::Resources;
-use crate::resources::timers::*;
+use crate::system::Resources;
+use crate::system::timers::*;
 use crate::controllers::timers::timer::*;
 use crate::controllers::timers::irq::*;
-use crate::resources::timers::timer::*;
+use crate::system::timers::timer::*;
 use crate::constants::timers::*;
 
 pub fn handle_count(resources: &mut Resources, timer_id: usize, duration: Duration) {

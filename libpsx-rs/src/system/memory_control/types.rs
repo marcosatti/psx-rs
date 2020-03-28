@@ -1,7 +1,7 @@
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::memory::b8_memory::B8Memory;
-use crate::resources::Resources;
+use crate::system::Resources;
 
 pub struct MemoryControl {
     pub expansion_1_base_address: B32Register,

@@ -2,7 +2,7 @@ use capstone::prelude::*;
 use capstone::Endian;
 use log::trace;
 use ansi_term::Colour::Red;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::controllers::r3000::memory_controller::translate_address;
 

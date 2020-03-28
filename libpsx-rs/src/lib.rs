@@ -16,7 +16,7 @@ use log::info;
 use crate::backends::video::{self, VideoBackend};
 use crate::backends::audio::{self, AudioBackend};
 use crate::backends::cdrom::{self, CdromBackend};
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::Event;
 
 pub struct State<'a: 'b, 'b: 'c, 'c> {

@@ -1,7 +1,7 @@
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::resources::Resources;
-use crate::resources::timers::register::*;
-use crate::resources::timers::timer::*;
+use crate::system::Resources;
+use crate::system::timers::register::*;
+use crate::system::timers::timer::*;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 use std::sync::atomic::{AtomicBool, Ordering};

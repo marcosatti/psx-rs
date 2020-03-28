@@ -1,5 +1,5 @@
 use num_traits::clamp;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::bitfield::Bitfield;
 use crate::types::register::b16_register::*;
 use crate::types::stereo::*;

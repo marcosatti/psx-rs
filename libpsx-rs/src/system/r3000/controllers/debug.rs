@@ -13,8 +13,8 @@ use crate::controllers::r3000::hazard::*;
 use crate::controllers::r3000::debug::disassembler::*;
 use crate::controllers::r3000::debug::register::*;
 use crate::controllers::r3000::memory_controller::translate_address;
-use crate::resources::Resources;
-use crate::resources::r3000::cp0::*;
+use crate::system::Resources;
+use crate::system::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
@@ -89,7 +89,7 @@ pub fn trace_hazard(hazard: Hazard) {
 
 pub fn trace_interrupt(resources: &Resources) {
     use crate::controllers::intc::debug::*;
-    use crate::resources::intc::{IRQ_BITFIELDS, IRQ_NAMES};
+    use crate::system::intc::{IRQ_BITFIELDS, IRQ_NAMES};
 
     let line_index = 2; // CDROM
     let line = IRQ_BITFIELDS[line_index];

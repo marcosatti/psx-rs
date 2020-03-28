@@ -1,11 +1,11 @@
 use std::intrinsics::{likely, unlikely};
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
 use crate::controllers::r3000::{InstResult, set_exception};
 use crate::controllers::r3000::memory_controller::*;
 use crate::controllers::r3000::register::*;
-use crate::resources::r3000::cp0::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
+use crate::system::r3000::cp0::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
 use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
 use crate::controllers::r3000::debug;
 

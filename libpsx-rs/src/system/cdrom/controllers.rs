@@ -10,10 +10,10 @@ use std::sync::atomic::Ordering;
 use log::warn;
 use crate::utilities::bool_to_flag;
 use crate::backends::cdrom::CdromBackend;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::cdrom::command::*;
 use crate::controllers::cdrom::read::*;
-use crate::resources::cdrom::*;
+use crate::system::cdrom::*;
 
 pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend) {
     handle_interrupt_enable(resources);

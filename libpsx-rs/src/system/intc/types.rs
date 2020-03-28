@@ -1,12 +1,12 @@
 use std::sync::atomic::{Ordering, AtomicBool};
 use crate::utilities::bool_to_flag;
 use crate::types::b8_memory_mapper::*;
-use crate::resources::intc::*;
+use crate::system::intc::*;
 use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::bitfield::Bitfield;
-use crate::resources::Resources;
-use crate::resources::intc::register::Stat;
+use crate::system::Resources;
+use crate::system::intc::register::Stat;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Line {

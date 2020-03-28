@@ -12,7 +12,7 @@ pub mod interrupt;
 use std::time::Duration;
 use crate::audio::AudioBackend;
 use crate::controllers::ControllerState;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::constants::spu::*;
 use crate::constants::spu::dac::*;
 use crate::controllers::Event;
@@ -20,7 +20,7 @@ use crate::controllers::spu::transfer::*;
 use crate::controllers::spu::interrupt::*;
 use crate::controllers::spu::dac::*;
 use crate::controllers::spu::sound::*;
-use crate::resources::spu::*;
+use crate::system::spu::*;
 
 pub fn run(state: &mut ControllerState, event: Event) {
     match event {

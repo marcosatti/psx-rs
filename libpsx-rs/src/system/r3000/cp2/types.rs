@@ -1,5 +1,5 @@
 use crate::types::mips1::instruction::Instruction;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::register::b32_register::B32Register;
 
 pub enum MultiplyMatrix {

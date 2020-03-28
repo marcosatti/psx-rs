@@ -1,4 +1,4 @@
-use crate::resources::Resources;
+use crate::system::Resources;
 
 pub fn handle_current_volume(resources: &mut Resources) {
     let main_volume_left = &mut resources.spu.main_volume_left;

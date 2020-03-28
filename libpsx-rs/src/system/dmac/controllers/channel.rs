@@ -1,10 +1,10 @@
 use log::warn;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
-use crate::resources::dmac::channel::*;
-use crate::resources::dmac::register::*;
-use crate::resources::dmac::*;
+use crate::system::dmac::channel::*;
+use crate::system::dmac::register::*;
+use crate::system::dmac::*;
 use crate::controllers::dmac::debug;
 
 pub fn get_madr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {

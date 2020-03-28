@@ -1,18 +1,12 @@
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::collections::VecDeque;
 use crate::types::register::b8_register::B8Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::fifo::Fifo;
-use crate::resources::cdrom::*;
-use std::ptr::NonNull;
-use std::collections::VecDeque;
 use crate::types::bitfield::Bitfield;
-use crate::types::register::b8_register::B8Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::fifo::Fifo;
 use crate::types::fifo::debug::DebugState;
-use crate::resources::Resources;
-use crate::resources::cdrom::register::*;
 
 pub struct Command {
     pub register: B8Register,

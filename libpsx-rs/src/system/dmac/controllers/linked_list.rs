@@ -1,6 +1,6 @@
 use crate::types::memory::b8_memory::B8Memory;
 use crate::types::bitfield::Bitfield;
-use crate::resources::dmac::channel::LinkedListState;
+use crate::system::dmac::channel::LinkedListState;
 use crate::controllers::dmac::debug;
 
 pub fn process_header(state: &mut LinkedListState, main_memory: &B8Memory) -> Result<(), ()> {

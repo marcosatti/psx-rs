@@ -2,11 +2,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::ptr::NonNull;
 use crate::utilities::bool_to_flag;
 use crate::types::register::b32_register::B32Register;
-use crate::resources::r3000::cp0::*;
+use crate::system::r3000::cp0::*;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
-use crate::resources::Resources;
-use crate::resources::r3000::cp0::register::*;
+use crate::system::Resources;
+use crate::system::r3000::cp0::register::*;
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqLine {

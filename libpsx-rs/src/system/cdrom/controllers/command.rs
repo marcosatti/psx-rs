@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use crate::backends::cdrom::CdromBackend;
-use crate::resources::Resources;
-use crate::resources::cdrom::*;
+use crate::system::Resources;
+use crate::system::cdrom::*;
 use crate::controllers::cdrom::command_impl;
 
 type LengthFn = fn(usize) -> usize;

@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use std::thread::sleep;
 use log::trace;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::video::VideoBackend;
 use crate::controllers::gpu::crtc::display::handle_render;
 

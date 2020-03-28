@@ -6,7 +6,7 @@ use std::io::Write;
 use std::sync::atomic::AtomicBool;
 use log::debug;
 use crate::Core;
-use crate::resources::Resources;
+use crate::system::Resources;
 
 pub static DEBUG_CORE_EXIT: AtomicBool = AtomicBool::new(false);
 

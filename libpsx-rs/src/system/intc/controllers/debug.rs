@@ -1,6 +1,6 @@
 use log::trace;
-use crate::resources::Resources;
-use crate::resources::intc::*;
+use crate::system::Resources;
+use crate::system::intc::*;
 use crate::types::bitfield::Bitfield;
 
 pub fn trace_intc(resources: &Resources, only_enabled: bool, enable_assert: bool) {

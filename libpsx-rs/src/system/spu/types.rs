@@ -3,9 +3,9 @@ use crate::types::register::b16_register::B16Register;
 use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::memory::b8_memory::B8Memory;
 use crate::types::bitfield::Bitfield;
-use crate::resources::Resources;
-use crate::resources::spu::register::*;
-use crate::resources::spu::dac::*;
+use crate::system::Resources;
+use crate::system::spu::register::*;
+use crate::system::spu::dac::*;
 use crate::types::stereo::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 use parking_lot::Mutex;
@@ -16,7 +16,7 @@ use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::*;
 use crate::types::bitfield::Bitfield;
 use std::time::Duration;
-use crate::resources::spu::voice::*;
+use crate::system::spu::voice::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TransferMode {

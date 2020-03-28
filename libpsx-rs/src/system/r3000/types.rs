@@ -2,11 +2,11 @@ use crate::types::register::b32_register::B32Register;
 use crate::types::b8_memory_mapper::{B8MemoryMapper, B8MemoryMap};
 use crate::types::mips1::branch_delay_slot::BranchDelaySlot;
 use crate::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
-use crate::resources::Resources;
-use crate::resources::r3000::cp0::Cp0;
-use crate::resources::r3000::cp0::initialize as cp0_initialize;
-use crate::resources::r3000::cp2::Cp2;
-use crate::resources::r3000::cp2::initialize as cp2_initialize;
+use crate::system::Resources;
+use crate::system::r3000::cp0::Cp0;
+use crate::system::r3000::cp0::initialize as cp0_initialize;
+use crate::system::r3000::cp2::Cp2;
+use crate::system::r3000::cp2::initialize as cp2_initialize;
 
 pub struct State {
     pub pc: B32Register,

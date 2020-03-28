@@ -1,6 +1,6 @@
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::backends::video::VideoBackend;
-use crate::resources::gpu::*;
+use crate::system::gpu::*;
 use crate::controllers::gpu::command_gp0_impl;
 use crate::controllers::gpu::debug;
 

@@ -7,7 +7,7 @@ pub mod debug;
 use std::time::Duration;
 use log::debug;
 use crate::controllers::ControllerState;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::controllers::Event;
 use crate::controllers::timers::mode::*;
 use crate::controllers::timers::count::*;

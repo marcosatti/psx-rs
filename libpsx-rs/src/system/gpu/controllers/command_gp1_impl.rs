@@ -1,7 +1,7 @@
 use crate::backends::video::VideoBackend;
-use crate::resources::Resources;
+use crate::system::Resources;
 use crate::types::bitfield::Bitfield;
-use crate::resources::gpu::*;
+use crate::system::gpu::*;
 use crate::controllers::gpu::command_gp0_impl;
 
 pub fn command_00(resources: &mut Resources, video_backend: &VideoBackend, _command: u32) {
