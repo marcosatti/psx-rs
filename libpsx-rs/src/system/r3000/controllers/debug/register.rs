@@ -36,10 +36,10 @@ const REGISTER_NAMES: [&str; 32] = [
     "ra",
 ];
 
-pub fn trace_registers(resources: &Resources) {
+pub fn trace_registers(state: &State) {
     let mut string = String::new();
     string.push_str("Register dump:\n");
-    for (index, (ref register, name)) in resources.r3000.gpr.iter().zip(REGISTER_NAMES.iter()).enumerate() {
+    for (index, (ref register, name)) in state.r3000.gpr.iter().zip(REGISTER_NAMES.iter()).enumerate() {
         string.push_str(&format!("{:>4} = 0x{:08X}, ", name, register.read_u32()));
         
         if (index + 1) % 4 == 0 {

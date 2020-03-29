@@ -1,17 +1,17 @@
 use log::warn;
 use log::debug;
 use crate::system::types::State;
-use crate::system::timers::*;
-use crate::controllers::timers::timer::*;
+use crate::system::timers::constants::*;
+use crate::system::timers::controllers::timer::*;
 
 pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType) {
-    let mode = get_mode(resources, timer_id);
-    let state = get_state(resources, timer_id);
+    let mode = get_mode(state, timer_id);
+    let timer_state = get_state(state, timer_id);
 
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.
     let oneshot = mode.register.read_bitfield(MODE_IRQ_REPEAT) > 0;
     if oneshot {
-        if state.irq_raised {
+        if timer_state.irq_raised {
             return;
         }
     }
@@ -22,23 +22,23 @@ pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType)
             let overflow_trigger = mode.register.read_bitfield(MODE_IRQ_OVERFLOW) > 0;
             
             if overflow_trigger {
-                handle_irq_raise(resources, timer_id);
-                state.irq_raised = true;
+                handle_irq_raise(state, timer_id);
+                timer_state.irq_raised = true;
             }
         },
         IrqType::Target => {
             let target_trigger = mode.register.read_bitfield(MODE_IRQ_TARGET) > 0;
             
             if target_trigger {
-                handle_irq_raise(resources, timer_id);
-                state.irq_raised = true;
+                handle_irq_raise(state, timer_id);
+                timer_state.irq_raised = true;
             }
         },
     }
 }
 
 pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
-    let mode = get_mode(resources, timer_id);
+    let mode = get_mode(state, timer_id);
 
     let mut raise_irq = false;
 
@@ -71,7 +71,7 @@ pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
             _ => unreachable!(),
         };
     
-        let stat = &resources.intc.stat;
+        let stat = &state.intc.stat;
         stat.assert_line(irq_line);
     
         debug!("Raised INTC IRQ for timer {}", timer_id);

@@ -5,7 +5,7 @@ use crate::backends::video::opengl::rendering::*;
 use crate::types::geometry::*;
 use crate::types::color::*;
 use crate::types::bitfield::*;
-use crate::constants::gpu::VRAM_HEIGHT_LINES;
+use crate::system::gpu::constants::VRAM_HEIGHT_LINES;
 
 pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;

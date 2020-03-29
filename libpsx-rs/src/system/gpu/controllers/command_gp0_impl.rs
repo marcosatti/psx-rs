@@ -2,11 +2,11 @@ use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
 use crate::system::types::State;
-use crate::system::gpu::*;
 use crate::backends::video::VideoBackend;
-use crate::controllers::gpu::data::*;
-use crate::controllers::gpu::debug;
-use crate::controllers::gpu::backend_dispatch;
+use crate::system::gpu::controllers::data::*;
+use crate::system::gpu::controllers::debug;
+use crate::system::gpu::controllers::backend_dispatch;
+use crate::system::gpu::constants::*;
 
 pub fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
@@ -177,10 +177,10 @@ pub fn command_65_handler(state: &mut State, video_backend: &VideoBackend, data:
     // Upper left corner is starting point.
     let base_point = extract_point_normalized(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
     let size = extract_size_normalized(data[3], default_render_x_size_modifier, default_render_y_size_modifier);
-    let clut_mode = resources.gpu.clut_mode;
+    let clut_mode = state.gpu.clut_mode;
     let texpage_base = Point2D::new(
-        resources.gpu.texpage_base_x, 
-        resources.gpu.texpage_base_y, 
+        state.gpu.texpage_base_x, 
+        state.gpu.texpage_base_y, 
     );
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let _clut = extract_clut_base_normalized(data[2]);
@@ -293,9 +293,9 @@ pub fn command_c0_handler(state: &mut State, video_backend: &VideoBackend, data:
         data.push(0);
     }
 
-    resources.gpu.gpu1810.read.clear();
+    state.gpu.gpu1810.read.clear();
 
-    let read_buffer = &mut resources.gpu.gp0_read_buffer;
+    let read_buffer = &mut state.gpu.gp0_read_buffer;
     read_buffer.clear();
 
     for i in 0..fifo_words {
@@ -313,23 +313,23 @@ pub fn command_e1_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e1_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Draw Mode setting", data);
     
-    let stat = &mut resources.gpu.gpu1814.stat;
+    let stat = &mut state.gpu.gpu1814.stat;
 
     let texpage_base_x = Bitfield::new(0, 4).extract_from(data[0]);
     stat.write_bitfield(STAT_TEXPAGEX, texpage_base_x);
-    resources.gpu.texpage_base_x = texpage_base_x as isize;
+    state.gpu.texpage_base_x = texpage_base_x as isize;
 
     let texpage_base_y = Bitfield::new(4, 1).extract_from(data[0]);
     stat.write_bitfield(STAT_TEXPAGEY, texpage_base_y);
-    resources.gpu.texpage_base_y = texpage_base_y as isize;
+    state.gpu.texpage_base_y = texpage_base_y as isize;
 
     let transparency_mode_raw = Bitfield::new(5, 2).extract_from(data[0]);
     stat.write_bitfield(STAT_TRANSPARENCY, transparency_mode_raw);
-    resources.gpu.transparency_mode = extract_texpage_transparency_mode(data[0]);
+    state.gpu.transparency_mode = extract_texpage_transparency_mode(data[0]);
 
     let clut_mode_raw = Bitfield::new(7, 2).extract_from(data[0]);
     stat.write_bitfield(STAT_TEXPAGE_COLORS, clut_mode_raw);
-    resources.gpu.clut_mode = extract_texpage_clut_mode(data[0]);
+    state.gpu.clut_mode = extract_texpage_clut_mode(data[0]);
 
     stat.write_bitfield(STAT_DITHER, Bitfield::new(9, 1).extract_from(data[0]));
 
@@ -337,9 +337,9 @@ pub fn command_e1_handler(state: &mut State, _video_backend: &VideoBackend, data
 
     stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
 
-    resources.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
+    state.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
 
-    resources.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
+    state.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
     //warn!("GP0(E1h) not properly implemented");
 }
 
@@ -350,10 +350,10 @@ pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e2_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Texture Window setting", data);
 
-    resources.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
-    resources.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
-    resources.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
-    resources.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
+    state.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
+    state.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
+    state.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
+    state.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
     //warn!("GP0(E2h) not properly implemented");
 }
 
@@ -364,12 +364,12 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e3_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area top left", data);
 
-    resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
-    resources.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+    state.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
+    state.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     //warn!("GP0(E3h) not properly implemented");
 
-    if (resources.gpu.drawing_area_x1 != 0) || (resources.gpu.drawing_area_y1 != 0) {
-        log::debug!("Non zero drawing area x1 y1: {}, {}", resources.gpu.drawing_area_x1, resources.gpu.drawing_area_y1);
+    if (state.gpu.drawing_area_x1 != 0) || (state.gpu.drawing_area_y1 != 0) {
+        log::debug!("Non zero drawing area x1 y1: {}, {}", state.gpu.drawing_area_x1, state.gpu.drawing_area_y1);
     }
 }
 
@@ -380,12 +380,12 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e4_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
 
-    resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
-    resources.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+    state.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
+    state.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     //warn!("GP0(E4h) not properly implemented");
 
-    if (resources.gpu.drawing_area_x2 != 0) || (resources.gpu.drawing_area_y2 != 0) {
-        //log::debug!("Non zero drawing area x2 y2: {}, {}", resources.gpu.drawing_area_x2, resources.gpu.drawing_area_y2);
+    if (state.gpu.drawing_area_x2 != 0) || (state.gpu.drawing_area_y2 != 0) {
+        //log::debug!("Non zero drawing area x2 y2: {}, {}", state.gpu.drawing_area_x2, state.gpu.drawing_area_y2);
     }
 }
 
@@ -401,12 +401,12 @@ pub fn command_e5_handler(state: &mut State, _video_backend: &VideoBackend, data
     //warn!("GP0(E5h) not properly implemented");
 
     // Sign extend from 11-bit to 16-bit.
-    resources.gpu.drawing_offset_x = ((x_offset << 5) >> 5) as isize;
-    resources.gpu.drawing_offset_y = ((y_offset << 5) >> 5) as isize;
+    state.gpu.drawing_offset_x = ((x_offset << 5) >> 5) as isize;
+    state.gpu.drawing_offset_y = ((y_offset << 5) >> 5) as isize;
     
-    //debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset, resources.gpu.drawing_offset_x, y_offset, resources.gpu.drawing_offset_y);
+    //debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset, state.gpu.drawing_offset_x, y_offset, state.gpu.drawing_offset_y);
     if (x_offset != 0) || (y_offset != 0) {
-        log::debug!("Non zero drawing offset: {}, {}", resources.gpu.drawing_offset_x, resources.gpu.drawing_offset_y);
+        log::debug!("Non zero drawing offset: {}, {}", state.gpu.drawing_offset_x, state.gpu.drawing_offset_y);
     }
 }
 
@@ -417,7 +417,7 @@ pub fn command_e6_length(_data: &[u32]) -> Option<usize> {
 pub fn command_e6_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Mask Bit Setting", data);
 
-    let stat = &mut resources.gpu.gpu1814.stat;
+    let stat = &mut state.gpu.gpu1814.stat;
     stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
     stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
     //warn!("GP0(E6h) not properly implemented");

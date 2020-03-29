@@ -9,8 +9,8 @@ use std::time::Instant;
 use sdl2::EventPump;
 use sdl2::video::GLProfile;
 use libpsx_rs::{Core, Config};
-use libpsx_rs::controllers::r3000::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
-use libpsx_rs::controllers::gpu::debug::{ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL};
+use libpsx_rs::system::r3000::controllers::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
+use libpsx_rs::system::gpu::controllers::debug::{ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL};
 use libpsx_rs::debug::DEBUG_CORE_EXIT;
 use libpsx_rs::debug::analysis as debug_analysis;
 

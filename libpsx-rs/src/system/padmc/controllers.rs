@@ -4,13 +4,13 @@ pub mod command;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 use crate::system::types::State;
-use crate::system::padmc::*;
-use crate::constants::padmc::*;
-use crate::controllers::{Event, ControllerState};
+use crate::system::padmc::constants::*;
+use crate::system::types::ControllerContext;
+use crate::system::types::Event;
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
-        Event::Time(duration) => run_time(state.resources, duration),
+        Event::Time(duration) => run_time(context.state, duration),
     }
 }
 
@@ -19,22 +19,22 @@ fn run_time(state: &mut State, duration: Duration) {
     ticks /= 16;
     
     for _ in 0..ticks {
-        tick(resources); 
+        tick(state); 
     }
 }
 
 pub fn tick(state: &mut State) {
-    handle_ctrl(resources);
-    handle_tx(resources);
-    handle_rx(resources);
-    handle_baud_timer(resources);
+    handle_ctrl(state);
+    handle_tx(state);
+    handle_rx(state);
+    handle_baud_timer(state);
 }
 
 fn handle_ctrl(state: &mut State) {
-    let ctrl = &mut resources.padmc.ctrl;
-    let mode = &mut resources.padmc.mode;
-    let stat = &mut resources.padmc.stat;
-    let baud = &mut resources.padmc.baud_reload;
+    let ctrl = &mut state.padmc.ctrl;
+    let mode = &mut state.padmc.mode;
+    let stat = &mut state.padmc.stat;
+    let baud = &mut state.padmc.baud_reload;
 
     if !ctrl.write_latch.load(Ordering::Acquire) {
         return;
@@ -58,9 +58,9 @@ fn handle_ctrl(state: &mut State) {
 
 fn handle_tx(state: &mut State) {
     {
-        let tx_fifo = &resources.padmc.tx_fifo;
-        let stat = &mut resources.padmc.stat;
-        let ctrl = &resources.padmc.ctrl.register;
+        let tx_fifo = &state.padmc.tx_fifo;
+        let stat = &mut state.padmc.stat;
+        let ctrl = &state.padmc.ctrl.register;
 
         if ctrl.read_bitfield(CTRL_TXEN) == 0 {
             return;
@@ -76,32 +76,32 @@ fn handle_tx(state: &mut State) {
 
     // Start transfer.
     let data = {
-        let tx_fifo = &resources.padmc.tx_fifo;
+        let tx_fifo = &state.padmc.tx_fifo;
         tx_fifo.read_one().unwrap()
     };
 
-    command::handle_command(resources, data);
+    command::handle_command(state, data);
 
     {
-        let stat = &mut resources.padmc.stat;
+        let stat = &mut state.padmc.stat;
         stat.write_bitfield(STAT_TXRDY_1, 0);
         stat.write_bitfield(STAT_TXRDY_2, 1);
     }
 }
 
 fn handle_rx(state: &mut State) {
-    let rx_fifo = &resources.padmc.rx_fifo;
+    let rx_fifo = &state.padmc.rx_fifo;
 
     if rx_fifo.is_empty() {
         return;
     }
 
-    let stat = &mut resources.padmc.stat;
+    let stat = &mut state.padmc.stat;
     stat.write_bitfield(STAT_RXFIFO_READY, 1);
 }
 
 fn handle_baud_timer(state: &mut State) {
-    let stat = &mut resources.padmc.stat;
+    let stat = &mut state.padmc.stat;
     let timer_value = stat.read_bitfield(STAT_TIMER).wrapping_sub(1);
     stat.write_bitfield(STAT_TIMER, timer_value);
 }

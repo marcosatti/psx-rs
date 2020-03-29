@@ -1,63 +1,62 @@
-use crate::constants::spu::dac::*;
 use crate::system::types::State;
 use crate::backends::audio::AudioBackend;
 use crate::types::bitfield::Bitfield;
-use crate::controllers::spu::voice::*;
-use crate::controllers::spu::adpcm::*;
-use crate::controllers::spu::backend_dispatch;
-use crate::controllers::spu::volume::*;
-use crate::controllers::spu::adsr::*;
-use crate::controllers::spu::interpolation::*;
-use crate::system::spu::*;
-use crate::system::spu::voice::*;
+use crate::system::spu::controllers::voice::*;
+use crate::system::spu::controllers::adpcm::*;
+use crate::system::spu::controllers::backend_dispatch;
+use crate::system::spu::controllers::volume::*;
+use crate::system::spu::controllers::adsr::*;
+use crate::system::spu::controllers::interpolation::*;
+use crate::system::spu::constants::*;
+use crate::system::spu::types::*;
 
 pub fn generate_sound(state: &mut State, audio_backend: &AudioBackend) {
-    let pmon_value = resources.spu.voice_channel_fm.read_u32();
+    let pmon_value = state.spu.voice_channel_fm.read_u32();
     if pmon_value > 0 {
         unimplemented!("Pitch modulation not implemented: 0x{:X}", pmon_value);
     }
 
-    let noise_value = resources.spu.voice_channel_noise.read_u32();
+    let noise_value = state.spu.voice_channel_noise.read_u32();
     if noise_value > 0 {
         unimplemented!("Noise generation not implemented: 0x{:X}", noise_value);
     }
 
     for voice_id in 0..24 {
-        let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
+        let play_state = unsafe { &mut *get_play_state(state, voice_id) };
 
-        handle_key_on(resources, voice_id);
+        handle_key_on(state, voice_id);
 
         if play_state.adpcm_state.sample_buffer.is_none() {
-            decode_adpcm_block(resources, voice_id);
+            decode_adpcm_block(state, voice_id);
         }
 
         let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
         let mut adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
         adpcm_sample_raw = interpolate_sample(adpcm_sample_raw, &mut play_state.old_sample, &mut play_state.older_sample, &mut play_state.oldest_sample, play_state.pitch_counter_interp);
 
-        handle_pitch_counter(resources, voice_id);
+        handle_pitch_counter(state, voice_id);
 
-        handle_adsr_envelope(resources, voice_id);
+        handle_adsr_envelope(state, voice_id);
 
         // The incoming ADPCM sample (mono) is volume transformed 3 times, and turned into stereo. 
-        let adpcm_sample = transform_voice_adsr_volume(resources, voice_id, adpcm_sample_raw);
-        let mut pcm_frame = transform_voice_volume(resources, voice_id, adpcm_sample);
-        pcm_frame = transform_main_volume(resources, pcm_frame);
+        let adpcm_sample = transform_voice_adsr_volume(state, voice_id, adpcm_sample_raw);
+        let mut pcm_frame = transform_voice_volume(state, voice_id, adpcm_sample);
+        pcm_frame = transform_main_volume(state, pcm_frame);
 
         // All processing done, ready to be played.
         play_state.sample_buffer.push(pcm_frame);
-        handle_play_sound_buffer(resources, audio_backend, voice_id);
+        handle_play_sound_buffer(state, audio_backend, voice_id);
 
-        handle_key_off(resources, voice_id);
+        handle_key_off(state, voice_id);
     }
 }
 
 fn handle_key_on(state: &mut State, voice_id: usize) {
-    let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
-    let start_address = unsafe { &mut *get_adpcm_sa(resources, voice_id) };
-    let key_on = &mut resources.spu.voice_key_on;
-    let key_off = &mut resources.spu.voice_key_off;
-    let status = &mut resources.spu.voice_channel_status;
+    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
+    let start_address = unsafe { &mut *get_adpcm_sa(state, voice_id) };
+    let key_on = &mut state.spu.voice_key_on;
+    let key_off = &mut state.spu.voice_key_off;
+    let status = &mut state.spu.voice_channel_status;
 
     let voice_bitfield = Bitfield::new(voice_id, 1);
 
@@ -80,8 +79,8 @@ fn handle_key_on(state: &mut State, voice_id: usize) {
 }
 
 fn handle_key_off(state: &mut State, voice_id: usize) {
-    let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
-    let key_off = &mut resources.spu.voice_key_off;
+    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
+    let key_off = &mut state.spu.voice_key_off;
 
     let voice_bitfield = Bitfield::new(voice_id, 1);
 
@@ -96,8 +95,8 @@ fn handle_key_off(state: &mut State, voice_id: usize) {
 }
 
 fn handle_play_sound_buffer(state: &mut State, audio_backend: &AudioBackend, voice_id: usize) {
-    let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
-    let control = &resources.spu.control;
+    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
+    let control = &state.spu.control;
 
     if play_state.sample_buffer.len() == BUFFER_SIZE {
         let unmuted = control.read_bitfield(CONTROL_UNMUTE) != 0;
@@ -111,10 +110,10 @@ fn handle_play_sound_buffer(state: &mut State, audio_backend: &AudioBackend, voi
 }
 
 fn decode_adpcm_block(state: &mut State, voice_id: usize) {
-    let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
-    let repeat_address = unsafe { &mut *get_adpcm_ra(resources, voice_id) };
-    let status = &mut resources.spu.voice_channel_status;
-    let memory = &resources.spu.memory;
+    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
+    let repeat_address = unsafe { &mut *get_adpcm_ra(state, voice_id) };
+    let status = &mut state.spu.voice_channel_status;
+    let memory = &state.spu.memory;
 
     // ADPCM header.
     let header = [memory.read_u8(play_state.current_address as u32), memory.read_u8((play_state.current_address + 1) as u32)];
@@ -150,8 +149,8 @@ fn decode_adpcm_block(state: &mut State, voice_id: usize) {
 }
 
 fn handle_pitch_counter(state: &mut State, voice_id: usize) {
-    let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
-    let sample_rate = unsafe { &mut *get_adpcm_sr(resources, voice_id) };
+    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
+    let sample_rate = unsafe { &mut *get_adpcm_sr(state, voice_id) };
 
     let sample_rate_value = sample_rate.read_u16() as u32;
     let interp_value = Bitfield::new(0, 12).extract_from(sample_rate_value) as usize;

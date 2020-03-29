@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use crate::system::types::State;
-use crate::controllers::r3000::*;
-use crate::controllers::r3000::debug;
+use crate::system::r3000::types::*;
+use crate::system::r3000::controllers::debug;
 
 pub fn translate_address(va: u32) -> u32 {
     match va {
@@ -32,16 +32,16 @@ pub fn translate_address(va: u32) -> u32 {
 
 pub fn read_u8(state: &mut State, physical_address: u32) -> Result<u8, Hazard> {
     let result = {
-        if resources.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
-        debug::track_memory_read_pending::<u8>(resources, physical_address);
-        resources.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
+        debug::track_memory_read_pending::<u8>(state, physical_address);
+        state.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_read(resources, physical_address, result.unwrap());
+        debug::track_memory_read(state, physical_address, result.unwrap());
     }
 
     result
@@ -49,16 +49,16 @@ pub fn read_u8(state: &mut State, physical_address: u32) -> Result<u8, Hazard> {
 
 pub fn write_u8(state: &mut State, physical_address: u32, value: u8) -> Result<(), Hazard> {
     let result = {
-        if resources.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
-        debug::track_memory_write_pending(resources, physical_address, value);
-        resources.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
+        debug::track_memory_write_pending(state, physical_address, value);
+        state.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_write(resources, physical_address, value);
+        debug::track_memory_write(state, physical_address, value);
     }
 
     result
@@ -66,16 +66,16 @@ pub fn write_u8(state: &mut State, physical_address: u32, value: u8) -> Result<(
 
 pub fn read_u16(state: &mut State, physical_address: u32) -> Result<u16, Hazard> {
     let result = {
-        if resources.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
-        debug::track_memory_read_pending::<u16>(resources, physical_address);
-        resources.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
+        debug::track_memory_read_pending::<u16>(state, physical_address);
+        state.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_read(resources, physical_address, result.unwrap());
+        debug::track_memory_read(state, physical_address, result.unwrap());
     }
 
     result
@@ -83,16 +83,16 @@ pub fn read_u16(state: &mut State, physical_address: u32) -> Result<u16, Hazard>
 
 pub fn write_u16(state: &mut State, physical_address: u32, value: u16) -> Result<(), Hazard> {
     let result = {
-        if resources.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
-        debug::track_memory_write_pending(resources, physical_address, value);
-        resources.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
+        debug::track_memory_write_pending(state, physical_address, value);
+        state.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
     
     if result.is_ok() {
-        debug::track_memory_write(resources, physical_address, value);
+        debug::track_memory_write(state, physical_address, value);
     }
 
     result
@@ -100,16 +100,16 @@ pub fn write_u16(state: &mut State, physical_address: u32, value: u16) -> Result
 
 pub fn read_u32(state: &mut State, physical_address: u32) -> Result<u32, Hazard> {
     let result = {
-        if resources.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
-        debug::track_memory_read_pending::<u32>(resources, physical_address);
-        resources.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
+        debug::track_memory_read_pending::<u32>(state, physical_address);
+        state.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_read(resources, physical_address, result.unwrap());
+        debug::track_memory_read(state, physical_address, result.unwrap());
     }
 
     result
@@ -117,16 +117,16 @@ pub fn read_u32(state: &mut State, physical_address: u32) -> Result<u32, Hazard>
 
 pub fn write_u32(state: &mut State, physical_address: u32, value: u32) -> Result<(), Hazard> {
     let result = {
-        if resources.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
-        debug::track_memory_write_pending(resources, physical_address, value);
-        resources.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))    
+        debug::track_memory_write_pending(state, physical_address, value);
+        state.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))    
     };
 
     if result.is_ok() {
-        debug::track_memory_write(resources, physical_address, value);
+        debug::track_memory_write(state, physical_address, value);
     }
 
     result

@@ -1,21 +1,21 @@
 use std::intrinsics::unlikely;
 use crate::system::types::State;
 use crate::utilities::mips1::status_push_exception;
-use crate::constants::r3000::INSTRUCTION_SIZE;
-use crate::system::r3000::cp0::*;
-use crate::controllers::r3000::debug;
+use crate::system::r3000::constants::INSTRUCTION_SIZE;
+use crate::system::r3000::cp0::constants::*;
+use crate::system::r3000::controllers::debug;
 
 pub fn set_exception(state: &mut State, exccode: usize) {
-    let pc = &mut resources.r3000.pc;
-    let cause = &mut resources.r3000.cp0.cause.register;
-    let status = &mut resources.r3000.cp0.status;
+    let pc = &mut state.r3000.pc;
+    let cause = &mut state.r3000.cp0.cause.register;
+    let status = &mut state.r3000.cp0.status;
     let mut pc_value = pc.read_u32() - INSTRUCTION_SIZE;
 
     if exccode == CAUSE_EXCCODE_INT {
         pc_value += INSTRUCTION_SIZE;
     }
 
-    assert!(!resources.r3000.branch_delay.branching(), "Exception handling while branching not implmeneted");
+    assert!(!state.r3000.branch_delay.branching(), "Exception handling while branching not implmeneted");
 
     // Push IEc & KUc (stack).
     let old_status_value = status.read_u32();
@@ -26,7 +26,7 @@ pub fn set_exception(state: &mut State, exccode: usize) {
     cause.write_bitfield(CAUSE_EXCCODE, exccode as u32);
 
     // Set EPC address.
-    let epc = &mut resources.r3000.cp0.epc;
+    let epc = &mut state.r3000.cp0.epc;
     epc.write_u32(pc_value);
     
     // Figure out base exception vector address.
@@ -53,14 +53,14 @@ pub fn set_exception(state: &mut State, exccode: usize) {
 }
 
 pub fn handle_interrupts(state: &mut State) {
-    let status = &resources.r3000.cp0.status;
-    let cause = &mut resources.r3000.cp0.cause;
+    let status = &state.r3000.cp0.status;
+    let cause = &mut state.r3000.cp0.cause;
 
     if status.read_bitfield(STATUS_IEC) == 0 {
         return;
     }
 
-    if resources.r3000.branch_delay.branching() {
+    if state.r3000.branch_delay.branching() {
         // Unimplemented for now, can just wait until we are not branching to handle this.
         return;
     }
@@ -68,13 +68,13 @@ pub fn handle_interrupts(state: &mut State) {
     cause.update_ip_field();
 
     let set_bits = {
-        let status = &resources.r3000.cp0.status;
-        let cause = &resources.r3000.cp0.cause.register;
+        let status = &state.r3000.cp0.status;
+        let cause = &state.r3000.cp0.cause.register;
         status.read_bitfield(STATUS_IM) & cause.read_bitfield(CAUSE_IP)
     };
 
     if unlikely(set_bits != 0) {
-        debug::trace_interrupt(resources);
-        set_exception(resources, CAUSE_EXCCODE_INT);
+        debug::trace_interrupt(state);
+        set_exception(state, CAUSE_EXCCODE_INT);
     }
 }

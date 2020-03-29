@@ -1,8 +1,8 @@
-use crate::constants::gpu::*;
+use crate::system::gpu::constants::*;
 use crate::types::color::Color;
 use crate::types::bitfield::Bitfield;
 use crate::types::geometry::*;
-use crate::system::gpu::data::*;
+use crate::system::gpu::types::*;
 
 pub fn default_render_x_position_modifier(d: isize) -> isize {
     // Sign extend from 11-bit to isize.

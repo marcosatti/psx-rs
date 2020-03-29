@@ -3,9 +3,9 @@ use std::fmt::{Display, UpperHex};
 use log::trace;
 use crate::system::types::State;
 use crate::types::fifo::Fifo;
-use crate::controllers::dmac::channel::*;
-use crate::system::dmac::*;
-use crate::system::dmac::debug::*;
+use crate::system::dmac::controllers::channel::*;
+use crate::system::dmac::constants::*;
+use crate::system::dmac::types::*;
 
 const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE: bool = false;
@@ -21,12 +21,12 @@ pub fn transfer_start(state: &mut State, channel: usize) {
 
     let transfer_id = TRANSFER_ID.fetch_add(1, Ordering::Relaxed);
 
-    let chcr = get_chcr(resources, channel);
-    let madr = get_madr(resources, channel);
-    let bcr = get_bcr(resources, channel);
+    let chcr = get_chcr(state, channel);
+    let madr = get_madr(state, channel);
+    let bcr = get_bcr(state, channel);
     let sync_mode = get_sync_mode(chcr);
     let transfer_direction = get_transfer_direction(chcr);
-    let transfer_state = get_transfer_state(resources, channel);
+    let transfer_state = get_transfer_state(state, channel);
     
     transfer_state.debug_state = Some(DebugState { transfer_id });
 
@@ -41,9 +41,9 @@ pub fn transfer_end(state: &mut State, channel: usize) {
         return;
     }
 
-    let madr = get_madr(resources, channel);
-    let bcr = get_bcr(resources, channel);
-    let transfer_state = get_transfer_state(resources, channel);
+    let madr = get_madr(state, channel);
+    let bcr = get_bcr(state, channel);
+    let transfer_state = get_transfer_state(state, channel);
 
     let transfer_id = transfer_state.debug_state.unwrap().transfer_id;
 
@@ -79,8 +79,8 @@ pub fn trace_hazard_full(fifo: &Fifo<u32>) {
     trace!("DMAC: writing to {} but full, trying again later", debug_state.identifier);
 }
 
-pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
-    let dpcr = resources.dmac.dpcr.read_u32();
+pub fn trace_dmac(state: &State, only_enabled: bool) {
+    let dpcr = state.dmac.dpcr.read_u32();
     for (name, bitfield) in DMA_CHANNEL_NAMES.iter().zip(DPCR_CHANNEL_ENABLE_BITFIELDS.iter()) {
         let dpcr_value = bitfield.extract_from(dpcr) != 0;
 
@@ -91,7 +91,7 @@ pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
         trace!("DMAC DPCR [{}]: dma enabled = {}", name, dpcr_value);
     }
 
-    let dicr = resources.dmac.dicr.register.read_u32();
+    let dicr = state.dmac.dicr.register.read_u32();
     let dicr_irq_master_enable_value = DICR_IRQ_MASTER_ENABLE.extract_from(dicr) != 0;
     trace!("DMAC DICR: master enable = {}", dicr_irq_master_enable_value);
     let dicr_irq_force_value = DICR_IRQ_FORCE.extract_from(dicr) != 0;

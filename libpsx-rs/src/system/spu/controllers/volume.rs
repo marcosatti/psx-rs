@@ -3,7 +3,7 @@ use crate::system::types::State;
 use crate::types::bitfield::Bitfield;
 use crate::types::register::b16_register::*;
 use crate::types::stereo::*;
-use crate::controllers::spu::voice::*;
+use crate::system::spu::controllers::voice::*;
 
 #[derive(Copy, Clone, Debug)]
 pub enum SweepMode {
@@ -24,13 +24,13 @@ pub enum SweepPhase {
 }
 
 pub fn transform_voice_adsr_volume(state: &mut State, voice_id: usize, adpcm_sample: i16) -> i16 {
-    let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
+    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
     (adpcm_sample as f64 * play_state.adsr_current_volume) as i16
 }
 
 pub fn transform_voice_volume(state: &mut State, voice_id: usize, adpcm_sample: i16) -> Stereo {
-    let vol_left = unsafe { &mut *get_voll(resources, voice_id) };
-    let vol_right = unsafe { &mut *get_volr(resources, voice_id) };
+    let vol_left = unsafe { &mut *get_voll(state, voice_id) };
+    let vol_right = unsafe { &mut *get_volr(state, voice_id) };
 
     let process_sample = |vol: &mut B16Register| -> i16 {
         let vol_value = vol.read_u16();
@@ -51,8 +51,8 @@ pub fn transform_voice_volume(state: &mut State, voice_id: usize, adpcm_sample: 
 }
 
 pub fn transform_main_volume(state: &mut State, pcm_frame: Stereo) -> Stereo {
-    let mvol_left = &mut resources.spu.main_volume_left;
-    let mvol_right = &mut resources.spu.main_volume_right;
+    let mvol_left = &mut state.spu.main_volume_left;
+    let mvol_right = &mut state.spu.main_volume_right;
 
     let process_sample = |sample, mvol: &mut B16Register| -> i16 {
         let mvol_value = mvol.read_u16();

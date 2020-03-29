@@ -1,10 +1,10 @@
 use crate::types::mips1::instruction::Instruction;
 use crate::system::types::State;
-use crate::controllers::r3000::*;
-use crate::controllers::r3000::instruction_impl::*;
-use crate::controllers::r3000::instruction_impl_cop2::*;
+use crate::system::r3000::types::*;
+use crate::system::r3000::controllers::instruction_impl::*;
+use crate::system::r3000::controllers::instruction_impl_cop2::*;
 
-type InstructionFn = fn(&mut Resources, Instruction) -> InstResult;
+type InstructionFn = fn(&mut State, Instruction) -> InstResult;
 
 pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {
     match inst.opcode() {

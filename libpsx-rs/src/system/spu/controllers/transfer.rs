@@ -1,34 +1,34 @@
 use std::sync::atomic::Ordering;
 use crate::system::types::State;
-use crate::controllers::spu::voice::*;
-use crate::system::spu::*;
-use crate::system::spu::register::*;
+use crate::system::spu::controllers::voice::*;
+use crate::system::spu::constants::*;
+use crate::system::spu::types::*;
 
 pub fn handle_transfer(state: &mut State) {
-    let current_transfer_mode = resources.spu.current_transfer_mode;
+    let current_transfer_mode = state.spu.current_transfer_mode;
 
-    handle_current_transfer_address(resources);
+    handle_current_transfer_address(state);
 
     match current_transfer_mode {
         TransferMode::Stop => {
-            handle_new_transfer_initialization(resources);
+            handle_new_transfer_initialization(state);
         },
         TransferMode::ManualWrite => {
-            handle_manual_write_transfer(resources);
+            handle_manual_write_transfer(state);
         },
         TransferMode::DmaWrite => {
-            handle_dma_write_transfer(resources);
+            handle_dma_write_transfer(state);
         }, 
         TransferMode::DmaRead => {
-            handle_dma_read_transfer(resources);
+            handle_dma_read_transfer(state);
         }, 
     } 
 }
 
 fn handle_current_transfer_address(state: &mut State) {
-    let control = &resources.spu.control;
-    let data_transfer_address = &mut resources.spu.data_transfer_address;
-    let current_transfer_adderss = &mut resources.spu.current_transfer_address;
+    let control = &state.spu.control;
+    let data_transfer_address = &mut state.spu.data_transfer_address;
+    let current_transfer_adderss = &mut state.spu.current_transfer_address;
 
     if data_transfer_address.write_latch.load(Ordering::Acquire) {
         if get_transfer_mode(control) != TransferMode::Stop {
@@ -41,9 +41,9 @@ fn handle_current_transfer_address(state: &mut State) {
 }
 
 fn handle_new_transfer_initialization(state: &mut State) {
-    let control = &resources.spu.control;
-    let stat = &mut resources.spu.stat;
-    let current_transfer_mode = &mut resources.spu.current_transfer_mode;
+    let control = &state.spu.control;
+    let stat = &mut state.spu.stat;
+    let current_transfer_mode = &mut state.spu.current_transfer_mode;
 
     let new_transfer_mode = get_transfer_mode(control);
     if new_transfer_mode != TransferMode::Stop {
@@ -56,18 +56,18 @@ fn handle_new_transfer_initialization(state: &mut State) {
 }
 
 fn handle_manual_write_transfer(state: &mut State) {
-    let control = &mut resources.spu.control;
-    let stat = &mut resources.spu.stat;
-    let memory = &mut resources.spu.memory;
-    let current_transfer_mode = &mut resources.spu.current_transfer_mode;
-    let current_transfer_address = &mut resources.spu.current_transfer_address;
+    let control = &mut state.spu.control;
+    let stat = &mut state.spu.stat;
+    let memory = &mut state.spu.memory;
+    let current_transfer_mode = &mut state.spu.current_transfer_mode;
+    let current_transfer_address = &mut state.spu.current_transfer_address;
 
-    let data_transfer_control = &resources.spu.data_transfer_control;
+    let data_transfer_control = &state.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {
         unimplemented!("Data transfer control not set to normal mode");
     }
 
-    let fifo = &mut resources.spu.data_fifo.fifo;
+    let fifo = &mut state.spu.data_fifo.fifo;
 
     match fifo.read_one() {
         Ok(value) => {
@@ -85,7 +85,7 @@ fn handle_manual_write_transfer(state: &mut State) {
 }
 
 fn handle_dma_write_transfer(state: &mut State) {
-    let data_transfer_control = &resources.spu.data_transfer_control;
+    let data_transfer_control = &state.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {
         unimplemented!("Data transfer control not set to normal mode");
     }
@@ -94,7 +94,7 @@ fn handle_dma_write_transfer(state: &mut State) {
 }
 
 fn handle_dma_read_transfer(state: &mut State) {
-    let data_transfer_control = &resources.spu.data_transfer_control;
+    let data_transfer_control = &state.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {
         unimplemented!("Data transfer control not set to normal mode");
     }

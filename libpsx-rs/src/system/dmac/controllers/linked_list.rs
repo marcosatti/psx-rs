@@ -1,7 +1,7 @@
 use crate::types::memory::b8_memory::B8Memory;
 use crate::types::bitfield::Bitfield;
-use crate::system::dmac::channel::LinkedListState;
-use crate::controllers::dmac::debug;
+use crate::system::dmac::types::LinkedListState;
+use crate::system::dmac::controllers::debug;
 
 pub fn process_header(state: &mut LinkedListState, main_memory: &B8Memory) -> Result<(), ()> {
     let header_value = main_memory.read_u32(state.next_header_address);

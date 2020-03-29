@@ -1,20 +1,20 @@
 use log::trace;
-use crate::system::timers::*;
-use crate::controllers::timers::timer::*;
+use crate::system::timers::constants::*;
+use crate::system::timers::controllers::timer::*;
 use crate::system::types::State;
 
 const ENABLE_MODE_WRITE_TRACE: bool = false;
 
 pub fn trace_timers(state: &mut State) {
     for i in 0..3 {
-        trace_timer(resources, i);
+        trace_timer(state, i);
     }
 }
 
 pub fn trace_timer(state: &mut State, timer_id: usize) {
-    let count = get_count(resources, timer_id);
-    let mode = get_mode(resources, timer_id);
-    let target = get_target(resources, timer_id);
+    let count = get_count(state, timer_id);
+    let mode = get_mode(state, timer_id);
+    let target = get_target(state, timer_id);
 
     trace!(
         "Timer {}: count = 0x{:08X}, mode = 0x{:08X}, target = 0x{:08X}",
@@ -24,11 +24,11 @@ pub fn trace_timer(state: &mut State, timer_id: usize) {
         target.read_u32(),
     );
 
-    trace_mode(resources, timer_id);
+    trace_mode(state, timer_id);
 }
 
 pub fn trace_mode(state: &mut State, timer_id: usize) {
-    let mode = get_mode(resources, timer_id);
+    let mode = get_mode(state, timer_id);
 
     let sync_enable = mode.register.read_bitfield(MODE_SYNC_EN);
     let sync_mode = mode.register.read_bitfield(MODE_SYNC_MODE);
@@ -53,5 +53,5 @@ pub fn trace_mode_write(state: &mut State, timer_id: usize) {
         return;
     }
 
-    trace_mode(resources, timer_id);
+    trace_mode(state, timer_id);
 }

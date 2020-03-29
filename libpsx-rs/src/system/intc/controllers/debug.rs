@@ -1,11 +1,11 @@
 use log::trace;
 use crate::system::types::State;
-use crate::system::intc::*;
+use crate::system::intc::constants::*;
 use crate::types::bitfield::Bitfield;
 
-pub fn trace_intc(resources: &Resources, only_enabled: bool, enable_assert: bool) {
-    let stat = resources.intc.stat.value();
-    let mask = resources.intc.mask.read_u32();
+pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
+    let stat = state.intc.stat.value();
+    let mask = state.intc.mask.read_u32();
     let mut pending_sticky = false;
     for (name, bitfield) in IRQ_NAMES.iter().zip(IRQ_BITFIELDS.iter()) {
         let stat_value = bitfield.extract_from(stat) != 0;
@@ -25,9 +25,9 @@ pub fn trace_intc(resources: &Resources, only_enabled: bool, enable_assert: bool
     }
 }
 
-pub fn is_pending(resources: &Resources, bitfield: Bitfield) -> bool {
-    let stat = resources.intc.stat.value();
-    let mask = resources.intc.mask.read_u32();
+pub fn is_pending(state: &State, bitfield: Bitfield) -> bool {
+    let stat = state.intc.stat.value();
+    let mask = state.intc.mask.read_u32();
     let stat_value = bitfield.extract_from(stat) != 0;
     let mask_value = bitfield.extract_from(mask) != 0;
     stat_value && mask_value

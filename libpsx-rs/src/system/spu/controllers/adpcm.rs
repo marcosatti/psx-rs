@@ -1,6 +1,6 @@
 use num_traits::clamp;
 use crate::types::bitfield::Bitfield;
-use crate::system::spu::voice::*;
+use crate::system::spu::types::*;
 
 pub fn decode_header(data: [u8; 2]) -> AdpcmParams {
     AdpcmParams {

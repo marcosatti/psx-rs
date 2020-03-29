@@ -2,20 +2,19 @@ use log::warn;
 use crate::system::types::State;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
-use crate::system::dmac::channel::*;
-use crate::system::dmac::register::*;
-use crate::system::dmac::*;
-use crate::controllers::dmac::debug;
+use crate::system::dmac::types::*;
+use crate::system::dmac::controllers::debug;
+use crate::system::dmac::constants::*;
 
-pub fn get_madr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
+pub fn get_madr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Register {
     let madr = match channel {
-        0 => &mut resources.dmac.mdecin_madr,
-        1 => &mut resources.dmac.mdecout_madr,
-        2 => &mut resources.dmac.gpu_madr,
-        3 => &mut resources.dmac.cdrom_madr,
-        4 => &mut resources.dmac.spu_madr,
-        5 => &mut resources.dmac.pio_madr,
-        6 => &mut resources.dmac.otc_madr,
+        0 => &mut state.dmac.mdecin_madr,
+        1 => &mut state.dmac.mdecout_madr,
+        2 => &mut state.dmac.gpu_madr,
+        3 => &mut state.dmac.cdrom_madr,
+        4 => &mut state.dmac.spu_madr,
+        5 => &mut state.dmac.pio_madr,
+        6 => &mut state.dmac.otc_madr,
         _ => unreachable!("Invalid DMAC channel"),
     };
 
@@ -24,15 +23,15 @@ pub fn get_madr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut
     }
 }
 
-pub fn get_bcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut B32Register {
+pub fn get_bcr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Register {
     let bcr = match channel {
-        0 => &mut resources.dmac.mdecin_bcr,
-        1 => &mut resources.dmac.mdecout_bcr,
-        2 => &mut resources.dmac.gpu_bcr,
-        3 => &mut resources.dmac.cdrom_bcr,
-        4 => &mut resources.dmac.spu_bcr,
-        5 => &mut resources.dmac.pio_bcr,
-        6 => &mut resources.dmac.otc_bcr,
+        0 => &mut state.dmac.mdecin_bcr,
+        1 => &mut state.dmac.mdecout_bcr,
+        2 => &mut state.dmac.gpu_bcr,
+        3 => &mut state.dmac.cdrom_bcr,
+        4 => &mut state.dmac.spu_bcr,
+        5 => &mut state.dmac.pio_bcr,
+        6 => &mut state.dmac.otc_bcr,
         _ => unreachable!("Invalid DMAC channel"),
     };
     
@@ -41,15 +40,15 @@ pub fn get_bcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut 
     }
 }
 
-pub fn get_chcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut Chcr {
+pub fn get_chcr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut Chcr {
     let chcr = match channel {
-        0 => &mut resources.dmac.mdecin_chcr,
-        1 => &mut resources.dmac.mdecout_chcr,
-        2 => &mut resources.dmac.gpu_chcr,
-        3 => &mut resources.dmac.cdrom_chcr,
-        4 => &mut resources.dmac.spu_chcr,
-        5 => &mut resources.dmac.pio_chcr,
-        6 => &mut resources.dmac.otc_chcr.chcr,
+        0 => &mut state.dmac.mdecin_chcr,
+        1 => &mut state.dmac.mdecout_chcr,
+        2 => &mut state.dmac.gpu_chcr,
+        3 => &mut state.dmac.cdrom_chcr,
+        4 => &mut state.dmac.spu_chcr,
+        5 => &mut state.dmac.pio_chcr,
+        6 => &mut state.dmac.otc_chcr.chcr,
         _ => unreachable!("Invalid DMAC channel"),
     };
 
@@ -58,15 +57,15 @@ pub fn get_chcr<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut
     }
 }
 
-pub fn get_transfer_state<'a, 'b>(resources: &'a mut Resources, channel: usize) -> &'b mut TransferState {
+pub fn get_transfer_state<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut TransferState {
     let transfer_state = match channel {
-        0 => &mut resources.dmac.mdecin_transfer_state,
-        1 => &mut resources.dmac.mdecout_transfer_state,
-        2 => &mut resources.dmac.gpu_transfer_state,
-        3 => &mut resources.dmac.cdrom_transfer_state,
-        4 => &mut resources.dmac.spu_transfer_state,
-        5 => &mut resources.dmac.pio_transfer_state,
-        6 => &mut resources.dmac.otc_transfer_state,
+        0 => &mut state.dmac.mdecin_transfer_state,
+        1 => &mut state.dmac.mdecout_transfer_state,
+        2 => &mut state.dmac.gpu_transfer_state,
+        3 => &mut state.dmac.cdrom_transfer_state,
+        4 => &mut state.dmac.spu_transfer_state,
+        5 => &mut state.dmac.pio_transfer_state,
+        6 => &mut state.dmac.otc_transfer_state,
         _ => unreachable!("Invalid DMAC channel"),
     };
 
@@ -83,17 +82,17 @@ fn get_otc_value(madr_value: u32, last_transfer: bool) -> u32 {
     }
 }
 
-pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
+pub fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
         2 => {
-            let fifo = &resources.gpu.gpu1810.read;
+            let fifo = &state.gpu.gpu1810.read;
             let handle_error = |e| { debug::trace_hazard_empty(fifo); e };
             fifo.read_one().map_err(handle_error)
         },
         3 => {        
-            let fifo = &resources.cdrom.data;
+            let fifo = &state.cdrom.data;
             if fifo.read_available() < 4 {
                 debug::trace_hazard_empty(fifo);
                 return Err(());
@@ -111,12 +110,12 @@ pub fn pop_channel_data(resources: &Resources, channel: usize, madr: u32, last_t
     }
 }
 
-pub fn push_channel_data(resources: &Resources, channel: usize, value: u32) -> Result<(), ()> {
+pub fn push_channel_data(state: &State, channel: usize, value: u32) -> Result<(), ()> {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
         2 => {
-            let fifo = &resources.gpu.gpu1810.gp0;
+            let fifo = &state.gpu.gpu1810.gp0;
             let handle_error = |e| { debug::trace_hazard_full(fifo); e };
             fifo.write_one(value).map_err(handle_error)
         },
@@ -154,7 +153,7 @@ pub fn get_sync_mode(chcr: &Chcr) -> SyncMode {
 }
 
 pub fn raise_irq(state: &mut State, channel: usize) {
-    let dicr = &mut resources.dmac.dicr;
+    let dicr = &mut state.dmac.dicr;
 
     let _lock = dicr.mutex.lock();
     

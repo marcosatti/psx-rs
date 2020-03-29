@@ -2,24 +2,23 @@ use std::sync::atomic::Ordering;
 use std::cmp::min;
 use log::warn;
 use crate::system::types::State;
-use crate::controllers::dmac::channel::*;
-use crate::constants::dmac::*;
-use crate::system::dmac::*;
-use crate::system::dmac::channel::*;
-use crate::controllers::dmac::debug;
-use crate::controllers::dmac::linked_list;
+use crate::system::dmac::constants::*;
+use crate::system::dmac::types::*;
+use crate::system::dmac::controllers::debug;
+use crate::system::dmac::controllers::linked_list;
+use crate::system::dmac::controllers::channel::*;
 
 pub fn handle_transfer(state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
-    let transfer_state = get_transfer_state(resources, channel_id);
+    let transfer_state = get_transfer_state(state, channel_id);
 
-    handle_transfer_start(resources, channel_id);
+    handle_transfer_start(state, channel_id);
 
     if transfer_state.started {
         match transfer_state.sync_mode_state {
             SyncModeState::Undefined => unreachable!(),
-            SyncModeState::Continuous(ref mut s) => handle_continuous_transfer(s, resources, channel_id, word_transfers_allowed),
-            SyncModeState::Blocks(ref mut s) => handle_blocks_transfer(s, resources, channel_id, word_transfers_allowed),
-            SyncModeState::LinkedList(ref mut s) => handle_linked_list_transfer(s, resources, channel_id, word_transfers_allowed),
+            SyncModeState::Continuous(ref mut s) => handle_continuous_transfer(s, state, channel_id, word_transfers_allowed),
+            SyncModeState::Blocks(ref mut s) => handle_blocks_transfer(s, state, channel_id, word_transfers_allowed),
+            SyncModeState::LinkedList(ref mut s) => handle_linked_list_transfer(s, state, channel_id, word_transfers_allowed),
         }
     } else {
         Ok(0)
@@ -27,10 +26,10 @@ pub fn handle_transfer(state: &mut State, channel_id: usize, word_transfers_allo
 }
 
 fn handle_transfer_start(state: &mut State, channel_id: usize) {
-    let chcr = get_chcr(resources, channel_id);
-    let madr = get_madr(resources, channel_id);
-    let bcr = get_bcr(resources, channel_id);
-    let transfer_state = get_transfer_state(resources, channel_id);
+    let chcr = get_chcr(state, channel_id);
+    let madr = get_madr(state, channel_id);
+    let bcr = get_bcr(state, channel_id);
+    let transfer_state = get_transfer_state(state, channel_id);
 
     if chcr.write_latch.load(Ordering::Acquire) {
         assert!(!transfer_state.started, format!("DMA transfer already started, channel_id = {}", channel_id));
@@ -40,11 +39,11 @@ fn handle_transfer_start(state: &mut State, channel_id: usize) {
                 unimplemented!("DMAC transfer logic not done yet (CHCR_CHOPPING, channel_id = {})", channel_id);
             }
 
-            resources.bus_locked.store(true, Ordering::Release);
+            state.bus_locked.store(true, Ordering::Release);
 
             initialize_transfer_state(transfer_state, chcr, madr, bcr);
 
-            debug::transfer_start(resources, channel_id);
+            debug::transfer_start(state, channel_id);
         }
 
         chcr.write_latch.store(false, Ordering::Release)
@@ -52,10 +51,10 @@ fn handle_transfer_start(state: &mut State, channel_id: usize) {
 }
 
 fn handle_transfer_finish(state: &mut State, channel_id: usize, bcr_value: Option<u32>, madr_value: Option<u32>) {
-    let chcr = get_chcr(resources, channel_id);
-    let madr = get_madr(resources, channel_id);
-    let bcr = get_bcr(resources, channel_id);
-    let transfer_state = get_transfer_state(resources, channel_id);
+    let chcr = get_chcr(state, channel_id);
+    let madr = get_madr(state, channel_id);
+    let bcr = get_bcr(state, channel_id);
+    let transfer_state = get_transfer_state(state, channel_id);
     
     transfer_state.started = false;
 
@@ -69,77 +68,77 @@ fn handle_transfer_finish(state: &mut State, channel_id: usize, bcr_value: Optio
         madr.write_u32(value);
     }
 
-    raise_irq(resources, channel_id);
+    raise_irq(state, channel_id);
 
-    debug::transfer_end(resources, channel_id);
+    debug::transfer_end(state, channel_id);
 }
 
-fn handle_continuous_transfer(state: &mut ContinuousState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
-    let chcr = get_chcr(resources, channel_id);
+fn handle_continuous_transfer(transfer_state: &mut ContinuousState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+    let chcr = get_chcr(state, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
 
-    let word_transfers_allowed = min(word_transfers_allowed, state.transfers_remaining());
+    let word_transfers_allowed = min(word_transfers_allowed, transfer_state.transfers_remaining());
     let mut word_transfers_count = 0;
 
     while word_transfers_count < word_transfers_allowed {
         match transfer_direction {
             TransferDirection::FromChannel => {
-                let last_transfer = state.transfers_remaining() == 1;
-                let value = pop_channel_data(resources, channel_id, state.current_address, last_transfer).map_err(|_| word_transfers_count)?;
-                resources.main_memory.write_u32(state.current_address, value);
+                let last_transfer = transfer_state.transfers_remaining() == 1;
+                let value = pop_channel_data(state, channel_id, transfer_state.current_address, last_transfer).map_err(|_| word_transfers_count)?;
+                state.main_memory.write_u32(transfer_state.current_address, value);
             },
             TransferDirection::ToChannel => {
-                let value = resources.main_memory.read_u32(state.current_address);
-                push_channel_data(resources, channel_id, value).map_err(|_| word_transfers_count)?;
+                let value = state.main_memory.read_u32(transfer_state.current_address);
+                push_channel_data(state, channel_id, value).map_err(|_| word_transfers_count)?;
             },
         }
     
-        state.increment(madr_step_direction);
+        transfer_state.increment(madr_step_direction);
         word_transfers_count += 1;
     }
 
-    if state.transfers_remaining() == 0 {
-        handle_transfer_finish(resources, channel_id, None, None);
+    if transfer_state.transfers_remaining() == 0 {
+        handle_transfer_finish(state, channel_id, None, None);
     }
 
     Ok(word_transfers_count)
 }
 
-fn handle_blocks_transfer(state: &mut BlocksState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
-    let chcr = get_chcr(resources, channel_id);
+fn handle_blocks_transfer(transfer_state: &mut BlocksState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+    let chcr = get_chcr(state, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
 
-    let word_transfers_allowed = min(word_transfers_allowed, state.transfers_remaining());
+    let word_transfers_allowed = min(word_transfers_allowed, transfer_state.transfers_remaining());
     let mut word_transfers_count = 0;
 
     while word_transfers_count < word_transfers_allowed {
         match transfer_direction {
             TransferDirection::FromChannel => {
-                let last_transfer = state.transfers_remaining() == 1;
-                let value = pop_channel_data(resources, channel_id, state.current_address, last_transfer).map_err(|_| word_transfers_count)?;
-                resources.main_memory.write_u32(state.current_address, value);
+                let last_transfer = transfer_state.transfers_remaining() == 1;
+                let value = pop_channel_data(state, channel_id, transfer_state.current_address, last_transfer).map_err(|_| word_transfers_count)?;
+                state.main_memory.write_u32(transfer_state.current_address, value);
             },
             TransferDirection::ToChannel => {
-                let value = resources.main_memory.read_u32(state.current_address);
-                push_channel_data(resources, channel_id, value).map_err(|_| word_transfers_count)?;
+                let value = state.main_memory.read_u32(transfer_state.current_address);
+                push_channel_data(state, channel_id, value).map_err(|_| word_transfers_count)?;
             },
         }
 
-        state.increment(madr_step_direction);
+        transfer_state.increment(madr_step_direction);
         word_transfers_count += 1;
     }
 
-    if state.transfers_remaining() == 0 {
-        handle_transfer_finish(resources, channel_id, Some(0), Some(state.current_address));
+    if transfer_state.transfers_remaining() == 0 {
+        handle_transfer_finish(state, channel_id, Some(0), Some(transfer_state.current_address));
     }
 
     Ok(word_transfers_count)
 }
 
-fn handle_linked_list_transfer(state: &mut LinkedListState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
-    let chcr = get_chcr(resources, channel_id);
+fn handle_linked_list_transfer(transfer_state: &mut LinkedListState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+    let chcr = get_chcr(state, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
 
     assert!(transfer_direction == TransferDirection::ToChannel, "Linked list transfers are ToChannel only");
@@ -147,16 +146,16 @@ fn handle_linked_list_transfer(state: &mut LinkedListState, state: &mut State, c
     let mut word_transfers_count = 0;
 
     while word_transfers_count < word_transfers_allowed {
-        if state.transfers_remaining() == 0 {
-            if state.next_header_address == 0xFF_FFFF {
-                handle_transfer_finish(resources, channel_id, None, Some(0xFF_FFFF));
+        if transfer_state.transfers_remaining() == 0 {
+            if transfer_state.next_header_address == 0xFF_FFFF {
+                handle_transfer_finish(state, channel_id, None, Some(0xFF_FFFF));
                 break;
             }
 
-            match linked_list::process_header(state, &resources.main_memory) {
+            match linked_list::process_header(transfer_state, &state.main_memory) {
                 Err(()) => {
                     warn!("Linked list transfer: null pointer encountered, ending transfer prematurely");
-                    handle_transfer_finish(resources, channel_id, None, Some(0xFF_FFFF));
+                    handle_transfer_finish(state, channel_id, None, Some(0xFF_FFFF));
                     break;
                 },
                 Ok(()) => {},
@@ -164,10 +163,10 @@ fn handle_linked_list_transfer(state: &mut LinkedListState, state: &mut State, c
 
             word_transfers_count += 1;
         } else {
-            let address = (state.current_header_address + DATA_SIZE) + ((state.current_count as u32) * DATA_SIZE);
-            let value = resources.main_memory.read_u32(address as u32);
-            push_channel_data(resources, channel_id, value).map_err(|_| word_transfers_count)?;
-            state.increment();
+            let address = (transfer_state.current_header_address + DATA_SIZE) + ((transfer_state.current_count as u32) * DATA_SIZE);
+            let value = state.main_memory.read_u32(address as u32);
+            push_channel_data(state, channel_id, value).map_err(|_| word_transfers_count)?;
+            transfer_state.increment();
             word_transfers_count += 1;
         }
     }

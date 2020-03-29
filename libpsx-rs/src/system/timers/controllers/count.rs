@@ -1,36 +1,35 @@
 use std::time::Duration;
 use crate::system::types::State;
-use crate::system::timers::*;
-use crate::controllers::timers::timer::*;
-use crate::controllers::timers::irq::*;
-use crate::system::timers::timer::*;
-use crate::constants::timers::*;
+use crate::system::timers::constants::*;
+use crate::system::timers::controllers::timer::*;
+use crate::system::timers::controllers::irq::*;
+use crate::system::timers::types::*;
 
 pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
-    let count = get_count(resources, timer_id);
-    let state = get_state(resources, timer_id);
+    let count = get_count(state, timer_id);
+    let timer_state = get_state(state, timer_id);
 
-    state.current_elapsed += duration;
-    let delta_elapsed = state.current_elapsed - state.acknowledged_elapsed;
-    let ticks = calc_ticks(state.clock_source, delta_elapsed);
-    state.acknowledged_elapsed = state.current_elapsed - ticks.1;
+    timer_state.current_elapsed += duration;
+    let delta_elapsed = timer_state.current_elapsed - timer_state.acknowledged_elapsed;
+    let ticks = calc_ticks(timer_state.clock_source, delta_elapsed);
+    timer_state.acknowledged_elapsed = timer_state.current_elapsed - ticks.1;
     
     for _ in 0..ticks.0 {
         let value = count.read_u32() + 1;
         count.write_u32(value);
-        let irq_type = handle_count_reset(resources, timer_id);
-        handle_irq_trigger(resources, timer_id, irq_type);
+        let irq_type = handle_count_reset(state, timer_id);
+        handle_irq_trigger(state, timer_id, irq_type);
     }
 }
 
 pub fn handle_count_clear(state: &mut State, timer_id: usize) {
-    let count = get_count(resources, timer_id);
+    let count = get_count(state, timer_id);
     count.write_u32(0);
 }
 
 fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
-    let mode = get_mode(resources, timer_id);
-    let count = get_count(resources, timer_id);
+    let mode = get_mode(state, timer_id);
+    let count = get_count(state, timer_id);
     let count_value = count.read_u32() & 0xFFFF;
     
     let mut irq_type = IrqType::None;
@@ -39,17 +38,17 @@ fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
         0 => {
             // When counter equals 0xFFFF.
             if count_value == (std::u16::MAX as u32) {
-                handle_count_clear(resources, timer_id);
+                handle_count_clear(state, timer_id);
                 mode.register.write_bitfield(MODE_OVERFLOW_HIT, 1);
                 irq_type = IrqType::Overflow;
             }
         },
         1 => {
             // When counter equals target.
-            let target = get_target(resources, timer_id);
+            let target = get_target(state, timer_id);
             let target_value = target.read_u32() & 0xFFFF;
             if count_value == target_value {
-                handle_count_clear(resources, timer_id);
+                handle_count_clear(state, timer_id);
                 mode.register.write_bitfield(MODE_TARGET_HIT, 0);
                 irq_type = IrqType::Target;
             }

@@ -8,13 +8,13 @@ use std::cmp::max;
 use log::trace;
 use log::debug;
 use log::warn;
-use crate::constants::r3000::INSTRUCTION_SIZE;
-use crate::controllers::r3000::hazard::*;
-use crate::controllers::r3000::debug::disassembler::*;
-use crate::controllers::r3000::debug::register::*;
-use crate::controllers::r3000::memory_controller::translate_address;
+use crate::system::r3000::constants::INSTRUCTION_SIZE;
+use crate::system::r3000::controllers::debug::disassembler::*;
+use crate::system::r3000::controllers::debug::register::*;
+use crate::system::r3000::controllers::memory_controller::translate_address;
 use crate::system::types::State;
-use crate::system::r3000::cp0::*;
+use crate::system::r3000::cp0::constants::*;
+use crate::system::r3000::types::*;
 use crate::debug::DEBUG_CORE_EXIT;
 
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
@@ -38,7 +38,7 @@ pub static mut DEBUG_TICK_COUNT: usize = 0;
 static mut DEBUG_BIOS_CALL_COUNT: usize = 0;
 static mut DEBUG_CRITICAL_SECTION_REFCOUNT: isize = 0;
 
-pub fn trace_state(resources: &Resources) {
+pub fn trace_state(state: &State) {
     unsafe { 
         DEBUG_TICK_COUNT += 1; 
 
@@ -47,18 +47,18 @@ pub fn trace_state(resources: &Resources) {
         }
     
         let tick_count = DEBUG_TICK_COUNT;
-        let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
+        let pc_va = state.r3000.pc.read_u32() - INSTRUCTION_SIZE;
     
         // let start = 1195;
         // let end = 1196;
         // if (start..=end).contains(&DEBUG_BIOS_CALL_COUNT) {
         if true {
-            let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
-            let branching = resources.r3000.branch_delay.branching();
+            let iec = state.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
+            let branching = state.r3000.branch_delay.branching();
             debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
-            trace_instructions_at_pc(resources, Some(1));
+            trace_instructions_at_pc(state, Some(1));
             if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
-                trace_registers(resources);
+                trace_registers(state);
             }
         }
 
@@ -68,10 +68,10 @@ pub fn trace_state(resources: &Resources) {
     }
 }
 
-pub fn trace_pc(resources: &Resources) {
-    let pc = resources.r3000.pc.read_u32();
-    let kuc = resources.r3000.cp0.status.read_bitfield(STATUS_KUC);
-    let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC);
+pub fn trace_pc(state: &State) {
+    let pc = state.r3000.pc.read_u32();
+    let kuc = state.r3000.cp0.status.read_bitfield(STATUS_KUC);
+    let iec = state.r3000.cp0.status.read_bitfield(STATUS_IEC);
     let tick_count = unsafe { DEBUG_TICK_COUNT };
     trace!("[{:X}] R3000 pc = 0x{:0X}, kuc = {}, iec = {}", tick_count, pc, kuc, iec);
 }
@@ -87,9 +87,9 @@ pub fn trace_hazard(hazard: Hazard) {
     }
 }
 
-pub fn trace_interrupt(resources: &Resources) {
-    use crate::controllers::intc::debug::*;
-    use crate::system::intc::{IRQ_BITFIELDS, IRQ_NAMES};
+pub fn trace_interrupt(state: &State) {
+    use crate::system::intc::controllers::debug::*;
+    use crate::system::intc::constants::{IRQ_BITFIELDS, IRQ_NAMES};
 
     let line_index = 2; // CDROM
     let line = IRQ_BITFIELDS[line_index];
@@ -97,25 +97,25 @@ pub fn trace_interrupt(resources: &Resources) {
 
     if ENABLE_INTERRUPT_TRACING.load(Ordering::Acquire) {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
-        let pc_va = resources.r3000.pc.read_u32();
-        let branching = resources.r3000.branch_delay.branching();
+        let pc_va = state.r3000.pc.read_u32();
+        let branching = state.r3000.branch_delay.branching();
         if false {
-            if is_pending(resources, line) {
+            if is_pending(state, line) {
                 trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}", debug_tick_count, pc_va, branching, line_name);
             }
         } else {
             trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
-            crate::controllers::intc::debug::trace_intc(resources, true, true);
+            crate::system::intc::controllers::debug::trace_intc(state, true, true);
         }
     }
 }
 
-pub fn trace_syscall(resources: &Resources) {
+pub fn trace_syscall(state: &State) {
     if ENABLE_SYSCALL_TRACING {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
-        let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
+        let pc_va = state.r3000.pc.read_u32() - INSTRUCTION_SIZE;
 
-        let opcode = match resources.r3000.gpr[4].read_u32() {
+        let opcode = match state.r3000.gpr[4].read_u32() {
             0 => "NoFunction".to_owned(),
             1 => { 
                 unsafe { 
@@ -137,16 +137,16 @@ pub fn trace_syscall(resources: &Resources) {
     }
 }
 
-pub fn trace_rfe(resources: &Resources) {
+pub fn trace_rfe(state: &State) {
     if ENABLE_RFE_TRACING {
         let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
-        let pc_va = resources.r3000.pc.read_u32() - INSTRUCTION_SIZE;
-        let branch_target = resources.r3000.branch_delay.target_or_null();
+        let pc_va = state.r3000.pc.read_u32() - INSTRUCTION_SIZE;
+        let branch_target = state.r3000.branch_delay.target_or_null();
         trace!("[{:X}] rfe, pc = 0x{:08X}, branch target = 0x{:08X}", debug_tick_count, pc_va, branch_target);
     }
 }
 
-pub fn track_memory_read_pending<T>(resources: &Resources, physical_address: u32) {
+pub fn track_memory_read_pending<T>(state: &State, physical_address: u32) {
     if !ENABLE_MEMORY_TRACKING_READ {
         return;
     }
@@ -158,12 +158,12 @@ pub fn track_memory_read_pending<T>(resources: &Resources, physical_address: u32
     if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        let pc = resources.r3000.pc.read_u32();
+        let pc = state.r3000.pc.read_u32();
         debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X} start", tick_count, pc, type_name, physical_address);
     }
 }
 
-pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
+pub fn track_memory_read<T: Copy + UpperHex>(state: &State, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_READ {
         return;
     }
@@ -177,14 +177,14 @@ pub fn track_memory_read<T: Copy + UpperHex>(resources: &Resources, physical_add
     if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        let pc = resources.r3000.pc.read_u32();
+        let pc = state.r3000.pc.read_u32();
         debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
-    trace_memory_spin_loop_detection_read(resources, physical_address, count);
+    trace_memory_spin_loop_detection_read(state, physical_address, count);
 }
 
-pub fn track_memory_write_pending<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
+pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &State, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_WRITE {
         return;
     }
@@ -196,12 +196,12 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(resources: &Resources, phy
     if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        let pc = resources.r3000.pc.read_u32();
+        let pc = state.r3000.pc.read_u32();
         debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} start", tick_count, pc, type_name, physical_address, value);
     }
 }
 
-pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_address: u32, value: T) {
+pub fn track_memory_write<T: Copy + UpperHex>(state: &State, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_WRITE {
         return;
     }
@@ -215,14 +215,14 @@ pub fn track_memory_write<T: Copy + UpperHex>(resources: &Resources, physical_ad
     if false {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
-        let pc = resources.r3000.pc.read_u32();
+        let pc = state.r3000.pc.read_u32();
         debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
-    trace_memory_spin_loop_detection_write(resources, physical_address, count);
+    trace_memory_spin_loop_detection_write(state, physical_address, count);
 }
 
-fn trace_memory_spin_loop_detection_read(resources: &Resources, physical_address: u32, count: usize) {
+fn trace_memory_spin_loop_detection_read(state: &State, physical_address: u32, count: usize) {
     if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ.load(Ordering::Acquire) {
         return;
     }
@@ -230,15 +230,15 @@ fn trace_memory_spin_loop_detection_read(resources: &Resources, physical_address
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         trace!("[{:X}] Memory read spin loop detected on address = 0x{:08X}", tick_count, physical_address);
-        trace_instructions_at_pc(resources, Some(1));
+        trace_instructions_at_pc(state, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
-            trace_registers(resources);
+            trace_registers(state);
         }
         memory::clear_state_read(physical_address);
     }
 } 
 
-fn trace_memory_spin_loop_detection_write(resources: &Resources, physical_address: u32, count: usize) {
+fn trace_memory_spin_loop_detection_write(state: &State, physical_address: u32, count: usize) {
     if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE.load(Ordering::Acquire) {
         return;
     }
@@ -246,15 +246,15 @@ fn trace_memory_spin_loop_detection_write(resources: &Resources, physical_addres
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         trace!("[{:X}] Memory write spin loop detected on address = 0x{:08X}", tick_count, physical_address);
-        trace_instructions_at_pc(resources, Some(1));
+        trace_instructions_at_pc(state, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
-            trace_registers(resources);
+            trace_registers(state);
         }
         memory::clear_state_write(physical_address);
     }
 }
 
-pub fn trace_stdout_putchar(resources: &Resources) {
+pub fn trace_stdout_putchar(state: &State) {
     static mut BUFFER: String = String::new();
 
     // BIOS call 0xA0, $t1 = 0x3C.
@@ -262,13 +262,13 @@ pub fn trace_stdout_putchar(resources: &Resources) {
         return;
     }
     
-    let mut pc = resources.r3000.pc.read_u32();
+    let mut pc = state.r3000.pc.read_u32();
     pc = translate_address(pc);
-    let t1 = resources.r3000.gpr[9].read_u32();
+    let t1 = state.r3000.gpr[9].read_u32();
 
     if ((pc == 0xA0) && (t1 == 0x3C)) || ((pc == 0xB0) && (t1 == 0x3D)) {
         unsafe {
-            let a1 = resources.r3000.gpr[4].read_u32();
+            let a1 = state.r3000.gpr[4].read_u32();
             assert!(a1 < 128, format!("stdout putchar a1 = 0x{:08X}", a1)); // Assumed to be ASCII encoding.
 
             let ch = a1 as u8 as char;
@@ -277,7 +277,7 @@ pub fn trace_stdout_putchar(resources: &Resources) {
                 BUFFER.push(ch);
             } else {
                 let tick_count = DEBUG_TICK_COUNT;
-                let iec = resources.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
+                let iec = state.r3000.cp0.status.read_bitfield(STATUS_IEC) != 0;
                 trace!("[{:X}] stdout: iec = {}, string = {}", tick_count, iec, &BUFFER); 
                 BUFFER.clear();
             }
@@ -285,14 +285,14 @@ pub fn trace_stdout_putchar(resources: &Resources) {
     }
 }
 
-pub fn trace_bios_call(resources: &Resources) {
+pub fn trace_bios_call(state: &State) {
     if !ENABLE_BIOS_CALL_TRACING {
         return;
     }
 
-    let mut pc = resources.r3000.pc.read_u32();
+    let mut pc = state.r3000.pc.read_u32();
     pc = translate_address(pc);
-    let t1 = resources.r3000.gpr[9].read_u32();
+    let t1 = state.r3000.gpr[9].read_u32();
     
     let string = match pc {
         0xA0 => {
@@ -361,7 +361,7 @@ pub fn trace_bios_call(resources: &Resources) {
         _ => return,
     };
 
-    let ra = resources.r3000.gpr[31].read_u32();
+    let ra = state.r3000.gpr[31].read_u32();
 
     unsafe { 
         DEBUG_BIOS_CALL_COUNT += 1;

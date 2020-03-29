@@ -3,23 +3,23 @@ use capstone::Endian;
 use log::trace;
 use ansi_term::Colour::Red;
 use crate::system::types::State;
-use crate::constants::r3000::INSTRUCTION_SIZE;
-use crate::controllers::r3000::memory_controller::translate_address;
+use crate::system::r3000::constants::INSTRUCTION_SIZE;
+use crate::system::r3000::controllers::memory_controller::translate_address;
 
 const DEFAULT_TRACE_INSTRUCTIONS_LENGTH: usize = 10;
 
-pub fn trace_instructions_at_pc(resources: &Resources, instruction_count: Option<usize>) {
-    let pc = translate_address(resources.r3000.pc.read_u32() - INSTRUCTION_SIZE);
+pub fn trace_instructions_at_pc(state: &State, instruction_count: Option<usize>) {
+    let pc = translate_address(state.r3000.pc.read_u32() - INSTRUCTION_SIZE);
     
     let memory_offset;
     let memory = match pc {
         0..=0x1F_FFFF => {
             memory_offset = pc;
-            &resources.main_memory.memory
+            &state.main_memory.memory
         },
         0x1FC0_0000..=0x1FC7_FFFF => {
             memory_offset = pc - 0x1FC0_0000;
-            &resources.bios.memory
+            &state.bios.memory
         },
         _ => panic!("PC = 0x{:08X} is not inside memory", pc)
     };

@@ -1,10 +1,10 @@
 use crate::backends::video::VideoBackend;
 use crate::system::types::State;
-use crate::system::gpu::*;
-use crate::controllers::gpu::command_gp1_impl;
+use crate::system::gpu::constants::*;
+use crate::system::gpu::controllers::command_gp1_impl;
 
 pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
-    let fifo = &mut resources.gpu.gpu1814.gp1;
+    let fifo = &mut state.gpu.gpu1814.gp1;
 
     // Commands (GP1) are always of length 1.
 
@@ -28,5 +28,5 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
         _ => unimplemented!("Unknown GP1 command: 0x{:0X}", command_index),
     };
 
-    command_fn(resources, video_backend, command);
+    command_fn(state, video_backend, command);
 }
