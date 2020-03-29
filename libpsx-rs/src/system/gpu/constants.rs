@@ -1,12 +1,11 @@
 use crate::types::bitfield::Bitfield;
 
-pub const CLOCK_SPEED_NTSC: f64 = 53.693175 * 1e6; 
-pub const _CLOCK_SPEED_PAL: f64 = 53.203425 * 1e6; 
+pub const CLOCK_SPEED_NTSC: f64 = 53.693175 * 1e6;
+pub const _CLOCK_SPEED_PAL: f64 = 53.203425 * 1e6;
 pub const VRAM_WIDTH_16B: usize = 1024; // Width in terms of halfwords (16 bit).
 pub const VRAM_HEIGHT_LINES: usize = 512;
 pub const _TEXPAGE_WIDTH: usize = 256;
 pub const _TEXPAGE_HEIGHT: usize = 256;
-
 
 pub const GP_CMD: Bitfield = Bitfield::new(24, 8);
 pub const STAT_TEXPAGEX: Bitfield = Bitfield::new(0, 4);
@@ -34,4 +33,3 @@ pub const STAT_SEND_VRAM: Bitfield = Bitfield::new(27, 1);
 pub const STAT_RECV_DMA: Bitfield = Bitfield::new(28, 1);
 pub const STAT_DMA_DIRECTION: Bitfield = Bitfield::new(29, 2);
 pub const STAT_DRAWING_ODD: Bitfield = Bitfield::new(31, 1);
-

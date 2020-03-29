@@ -1,8 +1,8 @@
+use crate::system::spu::constants::*;
+use crate::system::spu::types::*;
 use crate::system::types::State;
 use crate::types::register::b16_register::B16Register;
 use crate::types::register::b32_register::B32Register;
-use crate::system::spu::constants::*;
-use crate::system::spu::types::*;
 
 pub fn get_transfer_mode(control: &B16Register) -> TransferMode {
     match control.read_bitfield(CONTROL_TRANSFER_MODE) {

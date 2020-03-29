@@ -1,20 +1,20 @@
+pub mod backend_dispatch;
 pub mod command;
 pub mod command_gp0;
 pub mod command_gp0_impl;
 pub mod command_gp1;
 pub mod command_gp1_impl;
 pub mod data;
-pub mod backend_dispatch;
 pub mod debug;
 
-use std::time::Duration;
-use crate::system::types::State;
-use crate::video::VideoBackend;
-use crate::system::types::ControllerContext;
 use crate::system::gpu::constants::*;
-use crate::system::types::Event;
 use crate::system::gpu::controllers::command::*;
 use crate::system::gpu::crtc::controllers::run_time as crtc_run_time;
+use crate::system::types::ControllerContext;
+use crate::system::types::Event;
+use crate::system::types::State;
+use crate::video::VideoBackend;
+use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {

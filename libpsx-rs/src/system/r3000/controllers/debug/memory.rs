@@ -1,7 +1,7 @@
-use std::cell::UnsafeCell;
 use hashbrown::hash_map::DefaultHashBuilder;
-use lru::LruCache;
 use lazy_static::*;
+use lru::LruCache;
+use std::cell::UnsafeCell;
 
 struct AccessState(UnsafeCell<LruCache<u32, usize, DefaultHashBuilder>>);
 
@@ -17,7 +17,7 @@ impl AccessState {
             None => {
                 cache.put(address, 1);
                 1
-            },
+            }
             Some(count) => {
                 *count += 1;
                 *count
@@ -25,7 +25,7 @@ impl AccessState {
         }
     }
 
-    fn clear(&self, address: u32) {        
+    fn clear(&self, address: u32) {
         let cache = unsafe { &mut *self.0.get() };
         cache.pop(&address).unwrap();
     }
@@ -43,11 +43,11 @@ lazy_static! {
 }
 
 pub fn update_state_read(address: u32) -> usize {
-    READS_STATE.update(address) 
+    READS_STATE.update(address)
 }
 
 pub fn update_state_write(address: u32) -> usize {
-    WRITES_STATE.update(address) 
+    WRITES_STATE.update(address)
 }
 
 pub fn clear_state_read(address: u32) {

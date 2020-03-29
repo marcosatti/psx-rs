@@ -1,14 +1,14 @@
+use crate::system::cdrom::constants::*;
+use crate::system::types::State as SystemState;
+use crate::types::b8_memory_mapper::B8MemoryMap;
+use crate::types::b8_memory_mapper::*;
+use crate::types::bitfield::Bitfield;
+use crate::types::fifo::debug::DebugState;
+use crate::types::fifo::Fifo;
+use crate::types::register::b8_register::B8Register;
+use std::collections::VecDeque;
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::collections::VecDeque;
-use crate::types::register::b8_register::B8Register;
-use crate::types::b8_memory_mapper::*;
-use crate::types::fifo::Fifo;
-use crate::types::bitfield::Bitfield;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::fifo::debug::DebugState;
-use crate::system::types::State as SystemState;
-use crate::system::cdrom::constants::*;
 
 pub struct Command {
     pub register: B8Register,
@@ -30,7 +30,10 @@ impl B8MemoryMap for Command {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
+        assert!(
+            !self.write_latch.load(Ordering::Acquire),
+            "Write latch still on"
+        );
         self.write_latch.store(true, Ordering::Release);
         B8MemoryMap::write_u8(&mut self.register, offset, value)
     }
@@ -56,7 +59,10 @@ impl B8MemoryMap for IntEnable {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
+        assert!(
+            !self.write_latch.load(Ordering::Acquire),
+            "Write latch still pending"
+        );
         let mut register_value = self.register.read_u8();
         register_value = INTERRUPT_FLAGS.insert_into(register_value, value);
         B8MemoryMap::write_u8(&mut self.register, offset, register_value)
@@ -117,8 +123,14 @@ impl B8MemoryMap for IntFlag {
     }
 
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
-        assert!(!self.parameter_reset.load(Ordering::Acquire), "Parameter FIFO reset still pending");
+        assert!(
+            !self.write_latch.load(Ordering::Acquire),
+            "Write latch still pending"
+        );
+        assert!(
+            !self.parameter_reset.load(Ordering::Acquire),
+            "Parameter FIFO reset still pending"
+        );
         self.write_latch.store(true, Ordering::Release);
 
         if INT_FLAG_CLRPRM.extract_from(value) != 0 {
@@ -153,23 +165,39 @@ impl Cdrom1801 {
 
 impl B8MemoryMap for Cdrom1801 {
     fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
-        unsafe { 
+        unsafe {
             assert!(offset == 0, "Invalid offset");
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
+            let index = self
+                .status
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
-                1 => self.response.as_ref().unwrap().as_ref().read_one().map_err(|_| ReadError::Empty),
+                1 => self
+                    .response
+                    .as_ref()
+                    .unwrap()
+                    .as_ref()
+                    .read_one()
+                    .map_err(|_| ReadError::Empty),
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
             }
         }
     }
-    
+
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        unsafe { 
+        unsafe {
             assert!(offset == 0, "Invalid offset");
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
+            let index = self
+                .status
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .read_bitfield(STATUS_INDEX);
             match index {
                 0 => B8MemoryMap::write_u8(self.command.as_mut().unwrap().as_mut(), offset, value),
                 1 => unimplemented!(),
@@ -194,16 +222,21 @@ impl Cdrom1802 {
             status: None,
             parameter: None,
             data: None,
-            int_enable: None
+            int_enable: None,
         }
     }
 }
 
 impl B8MemoryMap for Cdrom1802 {
     fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
-        unsafe { 
+        unsafe {
             assert!(offset == 0, "Invalid offset");
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
+            let index = self
+                .status
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .read_bitfield(STATUS_INDEX);
             match index {
                 0 => unimplemented!(),
                 1 => unimplemented!(),
@@ -213,14 +246,27 @@ impl B8MemoryMap for Cdrom1802 {
             }
         }
     }
-    
+
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        unsafe { 
+        unsafe {
             assert!(offset == 0, "Invalid offset");
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
+            let index = self
+                .status
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .read_bitfield(STATUS_INDEX);
             match index {
-                0 => self.parameter.as_mut().unwrap().as_mut().write_one(value).map_err(|_| WriteError::Full),
-                1 => B8MemoryMap::write_u8(self.int_enable.as_mut().unwrap().as_mut(), offset, value),
+                0 => self
+                    .parameter
+                    .as_mut()
+                    .unwrap()
+                    .as_mut()
+                    .write_one(value)
+                    .map_err(|_| WriteError::Full),
+                1 => {
+                    B8MemoryMap::write_u8(self.int_enable.as_mut().unwrap().as_mut(), offset, value)
+                }
                 2 => unimplemented!(),
                 3 => unimplemented!(),
                 _ => panic!("Index {} does not exist", index),
@@ -249,9 +295,14 @@ impl Cdrom1803 {
 
 impl B8MemoryMap for Cdrom1803 {
     fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
-        unsafe { 
+        unsafe {
             assert!(offset == 0, "Invalid offset");
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
+            let index = self
+                .status
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .read_bitfield(STATUS_INDEX);
             match index {
                 0 => B8MemoryMap::read_u8(self.int_enable.as_mut().unwrap().as_mut(), offset),
                 1 => B8MemoryMap::read_u8(self.int_flag.as_mut().unwrap().as_mut(), offset),
@@ -261,11 +312,16 @@ impl B8MemoryMap for Cdrom1803 {
             }
         }
     }
-    
+
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
-        unsafe { 
+        unsafe {
             assert!(offset == 0, "Invalid offset");
-            let index = self.status.as_ref().unwrap().as_ref().read_bitfield(STATUS_INDEX);
+            let index = self
+                .status
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .read_bitfield(STATUS_INDEX);
             match index {
                 0 => B8MemoryMap::write_u8(self.request.as_mut().unwrap().as_mut(), offset, value),
                 1 => B8MemoryMap::write_u8(self.int_flag.as_mut().unwrap().as_mut(), offset, value),
@@ -302,7 +358,7 @@ pub struct State {
     pub reading: bool,
     pub read_buffer: VecDeque<u8>,
     /// Current LBA address.
-    pub lba_address: usize, 
+    pub lba_address: usize,
 }
 
 impl State {
@@ -348,8 +404,24 @@ pub fn initialize(state: &mut SystemState) {
     state.cdrom.cdrom1803.int_flag = NonNull::new(&mut state.cdrom.int_flag as *mut IntFlag);
     state.cdrom.cdrom1803.request = NonNull::new(&mut state.cdrom.request as *mut Request);
 
-    state.r3000.memory_mapper.map(0x1F80_1800, 1, &mut state.cdrom.status as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1801, 1, &mut state.cdrom.cdrom1801 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1802, 1, &mut state.cdrom.cdrom1802 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1803, 1, &mut state.cdrom.cdrom1803 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(
+        0x1F80_1800,
+        1,
+        &mut state.cdrom.status as *mut dyn B8MemoryMap,
+    );
+    state.r3000.memory_mapper.map(
+        0x1F80_1801,
+        1,
+        &mut state.cdrom.cdrom1801 as *mut dyn B8MemoryMap,
+    );
+    state.r3000.memory_mapper.map(
+        0x1F80_1802,
+        1,
+        &mut state.cdrom.cdrom1802 as *mut dyn B8MemoryMap,
+    );
+    state.r3000.memory_mapper.map(
+        0x1F80_1803,
+        1,
+        &mut state.cdrom.cdrom1803 as *mut dyn B8MemoryMap,
+    );
 }

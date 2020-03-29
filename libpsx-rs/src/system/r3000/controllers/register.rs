@@ -39,7 +39,9 @@ pub fn handle_cp2_flag_reset(state: &mut State) {
 }
 
 pub fn handle_cp2_flag_error_bit(state: &mut State) {
-    if (state.r3000.cp2.gc[31].read_bitfield(Bitfield::new(13, 6)) > 0) || (state.r3000.cp2.gc[31].read_bitfield(Bitfield::new(23, 8)) > 0) {
+    if (state.r3000.cp2.gc[31].read_bitfield(Bitfield::new(13, 6)) > 0)
+        || (state.r3000.cp2.gc[31].read_bitfield(Bitfield::new(23, 8)) > 0)
+    {
         state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(31, 1), 1);
     }
 }

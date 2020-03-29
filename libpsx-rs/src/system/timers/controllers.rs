@@ -1,15 +1,15 @@
-pub mod timer;
-pub mod mode;
 pub mod count;
-pub mod irq;
 pub mod debug;
+pub mod irq;
+pub mod mode;
+pub mod timer;
 
-use std::time::Duration;
-use crate::system::types::ControllerContext;
-use crate::system::types::State;
-use crate::system::types::Event;
-use crate::system::timers::controllers::mode::*;
 use crate::system::timers::controllers::count::*;
+use crate::system::timers::controllers::mode::*;
+use crate::system::types::ControllerContext;
+use crate::system::types::Event;
+use crate::system::types::State;
+use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {

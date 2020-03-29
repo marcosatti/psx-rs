@@ -1,7 +1,7 @@
-use log::trace;
-use crate::system::types::State;
 use crate::system::intc::constants::*;
+use crate::system::types::State;
 use crate::types::bitfield::Bitfield;
+use log::trace;
 
 pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
     let stat = state.intc.stat.value();
@@ -11,13 +11,19 @@ pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
         let stat_value = bitfield.extract_from(stat) != 0;
         let mask_value = bitfield.extract_from(mask) != 0;
         let pending = stat_value && mask_value;
-        pending_sticky |= pending; 
+        pending_sticky |= pending;
 
         if only_enabled && !mask_value {
             continue;
         }
 
-        trace!("INTC [{}]: stat = {}, mask = {} (pending = {})", name, stat_value, mask_value, pending);
+        trace!(
+            "INTC [{}]: stat = {}, mask = {} (pending = {})",
+            name,
+            stat_value,
+            mask_value,
+            pending
+        );
     }
 
     if enable_assert {

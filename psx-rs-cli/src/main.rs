@@ -1,24 +1,28 @@
-use std::path::{Path, PathBuf};
-use std::panic;
-use std::env::args;
-use std::time::Duration;
-use std::sync::atomic::{Ordering, AtomicBool};
-use std::time::Instant;
-use libpsx_rs::{Core, Config};
-use libpsx_rs::debug::analysis as debug_analysis;
-use libpsx_rs::backends::video::VideoBackend;
 use libpsx_rs::backends::audio::AudioBackend;
 use libpsx_rs::backends::cdrom::CdromBackend;
+use libpsx_rs::backends::video::VideoBackend;
+use libpsx_rs::debug::analysis as debug_analysis;
+use libpsx_rs::{Config, Core};
+use std::env::args;
+use std::panic;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+use std::time::Instant;
 
 static EXIT: AtomicBool = AtomicBool::new(false);
 
 fn main() {
     // Signal handlers
     setup_signal_handler();
-    
+
     // Working directory / workspace
     let workspace_path = PathBuf::from(r"./workspace/");
-    println!("Working directory: {}, workspace directory: {}", std::env::current_dir().unwrap().to_str().unwrap(), workspace_path.to_str().unwrap());
+    println!(
+        "Working directory: {}, workspace directory: {}",
+        std::env::current_dir().unwrap().to_str().unwrap(),
+        workspace_path.to_str().unwrap()
+    );
 
     // Setup logging
     let logs_path = workspace_path.join(r"logs/");
@@ -38,7 +42,7 @@ fn main() {
         time_delta: Duration::from_micros(time_delta_us as u64),
         worker_threads: worker_threads,
     };
-    
+
     main_inner(config);
 }
 
@@ -75,13 +79,11 @@ fn main_inner(config: Config) {
     let mut core = Core::new(config);
     log::info!("Core initialized");
 
-    let result = panic::catch_unwind(
-        panic::AssertUnwindSafe(|| {
-            while !EXIT.load(Ordering::Acquire) {
-                core.step();
-            }
-        })
-    );
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        while !EXIT.load(Ordering::Acquire) {
+            core.step();
+        }
+    }));
 
     if result.is_err() {
         log::error!("Panic occurred, exiting");

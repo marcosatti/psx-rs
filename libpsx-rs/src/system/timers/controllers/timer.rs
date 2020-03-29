@@ -1,7 +1,7 @@
-use std::time::Duration;
-use crate::system::types::State;
 use crate::system::timers::types::*;
+use crate::system::types::State;
 use crate::types::register::b32_register::B32Register;
+use std::time::Duration;
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqType {
@@ -18,9 +18,7 @@ pub fn get_count<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut B32Re
         _ => unreachable!("Invalid timer ID"),
     };
 
-    unsafe {
-        (count as *mut B32Register).as_mut().unwrap()
-    }
+    unsafe { (count as *mut B32Register).as_mut().unwrap() }
 }
 
 pub fn get_mode<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut Mode {
@@ -31,9 +29,7 @@ pub fn get_mode<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut Mode {
         _ => unreachable!("Invalid timer ID"),
     };
 
-    unsafe {
-        (mode as *mut Mode).as_mut().unwrap()
-    }
+    unsafe { (mode as *mut Mode).as_mut().unwrap() }
 }
 
 pub fn get_target<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut B32Register {
@@ -44,9 +40,7 @@ pub fn get_target<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut B32R
         _ => unreachable!("Invalid timer ID"),
     };
 
-    unsafe {
-        (target as *mut B32Register).as_mut().unwrap()
-    }
+    unsafe { (target as *mut B32Register).as_mut().unwrap() }
 }
 
 pub fn get_state<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut TimerState {
@@ -57,13 +51,11 @@ pub fn get_state<'a, 'b>(state: &'a mut State, timer_id: usize) -> &'b mut Timer
         _ => unreachable!("Invalid timer ID"),
     };
 
-    unsafe {
-        (state as *mut TimerState).as_mut().unwrap()
-    }
+    unsafe { (state as *mut TimerState).as_mut().unwrap() }
 }
 
 pub fn handle_duration_clear(state: &mut State, timer_id: usize) {
     let state = get_state(state, timer_id);
     state.current_elapsed = Duration::from_secs(0);
-    state.acknowledged_elapsed = Duration::from_secs(0);    
+    state.acknowledged_elapsed = Duration::from_secs(0);
 }

@@ -1,12 +1,12 @@
 pub mod benchmark;
 
-use std::path::PathBuf;
+use crate::system::types::State;
+use crate::Core;
+use log::debug;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
-use log::debug;
-use crate::Core;
-use crate::system::types::State;
 
 pub static DEBUG_CORE_EXIT: AtomicBool = AtomicBool::new(false);
 

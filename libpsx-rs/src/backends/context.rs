@@ -8,7 +8,10 @@ pub struct BackendContext<'a: 'b, 'b, T> {
 }
 
 impl<'a: 'b, 'b, T> BackendContext<'a, 'b, T> {
-    pub fn new(acquire_context: AcquireFn<'a, 'b, T>, release_context: ReleaseFn<'a>) -> BackendContext<'a, 'b, T> {
+    pub fn new(
+        acquire_context: AcquireFn<'a, 'b, T>,
+        release_context: ReleaseFn<'a>,
+    ) -> BackendContext<'a, 'b, T> {
         BackendContext {
             context: Mutex::new((acquire_context, release_context)),
         }
@@ -28,7 +31,7 @@ pub struct ContextGuard<'a: 'b, 'b: 'c, 'c, T> {
 }
 
 impl<'a: 'b, 'b: 'c, 'c, T> Drop for ContextGuard<'a, 'b, 'c, T> {
-    fn drop(&mut self) { 
+    fn drop(&mut self) {
         (self.guard.1)();
     }
 }

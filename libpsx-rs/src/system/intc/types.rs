@@ -1,10 +1,10 @@
-use std::sync::atomic::{Ordering, AtomicBool};
-use crate::utilities::bool_to_flag;
+use crate::system::intc::constants::*;
+use crate::system::types::State as SystemState;
+use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::b8_memory_mapper::*;
 use crate::types::register::b32_register::B32Register;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::system::types::State as SystemState;
-use crate::system::intc::constants::*;
+use crate::utilities::bool_to_flag;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Debug, Copy, Clone)]
 pub enum Line {
@@ -24,7 +24,7 @@ pub enum Line {
 pub struct State {
     pub stat: Stat,
     pub mask: B32Register,
-    pub old_masked_value: u32
+    pub old_masked_value: u32,
 }
 
 impl State {
@@ -101,7 +101,7 @@ impl Stat {
                     9 => self.spu.store(false, Ordering::Release),
                     10 => self.pio.store(false, Ordering::Release),
                     // Ignore (always zero).
-                    _ => {}, 
+                    _ => {}
                 }
             }
         }
@@ -128,7 +128,7 @@ impl B8MemoryMap for Stat {
     fn read_u16(&mut self, _offset: u32) -> ReadResult<u16> {
         Ok(self.value() as u16)
     }
-    
+
     fn write_u16(&mut self, _offset: u32, value: u16) -> WriteResult {
         Ok(self.acknowledge(value as u32))
     }
@@ -136,13 +136,19 @@ impl B8MemoryMap for Stat {
     fn read_u32(&mut self, _offset: u32) -> ReadResult<u32> {
         Ok(self.value() as u32)
     }
-    
+
     fn write_u32(&mut self, _offset: u32, value: u32) -> WriteResult {
         Ok(self.acknowledge(value))
     }
 }
 
 pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(0x1F80_1070, 4, &mut state.intc.stat as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1074, 4, &mut state.intc.mask as *mut dyn B8MemoryMap);
+    state
+        .r3000
+        .memory_mapper
+        .map(0x1F80_1070, 4, &mut state.intc.stat as *mut dyn B8MemoryMap);
+    state
+        .r3000
+        .memory_mapper
+        .map(0x1F80_1074, 4, &mut state.intc.mask as *mut dyn B8MemoryMap);
 }

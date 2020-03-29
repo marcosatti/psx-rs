@@ -1,11 +1,11 @@
-use std::env;
-use std::path::PathBuf;
-use std::process::Command;
-use std::fs::write;
-use bindgen::Builder;
-use serde::Deserialize;
 use crate::external_check::external_check_inner;
 use crate::python;
+use bindgen::Builder;
+use serde::Deserialize;
+use std::env;
+use std::fs::write;
+use std::path::PathBuf;
+use std::process::Command;
 
 #[derive(Deserialize, Debug)]
 struct Output {
@@ -23,7 +23,10 @@ struct Output {
 pub fn external_build(external_name: &str) {
     let out_file_name = format!("{}_build.rs", external_name);
     let out_file_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join(out_file_name);
-    println!("cargo:rustc-env=EXTERNAL_INCLUDE={}", out_file_path.to_str().unwrap());
+    println!(
+        "cargo:rustc-env=EXTERNAL_INCLUDE={}",
+        out_file_path.to_str().unwrap()
+    );
 
     if !external_check_inner(external_name).enable {
         write(out_file_path, b"").unwrap();
@@ -40,11 +43,17 @@ pub fn external_build(external_name: &str) {
     let output_str_stderr = String::from_utf8(output.stderr).unwrap();
 
     if !output.status.success() {
-        panic!("Non-success return code: \nstdout: \n{}\nstderr: \n{}\n", &output_str_stdout, &output_str_stderr);
+        panic!(
+            "Non-success return code: \nstdout: \n{}\nstderr: \n{}\n",
+            &output_str_stdout, &output_str_stderr
+        );
     }
 
     if false {
-        panic!("Debug\nstdout: \n{}\nstderr: \n{}\n", output_str_stdout, output_str_stderr);
+        panic!(
+            "Debug\nstdout: \n{}\nstderr: \n{}\n",
+            output_str_stdout, output_str_stderr
+        );
     }
 
     let output: Output = serde_json::from_str(&output_str_stdout).unwrap();
@@ -92,7 +101,7 @@ pub fn external_build(external_name: &str) {
     for library_search_path in output.library_search_paths {
         println!("cargo:rustc-link-search={}", &library_search_path);
     }
-    
+
     for library_name in output.library_names {
         println!("cargo:rustc-link-lib={}", &library_name);
     }

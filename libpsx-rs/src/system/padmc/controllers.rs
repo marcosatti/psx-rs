@@ -1,12 +1,12 @@
-pub mod debug;
 pub mod command;
+pub mod debug;
 
-use std::sync::atomic::Ordering;
-use std::time::Duration;
-use crate::system::types::State;
 use crate::system::padmc::constants::*;
 use crate::system::types::ControllerContext;
 use crate::system::types::Event;
+use crate::system::types::State;
+use std::sync::atomic::Ordering;
+use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
@@ -17,9 +17,9 @@ pub fn run(context: &mut ControllerContext, event: Event) {
 fn run_time(state: &mut State, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     ticks /= 16;
-    
+
     for _ in 0..ticks {
-        tick(state); 
+        tick(state);
     }
 }
 

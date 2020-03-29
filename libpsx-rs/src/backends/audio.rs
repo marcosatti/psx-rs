@@ -10,7 +10,7 @@ pub enum AudioBackend<'a: 'b, 'b> {
 
 pub fn setup(audio_backend: &AudioBackend) {
     match audio_backend {
-        AudioBackend::None => {},
+        AudioBackend::None => {}
         #[cfg(openal)]
         AudioBackend::Openal(ref params) => openal::setup(params),
         _ => unimplemented!(),
@@ -19,7 +19,7 @@ pub fn setup(audio_backend: &AudioBackend) {
 
 pub fn teardown(audio_backend: &AudioBackend) {
     match audio_backend {
-        AudioBackend::None => {},
+        AudioBackend::None => {}
         #[cfg(openal)]
         AudioBackend::Openal(ref params) => openal::teardown(params),
         _ => unimplemented!(),

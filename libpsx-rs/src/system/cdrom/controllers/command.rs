@@ -1,8 +1,8 @@
-use std::sync::atomic::Ordering;
 use crate::backends::cdrom::CdromBackend;
-use crate::system::types::State;
 use crate::system::cdrom::constants::*;
 use crate::system::cdrom::controllers::command_impl;
+use crate::system::types::State;
+use std::sync::atomic::Ordering;
 
 type LengthFn = fn(usize) -> usize;
 
@@ -17,8 +17,12 @@ pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
 
         state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 1);
         let command_value = state.cdrom.command.register.read_u8();
-        
-        state.cdrom.command.write_latch.store(false, Ordering::Release);
+
+        state
+            .cdrom
+            .command
+            .write_latch
+            .store(false, Ordering::Release);
 
         state.cdrom.command_index = Some(command_value);
         state.cdrom.command_iteration = 0;
@@ -33,7 +37,10 @@ pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
         return false;
     }
 
-    assert!(state.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
+    assert!(
+        state.cdrom.response.read_available() == 0,
+        "CDROM response FIFO still had bytes when a new command was run!"
+    );
 
     let finished = (handler.1)(state, cdrom_backend, command_iteration);
 
@@ -43,7 +50,10 @@ pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
         state.cdrom.command_index = None;
     }
 
-    assert!(state.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
+    assert!(
+        state.cdrom.parameter.read_available() == 0,
+        "CDROM parameter FIFO still had bytes when a command was just run!"
+    );
 
     state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 0);
 
@@ -52,14 +62,38 @@ pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
 
 fn get_handler_fn(command_index: u8) -> (LengthFn, HandlerFn) {
     match command_index {
-        0x01 => (command_impl::command_01_length, command_impl::command_01_handler),
-        0x02 => (command_impl::command_02_length, command_impl::command_02_handler),
-        0x06 => (command_impl::command_06_length, command_impl::command_06_handler),
-        0x09 => (command_impl::command_09_length, command_impl::command_09_handler),
-        0x0E => (command_impl::command_0e_length, command_impl::command_0e_handler),
-        0x15 => (command_impl::command_15_length, command_impl::command_15_handler),
-        0x19 => (command_impl::command_19_length, command_impl::command_19_handler),
-        0x1A => (command_impl::command_1a_length, command_impl::command_1a_handler),
+        0x01 => (
+            command_impl::command_01_length,
+            command_impl::command_01_handler,
+        ),
+        0x02 => (
+            command_impl::command_02_length,
+            command_impl::command_02_handler,
+        ),
+        0x06 => (
+            command_impl::command_06_length,
+            command_impl::command_06_handler,
+        ),
+        0x09 => (
+            command_impl::command_09_length,
+            command_impl::command_09_handler,
+        ),
+        0x0E => (
+            command_impl::command_0e_length,
+            command_impl::command_0e_handler,
+        ),
+        0x15 => (
+            command_impl::command_15_length,
+            command_impl::command_15_handler,
+        ),
+        0x19 => (
+            command_impl::command_19_length,
+            command_impl::command_19_handler,
+        ),
+        0x1A => (
+            command_impl::command_1a_length,
+            command_impl::command_1a_handler,
+        ),
         _ => unimplemented!("Command not implemented: 0x{:0X}", command_index),
     }
 }

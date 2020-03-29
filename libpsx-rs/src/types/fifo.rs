@@ -1,21 +1,21 @@
 pub mod debug;
 
-use std::fmt::{Display, UpperHex};
-use spsc_ringbuffer::SpscRingbuffer as QueueImpl;
 use crate::types::fifo::debug::DebugState;
+use spsc_ringbuffer::SpscRingbuffer as QueueImpl;
+use std::fmt::{Display, UpperHex};
 
 /// SPSC FIFO
-pub struct Fifo<T> 
+pub struct Fifo<T>
 where
-    T: Copy + Default
+    T: Copy + Default,
 {
     fifo: QueueImpl<T>,
     pub debug_state: Option<DebugState>,
 }
 
-impl<T> Fifo<T> 
+impl<T> Fifo<T>
 where
-    T: Copy + Default + Display + UpperHex
+    T: Copy + Default + Display + UpperHex,
 {
     pub fn new(size: usize, debug_state: Option<DebugState>) -> Fifo<T> {
         Fifo {
@@ -26,7 +26,7 @@ where
 
     pub fn read_one(&self) -> Result<T, ()> {
         let result = self.fifo.pop().map_err(|_| ());
-        
+
         if result.is_ok() {
             debug::trace_read(self, result.unwrap());
         }
@@ -40,7 +40,7 @@ where
         if result.is_ok() {
             debug::trace_write(self, data);
         }
-        
+
         result
     }
 
@@ -55,7 +55,7 @@ where
     pub fn is_empty(&self) -> bool {
         self.fifo.is_empty()
     }
-    
+
     pub fn is_full(&self) -> bool {
         self.fifo.is_full()
     }

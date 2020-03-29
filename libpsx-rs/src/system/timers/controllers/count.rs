@@ -1,9 +1,9 @@
-use std::time::Duration;
-use crate::system::types::State;
 use crate::system::timers::constants::*;
-use crate::system::timers::controllers::timer::*;
 use crate::system::timers::controllers::irq::*;
+use crate::system::timers::controllers::timer::*;
 use crate::system::timers::types::*;
+use crate::system::types::State;
+use std::time::Duration;
 
 pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
@@ -13,7 +13,7 @@ pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
     let delta_elapsed = timer_state.current_elapsed - timer_state.acknowledged_elapsed;
     let ticks = calc_ticks(timer_state.clock_source, delta_elapsed);
     timer_state.acknowledged_elapsed = timer_state.current_elapsed - ticks.1;
-    
+
     for _ in 0..ticks.0 {
         let value = count.read_u32() + 1;
         count.write_u32(value);
@@ -31,9 +31,9 @@ fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
     let mode = get_mode(state, timer_id);
     let count = get_count(state, timer_id);
     let count_value = count.read_u32() & 0xFFFF;
-    
+
     let mut irq_type = IrqType::None;
-    
+
     match mode.register.read_bitfield(MODE_RESET) {
         0 => {
             // When counter equals 0xFFFF.
@@ -42,7 +42,7 @@ fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
                 mode.register.write_bitfield(MODE_OVERFLOW_HIT, 1);
                 irq_type = IrqType::Overflow;
             }
-        },
+        }
         1 => {
             // When counter equals target.
             let target = get_target(state, timer_id);
@@ -52,14 +52,14 @@ fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
                 mode.register.write_bitfield(MODE_TARGET_HIT, 0);
                 irq_type = IrqType::Target;
             }
-        },
+        }
         _ => unreachable!(),
     };
 
     irq_type
 }
 
-/// Given the clock source and difference in elapsed durations, 
+/// Given the clock source and difference in elapsed durations,
 /// returns the number of whole ticks that have passed, with the remaining duration.
 /// This is an approximate calculation, good enough for emulation purposes.
 fn calc_ticks(clock_source: ClockSource, delta_elapsed: Duration) -> (usize, Duration) {
@@ -67,20 +67,14 @@ fn calc_ticks(clock_source: ClockSource, delta_elapsed: Duration) -> (usize, Dur
     let mut remaining_elapsed = delta_elapsed;
 
     let interval = match clock_source {
-        ClockSource::Dotclock => {
-            DOTCLOCK_320_INTERVAL_NTSC
-        },
+        ClockSource::Dotclock => DOTCLOCK_320_INTERVAL_NTSC,
         ClockSource::Hblank => {
             // Timer ticks when HBLANK line is asserted... which happens after every scanline is rendered.
             // So we are actually ticking over when a scanline interval has passed, in the context of an emulator.
             SCANLINE_INTERVAL_NTSC
-        },
-        ClockSource::System => {
-            SYSTEM_CLOCK_INTERVAL
-        },
-        ClockSource::System8 => {
-            SYSTEM_CLOCK_8_INTERVAL
-        },
+        }
+        ClockSource::System => SYSTEM_CLOCK_INTERVAL,
+        ClockSource::System8 => SYSTEM_CLOCK_8_INTERVAL,
     };
 
     while remaining_elapsed > interval {

@@ -1,23 +1,23 @@
 #![feature(core_intrinsics)]
 #![feature(no_more_cas)]
 
+pub mod backends;
+pub mod debug;
+pub mod executor;
 pub mod system;
 pub mod types;
 pub mod utilities;
-pub mod debug;
-pub mod backends;
-pub mod executor;
 
-use std::pin::Pin;
-use std::path::{PathBuf, Path};
-use std::time::{Duration, Instant};
-use rayon::{ThreadPool, ThreadPoolBuilder};
-use log::info;
-use crate::backends::video::{self, VideoBackend};
 use crate::backends::audio::{self, AudioBackend};
 use crate::backends::cdrom::{self, CdromBackend};
-use crate::system::types::State;
+use crate::backends::video::{self, VideoBackend};
 use crate::system::types::Event;
+use crate::system::types::State;
+use log::info;
+use rayon::{ThreadPool, ThreadPoolBuilder};
+use std::path::{Path, PathBuf};
+use std::pin::Pin;
+use std::time::{Duration, Instant};
 
 pub struct Context<'a: 'b, 'b: 'c, 'c> {
     pub state: *mut State,
@@ -46,12 +46,19 @@ pub struct Core<'a: 'b, 'b> {
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
     pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
-        info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
+        info!(
+            "Initializing libpsx-rs with {} time delta (us) and {} worker threads",
+            config.time_delta.as_micros(),
+            config.worker_threads
+        );
         info!("Main thread ID: {}", thread_id::get());
 
         let mut state = State::new();
 
-        let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
+        let bios_path = config
+            .workspace_path
+            .join(r"bios/")
+            .join(&config.bios_filename);
 
         unsafe {
             let state_mut = state.as_mut().get_unchecked_mut();
@@ -80,10 +87,8 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
     }
 
     pub fn step(&mut self) {
-        let state_mut = unsafe { 
-            self.state.as_mut().get_unchecked_mut()  
-        };
-        
+        let state_mut = unsafe { self.state.as_mut().get_unchecked_mut() };
+
         let state = Context {
             state: state_mut as *mut State,
             video_backend: &self.config.video_backend,
@@ -93,7 +98,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         let time = self.config.time_delta;
         let event = Event::Time(time);
-        
+
         let timer = Instant::now();
         let benchmark_results = executor::atomic_broadcast(&self.task_executor, &state, event);
         let scope_duration = timer.elapsed();

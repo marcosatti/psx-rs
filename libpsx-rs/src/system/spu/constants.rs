@@ -1,5 +1,5 @@
-use std::time::Duration;
 use crate::types::bitfield::Bitfield;
+use std::time::Duration;
 
 pub const _CONTROL_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
 pub const _CONTROL_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);

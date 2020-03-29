@@ -1,9 +1,9 @@
-use num_traits::clamp;
+use crate::system::spu::controllers::voice::*;
 use crate::system::types::State;
 use crate::types::bitfield::Bitfield;
 use crate::types::register::b16_register::*;
 use crate::types::stereo::*;
-use crate::system::spu::controllers::voice::*;
+use num_traits::clamp;
 
 #[derive(Copy, Clone, Debug)]
 pub enum SweepMode {
@@ -36,8 +36,16 @@ pub fn transform_voice_volume(state: &mut State, voice_id: usize, adpcm_sample: 
         let vol_value = vol.read_u16();
         let volume_mode = Bitfield::new(15, 1).extract_from(vol_value);
         if volume_mode != 0 {
-            let (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode) = extract_sweep_params(vol_value);
-            transform_sample_sweep(adpcm_sample, sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode)
+            let (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode) =
+                extract_sweep_params(vol_value);
+            transform_sample_sweep(
+                adpcm_sample,
+                sweep_step,
+                sweep_shift,
+                sweep_phase,
+                sweep_direction,
+                sweep_mode,
+            )
         } else {
             let volume15 = Bitfield::new(0, 15).extract_from(vol_value);
             transform_sample_fixed(adpcm_sample, volume15)
@@ -58,8 +66,16 @@ pub fn transform_main_volume(state: &mut State, pcm_frame: Stereo) -> Stereo {
         let mvol_value = mvol.read_u16();
         let volume_mode = Bitfield::new(15, 1).extract_from(mvol_value);
         if volume_mode != 0 {
-            let (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode) = extract_sweep_params(mvol_value);
-            transform_sample_sweep(sample, sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode)
+            let (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode) =
+                extract_sweep_params(mvol_value);
+            transform_sample_sweep(
+                sample,
+                sweep_step,
+                sweep_shift,
+                sweep_phase,
+                sweep_direction,
+                sweep_mode,
+            )
         } else {
             let volume15 = Bitfield::new(0, 15).extract_from(mvol_value);
             transform_sample_fixed(sample, volume15)
@@ -88,14 +104,20 @@ fn extract_sweep_params(sweep_raw: u16) -> (usize, usize, SweepPhase, SweepDirec
     } else {
         SweepDirection::Increase
     };
-    
+
     let sweep_mode = if Bitfield::new(14, 1).extract_from(sweep_raw) != 0 {
         SweepMode::Exponential
     } else {
         SweepMode::Linear
     };
 
-    (sweep_step, sweep_shift, sweep_phase, sweep_direction, sweep_mode)
+    (
+        sweep_step,
+        sweep_shift,
+        sweep_phase,
+        sweep_direction,
+        sweep_mode,
+    )
 }
 
 fn transform_sample_fixed(sample: i16, volume15: u16) -> i16 {
@@ -106,12 +128,27 @@ fn transform_sample_fixed(sample: i16, volume15: u16) -> i16 {
     let scale_factor = clamp(signed_volume as f64 / std::i16::MAX as f64, -1.0, 1.0);
 
     let result = (sample as f64 * scale_factor) as i16;
-    
+
     //debug!("sample: {}, volume15: {}, signed_volume: {}, scale_factor: {}, result: {}", sample, volume15, signed_volume, scale_factor, result);
 
     result
 }
 
-fn transform_sample_sweep(sample: i16, step: usize, shift: usize, phase: SweepPhase, direction: SweepDirection, mode: SweepMode) -> i16 {
-    unimplemented!("sample: {}, step: {}, shift: {}, phase: {:?}, direction: {:?}, mode: {:?}", sample, step, shift, phase, direction, mode);
+fn transform_sample_sweep(
+    sample: i16,
+    step: usize,
+    shift: usize,
+    phase: SweepPhase,
+    direction: SweepDirection,
+    mode: SweepMode,
+) -> i16 {
+    unimplemented!(
+        "sample: {}, step: {}, shift: {}, phase: {:?}, direction: {:?}, mode: {:?}",
+        sample,
+        step,
+        shift,
+        phase,
+        direction,
+        mode
+    );
 }

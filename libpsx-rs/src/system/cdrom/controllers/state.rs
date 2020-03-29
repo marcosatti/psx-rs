@@ -20,7 +20,7 @@ pub fn stat_value(state: &State) -> u8 {
     let mut value = 0;
 
     value = MOTOR_ON.insert_into(value, 1); // Motor always on.
-    
+
     // Only one of the three states below are allowed to be on, or none at all.
 
     if reading {

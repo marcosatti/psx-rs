@@ -1,14 +1,14 @@
-use std::intrinsics::{likely, unlikely};
-use crate::system::types::State;
 use crate::system::r3000::constants::INSTRUCTION_SIZE;
-use crate::types::mips1::instruction::Instruction;
-use crate::system::r3000::types::*;
-use crate::system::r3000::controllers::set_exception;
+use crate::system::r3000::controllers::debug;
 use crate::system::r3000::controllers::memory_controller::*;
 use crate::system::r3000::controllers::register::*;
-use crate::system::r3000::cp0::constants::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
+use crate::system::r3000::controllers::set_exception;
+use crate::system::r3000::cp0::constants::{CAUSE_EXCCODE_SYSCALL, STATUS_ISC};
+use crate::system::r3000::types::*;
+use crate::system::types::State;
+use crate::types::mips1::instruction::Instruction;
 use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
-use crate::system::r3000::controllers::debug;
+use std::intrinsics::{likely, unlikely};
 
 pub fn sll(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut state.r3000.gpr[instruction.rt()];
@@ -69,7 +69,7 @@ pub fn srlv(state: &mut State, instruction: Instruction) -> InstResult {
     } else {
         rd.write_u32(value2 >> value1);
     }
-    
+
     handle_zero(state);
     Ok(())
 }
@@ -90,7 +90,7 @@ pub fn srav(state: &mut State, instruction: Instruction) -> InstResult {
     } else {
         rd.write_u32((value2 >> value1) as u32);
     }
-    
+
     handle_zero(state);
     Ok(())
 }
@@ -114,7 +114,7 @@ pub fn syscall(state: &mut State, _instruction: Instruction) -> InstResult {
     debug::trace_syscall(state);
 
     if state.r3000.branch_delay.branching() {
-        unimplemented!("SYSCALL in branch delay slot not handled");    
+        unimplemented!("SYSCALL in branch delay slot not handled");
     }
 
     set_exception(state, CAUSE_EXCCODE_SYSCALL);
@@ -160,7 +160,7 @@ pub fn mult(state: &mut State, instruction: Instruction) -> InstResult {
     let value1 = rs.read_u32() as i32 as i64;
     let rt = &mut state.r3000.gpr[instruction.rt()];
     let value2 = rt.read_u32() as i32 as i64;
-    
+
     let result = (value1 * value2) as u64;
     let hi_value = ((result >> 32) & 0xFFFF_FFFF) as u32;
     let lo_value = (result & 0xFFFF_FFFF) as u32;
@@ -336,7 +336,7 @@ pub fn slt(state: &mut State, instruction: Instruction) -> InstResult {
     } else {
         rd.write_u32(0);
     }
-    
+
     handle_zero(state);
     Ok(())
 }
@@ -361,7 +361,7 @@ pub fn sltu(state: &mut State, instruction: Instruction) -> InstResult {
 pub fn bltz(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = state.r3000.gpr[instruction.rs()].read_u32() as i32;
-    
+
     if value < 0 {
         let pc = state.r3000.pc.read_u32();
         let target = pc.wrapping_add(offset as u32);
@@ -374,7 +374,7 @@ pub fn bltz(state: &mut State, instruction: Instruction) -> InstResult {
 pub fn bgez(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = state.r3000.gpr[instruction.rs()].read_u32() as i32;
-    
+
     if value >= 0 {
         let pc = state.r3000.pc.read_u32();
         let target = pc.wrapping_add(offset as u32);
@@ -412,7 +412,7 @@ pub fn beq(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = state.r3000.gpr[instruction.rs()].read_u32();
     let value2 = state.r3000.gpr[instruction.rt()].read_u32();
-    
+
     if value1 == value2 {
         let pc = state.r3000.pc.read_u32();
         let target = pc.wrapping_add(offset as u32);
@@ -426,7 +426,7 @@ pub fn bne(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = state.r3000.gpr[instruction.rs()].read_u32();
     let value2 = state.r3000.gpr[instruction.rt()].read_u32();
-    
+
     if value1 != value2 {
         let pc = state.r3000.pc.read_u32();
         let target = pc.wrapping_add(offset as u32);
@@ -439,7 +439,7 @@ pub fn bne(state: &mut State, instruction: Instruction) -> InstResult {
 pub fn blez(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = state.r3000.gpr[instruction.rs()].read_u32() as i32;
-    
+
     if value <= 0 {
         let pc = state.r3000.pc.read_u32();
         let target = pc.wrapping_add(offset as u32);
@@ -452,7 +452,7 @@ pub fn blez(state: &mut State, instruction: Instruction) -> InstResult {
 pub fn bgtz(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = state.r3000.gpr[instruction.rs()].read_u32() as i32;
-    
+
     if value > 0 {
         let pc = state.r3000.pc.read_u32();
         let target = pc.wrapping_add(offset as u32);
@@ -557,7 +557,12 @@ pub fn lui(state: &mut State, instruction: Instruction) -> InstResult {
 }
 
 pub fn mfc0(state: &mut State, instruction: Instruction) -> InstResult {
-    let rd = unsafe { state.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
+    let rd = unsafe {
+        state.r3000.cp0.register[instruction.rd()]
+            .as_mut()
+            .unwrap()
+            .as_mut()
+    };
     let value = rd.read_u32();
     let rt = &mut state.r3000.gpr[instruction.rt()];
     rt.write_u32(value);
@@ -568,7 +573,12 @@ pub fn mfc0(state: &mut State, instruction: Instruction) -> InstResult {
 pub fn mtc0(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut state.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
-    let rd = unsafe { state.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
+    let rd = unsafe {
+        state.r3000.cp0.register[instruction.rd()]
+            .as_mut()
+            .unwrap()
+            .as_mut()
+    };
     rd.write_u32(value);
     Ok(())
 }
@@ -603,7 +613,7 @@ pub fn rfe(state: &mut State, _instruction: Instruction) -> InstResult {
     let old_status_value = status.read_u32();
     let new_status_value = status_pop_exception(old_status_value);
     status.write_u32(new_status_value);
-    
+
     // Flush the branch delay slot if any.
     let target = state.r3000.branch_delay.advance_all();
     if likely(target.is_some()) {
@@ -623,12 +633,12 @@ pub fn lb(state: &mut State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u8(state, addr).map(|v| v as i8 as i32 as u32)?
-    } else { 
-        0 
+    } else {
+        0
     };
-    
+
     state.r3000.gpr[instruction.rt()].write_u32(value);
 
     handle_zero(state);
@@ -641,10 +651,10 @@ pub fn lh(state: &mut State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u16(state, addr).map(|v| v as i16 as i32 as u32)?
-    } else { 
-        0 
+    } else {
+        0
     };
 
     state.r3000.gpr[instruction.rt()].write_u32(value);
@@ -661,13 +671,13 @@ pub fn lwl(state: &mut State, instruction: Instruction) -> InstResult {
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
-	let shift = (addr & 3) as usize;
+    let shift = (addr & 3) as usize;
     addr &= !3;
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u32(state, addr)?
-    } else { 
+    } else {
         0
     };
 
@@ -687,9 +697,9 @@ pub fn lw(state: &mut State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u32(state, addr)?
-    } else { 
+    } else {
         0
     };
 
@@ -705,10 +715,10 @@ pub fn lbu(state: &mut State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u8(state, addr).map(|v| v as u32)?
-    } else { 
-        0 
+    } else {
+        0
     };
 
     state.r3000.gpr[instruction.rt()].write_u32(value);
@@ -723,10 +733,10 @@ pub fn lhu(state: &mut State, instruction: Instruction) -> InstResult {
     addr = translate_address(addr);
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u16(state, addr).map(|v| v as u32)?
-    } else { 
-        0 
+    } else {
+        0
     };
 
     state.r3000.gpr[instruction.rt()].write_u32(value);
@@ -743,13 +753,13 @@ pub fn lwr(state: &mut State, instruction: Instruction) -> InstResult {
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
-	let shift = (addr & 3) as usize;
+    let shift = (addr & 3) as usize;
     addr &= !3;
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
-    let value = if likely(!isc) { 
+    let value = if likely(!isc) {
         read_u32(state, addr)?
-    } else { 
+    } else {
         0
     };
 
@@ -771,7 +781,7 @@ pub fn sb(state: &mut State, instruction: Instruction) -> InstResult {
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if likely(!isc) { 
+    if likely(!isc) {
         write_u8(state, addr, value)?
     }
 
@@ -783,10 +793,10 @@ pub fn sh(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = state.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
-        
+
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if likely(!isc) { 
+    if likely(!isc) {
         write_u16(state, addr, value)?
     }
 
@@ -801,14 +811,14 @@ pub fn swl(state: &mut State, instruction: Instruction) -> InstResult {
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
-	let shift = (addr & 3) as usize;
+    let shift = (addr & 3) as usize;
     addr &= !3;
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    let mem_value = if likely(!isc) { 
+    let mem_value = if likely(!isc) {
         read_u32(state, addr)?
-    } else { 
+    } else {
         0
     };
 
@@ -816,7 +826,7 @@ pub fn swl(state: &mut State, instruction: Instruction) -> InstResult {
 
     let value = (rt_value >> SHIFT[shift]) | (mem_value & MASK[shift]);
 
-    if likely(!isc) { 
+    if likely(!isc) {
         write_u32(state, addr, value)?
     }
 
@@ -831,7 +841,7 @@ pub fn sw(state: &mut State, instruction: Instruction) -> InstResult {
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    if likely(!isc) { 
+    if likely(!isc) {
         write_u32(state, addr, value)?
     }
 
@@ -846,14 +856,14 @@ pub fn swr(state: &mut State, instruction: Instruction) -> InstResult {
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
-	let shift = (addr & 3) as usize;
+    let shift = (addr & 3) as usize;
     addr &= !3;
 
     let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
 
-    let mem_value = if likely(!isc) { 
+    let mem_value = if likely(!isc) {
         read_u32(state, addr)?
-    } else { 
+    } else {
         0
     };
 
@@ -861,7 +871,7 @@ pub fn swr(state: &mut State, instruction: Instruction) -> InstResult {
 
     let value = (rt_value << SHIFT[shift]) | (mem_value & MASK[shift]);
 
-    if likely(!isc) { 
+    if likely(!isc) {
         write_u32(state, addr, value)?
     }
 

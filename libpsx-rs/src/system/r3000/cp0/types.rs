@@ -1,9 +1,9 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::ptr::NonNull;
-use crate::utilities::bool_to_flag;
-use crate::types::register::b32_register::B32Register;
-use crate::system::types::State as SystemState;
 use crate::system::r3000::cp0::constants::*;
+use crate::system::types::State as SystemState;
+use crate::types::register::b32_register::B32Register;
+use crate::utilities::bool_to_flag;
+use std::ptr::NonNull;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqLine {
@@ -68,7 +68,10 @@ impl Cause {
     }
 
     pub fn update_ip_field(&mut self) {
-        self.register.write_bitfield(CAUSE_IP_INTC, bool_to_flag(self.intc_pending.load(Ordering::Acquire)));
+        self.register.write_bitfield(
+            CAUSE_IP_INTC,
+            bool_to_flag(self.intc_pending.load(Ordering::Acquire)),
+        );
     }
 
     pub fn clear_ip_field(&mut self) {
@@ -85,16 +88,26 @@ pub fn initialize(state: &mut SystemState) {
     state.r3000.cp0.status.write_bitfield(STATUS_BEV, 1);
     state.r3000.cp0.status.write_bitfield(STATUS_TS, 1);
 
-    state.r3000.cp0.register[3] = Some(NonNull::new(&mut state.r3000.cp0.bpc as *mut B32Register).unwrap());
-    state.r3000.cp0.register[5] = Some(NonNull::new(&mut state.r3000.cp0.bda as *mut B32Register).unwrap());
-    state.r3000.cp0.register[6] = Some(NonNull::new(&mut state.r3000.cp0.jump_dest as *mut B32Register).unwrap());
-    state.r3000.cp0.register[7] = Some(NonNull::new(&mut state.r3000.cp0.dcic as *mut B32Register).unwrap());
-    state.r3000.cp0.register[9] = Some(NonNull::new(&mut state.r3000.cp0.bdam as *mut B32Register).unwrap());
-    state.r3000.cp0.register[11] = Some(NonNull::new(&mut state.r3000.cp0.bpcm as *mut B32Register).unwrap());
-    state.r3000.cp0.register[12] = Some(NonNull::new(&mut state.r3000.cp0.status as *mut B32Register).unwrap());
-    state.r3000.cp0.register[13] = Some(NonNull::new(&mut state.r3000.cp0.cause.register as *mut B32Register).unwrap());
-    state.r3000.cp0.register[14] = Some(NonNull::new(&mut state.r3000.cp0.epc as *mut B32Register).unwrap());
-    state.r3000.cp0.register[15] = Some(NonNull::new(&mut state.r3000.cp0.prid as *mut B32Register).unwrap());
+    state.r3000.cp0.register[3] =
+        Some(NonNull::new(&mut state.r3000.cp0.bpc as *mut B32Register).unwrap());
+    state.r3000.cp0.register[5] =
+        Some(NonNull::new(&mut state.r3000.cp0.bda as *mut B32Register).unwrap());
+    state.r3000.cp0.register[6] =
+        Some(NonNull::new(&mut state.r3000.cp0.jump_dest as *mut B32Register).unwrap());
+    state.r3000.cp0.register[7] =
+        Some(NonNull::new(&mut state.r3000.cp0.dcic as *mut B32Register).unwrap());
+    state.r3000.cp0.register[9] =
+        Some(NonNull::new(&mut state.r3000.cp0.bdam as *mut B32Register).unwrap());
+    state.r3000.cp0.register[11] =
+        Some(NonNull::new(&mut state.r3000.cp0.bpcm as *mut B32Register).unwrap());
+    state.r3000.cp0.register[12] =
+        Some(NonNull::new(&mut state.r3000.cp0.status as *mut B32Register).unwrap());
+    state.r3000.cp0.register[13] =
+        Some(NonNull::new(&mut state.r3000.cp0.cause.register as *mut B32Register).unwrap());
+    state.r3000.cp0.register[14] =
+        Some(NonNull::new(&mut state.r3000.cp0.epc as *mut B32Register).unwrap());
+    state.r3000.cp0.register[15] =
+        Some(NonNull::new(&mut state.r3000.cp0.prid as *mut B32Register).unwrap());
 }
 
 fn initialize_prid() -> u32 {

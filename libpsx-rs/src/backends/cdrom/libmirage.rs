@@ -1,11 +1,11 @@
 pub mod state;
 
-use std::path::Path;
-use std::ffi::{CString, CStr};
-use libmirage_sys::*;
-use log::info;
 use crate::backends::cdrom::libmirage::state::*;
 use crate::backends::context::*;
+use libmirage_sys::*;
+use log::info;
+use std::ffi::{CStr, CString};
+use std::path::Path;
 
 static mut INITIALIZED: bool = false;
 
@@ -53,7 +53,11 @@ pub fn change_disc(backend_params: &BackendParams, path: &Path) {
             let mut error: *mut GError = std::ptr::null_mut();
 
             info!("Changing disc to {}", path.display());
-            DISC = mirage_context_load_image(*context, buffer.as_ptr() as *mut *mut i8, &mut error as *mut *mut GError);
+            DISC = mirage_context_load_image(
+                *context,
+                buffer.as_ptr() as *mut *mut i8,
+                &mut error as *mut *mut GError,
+            );
 
             if DISC.is_null() {
                 assert!(!error.is_null());

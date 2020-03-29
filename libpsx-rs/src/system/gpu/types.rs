@@ -1,12 +1,12 @@
-use std::collections::VecDeque;
-use log::warn;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::system::types::State as SystemState;
 use crate::system::gpu::crtc::types::Crtc;
-use crate::types::register::b32_register::B32Register;
+use crate::system::types::State as SystemState;
+use crate::types::b8_memory_mapper::B8MemoryMap;
 use crate::types::b8_memory_mapper::*;
-use crate::types::fifo::Fifo;
 use crate::types::fifo::debug::DebugState;
+use crate::types::fifo::Fifo;
+use crate::types::register::b32_register::B32Register;
+use log::warn;
+use std::collections::VecDeque;
 
 #[derive(Copy, Clone, Debug)]
 pub enum TransparencyMode {
@@ -26,7 +26,7 @@ pub enum ClutMode {
 
 pub struct Gpu1810 {
     pub gp0: Fifo<u32>,
-    pub read: Fifo<u32>, 
+    pub read: Fifo<u32>,
 }
 
 impl Gpu1810 {
@@ -41,13 +41,13 @@ impl Gpu1810 {
 impl B8MemoryMap for Gpu1810 {
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         assert!(offset == 0, "Invalid offset");
-        
+
         Ok(self.read.read_one().unwrap_or_else(|_| {
             warn!("GPUREAD is empty - returning 0xFFFF_FFFF");
             0xFFFF_FFFF
         }))
     }
-    
+
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         assert!(offset == 0, "Invalid offset");
         self.gp0.write_one(value).map_err(|_| WriteError::Full)
@@ -55,7 +55,7 @@ impl B8MemoryMap for Gpu1810 {
 }
 
 pub struct Gpu1814 {
-    pub gp1: Fifo<u32>, 
+    pub gp1: Fifo<u32>,
     pub stat: B32Register,
 }
 
@@ -72,7 +72,7 @@ impl B8MemoryMap for Gpu1814 {
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         B8MemoryMap::read_u32(&mut self.stat, offset)
     }
-    
+
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         assert!(offset == 0, "Invalid offset");
         self.gp1.write_one(value).map_err(|_| WriteError::Full)
@@ -147,6 +147,14 @@ impl State {
 }
 
 pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(0x1F80_1810, 4, &mut state.gpu.gpu1810 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1814, 4, &mut state.gpu.gpu1814 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(
+        0x1F80_1810,
+        4,
+        &mut state.gpu.gpu1810 as *mut dyn B8MemoryMap,
+    );
+    state.r3000.memory_mapper.map(
+        0x1F80_1814,
+        4,
+        &mut state.gpu.gpu1814 as *mut dyn B8MemoryMap,
+    );
 }

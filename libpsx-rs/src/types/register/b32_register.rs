@@ -1,5 +1,5 @@
-use crate::types::bitfield::Bitfield;
 use crate::types::b8_memory_mapper::*;
+use crate::types::bitfield::Bitfield;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -16,20 +16,20 @@ pub struct B32Register {
 
 impl B32Register {
     pub fn new() -> B32Register {
-        B32Register { 
+        B32Register {
             value: B32Register_ { v32: 0 },
         }
     }
 
     pub fn from(value: u32) -> B32Register {
-        B32Register { 
+        B32Register {
             value: B32Register_ { v32: value },
         }
     }
 
     pub fn read_u32(&self) -> u32 {
         unsafe { self.value.v32 }
-    } 
+    }
 
     pub fn write_u32(&mut self, value: u32) {
         self.value.v32 = value;
@@ -40,7 +40,9 @@ impl B32Register {
     }
 
     pub fn write_u16(&mut self, offset: u32, value: u16) {
-        unsafe { self.value.v16[offset as usize] = value; }
+        unsafe {
+            self.value.v16[offset as usize] = value;
+        }
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
@@ -48,7 +50,9 @@ impl B32Register {
     }
 
     pub fn write_u8(&mut self, offset: u32, value: u8) {
-        unsafe { self.value.v8[offset as usize] = value; }
+        unsafe {
+            self.value.v8[offset as usize] = value;
+        }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
@@ -65,7 +69,7 @@ impl B8MemoryMap for B32Register {
     fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         Ok(Self::read_u8(self, offset))
     }
-    
+
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         Self::write_u8(self, offset, value);
         Ok(())
@@ -75,8 +79,8 @@ impl B8MemoryMap for B32Register {
         assert!(offset % 2 == 0, "Non aligned offset");
         Ok(Self::read_u16(self, offset / 2))
     }
-    
-    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {        
+
+    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         assert!(offset % 2 == 0, "Non aligned offset");
         Self::write_u16(self, offset / 2, value);
         Ok(())
@@ -86,7 +90,7 @@ impl B8MemoryMap for B32Register {
         assert!(offset == 0, "Invalid offset");
         Ok(Self::read_u32(self))
     }
-    
+
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         assert!(offset == 0, "Invalid offset");
         Self::write_u32(self, value);

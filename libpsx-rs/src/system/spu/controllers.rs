@@ -1,24 +1,24 @@
-pub mod voice;
-pub mod transfer;
 pub mod adpcm;
-pub mod sound;
+pub mod adsr;
 pub mod backend_dispatch;
 pub mod dac;
-pub mod volume;
-pub mod adsr;
 pub mod interpolation;
 pub mod interrupt;
+pub mod sound;
+pub mod transfer;
+pub mod voice;
+pub mod volume;
 
-use std::time::Duration;
 use crate::audio::AudioBackend;
-use crate::system::types::ControllerContext;
-use crate::system::types::State;
-use crate::system::types::Event;
 use crate::system::spu::constants::*;
-use crate::system::spu::controllers::transfer::*;
-use crate::system::spu::controllers::interrupt::*;
 use crate::system::spu::controllers::dac::*;
+use crate::system::spu::controllers::interrupt::*;
 use crate::system::spu::controllers::sound::*;
+use crate::system::spu::controllers::transfer::*;
+use crate::system::types::ControllerContext;
+use crate::system::types::Event;
+use crate::system::types::State;
+use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {

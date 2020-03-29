@@ -3,15 +3,15 @@ pub mod debug;
 pub mod linked_list;
 pub mod transfer;
 
-use std::time::Duration;
-use std::sync::atomic::Ordering;
-use std::cmp::min;
-use crate::system::types::ControllerContext;
-use crate::system::types::State;
-use crate::system::types::Event;
+use crate::system::dmac::constants::*;
 use crate::system::dmac::controllers::channel::*;
 use crate::system::dmac::controllers::transfer::*;
-use crate::system::dmac::constants::*;
+use crate::system::types::ControllerContext;
+use crate::system::types::Event;
+use crate::system::types::State;
+use std::cmp::min;
+use std::sync::atomic::Ordering;
+use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
@@ -39,7 +39,7 @@ fn run_time(state: &mut State, duration: Duration) {
             Ok(channel_ticks) => {
                 if channel_ticks == 0 {
                     ticks -= 16;
-        
+
                     if channel_id == 0 {
                         channel_id = 6;
                     } else {
@@ -48,7 +48,7 @@ fn run_time(state: &mut State, duration: Duration) {
                 } else {
                     ticks -= channel_ticks as i64;
                 }
-            },
+            }
             Err(channel_ticks) => {
                 if channel_ticks == 0 {
                     cooloff = true;
@@ -56,14 +56,14 @@ fn run_time(state: &mut State, duration: Duration) {
                 } else {
                     ticks -= channel_ticks as i64;
                 }
-            },
+            }
         }
     }
 
     if cooloff {
         state.dmac.cooloff_runs = 4;
     }
-    
+
     handle_bus_unlock(state);
 
     handle_irq_check(state);
@@ -88,14 +88,16 @@ fn tick(state: &mut State, channel_id: usize, ticks_remaining: usize) -> Result<
         Ok(0)
     };
 
-    word_transfers_actual.map(|v| v * TICK_WORD_RATIO).map_err(|v| v * TICK_WORD_RATIO)
+    word_transfers_actual
+        .map(|v| v * TICK_WORD_RATIO)
+        .map_err(|v| v * TICK_WORD_RATIO)
 }
 
 /// Check if any channels are in progress, and acquires the bus lock if true.
 fn handle_bus_lock(state: &mut State) {
     for channel_id in 0..6 {
         let transfer_state = get_transfer_state(state, channel_id);
-        
+
         if transfer_state.started {
             state.bus_locked.store(true, Ordering::Release);
             return;
@@ -107,7 +109,7 @@ fn handle_bus_lock(state: &mut State) {
 fn handle_bus_unlock(state: &mut State) {
     for channel_id in 0..6 {
         let transfer_state = get_transfer_state(state, channel_id);
-        
+
         if transfer_state.started {
             return;
         }
@@ -122,11 +124,14 @@ fn handle_irq_check(state: &mut State) {
     let _icr_lock = dicr.mutex.lock();
 
     let force_irq = dicr.register.read_bitfield(DICR_IRQ_FORCE) != 0;
-    
+
     let mut channel_irq = false;
     let irq_channel_enable = dicr.register.read_bitfield(DICR_IRQ_MASTER_ENABLE) != 0;
     if irq_channel_enable {
-        for (&enable, &flag) in DICR_IRQ_ENABLE_BITFIELDS.iter().zip(DICR_IRQ_FLAG_BITFIELDS.iter()) {
+        for (&enable, &flag) in DICR_IRQ_ENABLE_BITFIELDS
+            .iter()
+            .zip(DICR_IRQ_FLAG_BITFIELDS.iter())
+        {
             let enable_value = dicr.register.read_bitfield(enable) != 0;
             let flag_value = dicr.register.read_bitfield(flag) != 0;
             if enable_value && flag_value {

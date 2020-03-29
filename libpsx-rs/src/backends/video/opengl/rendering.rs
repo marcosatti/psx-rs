@@ -11,7 +11,12 @@ pub struct ProgramContext {
 }
 
 impl ProgramContext {
-    pub fn new(program_id: GLuint, vao_id: GLuint, vbo_ids: &[GLuint], texture_ids: &[GLuint]) -> ProgramContext {
+    pub fn new(
+        program_id: GLuint,
+        vao_id: GLuint,
+        vbo_ids: &[GLuint],
+        texture_ids: &[GLuint],
+    ) -> ProgramContext {
         let mut c = ProgramContext {
             program_id: program_id,
             vao_id: vao_id,

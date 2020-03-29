@@ -1,9 +1,9 @@
-use std::intrinsics::unlikely;
+use crate::system::r3000::constants::INSTRUCTION_SIZE;
+use crate::system::r3000::controllers::debug;
+use crate::system::r3000::cp0::constants::*;
 use crate::system::types::State;
 use crate::utilities::mips1::status_push_exception;
-use crate::system::r3000::constants::INSTRUCTION_SIZE;
-use crate::system::r3000::cp0::constants::*;
-use crate::system::r3000::controllers::debug;
+use std::intrinsics::unlikely;
 
 pub fn set_exception(state: &mut State, exccode: usize) {
     let pc = &mut state.r3000.pc;
@@ -15,7 +15,10 @@ pub fn set_exception(state: &mut State, exccode: usize) {
         pc_value += INSTRUCTION_SIZE;
     }
 
-    assert!(!state.r3000.branch_delay.branching(), "Exception handling while branching not implmeneted");
+    assert!(
+        !state.r3000.branch_delay.branching(),
+        "Exception handling while branching not implmeneted"
+    );
 
     // Push IEc & KUc (stack).
     let old_status_value = status.read_u32();
@@ -28,24 +31,18 @@ pub fn set_exception(state: &mut State, exccode: usize) {
     // Set EPC address.
     let epc = &mut state.r3000.cp0.epc;
     epc.write_u32(pc_value);
-    
+
     // Figure out base exception vector address.
     let bev = status.read_bitfield(STATUS_BEV) != 0;
-    let mut vector_offset = if bev {
-        0xBF80_0100
-    } else {
-        0x8000_0000
-    };
+    let mut vector_offset = if bev { 0xBF80_0100 } else { 0x8000_0000 };
 
     // Figure out exception vector offset.
     match exccode {
         CAUSE_EXCCODE_INT | CAUSE_EXCCODE_SYSCALL => {
             // General exception vector.
             vector_offset += 0x80;
-        },
-        _ => {
-            unimplemented!("Unimplemented exception type encountered")
-        },
+        }
+        _ => unimplemented!("Unimplemented exception type encountered"),
     }
 
     // Set PC to exception vector.

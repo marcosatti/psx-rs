@@ -1,8 +1,8 @@
-use std::sync::atomic::Ordering;
-use crate::system::types::State;
-use crate::system::spu::controllers::voice::*;
 use crate::system::spu::constants::*;
+use crate::system::spu::controllers::voice::*;
 use crate::system::spu::types::*;
+use crate::system::types::State;
+use std::sync::atomic::Ordering;
 
 pub fn handle_transfer(state: &mut State) {
     let current_transfer_mode = state.spu.current_transfer_mode;
@@ -12,17 +12,17 @@ pub fn handle_transfer(state: &mut State) {
     match current_transfer_mode {
         TransferMode::Stop => {
             handle_new_transfer_initialization(state);
-        },
+        }
         TransferMode::ManualWrite => {
             handle_manual_write_transfer(state);
-        },
+        }
         TransferMode::DmaWrite => {
             handle_dma_write_transfer(state);
-        }, 
+        }
         TransferMode::DmaRead => {
             handle_dma_read_transfer(state);
-        }, 
-    } 
+        }
+    }
 }
 
 fn handle_current_transfer_address(state: &mut State) {
@@ -36,7 +36,9 @@ fn handle_current_transfer_address(state: &mut State) {
         }
 
         *current_transfer_adderss = data_transfer_address.register.read_u16() as u32 * 8;
-        data_transfer_address.write_latch.store(false, Ordering::Release);
+        data_transfer_address
+            .write_latch
+            .store(false, Ordering::Release);
     }
 }
 
@@ -74,13 +76,13 @@ fn handle_manual_write_transfer(state: &mut State) {
             memory.write_u16(*current_transfer_address as u32, value);
             *current_transfer_address += 2;
             *current_transfer_address &= 0x7FFFF;
-        },
+        }
         Err(_) => {
             control.write_bitfield(CONTROL_TRANSFER_MODE, 0);
             stat.write_bitfield(STAT_DATA_BUSY_FLAG, 0);
             stat.write_bitfield(STAT_TRANSFER_MODE, 0);
             *current_transfer_mode = TransferMode::Stop;
-        },
+        }
     }
 }
 

@@ -1,9 +1,9 @@
 use crate::backends::cdrom::CdromBackend;
-use crate::system::types::State;
+use crate::system::cdrom::constants::*;
 use crate::system::cdrom::controllers::backend_dispatch;
 use crate::system::cdrom::controllers::interrupt::*;
 use crate::system::cdrom::controllers::state::*;
-use crate::system::cdrom::constants::*;
+use crate::system::types::State;
 
 pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
     // Buffer some data first (INT1 means ready to send data?).
@@ -23,13 +23,14 @@ pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
         if !state.cdrom.reading {
             return false;
         }
-        
+
         // Make sure FIFO is empty.
         if !state.cdrom.data.is_empty() {
             return true;
         }
 
-        let data_block = backend_dispatch::read_sector(cdrom_backend, state.cdrom.lba_address).expect("Tried to read a sector when no backend is available");
+        let data_block = backend_dispatch::read_sector(cdrom_backend, state.cdrom.lba_address)
+            .expect("Tried to read a sector when no backend is available");
         assert_eq!(data_block.len(), 2048);
 
         state.cdrom.lba_address += 1;
@@ -53,7 +54,7 @@ pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
             if data.is_full() {
                 break;
             }
-    
+
             match read_buffer.pop_front() {
                 Some(v) => data.write_one(v).unwrap(),
                 None => break,

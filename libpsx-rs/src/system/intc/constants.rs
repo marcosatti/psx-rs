@@ -13,5 +13,9 @@ pub const PADMC: Bitfield = Bitfield::new(7, 1);
 pub const SIO: Bitfield = Bitfield::new(8, 1);
 pub const SPU: Bitfield = Bitfield::new(9, 1);
 pub const PIO: Bitfield = Bitfield::new(10, 1);
-pub const IRQ_NAMES: [&str; 11] = ["VBLANK", "GPU", "CDROM", "DMA", "TMR0", "TMR1", "TMR2", "PADMC", "SIO", "SPU", "PIO"];
-pub const IRQ_BITFIELDS: [Bitfield; 11] = [VBLANK, GPU, CDROM, DMA, TMR0, TMR1, TMR2, PADMC, SIO, SPU, PIO];
+pub const IRQ_NAMES: [&str; 11] = [
+    "VBLANK", "GPU", "CDROM", "DMA", "TMR0", "TMR1", "TMR2", "PADMC", "SIO", "SPU", "PIO",
+];
+pub const IRQ_BITFIELDS: [Bitfield; 11] = [
+    VBLANK, GPU, CDROM, DMA, TMR0, TMR1, TMR2, PADMC, SIO, SPU, PIO,
+];

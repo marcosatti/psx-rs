@@ -1,19 +1,19 @@
 pub mod backend_dispatch;
 pub mod command;
 pub mod command_impl;
-pub mod interrupt;
 pub mod debug;
+pub mod interrupt;
 pub mod read;
 pub mod state;
 
-use std::sync::atomic::Ordering;
-use log::warn;
-use crate::utilities::bool_to_flag;
 use crate::backends::cdrom::CdromBackend;
-use crate::system::types::State;
+use crate::system::cdrom::constants::*;
 use crate::system::cdrom::controllers::command::*;
 use crate::system::cdrom::controllers::read::*;
-use crate::system::cdrom::constants::*;
+use crate::system::types::State;
+use crate::utilities::bool_to_flag;
+use log::warn;
+use std::sync::atomic::Ordering;
 
 pub fn handle_tick(state: &mut State, cdrom_backend: &CdromBackend) {
     handle_interrupt_enable(state);
@@ -39,7 +39,7 @@ fn handle_state(state: &mut State, cdrom_backend: &CdromBackend) {
     // Can only do one action per cycle.
     // Commands get priority over anything else.
     let mut handled = false;
-    
+
     if !handled {
         handled = handle_command(state, cdrom_backend);
     }
@@ -89,7 +89,7 @@ fn handle_interrupt_flags(state: &mut State) {
 
     if int_flag.parameter_reset.load(Ordering::Acquire) {
         // TODO: actually performing a reset causes problems, where the BIOS is writing the clear bit and the parameters at the same time,
-        // before the controller gets a chance to run - this is an emulator level issue. There are asserts in the command handler that 
+        // before the controller gets a chance to run - this is an emulator level issue. There are asserts in the command handler that
         // check if the parameter is empty after a command has been run (which it should be).
         //state.cdrom.parameter.clear();
         int_flag.parameter_reset.store(false, Ordering::Release);
