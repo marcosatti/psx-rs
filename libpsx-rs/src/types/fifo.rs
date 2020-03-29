@@ -2,25 +2,26 @@ pub mod debug;
 
 use crate::types::fifo::debug::DebugState;
 use spsc_ringbuffer::SpscRingbuffer as QueueImpl;
-use std::fmt::{Display, UpperHex};
+use std::fmt::{
+    Display,
+    UpperHex,
+};
 
 /// SPSC FIFO
 pub struct Fifo<T>
-where
-    T: Copy + Default,
+where T: Copy + Default
 {
     fifo: QueueImpl<T>,
     pub debug_state: Option<DebugState>,
 }
 
 impl<T> Fifo<T>
-where
-    T: Copy + Default + Display + UpperHex,
+where T: Copy + Default + Display + UpperHex
 {
     pub fn new(size: usize, debug_state: Option<DebugState>) -> Fifo<T> {
         Fifo {
             fifo: QueueImpl::new(size),
-            debug_state: debug_state,
+            debug_state,
         }
     }
 

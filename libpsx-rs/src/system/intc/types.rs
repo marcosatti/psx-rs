@@ -1,10 +1,21 @@
-use crate::system::intc::constants::*;
-use crate::system::types::State as SystemState;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::b8_memory_mapper::*;
-use crate::types::register::b32_register::B32Register;
-use crate::utilities::bool_to_flag;
-use std::sync::atomic::{AtomicBool, Ordering};
+use crate::{
+    system::{
+        intc::constants::*,
+        types::State as SystemState,
+    },
+    types::{
+        b8_memory_mapper::{
+            B8MemoryMap,
+            *,
+        },
+        register::b32_register::B32Register,
+    },
+    utilities::bool_to_flag,
+};
+use std::sync::atomic::{
+    AtomicBool,
+    Ordering,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub enum Line {
@@ -101,7 +112,7 @@ impl Stat {
                     9 => self.spu.store(false, Ordering::Release),
                     10 => self.pio.store(false, Ordering::Release),
                     // Ignore (always zero).
-                    _ => {}
+                    _ => {},
                 }
             }
         }
@@ -143,12 +154,6 @@ impl B8MemoryMap for Stat {
 }
 
 pub fn initialize(state: &mut SystemState) {
-    state
-        .r3000
-        .memory_mapper
-        .map(0x1F80_1070, 4, &mut state.intc.stat as *mut dyn B8MemoryMap);
-    state
-        .r3000
-        .memory_mapper
-        .map(0x1F80_1074, 4, &mut state.intc.mask as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1070, 4, &mut state.intc.stat as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1074, 4, &mut state.intc.mask as *mut dyn B8MemoryMap);
 }

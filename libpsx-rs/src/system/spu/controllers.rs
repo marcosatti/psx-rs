@@ -9,15 +9,25 @@ pub mod transfer;
 pub mod voice;
 pub mod volume;
 
-use crate::audio::AudioBackend;
-use crate::system::spu::constants::*;
-use crate::system::spu::controllers::dac::*;
-use crate::system::spu::controllers::interrupt::*;
-use crate::system::spu::controllers::sound::*;
-use crate::system::spu::controllers::transfer::*;
-use crate::system::types::ControllerContext;
-use crate::system::types::Event;
-use crate::system::types::State;
+use crate::{
+    audio::AudioBackend,
+    system::{
+        spu::{
+            constants::*,
+            controllers::{
+                dac::*,
+                interrupt::*,
+                sound::*,
+                transfer::*,
+            },
+        },
+        types::{
+            ControllerContext,
+            Event,
+            State,
+        },
+    },
+};
 use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {

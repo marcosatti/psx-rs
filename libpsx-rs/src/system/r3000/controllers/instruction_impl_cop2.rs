@@ -1,14 +1,26 @@
-use crate::system::r3000::controllers::memory_controller::*;
-use crate::system::r3000::controllers::register::*;
-use crate::system::r3000::cp0::constants::STATUS_ISC;
-use crate::system::r3000::cp2::types::GteInstruction;
-use crate::system::r3000::types::InstResult;
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
-use crate::types::mips1::instruction::Instruction;
-use crate::utilities::numeric::*;
-use crate::utilities::packed::*;
-use crate::utilities::*;
+use crate::{
+    system::{
+        r3000::{
+            controllers::{
+                memory_controller::*,
+                register::*,
+            },
+            cp0::constants::STATUS_ISC,
+            cp2::types::GteInstruction,
+            types::InstResult,
+        },
+        types::State,
+    },
+    types::{
+        bitfield::Bitfield,
+        mips1::instruction::Instruction,
+    },
+    utilities::{
+        numeric::*,
+        packed::*,
+        *,
+    },
+};
 use std::intrinsics::likely;
 use typenum::*;
 
@@ -31,18 +43,9 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
     let (vx0_value, vy0_value) = split_32_i16_f64(vector_xy);
     let (vz0_value, _) = split_32_i16_f64(vector_z_);
 
-    let mut mac1_value = trx_value * 4096.0
-        + rt11_value * vx0_value
-        + rt12_value * vy0_value
-        + rt13_value * vz0_value;
-    let mut mac2_value = try_value * 4096.0
-        + rt21_value * vx0_value
-        + rt22_value * vy0_value
-        + rt23_value * vz0_value;
-    let mut mac3_value = trz_value * 4096.0
-        + rt31_value * vx0_value
-        + rt32_value * vy0_value
-        + rt33_value * vz0_value;
+    let mut mac1_value = trx_value * 4096.0 + rt11_value * vx0_value + rt12_value * vy0_value + rt13_value * vz0_value;
+    let mut mac2_value = try_value * 4096.0 + rt21_value * vx0_value + rt22_value * vy0_value + rt23_value * vz0_value;
+    let mut mac3_value = trz_value * 4096.0 + rt31_value * vx0_value + rt32_value * vy0_value + rt33_value * vz0_value;
 
     if shift {
         mac1_value /= 4096.0;
@@ -50,12 +53,9 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
         mac3_value /= 4096.0;
     }
 
-    let (ir1_value, ir1_overflow_flag) =
-        checked_clamp(mac1_value, std::i16::MIN as f64, std::i16::MAX as f64);
-    let (ir2_value, ir2_overflow_flag) =
-        checked_clamp(mac2_value, std::i16::MIN as f64, std::i16::MAX as f64);
-    let (ir3_value, ir3_overflow_flag) =
-        checked_clamp(mac3_value, std::i16::MIN as f64, std::i16::MAX as f64);
+    let (ir1_value, ir1_overflow_flag) = checked_clamp(mac1_value, std::i16::MIN as f64, std::i16::MAX as f64);
+    let (ir2_value, ir2_overflow_flag) = checked_clamp(mac2_value, std::i16::MIN as f64, std::i16::MAX as f64);
+    let (ir3_value, ir3_overflow_flag) = checked_clamp(mac3_value, std::i16::MIN as f64, std::i16::MAX as f64);
 
     let mac1_overflow_flag = f64::abs(mac1_value) >= ((1u64 << 44) as f64);
     let mac1_negative_flag = mac1_value < 0.0;
@@ -70,8 +70,7 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
         sz3_value /= 4096.0;
     }
 
-    let (sz3_value, sz3_overflow_flag) =
-        checked_clamp(sz3_value, std::u16::MIN as f64, std::u16::MAX as f64);
+    let (sz3_value, sz3_overflow_flag) = checked_clamp(sz3_value, std::u16::MIN as f64, std::u16::MAX as f64);
 
     let ofx_value = f64::from_fixed_bits_u32::<U16>(state.r3000.cp2.gc[24].read_u32());
     let ofy_value = f64::from_fixed_bits_u32::<U16>(state.r3000.cp2.gc[25].read_u32());
@@ -119,83 +118,47 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(12, 1), bool_to_flag(ir0_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(13, 1), bool_to_flag(sy2_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(14, 1), bool_to_flag(sx2_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(15, 1),
-        bool_to_flag(mac0_overflow_flag && mac0_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(16, 1),
-        bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)),
-    );
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(17, 1), bool_to_flag(plane_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(sz3_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(25, 1),
-        bool_to_flag(mac3_overflow_flag && mac3_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(26, 1),
-        bool_to_flag(mac2_overflow_flag && mac2_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(27, 1),
-        bool_to_flag(mac1_overflow_flag && mac1_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(28, 1),
-        bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(29, 1),
-        bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(30, 1),
-        bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)),
-    );
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
 
     handle_cp2_flag_error_bit(state);
     handle_cp2_sxyp_mirror(state);
 }
 
-fn normal_color(
-    state: &mut State,
-    shift: bool,
-    lm: bool,
-    color: bool,
-    depth: bool,
-    vector_xy: u32,
-    vector_z_: u32,
-) {
+fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bool, vector_xy: u32, vector_z_: u32) {
     if depth {
-        assert!(
-            color,
-            "Depth calculation shouldn't be set without color calculation"
-        );
+        assert!(color, "Depth calculation shouldn't be set without color calculation");
     }
 
     handle_cp2_flag_reset(state);
 
     let (llm11_value, llm12_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[8].read_u32());
     let (llm13_value, llm21_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[9].read_u32());
-    let (llm22_value, llm23_value) =
-        split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[10].read_u32());
-    let (llm31_value, llm32_value) =
-        split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[11].read_u32());
+    let (llm22_value, llm23_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[10].read_u32());
+    let (llm31_value, llm32_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[11].read_u32());
     let (llm33_value, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[12].read_u32());
 
     let (vx0_value, vy0_value) = split_32_i16_f64(vector_xy);
     let (vz0_value, _) = split_32_i16_f64(vector_z_);
 
-    let mut ir1_value =
-        (vx0_value * llm11_value) + (vy0_value * llm12_value) + (vz0_value * llm13_value);
-    let mut ir2_value =
-        (vx0_value * llm21_value) + (vy0_value * llm22_value) + (vz0_value * llm23_value);
-    let mut ir3_value =
-        (vx0_value * llm31_value) + (vy0_value * llm32_value) + (vz0_value * llm33_value);
+    let mut ir1_value = (vx0_value * llm11_value) + (vy0_value * llm12_value) + (vz0_value * llm13_value);
+    let mut ir2_value = (vx0_value * llm21_value) + (vy0_value * llm22_value) + (vz0_value * llm23_value);
+    let mut ir3_value = (vx0_value * llm31_value) + (vy0_value * llm32_value) + (vz0_value * llm33_value);
 
     if shift {
         ir1_value /= 4096.0;
@@ -203,26 +166,19 @@ fn normal_color(
         ir3_value /= 4096.0;
     }
 
-    let (lcm11_value, lcm12_value) =
-        split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[16].read_u32());
-    let (lcm13_value, lcm21_value) =
-        split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[17].read_u32());
-    let (lcm22_value, lcm23_value) =
-        split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[18].read_u32());
-    let (lcm31_value, lcm32_value) =
-        split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[19].read_u32());
+    let (lcm11_value, lcm12_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[16].read_u32());
+    let (lcm13_value, lcm21_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[17].read_u32());
+    let (lcm22_value, lcm23_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[18].read_u32());
+    let (lcm31_value, lcm32_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[19].read_u32());
     let (lcm33_value, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[20].read_u32());
 
     let rbk_value = f64::from_fixed_bits_i32::<U12>(state.r3000.cp2.gc[13].read_u32() as i32);
     let gbk_value = f64::from_fixed_bits_i32::<U12>(state.r3000.cp2.gc[14].read_u32() as i32);
     let bbk_value = f64::from_fixed_bits_i32::<U12>(state.r3000.cp2.gc[15].read_u32() as i32);
 
-    let lcm1_value =
-        (ir1_value * lcm11_value) + (ir2_value * lcm12_value) + (ir3_value * lcm13_value);
-    let lcm2_value =
-        (ir1_value * lcm21_value) + (ir2_value * lcm22_value) + (ir3_value * lcm23_value);
-    let lcm3_value =
-        (ir1_value * lcm31_value) + (ir2_value * lcm32_value) + (ir3_value * lcm33_value);
+    let lcm1_value = (ir1_value * lcm11_value) + (ir2_value * lcm12_value) + (ir3_value * lcm13_value);
+    let lcm2_value = (ir1_value * lcm21_value) + (ir2_value * lcm22_value) + (ir3_value * lcm23_value);
+    let lcm3_value = (ir1_value * lcm31_value) + (ir2_value * lcm32_value) + (ir3_value * lcm33_value);
 
     ir1_value = (rbk_value * 4096.0) + lcm1_value;
     ir2_value = (gbk_value * 4096.0) + lcm2_value;
@@ -248,12 +204,9 @@ fn normal_color(
         mac3_value = (b_value * ir3_value) * 16.0;
 
         if depth {
-            let rfc_value =
-                f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[21].read_u32() as i32);
-            let gfc_value =
-                f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[22].read_u32() as i32);
-            let bfc_value =
-                f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[23].read_u32() as i32);
+            let rfc_value = f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[21].read_u32() as i32);
+            let gfc_value = f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[22].read_u32() as i32);
+            let bfc_value = f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[23].read_u32() as i32);
             let (ir0_value, _) = split_32_i16_f64(state.r3000.cp2.gd[8].read_u32());
 
             mac1_value = mac1_value + ((rfc_value - mac1_value) * ir0_value);
@@ -273,12 +226,9 @@ fn normal_color(
         ir_clamp_min = std::i16::MIN;
     }
 
-    let (ir1_value, ir1_overflow_flag) =
-        checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
-    let (ir2_value, ir2_overflow_flag) =
-        checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
-    let (ir3_value, ir3_overflow_flag) =
-        checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir1_value, ir1_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir2_value, ir2_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir3_value, ir3_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
 
     mac1_value /= 16.0;
     mac2_value /= 16.0;
@@ -313,30 +263,15 @@ fn normal_color(
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(25, 1),
-        bool_to_flag(mac3_overflow_flag && mac3_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(26, 1),
-        bool_to_flag(mac2_overflow_flag && mac2_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(27, 1),
-        bool_to_flag(mac1_overflow_flag && mac1_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(28, 1),
-        bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(29, 1),
-        bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(30, 1),
-        bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)),
-    );
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
 
     handle_cp2_flag_error_bit(state);
 }
@@ -423,21 +358,15 @@ pub fn nclip(state: &mut State, _instruction: Instruction) -> InstResult {
     let (sx1, sy1) = split_32_i16_f64(sxy1);
     let (sx2, sy2) = split_32_i16_f64(sxy2);
 
-    let mac0_value =
-        (sx0 * sy1) + (sx1 * sy2) + (sx2 * sy0) - (sx0 * sy2) - (sx1 * sy0) - (sx2 * sy1);
+    let mac0_value = (sx0 * sy1) + (sx1 * sy2) + (sx2 * sy0) - (sx0 * sy2) - (sx1 * sy0) - (sx2 * sy1);
     let mac0_overflow_flag = f64::abs(mac0_value) >= ((1u64 << 32) as f64);
     let mac0_negative_flag = mac0_value < 0.0;
 
     state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
 
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(15, 1),
-        bool_to_flag(mac0_overflow_flag && mac0_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(16, 1),
-        bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)),
-    );
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
 
     handle_cp2_flag_error_bit(state);
 
@@ -469,15 +398,7 @@ pub fn ncds(state: &mut State, instruction: Instruction) -> InstResult {
     let instruction = GteInstruction::new(instruction);
     let vector_0_xy = state.r3000.cp2.gd[0].read_u32();
     let vector_0_z_ = state.r3000.cp2.gd[1].read_u32();
-    normal_color(
-        state,
-        instruction.sf(),
-        instruction.lm(),
-        true,
-        true,
-        vector_0_xy,
-        vector_0_z_,
-    );
+    normal_color(state, instruction.sf(), instruction.lm(), true, true, vector_0_xy, vector_0_z_);
     Ok(())
 }
 
@@ -545,20 +466,14 @@ pub fn avsz3(state: &mut State, _instruction: Instruction) -> InstResult {
     let mac0_negative_flag = mac0_value < 0.0;
 
     let otz_value = mac0_value / (0x1000 as f64);
-    let (otz_value, otz_overflow_flag) =
-        checked_clamp(otz_value, std::u16::MIN as f64, std::u16::MAX as f64);
+    let (otz_value, otz_overflow_flag) = checked_clamp(otz_value, std::u16::MIN as f64, std::u16::MAX as f64);
 
     state.r3000.cp2.gd[7].write_u32(otz_value as i32 as u32);
     state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
 
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(15, 1),
-        bool_to_flag(mac0_overflow_flag && mac0_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(16, 1),
-        bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)),
-    );
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
 
     handle_cp2_flag_error_bit(state);
@@ -582,20 +497,14 @@ pub fn avsz4(state: &mut State, _instruction: Instruction) -> InstResult {
     let mac0_negative_flag = mac0_value < 0.0;
 
     let otz_value = mac0_value / (0x1000 as f64);
-    let (otz_value, otz_overflow_flag) =
-        checked_clamp(otz_value, std::u16::MIN as f64, std::u16::MAX as f64);
+    let (otz_value, otz_overflow_flag) = checked_clamp(otz_value, std::u16::MIN as f64, std::u16::MAX as f64);
 
     state.r3000.cp2.gd[7].write_u32(otz_value as i32 as u32);
     state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
 
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(15, 1),
-        bool_to_flag(mac0_overflow_flag && mac0_negative_flag),
-    );
-    state.r3000.cp2.gc[31].write_bitfield(
-        Bitfield::new(16, 1),
-        bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)),
-    );
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    state.r3000.cp2.gc[31]
+        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
 
     handle_cp2_flag_error_bit(state);

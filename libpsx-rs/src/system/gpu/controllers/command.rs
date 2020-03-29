@@ -1,12 +1,21 @@
-use crate::backends::video::VideoBackend;
-use crate::system::gpu::constants::*;
-use crate::system::gpu::controllers::command_gp0::handle_command as handle_command_gp0;
-use crate::system::gpu::controllers::command_gp1::handle_command as handle_command_gp1;
-use crate::system::types::State;
+use crate::{
+    backends::video::VideoBackend,
+    system::{
+        gpu::{
+            constants::*,
+            controllers::{
+                command_gp0::handle_command as handle_command_gp0,
+                command_gp1::handle_command as handle_command_gp1,
+            },
+        },
+        types::State,
+    },
+};
 
 pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
     // TODO: what's the priority of command handling?
-    // Doesn't really mention what happens if there is a command waiting in GP0 queue then a command gets written to GP1.
+    // Doesn't really mention what happens if there is a command waiting in GP0 queue then a command gets written to
+    // GP1.
     handle_command_gp1(state, video_backend);
     handle_command_gp0(state, video_backend);
     handle_read(state);
@@ -73,7 +82,8 @@ fn handle_stat_recv_dma(state: &mut State) {
     let stat = &mut state.gpu.gpu1814.stat;
 
     // TODO: currently GPU says it always wants commands/data.
-    // This bit is used for DMA block mode - the DMAC is meant to wait for the line to be asserted before sending the next block.
+    // This bit is used for DMA block mode - the DMAC is meant to wait for the line to be asserted before sending the
+    // next block.
 
     stat.write_bitfield(STAT_RECV_DMA, 1);
 }

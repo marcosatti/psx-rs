@@ -1,5 +1,7 @@
-use crate::types::b8_memory_mapper::*;
-use crate::types::bitfield::Bitfield;
+use crate::types::{
+    b8_memory_mapper::*,
+    bitfield::Bitfield,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -17,13 +19,17 @@ pub struct B32Register {
 impl B32Register {
     pub fn new() -> B32Register {
         B32Register {
-            value: B32Register_ { v32: 0 },
+            value: B32Register_ {
+                v32: 0,
+            },
         }
     }
 
     pub fn from(value: u32) -> B32Register {
         B32Register {
-            value: B32Register_ { v32: value },
+            value: B32Register_ {
+                v32: value,
+            },
         }
     }
 

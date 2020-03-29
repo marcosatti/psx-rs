@@ -1,9 +1,17 @@
 use crate::types::bitfield::Bitfield;
-use num_traits::{PrimInt, Unsigned};
-use std::convert::TryInto;
-use std::fmt::{Debug, UpperHex};
-use std::mem::size_of;
-use std::ptr::NonNull;
+use num_traits::{
+    PrimInt,
+    Unsigned,
+};
+use std::{
+    convert::TryInto,
+    fmt::{
+        Debug,
+        UpperHex,
+    },
+    mem::size_of,
+    ptr::NonNull,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub enum ReadError {
@@ -68,9 +76,9 @@ where
 
         B8MemoryMapper {
             mappings: vec![None; 1 << directory_bits],
-            directory_mask: directory_mask,
-            page_mask: page_mask,
-            offset_mask: offset_mask,
+            directory_mask,
+            page_mask,
+            offset_mask,
         }
     }
 
@@ -78,11 +86,7 @@ where
         debug_assert!(size > 0);
         debug_assert!(!object.is_null());
 
-        let mut directory_index: usize = self
-            .directory_mask
-            .extract_from(address)
-            .try_into()
-            .unwrap();
+        let mut directory_index: usize = self.directory_mask.extract_from(address).try_into().unwrap();
         let mut page_index: usize = self.page_mask.extract_from(address).try_into().unwrap();
         let len_pages = 1 << self.page_mask.length;
         let mut map_size: usize = 0;
@@ -115,11 +119,7 @@ where
 
     fn object_at(&self, address: T) -> (*mut dyn B8MemoryMap, T) {
         unsafe {
-            let directory_index: usize = self
-                .directory_mask
-                .extract_from(address)
-                .try_into()
-                .unwrap();
+            let directory_index: usize = self.directory_mask.extract_from(address).try_into().unwrap();
             let directory = match self.mappings.get_unchecked(directory_index).as_ref() {
                 Some(d) => d,
                 None => panic!(format!("Missing object map at address 0x{:0X}", address)),
@@ -136,9 +136,7 @@ where
 
     pub fn read_u8(&mut self, address: T) -> ReadResult<u8> {
         let (object, base_address) = self.object_at(address);
-        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address))
-            .try_into()
-            .unwrap();
+        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -148,9 +146,7 @@ where
 
     pub fn write_u8(&mut self, address: T, value: u8) -> WriteResult {
         let (object, base_address) = self.object_at(address);
-        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address))
-            .try_into()
-            .unwrap();
+        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -160,9 +156,7 @@ where
 
     pub fn read_u16(&mut self, address: T) -> ReadResult<u16> {
         let (object, base_address) = self.object_at(address);
-        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address))
-            .try_into()
-            .unwrap();
+        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -172,9 +166,7 @@ where
 
     pub fn write_u16(&mut self, address: T, value: u16) -> WriteResult {
         let (object, base_address) = self.object_at(address);
-        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address))
-            .try_into()
-            .unwrap();
+        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -184,9 +176,7 @@ where
 
     pub fn read_u32(&mut self, address: T) -> ReadResult<u32> {
         let (object, base_address) = self.object_at(address);
-        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address))
-            .try_into()
-            .unwrap();
+        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;
@@ -196,9 +186,7 @@ where
 
     pub fn write_u32(&mut self, address: T, value: u32) -> WriteResult {
         let (object, base_address) = self.object_at(address);
-        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address))
-            .try_into()
-            .unwrap();
+        let offset_index: u32 = ((address - base_address) + self.offset_mask.extract_from(address)).try_into().unwrap();
 
         unsafe {
             let object = &mut *object;

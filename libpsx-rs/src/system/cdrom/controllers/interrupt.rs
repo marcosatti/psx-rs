@@ -1,6 +1,8 @@
-use crate::system::cdrom::constants::*;
-use crate::system::intc::types::Line;
-use crate::system::types::State;
+use crate::system::{
+    cdrom::constants::*,
+    intc::types::Line,
+    types::State,
+};
 
 pub fn raise_irq(state: &mut State, irq_line: usize) {
     let int_enable = &state.cdrom.int_enable;

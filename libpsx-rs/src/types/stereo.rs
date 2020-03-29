@@ -7,6 +7,9 @@ pub struct Stereo {
 
 impl Stereo {
     pub fn new(left: i16, right: i16) -> Stereo {
-        Stereo { left, right }
+        Stereo {
+            left,
+            right,
+        }
     }
 }

@@ -1,6 +1,10 @@
-use crate::system::timers::constants::*;
-use crate::system::timers::controllers::timer::*;
-use crate::system::types::State;
+use crate::system::{
+    timers::{
+        constants::*,
+        controllers::timer::*,
+    },
+    types::State,
+};
 use log::trace;
 
 const ENABLE_MODE_WRITE_TRACE: bool = false;
@@ -43,13 +47,7 @@ pub fn trace_mode(state: &mut State, timer_id: usize) {
     let overflow_hit = mode.register.read_bitfield(MODE_OVERFLOW_HIT);
 
     trace!("Timer {} mode details:", timer_id);
-    trace!(
-        "sync_enable = {}, sync_mode = {}, reset = {}, irq_target = {}",
-        sync_enable,
-        sync_mode,
-        reset,
-        irq_target
-    );
+    trace!("sync_enable = {}, sync_mode = {}, reset = {}, irq_target = {}", sync_enable, sync_mode, reset, irq_target);
     trace!(
         "irq_overflow = {}, irq_repeat = {}, irq_pulse = {}, clk_src = {}",
         irq_overflow,
@@ -57,12 +55,7 @@ pub fn trace_mode(state: &mut State, timer_id: usize) {
         irq_pulse,
         clk_src
     );
-    trace!(
-        "irq_status = {}, target_hit = {}, overflow_hit = {}",
-        irq_status,
-        target_hit,
-        overflow_hit
-    );
+    trace!("irq_status = {}, target_hit = {}, overflow_hit = {}", irq_status, target_hit, overflow_hit);
 }
 
 pub fn trace_mode_write(state: &mut State, timer_id: usize) {

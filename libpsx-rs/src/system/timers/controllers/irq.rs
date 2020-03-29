@@ -1,8 +1,14 @@
-use crate::system::timers::constants::*;
-use crate::system::timers::controllers::timer::*;
-use crate::system::types::State;
-use log::debug;
-use log::warn;
+use crate::system::{
+    timers::{
+        constants::*,
+        controllers::timer::*,
+    },
+    types::State,
+};
+use log::{
+    debug,
+    warn,
+};
 
 pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType) {
     let mode = get_mode(state, timer_id);
@@ -17,7 +23,7 @@ pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType)
     }
 
     match irq_type {
-        IrqType::None => {}
+        IrqType::None => {},
         IrqType::Overflow => {
             let overflow_trigger = mode.register.read_bitfield(MODE_IRQ_OVERFLOW) > 0;
 
@@ -25,7 +31,7 @@ pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType)
                 handle_irq_raise(state, timer_id);
                 timer_state.irq_raised = true;
             }
-        }
+        },
         IrqType::Target => {
             let target_trigger = mode.register.read_bitfield(MODE_IRQ_TARGET) > 0;
 
@@ -33,7 +39,7 @@ pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType)
                 handle_irq_raise(state, timer_id);
                 timer_state.irq_raised = true;
             }
-        }
+        },
     }
 }
 
@@ -48,17 +54,16 @@ pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
             // TODO: Do nothing? How long is a few clock cycles? Will the BIOS see this? Probably not...
             warn!("Pulse IRQ mode not implemented properly?");
             raise_irq = true;
-        }
+        },
         1 => {
             // Toggle mode. IRQ's will effectively only be raised every 2nd time.
             let new_irq_status = mode.register.read_bitfield(MODE_IRQ_STATUS) ^ 1;
-            mode.register
-                .write_bitfield(MODE_IRQ_STATUS, new_irq_status);
+            mode.register.write_bitfield(MODE_IRQ_STATUS, new_irq_status);
 
             if new_irq_status == 0 {
                 raise_irq = true;
             }
-        }
+        },
         _ => unreachable!(),
     }
 

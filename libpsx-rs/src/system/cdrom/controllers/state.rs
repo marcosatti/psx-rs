@@ -1,6 +1,8 @@
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
-use crate::utilities::bool_to_flag;
+use crate::{
+    system::types::State,
+    types::bitfield::Bitfield,
+    utilities::bool_to_flag,
+};
 
 pub fn stat_value(state: &State) -> u8 {
     const _ERROR: Bitfield = Bitfield::new(0, 0);

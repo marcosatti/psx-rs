@@ -14,14 +14,8 @@ pub fn render(backend_params: &opengl::BackendParams) {
 
             let texcoords_flat: [f32; 8] = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
 
-            let vs = opengl::shaders::compile_shader(
-                opengl::shaders::vertex::TEXTURED_POLYGON,
-                GL_VERTEX_SHADER,
-            );
-            let fs = opengl::shaders::compile_shader(
-                opengl::shaders::fragment::TEXTURED_POLYGON,
-                GL_FRAGMENT_SHADER,
-            );
+            let vs = opengl::shaders::compile_shader(opengl::shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
+            let fs = opengl::shaders::compile_shader(opengl::shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
             let program = opengl::shaders::create_program(&[vs, fs]);
 
             let mut vao = 0;
@@ -56,12 +50,8 @@ pub fn render(backend_params: &opengl::BackendParams) {
                 panic!("Error initializing OpenGL program: render_opengl");
             }
 
-            PROGRAM_CONTEXT = Some(opengl::rendering::ProgramContext::new(
-                program,
-                vao,
-                &[vbo_position, vbo_texcoord],
-                &[],
-            ));
+            PROGRAM_CONTEXT =
+                Some(opengl::rendering::ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
         }
 
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
@@ -85,10 +75,7 @@ pub fn render(backend_params: &opengl::BackendParams) {
         glBindTexture(GL_TEXTURE_2D, texture as GLuint);
 
         let tex2d_cstr = b"tex2d\0";
-        let uniform_tex2d = glGetUniformLocation(
-            program_context.program_id,
-            tex2d_cstr.as_ptr() as *const GLchar,
-        );
+        let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
         glUniform1i(uniform_tex2d, 0);
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

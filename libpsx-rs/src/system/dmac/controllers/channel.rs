@@ -1,9 +1,17 @@
-use crate::system::dmac::constants::*;
-use crate::system::dmac::controllers::debug;
-use crate::system::dmac::types::*;
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::{
+        dmac::{
+            constants::*,
+            controllers::debug,
+            types::*,
+        },
+        types::State,
+    },
+    types::{
+        bitfield::Bitfield,
+        register::b32_register::B32Register,
+    },
+};
 use log::warn;
 
 pub fn get_madr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Register {
@@ -74,12 +82,7 @@ fn get_otc_value(madr_value: u32, last_transfer: bool) -> u32 {
     }
 }
 
-pub fn pop_channel_data(
-    state: &State,
-    channel: usize,
-    madr: u32,
-    last_transfer: bool,
-) -> Result<u32, ()> {
+pub fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
@@ -90,7 +93,7 @@ pub fn pop_channel_data(
                 e
             };
             fifo.read_one().map_err(handle_error)
-        }
+        },
         3 => {
             let fifo = &state.cdrom.data;
             if fifo.read_available() < 4 {
@@ -102,7 +105,7 @@ pub fn pop_channel_data(
             let result3 = fifo.read_one().unwrap();
             let result4 = fifo.read_one().unwrap();
             Ok(u32::from_le_bytes([result1, result2, result3, result4]))
-        }
+        },
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
         6 => Ok(get_otc_value(madr, last_transfer)),
@@ -121,7 +124,7 @@ pub fn push_channel_data(state: &State, channel: usize, value: u32) -> Result<()
                 e
             };
             fifo.write_one(value).map_err(handle_error)
-        }
+        },
         3 => unimplemented!("Unhandled DMAC channel 3"),
         4 => unimplemented!("Unhandled DMAC channel 4"),
         5 => unimplemented!("Unhandled DMAC channel 5"),
@@ -160,21 +163,13 @@ pub fn raise_irq(state: &mut State, channel: usize) {
 
     let _lock = dicr.mutex.lock();
 
-    if dicr
-        .register
-        .read_bitfield(DICR_IRQ_ENABLE_BITFIELDS[channel])
-        != 0
-    {
-        dicr.register
-            .write_bitfield(DICR_IRQ_FLAG_BITFIELDS[channel], 1);
+    if dicr.register.read_bitfield(DICR_IRQ_ENABLE_BITFIELDS[channel]) != 0 {
+        dicr.register.write_bitfield(DICR_IRQ_FLAG_BITFIELDS[channel], 1);
     }
 }
 
 pub fn initialize_transfer_state(
-    transfer_state: &mut TransferState,
-    chcr: &Chcr,
-    madr: &B32Register,
-    bcr: &B32Register,
+    transfer_state: &mut TransferState, chcr: &Chcr, madr: &B32Register, bcr: &B32Register,
 ) {
     let bcr_calculate = |v| {
         if v == 0 {
@@ -198,7 +193,7 @@ pub fn initialize_transfer_state(
                 current_count: 0,
                 target_count: bs_count,
             });
-        }
+        },
         SyncMode::Blocks => {
             warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending/receiving next block");
 
@@ -211,7 +206,7 @@ pub fn initialize_transfer_state(
             };
 
             transfer_state.sync_mode_state = SyncModeState::Blocks(blocks_state);
-        }
+        },
         SyncMode::LinkedList => {
             transfer_state.sync_mode_state = SyncModeState::LinkedList(LinkedListState {
                 current_header_address: 0,
@@ -219,7 +214,7 @@ pub fn initialize_transfer_state(
                 target_count: 0,
                 current_count: 0,
             });
-        }
+        },
     }
 
     transfer_state.started = true;

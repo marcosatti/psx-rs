@@ -17,11 +17,11 @@ impl AccessState {
             None => {
                 cache.put(address, 1);
                 1
-            }
+            },
             Some(count) => {
                 *count += 1;
                 *count
-            }
+            },
         }
     }
 
@@ -32,7 +32,8 @@ impl AccessState {
 }
 
 // Only ever accessed in a single threaded environment.
-unsafe impl Sync for AccessState {}
+unsafe impl Sync for AccessState {
+}
 
 lazy_static! {
     static ref READS_STATE: AccessState = AccessState::new();

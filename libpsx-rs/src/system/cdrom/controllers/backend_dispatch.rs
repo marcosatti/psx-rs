@@ -14,18 +14,11 @@ pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> Result<bool, ()> {
     }
 }
 
-pub(crate) fn msf_to_lba(
-    cdrom_backend: &CdromBackend,
-    minute: u8,
-    second: u8,
-    frame: u8,
-) -> Result<usize, ()> {
+pub(crate) fn msf_to_lba(cdrom_backend: &CdromBackend, minute: u8, second: u8, frame: u8) -> Result<usize, ()> {
     match cdrom_backend {
         CdromBackend::None => Err(()),
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => {
-            Ok(libmirage::msf_to_lba_address(params, minute, second, frame))
-        }
+        CdromBackend::Libmirage(ref params) => Ok(libmirage::msf_to_lba_address(params, minute, second, frame)),
         _ => unimplemented!(),
     }
 }

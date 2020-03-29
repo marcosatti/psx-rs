@@ -1,8 +1,16 @@
-use average::{Estimate, Mean};
+use average::{
+    Estimate,
+    Mean,
+};
 use log::debug;
 use parking_lot::Mutex;
-use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashMap,
+    time::{
+        Duration,
+        Instant,
+    },
+};
 
 const ENABLE_BENCHMARK_TRACING: bool = true;
 
@@ -55,11 +63,7 @@ impl State {
 
 static mut BENCHMARK_STATE: Option<State> = None;
 
-pub fn trace_performance(
-    host_time_elapsed: Duration,
-    guest_time_elapsed: Duration,
-    benchmark: BenchmarkResults,
-) {
+pub fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed: Duration, benchmark: BenchmarkResults) {
     if !ENABLE_BENCHMARK_TRACING {
         return;
     }
@@ -72,13 +76,9 @@ pub fn trace_performance(
         let state = BENCHMARK_STATE.as_mut().unwrap();
 
         state.total_host_time_elapsed += host_time_elapsed;
-        state
-            .average_host_time_elapsed
-            .add(host_time_elapsed.as_secs_f64());
+        state.average_host_time_elapsed.add(host_time_elapsed.as_secs_f64());
         state.total_guest_time_elapsed += guest_time_elapsed;
-        state
-            .average_guest_time_elapsed
-            .add(guest_time_elapsed.as_secs_f64());
+        state.average_guest_time_elapsed.add(guest_time_elapsed.as_secs_f64());
 
         for controller_result in benchmark.consume().iter() {
             state
@@ -89,16 +89,14 @@ pub fn trace_performance(
         }
 
         if state.last_reported.elapsed() > REPORTING_PERIOD {
-            let overall_time_elapsed_percent = state.total_host_time_elapsed.as_secs_f64()
-                / state.total_guest_time_elapsed.as_secs_f64()
-                * 100.0;
+            let overall_time_elapsed_percent =
+                state.total_host_time_elapsed.as_secs_f64() / state.total_guest_time_elapsed.as_secs_f64() * 100.0;
             let average_host_time_elapsed =
                 Duration::from_secs_f64(state.average_host_time_elapsed.estimate()).as_micros();
             let average_guest_time_elapsed =
                 Duration::from_secs_f64(state.average_guest_time_elapsed.estimate()).as_micros();
 
-            let mut controller_results_str =
-                Vec::with_capacity(state.average_host_time_elapsed_controllers.len());
+            let mut controller_results_str = Vec::with_capacity(state.average_host_time_elapsed_controllers.len());
             for controller_result in state.average_host_time_elapsed_controllers.iter() {
                 controller_results_str.push(format!(
                     "{} = {}",

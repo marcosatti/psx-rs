@@ -6,12 +6,20 @@ pub mod interrupt;
 pub mod read;
 pub mod state;
 
-use crate::backends::cdrom::CdromBackend;
-use crate::system::cdrom::constants::*;
-use crate::system::cdrom::controllers::command::*;
-use crate::system::cdrom::controllers::read::*;
-use crate::system::types::State;
-use crate::utilities::bool_to_flag;
+use crate::{
+    backends::cdrom::CdromBackend,
+    system::{
+        cdrom::{
+            constants::*,
+            controllers::{
+                command::*,
+                read::*,
+            },
+        },
+        types::State,
+    },
+    utilities::bool_to_flag,
+};
 use log::warn;
 use std::sync::atomic::Ordering;
 
@@ -63,7 +71,7 @@ fn handle_request(state: &mut State) {
         let reset_data_fifo = request.register.read_bitfield(REQUEST_BFRD) == 0;
         if reset_data_fifo {
             let count = state.cdrom.data.read_available();
-            //state.cdrom.data.clear();
+            // state.cdrom.data.clear();
             warn!("Ignored Reset CDROM data FIFO (has {} bytes)", count);
         }
 
@@ -88,10 +96,10 @@ fn handle_interrupt_flags(state: &mut State) {
     }
 
     if int_flag.parameter_reset.load(Ordering::Acquire) {
-        // TODO: actually performing a reset causes problems, where the BIOS is writing the clear bit and the parameters at the same time,
-        // before the controller gets a chance to run - this is an emulator level issue. There are asserts in the command handler that
-        // check if the parameter is empty after a command has been run (which it should be).
-        //state.cdrom.parameter.clear();
+        // TODO: actually performing a reset causes problems, where the BIOS is writing the clear bit and the parameters
+        // at the same time, before the controller gets a chance to run - this is an emulator level issue. There
+        // are asserts in the command handler that check if the parameter is empty after a command has been run
+        // (which it should be). state.cdrom.parameter.clear();
         int_flag.parameter_reset.store(false, Ordering::Release);
     }
 }

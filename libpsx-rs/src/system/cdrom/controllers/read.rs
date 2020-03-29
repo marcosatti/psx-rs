@@ -1,13 +1,22 @@
-use crate::backends::cdrom::CdromBackend;
-use crate::system::cdrom::constants::*;
-use crate::system::cdrom::controllers::backend_dispatch;
-use crate::system::cdrom::controllers::interrupt::*;
-use crate::system::cdrom::controllers::state::*;
-use crate::system::types::State;
+use crate::{
+    backends::cdrom::CdromBackend,
+    system::{
+        cdrom::{
+            constants::*,
+            controllers::{
+                backend_dispatch,
+                interrupt::*,
+                state::*,
+            },
+        },
+        types::State,
+    },
+};
 
 pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
     // Buffer some data first (INT1 means ready to send data?).
-    // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the BIOS expects it...
+    // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the
+    // BIOS expects it...
     if state.cdrom.read_buffer.is_empty() {
         if state.cdrom.pausing {
             // Stop reading and raise interrupt.

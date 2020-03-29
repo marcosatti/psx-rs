@@ -1,11 +1,25 @@
-use crate::system::dmac::constants::*;
-use crate::system::dmac::controllers::channel::*;
-use crate::system::dmac::types::*;
-use crate::system::types::State;
-use crate::types::fifo::Fifo;
+use crate::{
+    system::{
+        dmac::{
+            constants::*,
+            controllers::channel::*,
+            types::*,
+        },
+        types::State,
+    },
+    types::fifo::Fifo,
+};
 use log::trace;
-use std::fmt::{Display, UpperHex};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    fmt::{
+        Display,
+        UpperHex,
+    },
+    sync::atomic::{
+        AtomicUsize,
+        Ordering,
+    },
+};
 
 const ENABLE_CHANNEL_STATE_CHANGE_TRACE: bool = false;
 const ENABLE_CHANNEL_FIFO_HAZARD_READ_TRACE: bool = false;
@@ -28,7 +42,9 @@ pub fn transfer_start(state: &mut State, channel: usize) {
     let transfer_direction = get_transfer_direction(chcr);
     let transfer_state = get_transfer_state(state, channel);
 
-    transfer_state.debug_state = Some(DebugState { transfer_id });
+    transfer_state.debug_state = Some(DebugState {
+        transfer_id,
+    });
 
     trace!(
         "Starting transfer [{}] on channel {}, sync_mode = {:?}, direction = {:?}, bs (raw) = {}, ba (raw) = {}, madr (raw) = 0x{:0X}", 
@@ -67,10 +83,7 @@ pub fn trace_hazard_empty<T: Copy + Default + Display + UpperHex>(fifo: &Fifo<T>
         Some(ref d) => d,
     };
 
-    trace!(
-        "DMAC: reading from {} but empty, trying again later",
-        debug_state.identifier
-    );
+    trace!("DMAC: reading from {} but empty, trying again later", debug_state.identifier);
 }
 
 pub fn trace_hazard_full(fifo: &Fifo<u32>) {
@@ -83,18 +96,12 @@ pub fn trace_hazard_full(fifo: &Fifo<u32>) {
         Some(ref d) => d,
     };
 
-    trace!(
-        "DMAC: writing to {} but full, trying again later",
-        debug_state.identifier
-    );
+    trace!("DMAC: writing to {} but full, trying again later", debug_state.identifier);
 }
 
 pub fn trace_dmac(state: &State, only_enabled: bool) {
     let dpcr = state.dmac.dpcr.read_u32();
-    for (name, bitfield) in DMA_CHANNEL_NAMES
-        .iter()
-        .zip(DPCR_CHANNEL_ENABLE_BITFIELDS.iter())
-    {
+    for (name, bitfield) in DMA_CHANNEL_NAMES.iter().zip(DPCR_CHANNEL_ENABLE_BITFIELDS.iter()) {
         let dpcr_value = bitfield.extract_from(dpcr) != 0;
 
         if only_enabled && !dpcr_value {
@@ -106,17 +113,12 @@ pub fn trace_dmac(state: &State, only_enabled: bool) {
 
     let dicr = state.dmac.dicr.register.read_u32();
     let dicr_irq_master_enable_value = DICR_IRQ_MASTER_ENABLE.extract_from(dicr) != 0;
-    trace!(
-        "DMAC DICR: master enable = {}",
-        dicr_irq_master_enable_value
-    );
+    trace!("DMAC DICR: master enable = {}", dicr_irq_master_enable_value);
     let dicr_irq_force_value = DICR_IRQ_FORCE.extract_from(dicr) != 0;
     trace!("DMAC DICR: irq force = {}", dicr_irq_force_value);
-    for (name, (enable_bitfield, flag_bitfield)) in DMA_CHANNEL_NAMES.iter().zip(
-        DICR_IRQ_ENABLE_BITFIELDS
-            .iter()
-            .zip(DICR_IRQ_FLAG_BITFIELDS.iter()),
-    ) {
+    for (name, (enable_bitfield, flag_bitfield)) in
+        DMA_CHANNEL_NAMES.iter().zip(DICR_IRQ_ENABLE_BITFIELDS.iter().zip(DICR_IRQ_FLAG_BITFIELDS.iter()))
+    {
         let dicr_enable_value = enable_bitfield.extract_from(dicr) != 0;
         let dicr_flag_value = flag_bitfield.extract_from(dicr) != 0;
 
@@ -124,12 +126,7 @@ pub fn trace_dmac(state: &State, only_enabled: bool) {
             continue;
         }
 
-        trace!(
-            "DMAC DICR [{}]: irq enabled = {}, irq flag = {}",
-            name,
-            dicr_enable_value,
-            dicr_flag_value
-        );
+        trace!("DMAC DICR [{}]: irq enabled = {}, irq flag = {}", name, dicr_enable_value, dicr_flag_value);
     }
     let dicr_irq_master_flag_value = DICR_IRQ_MASTER_FLAG.extract_from(dicr) != 0;
     trace!("DMAC DICR: master flag = {}", dicr_irq_master_flag_value);
@@ -140,5 +137,8 @@ pub fn trace_linked_list_null_header(header_address: u32) {
         return;
     }
 
-    trace!("Null linked list transfer header value (address 0x{:08X}) - CPU is probably too slow (or bad timing)!", header_address);
+    trace!(
+        "Null linked list transfer header value (address 0x{:08X}) - CPU is probably too slow (or bad timing)!",
+        header_address
+    );
 }

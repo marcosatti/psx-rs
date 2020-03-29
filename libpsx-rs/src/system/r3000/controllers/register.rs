@@ -1,5 +1,7 @@
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
+use crate::{
+    system::types::State,
+    types::bitfield::Bitfield,
+};
 
 pub fn handle_zero(state: &mut State) {
     state.r3000.gpr[0].write_u32(0);

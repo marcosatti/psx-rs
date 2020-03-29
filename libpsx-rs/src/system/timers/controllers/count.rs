@@ -1,8 +1,14 @@
-use crate::system::timers::constants::*;
-use crate::system::timers::controllers::irq::*;
-use crate::system::timers::controllers::timer::*;
-use crate::system::timers::types::*;
-use crate::system::types::State;
+use crate::system::{
+    timers::{
+        constants::*,
+        controllers::{
+            irq::*,
+            timer::*,
+        },
+        types::*,
+    },
+    types::State,
+};
 use std::time::Duration;
 
 pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
@@ -42,7 +48,7 @@ fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
                 mode.register.write_bitfield(MODE_OVERFLOW_HIT, 1);
                 irq_type = IrqType::Overflow;
             }
-        }
+        },
         1 => {
             // When counter equals target.
             let target = get_target(state, timer_id);
@@ -52,7 +58,7 @@ fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
                 mode.register.write_bitfield(MODE_TARGET_HIT, 0);
                 irq_type = IrqType::Target;
             }
-        }
+        },
         _ => unreachable!(),
     };
 
@@ -72,7 +78,7 @@ fn calc_ticks(clock_source: ClockSource, delta_elapsed: Duration) -> (usize, Dur
             // Timer ticks when HBLANK line is asserted... which happens after every scanline is rendered.
             // So we are actually ticking over when a scanline interval has passed, in the context of an emulator.
             SCANLINE_INTERVAL_NTSC
-        }
+        },
         ClockSource::System => SYSTEM_CLOCK_INTERVAL,
         ClockSource::System8 => SYSTEM_CLOCK_8_INTERVAL,
     };

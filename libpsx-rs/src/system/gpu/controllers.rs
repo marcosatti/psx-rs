@@ -7,13 +7,21 @@ pub mod command_gp1_impl;
 pub mod data;
 pub mod debug;
 
-use crate::system::gpu::constants::*;
-use crate::system::gpu::controllers::command::*;
-use crate::system::gpu::crtc::controllers::run_time as crtc_run_time;
-use crate::system::types::ControllerContext;
-use crate::system::types::Event;
-use crate::system::types::State;
-use crate::video::VideoBackend;
+use crate::{
+    system::{
+        gpu::{
+            constants::*,
+            controllers::command::*,
+            crtc::controllers::run_time as crtc_run_time,
+        },
+        types::{
+            ControllerContext,
+            Event,
+            State,
+        },
+    },
+    video::VideoBackend,
+};
 use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {

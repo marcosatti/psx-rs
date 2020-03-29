@@ -1,14 +1,29 @@
-use libpsx_rs::backends::audio::AudioBackend;
-use libpsx_rs::backends::cdrom::CdromBackend;
-use libpsx_rs::backends::video::VideoBackend;
-use libpsx_rs::debug::analysis as debug_analysis;
-use libpsx_rs::{Config, Core};
-use std::env::args;
-use std::panic;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
-use std::time::Instant;
+use libpsx_rs::{
+    backends::{
+        audio::AudioBackend,
+        cdrom::CdromBackend,
+        video::VideoBackend,
+    },
+    debug::analysis as debug_analysis,
+    Config,
+    Core,
+};
+use std::{
+    env::args,
+    panic,
+    path::{
+        Path,
+        PathBuf,
+    },
+    sync::atomic::{
+        AtomicBool,
+        Ordering,
+    },
+    time::{
+        Duration,
+        Instant,
+    },
+};
 
 static EXIT: AtomicBool = AtomicBool::new(false);
 
@@ -40,7 +55,7 @@ fn main() {
         audio_backend: AudioBackend::None,
         cdrom_backend: CdromBackend::None,
         time_delta: Duration::from_micros(time_delta_us as u64),
-        worker_threads: worker_threads,
+        worker_threads,
     };
 
     main_inner(config);

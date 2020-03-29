@@ -1,6 +1,10 @@
-use crate::system::intc::constants::*;
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
+use crate::{
+    system::{
+        intc::constants::*,
+        types::State,
+    },
+    types::bitfield::Bitfield,
+};
 use log::trace;
 
 pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
@@ -17,13 +21,7 @@ pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
             continue;
         }
 
-        trace!(
-            "INTC [{}]: stat = {}, mask = {} (pending = {})",
-            name,
-            stat_value,
-            mask_value,
-            pending
-        );
+        trace!("INTC [{}]: stat = {}, mask = {} (pending = {})", name, stat_value, mask_value, pending);
     }
 
     if enable_assert {

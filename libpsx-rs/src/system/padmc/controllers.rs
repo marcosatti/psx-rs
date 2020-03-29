@@ -1,12 +1,18 @@
 pub mod command;
 pub mod debug;
 
-use crate::system::padmc::constants::*;
-use crate::system::types::ControllerContext;
-use crate::system::types::Event;
-use crate::system::types::State;
-use std::sync::atomic::Ordering;
-use std::time::Duration;
+use crate::system::{
+    padmc::constants::*,
+    types::{
+        ControllerContext,
+        Event,
+        State,
+    },
+};
+use std::{
+    sync::atomic::Ordering,
+    time::Duration,
+};
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {

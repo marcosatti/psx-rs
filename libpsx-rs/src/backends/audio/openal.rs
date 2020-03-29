@@ -1,8 +1,12 @@
 pub mod rendering;
 
-use crate::backends::audio::openal::rendering::*;
-use crate::backends::context::*;
-use crate::system::spu::constants::VOICES_COUNT;
+use crate::{
+    backends::{
+        audio::openal::rendering::*,
+        context::*,
+    },
+    system::spu::constants::VOICES_COUNT,
+};
 use openal_sys::*;
 
 static mut INITIALIZED: bool = false;
@@ -17,14 +21,8 @@ pub fn setup(backend_params: &BackendParams) {
     unsafe {
         assert_eq!(INITIALIZED, false);
 
-        alGenSources(
-            rendering::SOURCES.len() as ALsizei,
-            rendering::SOURCES.as_mut_ptr(),
-        );
-        alGenBuffers(
-            rendering::BUFFERS.len() as ALsizei,
-            rendering::BUFFERS.as_mut_ptr(),
-        );
+        alGenSources(rendering::SOURCES.len() as ALsizei, rendering::SOURCES.as_mut_ptr());
+        alGenBuffers(rendering::BUFFERS.len() as ALsizei, rendering::BUFFERS.as_mut_ptr());
 
         if alGetError() != AL_NO_ERROR as ALenum {
             panic!("Error initializing OpenAL audio backend");
@@ -44,14 +42,8 @@ pub fn teardown(backend_params: &BackendParams) {
                 alSourcei(SOURCES[i], AL_BUFFER as ALenum, 0);
             }
 
-            alDeleteBuffers(
-                rendering::BUFFERS.len() as ALsizei,
-                rendering::BUFFERS.as_mut_ptr(),
-            );
-            alDeleteSources(
-                rendering::SOURCES.len() as ALsizei,
-                rendering::SOURCES.as_mut_ptr(),
-            );
+            alDeleteBuffers(rendering::BUFFERS.len() as ALsizei, rendering::BUFFERS.as_mut_ptr());
+            alDeleteSources(rendering::SOURCES.len() as ALsizei, rendering::SOURCES.as_mut_ptr());
 
             INITIALIZED = false;
         }

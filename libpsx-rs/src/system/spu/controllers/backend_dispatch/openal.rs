@@ -1,6 +1,10 @@
-use crate::backends::audio::openal::rendering::*;
-use crate::backends::audio::openal::*;
-use crate::types::stereo::*;
+use crate::{
+    backends::audio::openal::{
+        rendering::*,
+        *,
+    },
+    types::stereo::*,
+};
 use openal_sys::*;
 
 pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) {
@@ -23,11 +27,7 @@ pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voic
         );
 
         alSourceStop(SOURCES[voice_id]);
-        alSourcei(
-            SOURCES[voice_id],
-            AL_BUFFER as ALenum,
-            BUFFERS[buffer_index] as ALint,
-        );
+        alSourcei(SOURCES[voice_id], AL_BUFFER as ALenum, BUFFERS[buffer_index] as ALint);
         alSourcePlay(SOURCES[voice_id]);
 
         if alGetError() != AL_NO_ERROR as ALenum {

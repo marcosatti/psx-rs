@@ -6,19 +6,34 @@ pub mod instruction_impl_cop2;
 pub mod memory_controller;
 pub mod register;
 
-use crate::backends::cdrom::CdromBackend;
-use crate::system::cdrom::controllers::handle_tick as tick_cdrom;
-use crate::system::r3000::constants::{CLOCK_SPEED, INSTRUCTION_SIZE};
-use crate::system::r3000::controllers::exception::*;
-use crate::system::r3000::controllers::instruction::lookup as instruction_lookup;
-use crate::system::r3000::controllers::memory_controller::translate_address;
-use crate::system::types::ControllerContext;
-use crate::system::types::Event;
-use crate::system::types::State;
-use crate::types::mips1::instruction::Instruction;
+use crate::{
+    backends::cdrom::CdromBackend,
+    system::{
+        cdrom::controllers::handle_tick as tick_cdrom,
+        r3000::{
+            constants::{
+                CLOCK_SPEED,
+                INSTRUCTION_SIZE,
+            },
+            controllers::{
+                exception::*,
+                instruction::lookup as instruction_lookup,
+                memory_controller::translate_address,
+            },
+        },
+        types::{
+            ControllerContext,
+            Event,
+            State,
+        },
+    },
+    types::mips1::instruction::Instruction,
+};
 use log::debug;
-use std::intrinsics::unlikely;
-use std::time::Duration;
+use std::{
+    intrinsics::unlikely,
+    time::Duration,
+};
 
 pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
@@ -70,11 +85,7 @@ fn tick(state: &mut State) -> i64 {
     state.r3000.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
     let (fn_ptr, cycles) = instruction_lookup(inst).unwrap_or_else(|| {
-        unimplemented!(
-            "Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})",
-            inst.value,
-            pc_va
-        )
+        unimplemented!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_va)
     });
 
     debug::trace_state(state);

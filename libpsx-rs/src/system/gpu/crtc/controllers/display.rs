@@ -1,7 +1,13 @@
-use crate::backends::video::VideoBackend;
-use crate::system::gpu::constants::*;
-use crate::system::gpu::crtc::controllers::backend_dispatch;
-use crate::system::types::State;
+use crate::{
+    backends::video::VideoBackend,
+    system::{
+        gpu::{
+            constants::*,
+            crtc::controllers::backend_dispatch,
+        },
+        types::State,
+    },
+};
 
 pub fn handle_render(state: &State, video_backend: &VideoBackend) {
     let stat = &state.gpu.gpu1814.stat;

@@ -4,11 +4,17 @@ pub mod irq;
 pub mod mode;
 pub mod timer;
 
-use crate::system::timers::controllers::count::*;
-use crate::system::timers::controllers::mode::*;
-use crate::system::types::ControllerContext;
-use crate::system::types::Event;
-use crate::system::types::State;
+use crate::system::{
+    timers::controllers::{
+        count::*,
+        mode::*,
+    },
+    types::{
+        ControllerContext,
+        Event,
+        State,
+    },
+};
 use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {

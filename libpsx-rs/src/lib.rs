@@ -8,16 +8,42 @@ pub mod system;
 pub mod types;
 pub mod utilities;
 
-use crate::backends::audio::{self, AudioBackend};
-use crate::backends::cdrom::{self, CdromBackend};
-use crate::backends::video::{self, VideoBackend};
-use crate::system::types::Event;
-use crate::system::types::State;
+use crate::{
+    backends::{
+        audio::{
+            self,
+            AudioBackend,
+        },
+        cdrom::{
+            self,
+            CdromBackend,
+        },
+        video::{
+            self,
+            VideoBackend,
+        },
+    },
+    system::types::{
+        Event,
+        State,
+    },
+};
 use log::info;
-use rayon::{ThreadPool, ThreadPoolBuilder};
-use std::path::{Path, PathBuf};
-use std::pin::Pin;
-use std::time::{Duration, Instant};
+use rayon::{
+    ThreadPool,
+    ThreadPoolBuilder,
+};
+use std::{
+    path::{
+        Path,
+        PathBuf,
+    },
+    pin::Pin,
+    time::{
+        Duration,
+        Instant,
+    },
+};
 
 pub struct Context<'a: 'b, 'b: 'c, 'c> {
     pub state: *mut State,
@@ -26,7 +52,8 @@ pub struct Context<'a: 'b, 'b: 'c, 'c> {
     pub cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
-unsafe impl<'a: 'b, 'b: 'c, 'c> Sync for Context<'a, 'b, 'c> {}
+unsafe impl<'a: 'b, 'b: 'c, 'c> Sync for Context<'a, 'b, 'c> {
+}
 
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
@@ -55,10 +82,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         let mut state = State::new();
 
-        let bios_path = config
-            .workspace_path
-            .join(r"bios/")
-            .join(&config.bios_filename);
+        let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
 
         unsafe {
             let state_mut = state.as_mut().get_unchecked_mut();
@@ -80,9 +104,9 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         cdrom::setup(&config.cdrom_backend);
 
         Core {
-            state: state,
-            task_executor: task_executor,
-            config: config,
+            state,
+            task_executor,
+            config,
         }
     }
 

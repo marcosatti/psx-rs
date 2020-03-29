@@ -1,10 +1,19 @@
-use crate::system::spu::controllers::voice::*;
-use crate::system::spu::types::*;
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
+use crate::{
+    system::{
+        spu::{
+            controllers::voice::*,
+            types::*,
+        },
+        types::State,
+    },
+    types::bitfield::Bitfield,
+};
 use log::warn;
 use num_traits::clamp;
-use std::cmp::{max, min};
+use std::cmp::{
+    max,
+    min,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 enum Direction {
@@ -18,64 +27,39 @@ pub fn handle_adsr_envelope(state: &mut State, voice_id: usize) {
     match play_state.adsr_mode {
         AdsrMode::Attack => {
             let (step, shift, direction, exponential) = get_adsr_attack_params(state, voice_id);
-            let increment = calculate_increment(
-                play_state.adsr_current_volume,
-                step,
-                shift,
-                direction,
-                exponential,
-            );
+            let increment = calculate_increment(play_state.adsr_current_volume, step, shift, direction, exponential);
             let new_volume = (play_state.adsr_current_volume + increment).min(1.0);
             play_state.adsr_current_volume = new_volume;
 
             if play_state.adsr_current_volume == 1.0 {
                 play_state.adsr_mode = AdsrMode::Decay;
             }
-        }
+        },
         AdsrMode::Decay => {
             let (step, shift, direction, exponential) = get_adsr_decay_params(state, voice_id);
-            let sustain_level =
-                get_adsr_sustain_level(state, voice_id) as f64 / std::i16::MAX as f64;
-            let increment = calculate_increment(
-                play_state.adsr_current_volume,
-                step,
-                shift,
-                direction,
-                exponential,
-            );
+            let sustain_level = get_adsr_sustain_level(state, voice_id) as f64 / std::i16::MAX as f64;
+            let increment = calculate_increment(play_state.adsr_current_volume, step, shift, direction, exponential);
             let new_volume = (play_state.adsr_current_volume + increment).max(sustain_level);
             play_state.adsr_current_volume = new_volume;
 
             if play_state.adsr_current_volume == sustain_level {
                 play_state.adsr_mode = AdsrMode::Sustain;
             }
-        }
+        },
         AdsrMode::Sustain => {
             let (step, shift, direction, exponential) = get_adsr_sustain_params(state, voice_id);
-            let increment = calculate_increment(
-                play_state.adsr_current_volume,
-                step,
-                shift,
-                direction,
-                exponential,
-            );
+            let increment = calculate_increment(play_state.adsr_current_volume, step, shift, direction, exponential);
             let new_volume = clamp(play_state.adsr_current_volume + increment, 0.0, 1.0);
             play_state.adsr_current_volume = new_volume;
 
             // The change to release mode happens when key off is triggered.
-        }
+        },
         AdsrMode::Release => {
             let (step, shift, direction, exponential) = get_adsr_release_params(state, voice_id);
-            let increment = calculate_increment(
-                play_state.adsr_current_volume,
-                step,
-                shift,
-                direction,
-                exponential,
-            );
+            let increment = calculate_increment(play_state.adsr_current_volume, step, shift, direction, exponential);
             let new_volume = (play_state.adsr_current_volume + increment).max(0.0);
             play_state.adsr_current_volume = new_volume;
-        }
+        },
     }
 
     // Volume should never go below 0 or above 1...
@@ -121,10 +105,7 @@ fn get_adsr_decay_params(state: &mut State, voice_id: usize) -> (usize, usize, D
 fn get_adsr_sustain_level(state: &mut State, voice_id: usize) -> usize {
     let adsr = unsafe { &mut *get_adpcm_envelope(state, voice_id) };
     let adsr_value = adsr.read_u32();
-    min(
-        ((Bitfield::new(0, 4).extract_from(adsr_value) as usize) + 1) * 0x800,
-        std::i16::MAX as usize,
-    )
+    min(((Bitfield::new(0, 4).extract_from(adsr_value) as usize) + 1) * 0x800, std::i16::MAX as usize)
 }
 
 fn get_adsr_sustain_params(state: &mut State, voice_id: usize) -> (usize, usize, Direction, bool) {
@@ -162,13 +143,7 @@ fn get_adsr_release_params(state: &mut State, voice_id: usize) -> (usize, usize,
     (step, shift, direction, exponential)
 }
 
-fn calculate_increment(
-    current_level: f64,
-    step: usize,
-    shift: usize,
-    direction: Direction,
-    exponential: bool,
-) -> f64 {
+fn calculate_increment(current_level: f64, step: usize, shift: usize, direction: Direction, exponential: bool) -> f64 {
     let current_level_abs = (current_level * std::i16::MAX as f64) as usize;
 
     let mut step_increment = (step << max(0, 11 - shift as isize) as usize) as f64;
@@ -189,9 +164,5 @@ fn calculate_increment(
 
     let wait_cycles_factor = 1.0 / wait_cycles as f64;
 
-    clamp(
-        step_increment * step_increment_subfactor * wait_cycles_factor,
-        -1.0,
-        1.0,
-    )
+    clamp(step_increment * step_increment_subfactor * wait_cycles_factor, -1.0, 1.0)
 }

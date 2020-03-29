@@ -1,6 +1,10 @@
-use crate::system::types::State as SystemState;
-use crate::types::mips1::instruction::Instruction;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::types::State as SystemState,
+    types::{
+        mips1::instruction::Instruction,
+        register::b32_register::B32Register,
+    },
+};
 
 pub enum MultiplyMatrix {
     Rotation,
@@ -30,7 +34,7 @@ pub struct GteInstruction {
 impl GteInstruction {
     pub fn new(instruction: Instruction) -> GteInstruction {
         GteInstruction {
-            instruction: instruction,
+            instruction,
         }
     }
 
@@ -97,4 +101,5 @@ impl State {
     }
 }
 
-pub fn initialize(_state: &mut SystemState) {}
+pub fn initialize(_state: &mut SystemState) {
+}

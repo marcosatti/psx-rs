@@ -1,37 +1,70 @@
-use crate::backends::audio::AudioBackend;
-use crate::backends::cdrom::CdromBackend;
-use crate::backends::video::VideoBackend;
-use crate::system::cdrom::types::initialize as cdrom_initialize;
-use crate::system::cdrom::types::State as CdromState;
-use crate::system::dmac::types::initialize as dmac_initialize;
-use crate::system::dmac::types::State as DmacState;
-use crate::system::gpu::types::initialize as gpu_initialize;
-use crate::system::gpu::types::State as GpuState;
-use crate::system::intc::types::initialize as intc_initialize;
-use crate::system::intc::types::State as IntcState;
-use crate::system::memory_control::types::initialize as memory_control_initialize;
-use crate::system::memory_control::types::State as MemoryControlState;
-use crate::system::padmc::types::initialize as padmc_initialize;
-use crate::system::padmc::types::State as PadmcState;
-use crate::system::r3000::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
-use crate::system::r3000::types::initialize as r3000_initialize;
-use crate::system::r3000::types::State as R3000State;
-use crate::system::spu::types::initialize as spu_initialize;
-use crate::system::spu::types::State as SpuState;
-use crate::system::timers::types::initialize as timers_initialize;
-use crate::system::timers::types::State as TimersState;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::memory::b8_memory::B8Memory;
-use crate::types::register::b8_register::B8Register;
-use crate::Context;
+use crate::{
+    backends::{
+        audio::AudioBackend,
+        cdrom::CdromBackend,
+        video::VideoBackend,
+    },
+    system::{
+        cdrom::types::{
+            initialize as cdrom_initialize,
+            State as CdromState,
+        },
+        dmac::types::{
+            initialize as dmac_initialize,
+            State as DmacState,
+        },
+        gpu::types::{
+            initialize as gpu_initialize,
+            State as GpuState,
+        },
+        intc::types::{
+            initialize as intc_initialize,
+            State as IntcState,
+        },
+        memory_control::types::{
+            initialize as memory_control_initialize,
+            State as MemoryControlState,
+        },
+        padmc::types::{
+            initialize as padmc_initialize,
+            State as PadmcState,
+        },
+        r3000::{
+            constants::{
+                BIOS_SIZE,
+                MAIN_MEMORY_SIZE,
+            },
+            types::{
+                initialize as r3000_initialize,
+                State as R3000State,
+            },
+        },
+        spu::types::{
+            initialize as spu_initialize,
+            State as SpuState,
+        },
+        timers::types::{
+            initialize as timers_initialize,
+            State as TimersState,
+        },
+    },
+    types::{
+        b8_memory_mapper::B8MemoryMap,
+        memory::b8_memory::B8Memory,
+        register::b8_register::B8Register,
+    },
+    Context,
+};
 use log::info;
-use std::fs::File;
-use std::io::Read;
-use std::marker::PhantomPinned;
-use std::path::Path;
-use std::pin::Pin;
-use std::sync::atomic::AtomicBool;
-use std::time::Duration;
+use std::{
+    fs::File,
+    io::Read,
+    marker::PhantomPinned,
+    path::Path,
+    pin::Pin,
+    sync::atomic::AtomicBool,
+    time::Duration,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Event {
@@ -46,9 +79,7 @@ pub struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
 }
 
 impl<'a: 'b, 'b: 'c, 'c> ControllerContext<'a, 'b, 'c> {
-    pub unsafe fn from_core_context(
-        context: &Context<'a, 'b, 'c>,
-    ) -> ControllerContext<'a, 'b, 'c> {
+    pub unsafe fn from_core_context(context: &Context<'a, 'b, 'c>) -> ControllerContext<'a, 'b, 'c> {
         ControllerContext {
             state: context.state.as_mut().unwrap(),
             video_backend: context.video_backend,
@@ -114,15 +145,8 @@ impl State {
         cdrom_initialize(state);
         padmc_initialize(state);
 
-        state.r3000.memory_mapper.map(
-            0x1F80_2041,
-            1,
-            &mut state.post_display as *mut dyn B8MemoryMap,
-        );
-        state
-            .r3000
-            .memory_mapper
-            .map(0x1F00_0000, 0x100, &mut state.pio as *mut dyn B8MemoryMap);
+        state.r3000.memory_mapper.map(0x1F80_2041, 1, &mut state.post_display as *mut dyn B8MemoryMap);
+        state.r3000.memory_mapper.map(0x1F00_0000, 0x100, &mut state.pio as *mut dyn B8MemoryMap);
     }
 
     pub fn load_bios(state: &mut State, path: &Path) {

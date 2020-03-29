@@ -1,18 +1,22 @@
-use crate::system::dmac::constants::*;
-use crate::system::dmac::controllers::channel::*;
-use crate::system::dmac::controllers::debug;
-use crate::system::dmac::controllers::linked_list;
-use crate::system::dmac::types::*;
-use crate::system::types::State;
+use crate::system::{
+    dmac::{
+        constants::*,
+        controllers::{
+            channel::*,
+            debug,
+            linked_list,
+        },
+        types::*,
+    },
+    types::State,
+};
 use log::warn;
-use std::cmp::min;
-use std::sync::atomic::Ordering;
+use std::{
+    cmp::min,
+    sync::atomic::Ordering,
+};
 
-pub fn handle_transfer(
-    state: &mut State,
-    channel_id: usize,
-    word_transfers_allowed: usize,
-) -> Result<usize, usize> {
+pub fn handle_transfer(state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
     let transfer_state = get_transfer_state(state, channel_id);
 
     handle_transfer_start(state, channel_id);
@@ -22,13 +26,11 @@ pub fn handle_transfer(
             SyncModeState::Undefined => unreachable!(),
             SyncModeState::Continuous(ref mut s) => {
                 handle_continuous_transfer(s, state, channel_id, word_transfers_allowed)
-            }
-            SyncModeState::Blocks(ref mut s) => {
-                handle_blocks_transfer(s, state, channel_id, word_transfers_allowed)
-            }
+            },
+            SyncModeState::Blocks(ref mut s) => handle_blocks_transfer(s, state, channel_id, word_transfers_allowed),
             SyncModeState::LinkedList(ref mut s) => {
                 handle_linked_list_transfer(s, state, channel_id, word_transfers_allowed)
-            }
+            },
         }
     } else {
         Ok(0)
@@ -42,17 +44,11 @@ fn handle_transfer_start(state: &mut State, channel_id: usize) {
     let transfer_state = get_transfer_state(state, channel_id);
 
     if chcr.write_latch.load(Ordering::Acquire) {
-        assert!(
-            !transfer_state.started,
-            format!("DMA transfer already started, channel_id = {}", channel_id)
-        );
+        assert!(!transfer_state.started, format!("DMA transfer already started, channel_id = {}", channel_id));
 
         if chcr.register.read_bitfield(CHCR_STARTBUSY) != 0 {
             if chcr.register.read_bitfield(CHCR_CHOPPING) != 0 {
-                unimplemented!(
-                    "DMAC transfer logic not done yet (CHCR_CHOPPING, channel_id = {})",
-                    channel_id
-                );
+                unimplemented!("DMAC transfer logic not done yet (CHCR_CHOPPING, channel_id = {})", channel_id);
             }
 
             state.bus_locked.store(true, Ordering::Release);
@@ -66,12 +62,7 @@ fn handle_transfer_start(state: &mut State, channel_id: usize) {
     }
 }
 
-fn handle_transfer_finish(
-    state: &mut State,
-    channel_id: usize,
-    bcr_value: Option<u32>,
-    madr_value: Option<u32>,
-) {
+fn handle_transfer_finish(state: &mut State, channel_id: usize, bcr_value: Option<u32>, madr_value: Option<u32>) {
     let chcr = get_chcr(state, channel_id);
     let madr = get_madr(state, channel_id);
     let bcr = get_bcr(state, channel_id);
@@ -95,10 +86,7 @@ fn handle_transfer_finish(
 }
 
 fn handle_continuous_transfer(
-    transfer_state: &mut ContinuousState,
-    state: &mut State,
-    channel_id: usize,
-    word_transfers_allowed: usize,
+    transfer_state: &mut ContinuousState, state: &mut State, channel_id: usize, word_transfers_allowed: usize,
 ) -> Result<usize, usize> {
     let chcr = get_chcr(state, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
@@ -111,21 +99,14 @@ fn handle_continuous_transfer(
         match transfer_direction {
             TransferDirection::FromChannel => {
                 let last_transfer = transfer_state.transfers_remaining() == 1;
-                let value = pop_channel_data(
-                    state,
-                    channel_id,
-                    transfer_state.current_address,
-                    last_transfer,
-                )
-                .map_err(|_| word_transfers_count)?;
-                state
-                    .main_memory
-                    .write_u32(transfer_state.current_address, value);
-            }
+                let value = pop_channel_data(state, channel_id, transfer_state.current_address, last_transfer)
+                    .map_err(|_| word_transfers_count)?;
+                state.main_memory.write_u32(transfer_state.current_address, value);
+            },
             TransferDirection::ToChannel => {
                 let value = state.main_memory.read_u32(transfer_state.current_address);
                 push_channel_data(state, channel_id, value).map_err(|_| word_transfers_count)?;
-            }
+            },
         }
 
         transfer_state.increment(madr_step_direction);
@@ -140,10 +121,7 @@ fn handle_continuous_transfer(
 }
 
 fn handle_blocks_transfer(
-    transfer_state: &mut BlocksState,
-    state: &mut State,
-    channel_id: usize,
-    word_transfers_allowed: usize,
+    transfer_state: &mut BlocksState, state: &mut State, channel_id: usize, word_transfers_allowed: usize,
 ) -> Result<usize, usize> {
     let chcr = get_chcr(state, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
@@ -156,21 +134,14 @@ fn handle_blocks_transfer(
         match transfer_direction {
             TransferDirection::FromChannel => {
                 let last_transfer = transfer_state.transfers_remaining() == 1;
-                let value = pop_channel_data(
-                    state,
-                    channel_id,
-                    transfer_state.current_address,
-                    last_transfer,
-                )
-                .map_err(|_| word_transfers_count)?;
-                state
-                    .main_memory
-                    .write_u32(transfer_state.current_address, value);
-            }
+                let value = pop_channel_data(state, channel_id, transfer_state.current_address, last_transfer)
+                    .map_err(|_| word_transfers_count)?;
+                state.main_memory.write_u32(transfer_state.current_address, value);
+            },
             TransferDirection::ToChannel => {
                 let value = state.main_memory.read_u32(transfer_state.current_address);
                 push_channel_data(state, channel_id, value).map_err(|_| word_transfers_count)?;
-            }
+            },
         }
 
         transfer_state.increment(madr_step_direction);
@@ -178,30 +149,19 @@ fn handle_blocks_transfer(
     }
 
     if transfer_state.transfers_remaining() == 0 {
-        handle_transfer_finish(
-            state,
-            channel_id,
-            Some(0),
-            Some(transfer_state.current_address),
-        );
+        handle_transfer_finish(state, channel_id, Some(0), Some(transfer_state.current_address));
     }
 
     Ok(word_transfers_count)
 }
 
 fn handle_linked_list_transfer(
-    transfer_state: &mut LinkedListState,
-    state: &mut State,
-    channel_id: usize,
-    word_transfers_allowed: usize,
+    transfer_state: &mut LinkedListState, state: &mut State, channel_id: usize, word_transfers_allowed: usize,
 ) -> Result<usize, usize> {
     let chcr = get_chcr(state, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
 
-    assert!(
-        transfer_direction == TransferDirection::ToChannel,
-        "Linked list transfers are ToChannel only"
-    );
+    assert!(transfer_direction == TransferDirection::ToChannel, "Linked list transfers are ToChannel only");
 
     let mut word_transfers_count = 0;
 
@@ -217,8 +177,8 @@ fn handle_linked_list_transfer(
                     warn!("Linked list transfer: null pointer encountered, ending transfer prematurely");
                     handle_transfer_finish(state, channel_id, None, Some(0xFF_FFFF));
                     break;
-                }
-                Ok(()) => {}
+                },
+                Ok(()) => {},
             }
 
             word_transfers_count += 1;

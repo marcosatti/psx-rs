@@ -1,14 +1,22 @@
-use crate::backends::audio::AudioBackend;
-use crate::system::spu::constants::*;
-use crate::system::spu::controllers::adpcm::*;
-use crate::system::spu::controllers::adsr::*;
-use crate::system::spu::controllers::backend_dispatch;
-use crate::system::spu::controllers::interpolation::*;
-use crate::system::spu::controllers::voice::*;
-use crate::system::spu::controllers::volume::*;
-use crate::system::spu::types::*;
-use crate::system::types::State;
-use crate::types::bitfield::Bitfield;
+use crate::{
+    backends::audio::AudioBackend,
+    system::{
+        spu::{
+            constants::*,
+            controllers::{
+                adpcm::*,
+                adsr::*,
+                backend_dispatch,
+                interpolation::*,
+                voice::*,
+                volume::*,
+            },
+            types::*,
+        },
+        types::State,
+    },
+    types::bitfield::Bitfield,
+};
 
 pub fn generate_sound(state: &mut State, audio_backend: &AudioBackend) {
     let pmon_value = state.spu.voice_channel_fm.read_u32();
@@ -69,8 +77,7 @@ fn handle_key_on(state: &mut State, voice_id: usize) {
     let _key_on_lock = key_on.mutex.lock();
     let _key_off_lock = key_off.mutex.lock();
 
-    let key_on_value =
-        key_on.write_latch[voice_id] && key_on.register.read_bitfield(voice_bitfield) > 0;
+    let key_on_value = key_on.write_latch[voice_id] && key_on.register.read_bitfield(voice_bitfield) > 0;
 
     if key_on_value {
         let current_address = start_address.read_u16() as usize * 8;
@@ -93,8 +100,7 @@ fn handle_key_off(state: &mut State, voice_id: usize) {
 
     let _key_off_lock = key_off.mutex.lock();
 
-    let key_off_value =
-        key_off.write_latch[voice_id] && key_off.register.read_bitfield(voice_bitfield) > 0;
+    let key_off_value = key_off.write_latch[voice_id] && key_off.register.read_bitfield(voice_bitfield) > 0;
 
     if key_off_value {
         play_state.adsr_mode = AdsrMode::Release;
@@ -110,11 +116,7 @@ fn handle_play_sound_buffer(state: &mut State, audio_backend: &AudioBackend, voi
         let unmuted = control.read_bitfield(CONTROL_UNMUTE) != 0;
 
         if unmuted {
-            let _ = backend_dispatch::play_pcm_samples(
-                audio_backend,
-                &play_state.sample_buffer,
-                voice_id,
-            );
+            let _ = backend_dispatch::play_pcm_samples(audio_backend, &play_state.sample_buffer, voice_id);
         }
 
         play_state.sample_buffer.clear();
@@ -128,10 +130,8 @@ fn decode_adpcm_block(state: &mut State, voice_id: usize) {
     let memory = &state.spu.memory;
 
     // ADPCM header.
-    let header = [
-        memory.read_u8(play_state.current_address as u32),
-        memory.read_u8((play_state.current_address + 1) as u32),
-    ];
+    let header =
+        [memory.read_u8(play_state.current_address as u32), memory.read_u8((play_state.current_address + 1) as u32)];
     play_state.adpcm_state.params = decode_header(header);
 
     // ADPCM (packed) samples are from indexes 2 -> 15, with each byte containing 2 real samples.

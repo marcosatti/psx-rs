@@ -1,29 +1,27 @@
-use crate::backends::video::opengl::rendering::*;
-use crate::backends::video::opengl::*;
-use crate::system::gpu::constants::VRAM_HEIGHT_LINES;
-use crate::types::bitfield::*;
-use crate::types::color::*;
-use crate::types::geometry::*;
+use crate::{
+    backends::video::opengl::{
+        rendering::*,
+        *,
+    },
+    system::gpu::constants::VRAM_HEIGHT_LINES,
+    types::{
+        bitfield::*,
+        color::*,
+        geometry::*,
+    },
+};
 use opengl_sys::*;
 use std::convert::TryInto;
 
 pub fn draw_polygon_3_shaded(
-    backend_params: &BackendParams,
-    positions: [Point2D<f32, Normalized>; 3],
-    colors: [Color; 3],
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3],
 ) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 6] = [
-        positions[0].x,
-        positions[0].y,
-        positions[1].x,
-        positions[1].y,
-        positions[2].x,
-        positions[2].y,
-    ];
+    let positions_flat: [f32; 6] =
+        [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
     let (r0, g0, b0, a0) = colors[0].normalize();
     let (r1, g1, b1, a1) = colors[1].normalize();
@@ -69,12 +67,7 @@ pub fn draw_polygon_3_shaded(
                 panic!("Error initializing OpenGL program: draw_polygon_3_shaded");
             }
 
-            PROGRAM_CONTEXT = Some(ProgramContext::new(
-                program,
-                vao,
-                &[vbo_position, vbo_color],
-                &[],
-            ));
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_color], &[]));
         }
 
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
@@ -101,11 +94,7 @@ pub fn draw_polygon_3_shaded(
     }
 }
 
-pub fn draw_polygon_4_solid(
-    backend_params: &BackendParams,
-    positions: [Point2D<f32, Normalized>; 4],
-    color: Color,
-) {
+pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -156,10 +145,8 @@ pub fn draw_polygon_4_solid(
         glUseProgram(program_context.program_id);
 
         let in_color_cstr = b"in_color\0";
-        let uniform_in_color = glGetUniformLocation(
-            program_context.program_id,
-            in_color_cstr.as_ptr() as *const GLchar,
-        );
+        let uniform_in_color =
+            glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
         glUniform4f(uniform_in_color, r, g, b, a);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
@@ -176,9 +163,7 @@ pub fn draw_polygon_4_solid(
 }
 
 pub fn draw_polygon_4_shaded(
-    backend_params: &BackendParams,
-    positions: [Point2D<f32, Normalized>; 4],
-    colors: [Color; 4],
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4],
 ) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
@@ -200,9 +185,7 @@ pub fn draw_polygon_4_shaded(
     let (r1, g1, b1, a1) = colors[1].normalize();
     let (r3, g3, b3, a3) = colors[3].normalize();
 
-    let colors_flat: [f32; 16] = [
-        r2, g2, b2, a2, r0, g0, b0, a0, r1, g1, b1, a1, r3, g3, b3, a3,
-    ];
+    let colors_flat: [f32; 16] = [r2, g2, b2, a2, r0, g0, b0, a0, r1, g1, b1, a1, r3, g3, b3, a3];
 
     unsafe {
         if PROGRAM_CONTEXT.is_none() {
@@ -242,12 +225,7 @@ pub fn draw_polygon_4_shaded(
                 panic!("Error initializing OpenGL program: draw_polygon_4_shaded");
             }
 
-            PROGRAM_CONTEXT = Some(ProgramContext::new(
-                program,
-                vao,
-                &[vbo_position, vbo_color],
-                &[],
-            ));
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_color], &[]));
         }
 
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
@@ -275,13 +253,10 @@ pub fn draw_polygon_4_shaded(
 }
 
 pub fn draw_polygon_4_textured(
-    backend_params: &BackendParams,
-    positions: [Point2D<f32, Normalized>; 4],
-    texcoords: [Point2D<f32, Normalized>; 4],
-    texture_width: usize,
-    texture_height: usize,
-    texture_data: &[Color],
-) {
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
+    texture_width: usize, texture_height: usize, texture_data: &[Color],
+)
+{
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -311,8 +286,7 @@ pub fn draw_polygon_4_textured(
     unsafe {
         if PROGRAM_CONTEXT.is_none() {
             let vs = shaders::compile_shader(shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
-            let fs =
-                shaders::compile_shader(shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
+            let fs = shaders::compile_shader(shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
             let program = shaders::create_program(&[vs, fs]);
 
             let mut vao = 0;
@@ -367,12 +341,7 @@ pub fn draw_polygon_4_textured(
                 panic!("Error initializing OpenGL program: draw_polygon_4_textured");
             }
 
-            PROGRAM_CONTEXT = Some(ProgramContext::new(
-                program,
-                vao,
-                &[vbo_position, vbo_texcoord],
-                &[texture],
-            ));
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[texture]));
         }
 
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
@@ -393,10 +362,7 @@ pub fn draw_polygon_4_textured(
         );
 
         let tex2d_cstr = b"tex2d\0";
-        let uniform_tex2d = glGetUniformLocation(
-            program_context.program_id,
-            tex2d_cstr.as_ptr() as *const GLchar,
-        );
+        let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
         glUniform1i(uniform_tex2d, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
@@ -421,9 +387,7 @@ pub fn draw_polygon_4_textured(
 }
 
 pub fn draw_polygon_4_textured_framebuffer(
-    backend_params: &BackendParams,
-    positions: [Point2D<f32, Normalized>; 4],
-    texcoords: [Point2D<f32, Normalized>; 4],
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
 ) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
@@ -456,8 +420,7 @@ pub fn draw_polygon_4_textured_framebuffer(
 
         if PROGRAM_CONTEXT.is_none() {
             let vs = shaders::compile_shader(shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
-            let fs =
-                shaders::compile_shader(shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
+            let fs = shaders::compile_shader(shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
             let program = shaders::create_program(&[vs, fs]);
 
             let mut vao = 0;
@@ -492,12 +455,7 @@ pub fn draw_polygon_4_textured_framebuffer(
                 panic!("Error initializing OpenGL program: draw_polygon_4_textured_framebuffer");
             }
 
-            PROGRAM_CONTEXT = Some(ProgramContext::new(
-                program,
-                vao,
-                &[vbo_position, vbo_texcoord],
-                &[],
-            ));
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
         }
 
         let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
@@ -514,10 +472,7 @@ pub fn draw_polygon_4_textured_framebuffer(
         glBindTexture(GL_TEXTURE_2D, texture as GLuint);
 
         let tex2d_cstr = b"tex2d\0";
-        let uniform_tex2d = glGetUniformLocation(
-            program_context.program_id,
-            tex2d_cstr.as_ptr() as *const GLchar,
-        );
+        let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
         glUniform1i(uniform_tex2d, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
@@ -542,16 +497,12 @@ pub fn draw_polygon_4_textured_framebuffer(
 }
 
 pub fn read_framebuffer_5551(
-    backend_params: &BackendParams,
-    origin: Point2D<isize, Pixel>,
-    size: Size2D<isize, Pixel>,
+    backend_params: &BackendParams, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>,
 ) -> Vec<u16> {
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let opengl_origin: Point2D<isize, Pixel> = Point2D::new(
-        origin.x,
-        (VRAM_HEIGHT_LINES as isize) - origin.y - size.height,
-    );
+    let opengl_origin: Point2D<isize, Pixel> =
+        Point2D::new(origin.x, (VRAM_HEIGHT_LINES as isize) - origin.y - size.height);
 
     let mut buffer: Vec<u8> = Vec::new();
     let buffer_size = size.width * size.height * (std::mem::size_of::<u16>() as isize);

@@ -1,23 +1,46 @@
 mod backend;
 
-use libpsx_rs::debug::analysis as debug_analysis;
-use libpsx_rs::debug::DEBUG_CORE_EXIT;
-use libpsx_rs::system::gpu::controllers::debug::{
-    ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL,
+use libpsx_rs::{
+    debug::{
+        analysis as debug_analysis,
+        DEBUG_CORE_EXIT,
+    },
+    system::{
+        gpu::controllers::debug::{
+            ENABLE_GP0_COMMAND_TRACING,
+            ENABLE_GP0_RENDER_PER_CALL,
+        },
+        r3000::controllers::debug::{
+            ENABLE_INTERRUPT_TRACING,
+            ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ,
+            ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE,
+            ENABLE_REGISTER_TRACING,
+            ENABLE_STATE_TRACING,
+        },
+    },
+    Config,
+    Core,
 };
-use libpsx_rs::system::r3000::controllers::debug::{
-    ENABLE_INTERRUPT_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ,
-    ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING, ENABLE_STATE_TRACING,
+use sdl2::{
+    video::GLProfile,
+    EventPump,
 };
-use libpsx_rs::{Config, Core};
-use sdl2::video::GLProfile;
-use sdl2::EventPump;
-use std::env::args;
-use std::panic;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
-use std::time::Instant;
+use std::{
+    env::args,
+    panic,
+    path::{
+        Path,
+        PathBuf,
+    },
+    sync::atomic::{
+        AtomicBool,
+        Ordering,
+    },
+    time::{
+        Duration,
+        Instant,
+    },
+};
 
 fn main() {
     // Signal handlers
@@ -46,12 +69,7 @@ fn main() {
     gl_attr.set_context_version(3, 3);
     gl_attr.set_double_buffer(false);
     gl_attr.set_context_flags().debug().set();
-    let window = video_subsystem
-        .window("psx-rs", 1024, 512)
-        .position_centered()
-        .opengl()
-        .build()
-        .unwrap();
+    let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().opengl().build().unwrap();
     log::info!("SDL initialized");
 
     // Initialize video
@@ -69,11 +87,11 @@ fn main() {
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
-        video_backend: video_backend,
-        audio_backend: audio_backend,
-        cdrom_backend: cdrom_backend,
+        video_backend,
+        audio_backend,
+        cdrom_backend,
         time_delta: Duration::from_micros(time_delta_us as u64),
-        worker_threads: worker_threads,
+        worker_threads,
     };
 
     main_inner(&mut event_pump, config);
@@ -122,8 +140,8 @@ fn main_inner(event_pump: &mut EventPump, config: Config) {
             let disc_path = Path::new(&disc_path_raw);
             core.change_disc(disc_path);
             log::info!("Changed disc to {}", disc_path.display());
-        }
-        None => {}
+        },
+        None => {},
     }
 
     // Do event loop
@@ -131,13 +149,18 @@ fn main_inner(event_pump: &mut EventPump, config: Config) {
         'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
             for event in event_pump.poll_iter() {
                 match event {
-                    sdl2::event::Event::Quit { .. } => break 'event_loop,
-                    sdl2::event::Event::KeyDown { keycode, .. } => {
+                    sdl2::event::Event::Quit {
+                        ..
+                    } => break 'event_loop,
+                    sdl2::event::Event::KeyDown {
+                        keycode,
+                        ..
+                    } => {
                         if let Some(key) = keycode {
                             handle_keycode(key);
                         }
-                    }
-                    _ => {}
+                    },
+                    _ => {},
                 }
             }
 
@@ -167,41 +190,30 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
     match keycode {
         Keycode::F1 => {
             toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
-        }
+        },
         Keycode::F2 => {
             toggle_debug_option(&ENABLE_STATE_TRACING, "R3000 state tracing");
-        }
+        },
         Keycode::F3 => {
-            toggle_debug_option(
-                &ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ,
-                "spin loop detection (read)",
-            );
-        }
+            toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, "spin loop detection (read)");
+        },
         Keycode::F4 => {
-            toggle_debug_option(
-                &ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE,
-                "spin loop detection (write)",
-            );
-        }
+            toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, "spin loop detection (write)");
+        },
         Keycode::F5 => {
             toggle_debug_option(&ENABLE_INTERRUPT_TRACING, "interrupt tracing");
-        }
+        },
         Keycode::F6 => {
             toggle_debug_option(&ENABLE_GP0_RENDER_PER_CALL, "GPU rendering per draw call");
-        }
+        },
         Keycode::F7 => {
             toggle_debug_option(&ENABLE_GP0_COMMAND_TRACING, "GPU GP0 command tracing");
-        }
-        _ => {}
+        },
+        _ => {},
     }
 }
 
 fn toggle_debug_option(flag: &'static AtomicBool, identifier: &str) {
     let old_value = flag.fetch_xor(true, Ordering::AcqRel);
-    log::debug!(
-        "Toggled {} from {} to {}",
-        identifier,
-        old_value,
-        !old_value
-    );
+    log::debug!("Toggled {} from {} to {}", identifier, old_value, !old_value);
 }

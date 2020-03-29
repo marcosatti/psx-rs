@@ -1,7 +1,16 @@
 use fixed::{
-    traits::{FromFixed, ToFixed},
-    types::extra::{LeEqU16, LeEqU32},
-    FixedI16, FixedI32, FixedU16, FixedU32,
+    traits::{
+        FromFixed,
+        ToFixed,
+    },
+    types::extra::{
+        LeEqU16,
+        LeEqU32,
+    },
+    FixedI16,
+    FixedI32,
+    FixedU16,
+    FixedU32,
 };
 
 pub trait FromFixedBits {

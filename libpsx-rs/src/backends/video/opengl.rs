@@ -2,8 +2,13 @@ pub mod debug;
 pub mod rendering;
 pub mod shaders;
 
-use crate::backends::context::*;
-use crate::system::gpu::constants::{VRAM_HEIGHT_LINES, VRAM_WIDTH_16B};
+use crate::{
+    backends::context::*,
+    system::gpu::constants::{
+        VRAM_HEIGHT_LINES,
+        VRAM_WIDTH_16B,
+    },
+};
 use opengl_sys::*;
 
 static mut INITIALIZED: bool = false;
@@ -19,14 +24,7 @@ pub fn setup(backend_params: &BackendParams) {
         assert_eq!(INITIALIZED, false);
 
         // Debug
-        glDebugMessageControlARB(
-            GL_DONT_CARE,
-            GL_DONT_CARE,
-            GL_DONT_CARE,
-            0,
-            std::ptr::null(),
-            GL_TRUE as GLboolean,
-        );
+        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
         glDebugMessageCallbackARB(Some(debug::debug_callback), std::ptr::null());
 
         // FBO
@@ -69,19 +67,8 @@ pub fn setup(backend_params: &BackendParams) {
             VRAM_HEIGHT_LINES as GLint,
         );
 
-        glFramebufferTexture2D(
-            GL_DRAW_FRAMEBUFFER,
-            GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_2D,
-            texture,
-            0,
-        );
-        glFramebufferRenderbuffer(
-            GL_DRAW_FRAMEBUFFER,
-            GL_DEPTH_STENCIL_ATTACHMENT,
-            GL_RENDERBUFFER,
-            rbo,
-        );
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
         // Other
         glClearColor(0.0, 0.0, 0.0, 1.0);

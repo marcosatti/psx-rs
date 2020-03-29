@@ -1,12 +1,27 @@
-use crate::system::r3000::constants::*;
-use crate::system::r3000::cp0::types::initialize as cp0_initialize;
-use crate::system::r3000::cp0::types::State as Cp0State;
-use crate::system::r3000::cp2::types::initialize as cp2_initialize;
-use crate::system::r3000::cp2::types::State as Cp2State;
-use crate::system::types::State as SystemState;
-use crate::types::b8_memory_mapper::{B8MemoryMap, B8MemoryMapper};
-use crate::types::mips1::branch_delay_slot::BranchDelaySlot;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::{
+        r3000::{
+            constants::*,
+            cp0::types::{
+                initialize as cp0_initialize,
+                State as Cp0State,
+            },
+            cp2::types::{
+                initialize as cp2_initialize,
+                State as Cp2State,
+            },
+        },
+        types::State as SystemState,
+    },
+    types::{
+        b8_memory_mapper::{
+            B8MemoryMap,
+            B8MemoryMapper,
+        },
+        mips1::branch_delay_slot::BranchDelaySlot,
+        register::b32_register::B32Register,
+    },
+};
 use std::fmt;
 
 #[derive(Copy, Clone, PartialEq)]
@@ -63,31 +78,11 @@ impl State {
 }
 
 pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(
-        0x1FC0_0000,
-        BIOS_SIZE,
-        &mut state.bios as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x0000_0000,
-        MAIN_MEMORY_SIZE,
-        &mut state.main_memory as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x0020_0000,
-        MAIN_MEMORY_SIZE,
-        &mut state.main_memory as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x0040_0000,
-        MAIN_MEMORY_SIZE,
-        &mut state.main_memory as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x0060_0000,
-        MAIN_MEMORY_SIZE,
-        &mut state.main_memory as *mut dyn B8MemoryMap,
-    );
+    state.r3000.memory_mapper.map(0x1FC0_0000, BIOS_SIZE, &mut state.bios as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x0000_0000, MAIN_MEMORY_SIZE, &mut state.main_memory as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x0020_0000, MAIN_MEMORY_SIZE, &mut state.main_memory as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x0040_0000, MAIN_MEMORY_SIZE, &mut state.main_memory as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x0060_0000, MAIN_MEMORY_SIZE, &mut state.main_memory as *mut dyn B8MemoryMap);
 
     state.r3000.pc.write_u32(0xBFC0_0000);
 

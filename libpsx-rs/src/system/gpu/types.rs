@@ -1,10 +1,20 @@
-use crate::system::gpu::crtc::types::Crtc;
-use crate::system::types::State as SystemState;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::b8_memory_mapper::*;
-use crate::types::fifo::debug::DebugState;
-use crate::types::fifo::Fifo;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::{
+        gpu::crtc::types::Crtc,
+        types::State as SystemState,
+    },
+    types::{
+        b8_memory_mapper::{
+            B8MemoryMap,
+            *,
+        },
+        fifo::{
+            debug::DebugState,
+            Fifo,
+        },
+        register::b32_register::B32Register,
+    },
+};
 use log::warn;
 use std::collections::VecDeque;
 
@@ -147,14 +157,6 @@ impl State {
 }
 
 pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(
-        0x1F80_1810,
-        4,
-        &mut state.gpu.gpu1810 as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1814,
-        4,
-        &mut state.gpu.gpu1814 as *mut dyn B8MemoryMap,
-    );
+    state.r3000.memory_mapper.map(0x1F80_1810, 4, &mut state.gpu.gpu1810 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1814, 4, &mut state.gpu.gpu1814 as *mut dyn B8MemoryMap);
 }

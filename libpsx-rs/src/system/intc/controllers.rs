@@ -1,10 +1,14 @@
 pub mod debug;
 
-use crate::system::intc::constants::CLOCK_SPEED;
-use crate::system::r3000::cp0::types::IrqLine;
-use crate::system::types::ControllerContext;
-use crate::system::types::Event;
-use crate::system::types::State;
+use crate::system::{
+    intc::constants::CLOCK_SPEED,
+    r3000::cp0::types::IrqLine,
+    types::{
+        ControllerContext,
+        Event,
+        State,
+    },
+};
 use std::time::Duration;
 
 pub fn run(context: &mut ControllerContext, event: Event) {

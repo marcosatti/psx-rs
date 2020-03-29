@@ -1,7 +1,9 @@
 #![allow(non_upper_case_globals)]
 
-use crate::backends::cdrom::libmirage::state::*;
-use crate::backends::cdrom::libmirage::*;
+use crate::backends::cdrom::libmirage::{
+    state::*,
+    *,
+};
 use libmirage_sys::*;
 
 pub(crate) fn disc_loaded(backend_params: &BackendParams) -> bool {
@@ -33,12 +35,7 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
     }
 }
 
-pub fn msf_to_lba_address(
-    backend_params: &BackendParams,
-    minute: u8,
-    second: u8,
-    frame: u8,
-) -> usize {
+pub fn msf_to_lba_address(backend_params: &BackendParams, minute: u8, second: u8, frame: u8) -> usize {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe { mirage_helper_msf2lba(minute, second, frame, 1) as usize }
@@ -52,8 +49,7 @@ pub fn read_sector(backend_params: &BackendParams, lba_address: usize) -> Vec<u8
 
         let mut error: *mut GError = std::ptr::null_mut();
 
-        let mut sector =
-            mirage_disc_get_sector(DISC, lba_address as gint, &mut error as *mut *mut GError);
+        let mut sector = mirage_disc_get_sector(DISC, lba_address as gint, &mut error as *mut *mut GError);
         assert!(!sector.is_null());
         assert!(error.is_null());
 

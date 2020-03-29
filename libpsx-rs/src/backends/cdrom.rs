@@ -14,7 +14,7 @@ pub enum CdromBackend<'a: 'b, 'b> {
 
 pub fn setup(cdrom_backend: &CdromBackend) {
     match cdrom_backend {
-        CdromBackend::None => {}
+        CdromBackend::None => {},
         #[cfg(libmirage)]
         CdromBackend::Libmirage(ref params) => libmirage::setup(params),
         _ => unimplemented!(),
@@ -23,7 +23,7 @@ pub fn setup(cdrom_backend: &CdromBackend) {
 
 pub fn teardown(cdrom_backend: &CdromBackend) {
     match cdrom_backend {
-        CdromBackend::None => {}
+        CdromBackend::None => {},
         #[cfg(libmirage)]
         CdromBackend::Libmirage(ref params) => libmirage::teardown(params),
         _ => unimplemented!(),

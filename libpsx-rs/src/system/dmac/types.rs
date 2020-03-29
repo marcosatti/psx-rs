@@ -1,10 +1,19 @@
-use crate::system::dmac::constants::*;
-use crate::system::types::State as SystemState;
-use crate::types::b8_memory_mapper::*;
-use crate::types::bitfield::Bitfield;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::{
+        dmac::constants::*,
+        types::State as SystemState,
+    },
+    types::{
+        b8_memory_mapper::*,
+        bitfield::Bitfield,
+        register::b32_register::B32Register,
+    },
+};
 use parking_lot::Mutex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{
+    AtomicBool,
+    Ordering,
+};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TransferDirection {
@@ -92,7 +101,7 @@ impl B8MemoryMap for Chcr {
 
     fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
         // BIOS writes consecutively to this register without a chance to acknowledge...
-        //assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
+        // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
         B8MemoryMap::write_u32(&mut self.register, offset, value)
     }
@@ -107,7 +116,9 @@ impl OtcChcr {
         let mut chcr = Chcr::new();
         chcr.register.write_u32(0x0000_0002);
 
-        OtcChcr { chcr: chcr }
+        OtcChcr {
+            chcr,
+        }
     }
 }
 
@@ -189,8 +200,7 @@ impl BlocksState {
 
     pub fn transfers_remaining(&self) -> usize {
         let target = self.target_bsize_count * self.target_bamount_count;
-        let current =
-            (self.current_bamount_count * self.target_bsize_count) + self.current_bsize_count;
+        let current = (self.current_bamount_count * self.target_bsize_count) + self.current_bsize_count;
         target - current
     }
 }
@@ -296,117 +306,27 @@ impl State {
 }
 
 pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(
-        0x1F80_1080,
-        4,
-        &mut state.dmac.mdecin_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1084,
-        4,
-        &mut state.dmac.mdecin_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1088,
-        4,
-        &mut state.dmac.mdecin_chcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1090,
-        4,
-        &mut state.dmac.mdecout_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1094,
-        4,
-        &mut state.dmac.mdecout_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1098,
-        4,
-        &mut state.dmac.mdecout_chcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10A0,
-        4,
-        &mut state.dmac.gpu_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10A4,
-        4,
-        &mut state.dmac.gpu_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10A8,
-        4,
-        &mut state.dmac.gpu_chcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10B0,
-        4,
-        &mut state.dmac.cdrom_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10B4,
-        4,
-        &mut state.dmac.cdrom_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10B8,
-        4,
-        &mut state.dmac.cdrom_chcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10C0,
-        4,
-        &mut state.dmac.spu_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10C4,
-        4,
-        &mut state.dmac.spu_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10C8,
-        4,
-        &mut state.dmac.spu_chcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10D0,
-        4,
-        &mut state.dmac.pio_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10D4,
-        4,
-        &mut state.dmac.pio_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10D8,
-        4,
-        &mut state.dmac.pio_chcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10E0,
-        4,
-        &mut state.dmac.otc_madr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10E4,
-        4,
-        &mut state.dmac.otc_bcr as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_10E8,
-        4,
-        &mut state.dmac.otc_chcr as *mut dyn B8MemoryMap,
-    );
-    state
-        .r3000
-        .memory_mapper
-        .map(0x1F80_10F0, 4, &mut state.dmac.dpcr as *mut dyn B8MemoryMap);
-    state
-        .r3000
-        .memory_mapper
-        .map(0x1F80_10F4, 4, &mut state.dmac.dicr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1080, 4, &mut state.dmac.mdecin_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1084, 4, &mut state.dmac.mdecin_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1088, 4, &mut state.dmac.mdecin_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1090, 4, &mut state.dmac.mdecout_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1094, 4, &mut state.dmac.mdecout_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1098, 4, &mut state.dmac.mdecout_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10A0, 4, &mut state.dmac.gpu_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10A4, 4, &mut state.dmac.gpu_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10A8, 4, &mut state.dmac.gpu_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10B0, 4, &mut state.dmac.cdrom_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10B4, 4, &mut state.dmac.cdrom_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10B8, 4, &mut state.dmac.cdrom_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10C0, 4, &mut state.dmac.spu_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10C4, 4, &mut state.dmac.spu_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10C8, 4, &mut state.dmac.spu_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10D0, 4, &mut state.dmac.pio_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10D4, 4, &mut state.dmac.pio_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10D8, 4, &mut state.dmac.pio_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10E0, 4, &mut state.dmac.otc_madr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10E4, 4, &mut state.dmac.otc_bcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10E8, 4, &mut state.dmac.otc_chcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10F0, 4, &mut state.dmac.dpcr as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_10F4, 4, &mut state.dmac.dicr as *mut dyn B8MemoryMap);
 }

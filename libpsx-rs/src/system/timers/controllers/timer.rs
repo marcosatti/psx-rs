@@ -1,6 +1,10 @@
-use crate::system::timers::types::*;
-use crate::system::types::State;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::{
+        timers::types::*,
+        types::State,
+    },
+    types::register::b32_register::B32Register,
+};
 use std::time::Duration;
 
 #[derive(Copy, Clone, Debug)]

@@ -5,7 +5,9 @@ pub struct Instruction {
 
 impl Instruction {
     pub fn new(value: u32) -> Instruction {
-        Instruction { value }
+        Instruction {
+            value,
+        }
     }
 
     pub fn opcode(&self) -> usize {

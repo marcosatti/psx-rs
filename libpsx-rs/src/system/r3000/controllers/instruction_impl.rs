@@ -1,14 +1,31 @@
-use crate::system::r3000::constants::INSTRUCTION_SIZE;
-use crate::system::r3000::controllers::debug;
-use crate::system::r3000::controllers::memory_controller::*;
-use crate::system::r3000::controllers::register::*;
-use crate::system::r3000::controllers::set_exception;
-use crate::system::r3000::cp0::constants::{CAUSE_EXCCODE_SYSCALL, STATUS_ISC};
-use crate::system::r3000::types::*;
-use crate::system::types::State;
-use crate::types::mips1::instruction::Instruction;
-use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
-use std::intrinsics::{likely, unlikely};
+use crate::{
+    system::{
+        r3000::{
+            constants::INSTRUCTION_SIZE,
+            controllers::{
+                debug,
+                memory_controller::*,
+                register::*,
+                set_exception,
+            },
+            cp0::constants::{
+                CAUSE_EXCCODE_SYSCALL,
+                STATUS_ISC,
+            },
+            types::*,
+        },
+        types::State,
+    },
+    types::mips1::instruction::Instruction,
+    utilities::mips1::{
+        pc_calc_jump_target,
+        status_pop_exception,
+    },
+};
+use std::intrinsics::{
+    likely,
+    unlikely,
+};
 
 pub fn sll(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut state.r3000.gpr[instruction.rt()];
@@ -557,12 +574,7 @@ pub fn lui(state: &mut State, instruction: Instruction) -> InstResult {
 }
 
 pub fn mfc0(state: &mut State, instruction: Instruction) -> InstResult {
-    let rd = unsafe {
-        state.r3000.cp0.register[instruction.rd()]
-            .as_mut()
-            .unwrap()
-            .as_mut()
-    };
+    let rd = unsafe { state.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
     let value = rd.read_u32();
     let rt = &mut state.r3000.gpr[instruction.rt()];
     rt.write_u32(value);
@@ -573,12 +585,7 @@ pub fn mfc0(state: &mut State, instruction: Instruction) -> InstResult {
 pub fn mtc0(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut state.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
-    let rd = unsafe {
-        state.r3000.cp0.register[instruction.rd()]
-            .as_mut()
-            .unwrap()
-            .as_mut()
-    };
+    let rd = unsafe { state.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
     rd.write_u32(value);
     Ok(())
 }
@@ -620,8 +627,9 @@ pub fn rfe(state: &mut State, _instruction: Instruction) -> InstResult {
         state.r3000.pc.write_u32(target.unwrap());
     }
 
-    // Also flush the cause register to make sure no stray interrupts are pending as a result of the emulator being out of sync temporarily.
-    // If there is an actual interrupt pending, then it will be asserted again shortly (R3000 interrupts are level triggered).
+    // Also flush the cause register to make sure no stray interrupts are pending as a result of the emulator being out
+    // of sync temporarily. If there is an actual interrupt pending, then it will be asserted again shortly (R3000
+    // interrupts are level triggered).
     state.r3000.cp0.cause.clear_ip_field();
 
     Ok(())

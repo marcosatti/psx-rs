@@ -1,5 +1,7 @@
-use crate::types::b8_memory_mapper::*;
-use crate::types::bitfield::Bitfield;
+use crate::types::{
+    b8_memory_mapper::*,
+    bitfield::Bitfield,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -15,7 +17,9 @@ pub struct B8Register {
 impl B8Register {
     pub fn new() -> B8Register {
         B8Register {
-            value: B8Register_ { v8: 0 },
+            value: B8Register_ {
+                v8: 0,
+            },
         }
     }
 

@@ -1,13 +1,28 @@
-use crate::system::types::State as SystemState;
-use crate::types::b8_memory_mapper::B8MemoryMap;
-use crate::types::b8_memory_mapper::*;
-use crate::types::fifo::debug::DebugState;
-use crate::types::fifo::Fifo;
-use crate::types::register::b16_register::B16Register;
-use crate::types::register::b32_register::B32Register;
+use crate::{
+    system::types::State as SystemState,
+    types::{
+        b8_memory_mapper::{
+            B8MemoryMap,
+            *,
+        },
+        fifo::{
+            debug::DebugState,
+            Fifo,
+        },
+        register::{
+            b16_register::B16Register,
+            b32_register::B32Register,
+        },
+    },
+};
 use log::warn;
-use std::ptr::NonNull;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{
+    ptr::NonNull,
+    sync::atomic::{
+        AtomicBool,
+        Ordering,
+    },
+};
 
 pub struct Ctrl {
     pub register: B16Register,
@@ -30,7 +45,7 @@ impl B8MemoryMap for Ctrl {
 
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         // BIOS writes consecutively to this register without a chance to acknowledge...
-        //assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
+        // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
         B8MemoryMap::write_u16(&mut self.register, offset, value)
     }
@@ -53,41 +68,22 @@ impl Padmc1040 {
 impl B8MemoryMap for Padmc1040 {
     fn read_u8(&mut self, _offset: u32) -> ReadResult<u8> {
         unsafe {
-            Ok(self
-                .rx_fifo
-                .as_ref()
-                .unwrap()
-                .as_ref()
-                .read_one()
-                .unwrap_or_else(|_| {
-                    //warn!("PADMC RX FIFO empty - returning 0xFF");
-                    0xFF
-                }))
+            Ok(self.rx_fifo.as_ref().unwrap().as_ref().read_one().unwrap_or_else(|_| {
+                // warn!("PADMC RX FIFO empty - returning 0xFF");
+                0xFF
+            }))
         }
     }
 
     fn write_u8(&mut self, _offset: u32, value: u8) -> WriteResult {
-        unsafe {
-            self.tx_fifo
-                .as_ref()
-                .unwrap()
-                .as_ref()
-                .write_one(value)
-                .map_err(|_| WriteError::Full)
-        }
+        unsafe { self.tx_fifo.as_ref().unwrap().as_ref().write_one(value).map_err(|_| WriteError::Full) }
     }
 
     fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
         unsafe {
             assert!(offset == 0, "Invalid offset");
             warn!("PADMC RX FIFO u32 preview reads not properly implemented");
-            self.tx_fifo
-                .as_ref()
-                .unwrap()
-                .as_ref()
-                .read_one()
-                .map(|v| v as u32)
-                .map_err(|_| ReadError::Empty)
+            self.tx_fifo.as_ref().unwrap().as_ref().read_one().map(|v| v as u32).map_err(|_| ReadError::Empty)
         }
     }
 
@@ -95,12 +91,7 @@ impl B8MemoryMap for Padmc1040 {
         unsafe {
             assert!(offset == 0, "Invalid offset");
             let value_u8 = value as u8;
-            self.tx_fifo
-                .as_ref()
-                .unwrap()
-                .as_ref()
-                .write_one(value_u8)
-                .map_err(|_| WriteError::Full)
+            self.tx_fifo.as_ref().unwrap().as_ref().write_one(value_u8).map_err(|_| WriteError::Full)
         }
     }
 }
@@ -133,29 +124,9 @@ pub fn initialize(state: &mut SystemState) {
     state.padmc.padmc1040.tx_fifo = NonNull::new(&mut state.padmc.tx_fifo as *mut Fifo<u8>);
     state.padmc.padmc1040.rx_fifo = NonNull::new(&mut state.padmc.rx_fifo as *mut Fifo<u8>);
 
-    state.r3000.memory_mapper.map(
-        0x1F80_1040,
-        4,
-        &mut state.padmc.padmc1040 as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1044,
-        4,
-        &mut state.padmc.stat as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_1048,
-        2,
-        &mut state.padmc.mode as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_104A,
-        2,
-        &mut state.padmc.ctrl as *mut dyn B8MemoryMap,
-    );
-    state.r3000.memory_mapper.map(
-        0x1F80_104E,
-        2,
-        &mut state.padmc.baud_reload as *mut dyn B8MemoryMap,
-    );
+    state.r3000.memory_mapper.map(0x1F80_1040, 4, &mut state.padmc.padmc1040 as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1044, 4, &mut state.padmc.stat as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_1048, 2, &mut state.padmc.mode as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_104A, 2, &mut state.padmc.ctrl as *mut dyn B8MemoryMap);
+    state.r3000.memory_mapper.map(0x1F80_104E, 2, &mut state.padmc.baud_reload as *mut dyn B8MemoryMap);
 }

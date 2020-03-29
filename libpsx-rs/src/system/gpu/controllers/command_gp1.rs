@@ -1,7 +1,13 @@
-use crate::backends::video::VideoBackend;
-use crate::system::gpu::constants::*;
-use crate::system::gpu::controllers::command_gp1_impl;
-use crate::system::types::State;
+use crate::{
+    backends::video::VideoBackend,
+    system::{
+        gpu::{
+            constants::*,
+            controllers::command_gp1_impl,
+        },
+        types::State,
+    },
+};
 
 pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
     let fifo = &mut state.gpu.gpu1814.gp1;
