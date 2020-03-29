@@ -1,10 +1,10 @@
 use crate::backends::video::VideoBackend;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::gpu::*;
 use crate::controllers::gpu::command_gp0::handle_command as handle_command_gp0;
 use crate::controllers::gpu::command_gp1::handle_command as handle_command_gp1;
 
-pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
+pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
     // TODO: what's the priority of command handling?
     // Doesn't really mention what happens if there is a command waiting in GP0 queue then a command gets written to GP1.
     handle_command_gp1(resources, video_backend);
@@ -17,7 +17,7 @@ pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
     handle_stat_recv_dma(resources);
 }
 
-fn handle_read(resources: &mut Resources) {
+fn handle_read(state: &mut State) {
     let read_buffer = &mut resources.gpu.gp0_read_buffer;
     let read = &mut resources.gpu.gpu1810.read;
 
@@ -35,7 +35,7 @@ fn handle_read(resources: &mut Resources) {
     }
 }
 
-fn handle_stat_dma_request(resources: &mut Resources) {
+fn handle_stat_dma_request(state: &mut State) {
     let stat = &mut resources.gpu.gpu1814.stat;
     
     // TODO: currently GPU says it always wants commands/data.
@@ -43,7 +43,7 @@ fn handle_stat_dma_request(resources: &mut Resources) {
     stat.write_bitfield(STAT_DMA_REQUEST, 1);
 }
 
-fn handle_stat_recv_cmd(resources: &mut Resources) {
+fn handle_stat_recv_cmd(state: &mut State) {
     let stat = &mut resources.gpu.gpu1814.stat;
     let _gp0 = &resources.gpu.gpu1810.gp0;
     
@@ -52,7 +52,7 @@ fn handle_stat_recv_cmd(resources: &mut Resources) {
     stat.write_bitfield(STAT_RECV_CMD, 1);
 }
 
-fn handle_stat_send_vram(resources: &mut Resources) {
+fn handle_stat_send_vram(state: &mut State) {
     let stat = &mut resources.gpu.gpu1814.stat;
     let read_buffer = &resources.gpu.gp0_read_buffer;
     let read_fifo = &resources.gpu.gpu1810.read;
@@ -69,7 +69,7 @@ fn handle_stat_send_vram(resources: &mut Resources) {
     stat.write_bitfield(STAT_SEND_VRAM, data_available);
 }
 
-fn handle_stat_recv_dma(resources: &mut Resources) {
+fn handle_stat_recv_dma(state: &mut State) {
     let stat = &mut resources.gpu.gpu1814.stat;
 
     // TODO: currently GPU says it always wants commands/data.

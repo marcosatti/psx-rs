@@ -11,26 +11,26 @@ use std::time::Duration;
 use std::intrinsics::unlikely;
 use log::debug;
 use crate::backends::cdrom::CdromBackend;
-use crate::controllers::ControllerState;
-use crate::system::Resources;
+use crate::system::types::ControllerContext;
+use crate::system::types::State;
 use crate::constants::r3000::{CLOCK_SPEED, INSTRUCTION_SIZE};
-use crate::controllers::Event;
+use crate::system::types::Event;
 use crate::controllers::r3000::hazard::*;
 use crate::controllers::r3000::exception::*;
-use crate::controllers::cdrom::handle_tick as tick_cdrom;
+use crate::system::cdrom::controllers::handle_tick as tick_cdrom;
 use crate::controllers::r3000::memory_controller::translate_address;
 use crate::controllers::r3000::instruction::lookup as instruction_lookup;
 use crate::types::mips1::instruction::Instruction;
 
 pub type InstResult = Result<(), Hazard>;
 
-pub fn run(state: &mut ControllerState, event: Event) {
+pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
         Event::Time(duration) => run_time(state.resources, state.cdrom_backend, duration),
     }
 }
 
-fn run_time(resources: &mut Resources, cdrom_backend: &CdromBackend, duration: Duration) {
+fn run_time(state: &mut State, cdrom_backend: &CdromBackend, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     
     while ticks > 0 {
@@ -46,7 +46,7 @@ fn run_time(resources: &mut Resources, cdrom_backend: &CdromBackend, duration: D
     }
 }
 
-fn tick(resources: &mut Resources) -> i64 {
+fn tick(state: &mut State) -> i64 {
     handle_interrupts(resources);
 
     if let Some(target) = resources.r3000.branch_delay.advance() {

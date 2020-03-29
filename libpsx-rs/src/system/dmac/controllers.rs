@@ -6,38 +6,36 @@ pub mod transfer;
 use std::time::Duration;
 use std::sync::atomic::Ordering;
 use std::cmp::min;
-use log::debug;
-use crate::controllers::ControllerState;
-use crate::system::Resources;
-use crate::constants::dmac::*;
-use crate::controllers::Event;
-use crate::controllers::dmac::channel::*;
-use crate::controllers::dmac::transfer::*;
-use crate::system::dmac::*;
+use crate::system::types::ControllerContext;
+use crate::system::types::State;
+use crate::system::types::Event;
+use crate::system::dmac::controllers::channel::*;
+use crate::system::dmac::controllers::transfer::*;
+use crate::system::dmac::constants::*;
 
-pub fn run(state: &mut ControllerState, event: Event) {
+pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
-        Event::Time(time) => run_time(state.resources, time),
+        Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(resources: &mut Resources, duration: Duration) {
+fn run_time(state: &mut State, duration: Duration) {
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 
     // Don't run if the CPU needs to use the bus.
-    if resources.dmac.cooloff_runs > 0 {
-        resources.bus_locked.store(false, Ordering::Release);
-        resources.dmac.cooloff_runs -= 1;
+    if state.dmac.cooloff_runs > 0 {
+        state.bus_locked.store(false, Ordering::Release);
+        state.dmac.cooloff_runs -= 1;
         return;
     }
 
-    handle_bus_lock(resources);
+    handle_bus_lock(state);
 
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     let mut channel_id: usize = 6;
     let mut cooloff = false;
     while ticks > 0 {
-        match tick(resources, channel_id, ticks as usize) {
+        match tick(state, channel_id, ticks as usize) {
             Ok(channel_ticks) => {
                 if channel_ticks == 0 {
                     ticks -= 16;
@@ -63,19 +61,19 @@ fn run_time(resources: &mut Resources, duration: Duration) {
     }
 
     if cooloff {
-        resources.dmac.cooloff_runs = 4;
+        state.dmac.cooloff_runs = 4;
     }
     
-    handle_bus_unlock(resources);
+    handle_bus_unlock(state);
 
-    handle_irq_check(resources);
+    handle_irq_check(state);
 }
 
-fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) -> Result<usize, usize> {
+fn tick(state: &mut State, channel_id: usize, ticks_remaining: usize) -> Result<usize, usize> {
     // Number of ticks per word transfer.
     const TICK_WORD_RATIO: usize = 2;
 
-    let dpcr = &resources.dmac.dpcr;
+    let dpcr = &state.dmac.dpcr;
     let enable = DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id];
 
     // Round up to nearset alignment for no remainder.
@@ -85,7 +83,7 @@ fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) ->
     word_transfers_allowed = min(word_transfers_allowed, 16);
 
     let word_transfers_actual = if dpcr.read_bitfield(enable) != 0 {
-        handle_transfer(resources, channel_id, word_transfers_allowed)
+        handle_transfer(state, channel_id, word_transfers_allowed)
     } else {
         Ok(0)
     };
@@ -94,33 +92,33 @@ fn tick(resources: &mut Resources, channel_id: usize, ticks_remaining: usize) ->
 }
 
 /// Check if any channels are in progress, and acquires the bus lock if true.
-fn handle_bus_lock(resources: &mut Resources) {
+fn handle_bus_lock(state: &mut State) {
     for channel_id in 0..6 {
-        let transfer_state = get_transfer_state(resources, channel_id);
+        let transfer_state = get_transfer_state(state, channel_id);
         
         if transfer_state.started {
-            resources.bus_locked.store(true, Ordering::Release);
+            state.bus_locked.store(true, Ordering::Release);
             return;
         }
     }
 }
 
 /// Check if all channels are finished, and release the bus lock if true.
-fn handle_bus_unlock(resources: &mut Resources) {
+fn handle_bus_unlock(state: &mut State) {
     for channel_id in 0..6 {
-        let transfer_state = get_transfer_state(resources, channel_id);
+        let transfer_state = get_transfer_state(state, channel_id);
         
         if transfer_state.started {
             return;
         }
     }
 
-    resources.bus_locked.store(false, Ordering::Release);
+    state.bus_locked.store(false, Ordering::Release);
 }
 
 /// Performs interrupt check for raising an IRQ on the INTC.
-fn handle_irq_check(resources: &mut Resources) {
-    let dicr = &mut resources.dmac.dicr;
+fn handle_irq_check(state: &mut State) {
+    let dicr = &mut state.dmac.dicr;
     let _icr_lock = dicr.mutex.lock();
 
     let force_irq = dicr.register.read_bitfield(DICR_IRQ_FORCE) != 0;
@@ -141,8 +139,8 @@ fn handle_irq_check(resources: &mut Resources) {
         if dicr.register.read_bitfield(DICR_IRQ_MASTER_FLAG) == 0 {
             dicr.register.write_bitfield(DICR_IRQ_MASTER_FLAG, 1);
 
-            use crate::system::intc::register::Line;
-            let stat = &resources.intc.stat;
+            use crate::system::intc::types::Line;
+            let stat = &state.intc.stat;
             stat.assert_line(Line::Dma);
         }
     } else {

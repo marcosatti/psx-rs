@@ -1,11 +1,11 @@
 use std::intrinsics::unlikely;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::utilities::mips1::status_push_exception;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::system::r3000::cp0::*;
 use crate::controllers::r3000::debug;
 
-pub fn set_exception(resources: &mut Resources, exccode: usize) {
+pub fn set_exception(state: &mut State, exccode: usize) {
     let pc = &mut resources.r3000.pc;
     let cause = &mut resources.r3000.cp0.cause.register;
     let status = &mut resources.r3000.cp0.status;
@@ -52,7 +52,7 @@ pub fn set_exception(resources: &mut Resources, exccode: usize) {
     pc.write_u32(vector_offset);
 }
 
-pub fn handle_interrupts(resources: &mut Resources) {
+pub fn handle_interrupts(state: &mut State) {
     let status = &resources.r3000.cp0.status;
     let cause = &mut resources.r3000.cp0.cause;
 

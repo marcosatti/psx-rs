@@ -1,5 +1,5 @@
 use crate::types::mips1::instruction::Instruction;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::controllers::r3000::*;
 use crate::controllers::r3000::instruction_impl::*;
 use crate::controllers::r3000::instruction_impl_cop2::*;

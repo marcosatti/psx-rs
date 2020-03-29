@@ -3,18 +3,18 @@ pub mod command;
 
 use std::sync::atomic::Ordering;
 use std::time::Duration;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::padmc::*;
 use crate::constants::padmc::*;
 use crate::controllers::{Event, ControllerState};
 
-pub fn run(state: &mut ControllerState, event: Event) {
+pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
         Event::Time(duration) => run_time(state.resources, duration),
     }
 }
 
-fn run_time(resources: &mut Resources, duration: Duration) {
+fn run_time(state: &mut State, duration: Duration) {
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     ticks /= 16;
     
@@ -23,14 +23,14 @@ fn run_time(resources: &mut Resources, duration: Duration) {
     }
 }
 
-pub fn tick(resources: &mut Resources) {
+pub fn tick(state: &mut State) {
     handle_ctrl(resources);
     handle_tx(resources);
     handle_rx(resources);
     handle_baud_timer(resources);
 }
 
-fn handle_ctrl(resources: &mut Resources) {
+fn handle_ctrl(state: &mut State) {
     let ctrl = &mut resources.padmc.ctrl;
     let mode = &mut resources.padmc.mode;
     let stat = &mut resources.padmc.stat;
@@ -56,7 +56,7 @@ fn handle_ctrl(resources: &mut Resources) {
     ctrl.write_latch.store(false, Ordering::Release);
 }
 
-fn handle_tx(resources: &mut Resources) {
+fn handle_tx(state: &mut State) {
     {
         let tx_fifo = &resources.padmc.tx_fifo;
         let stat = &mut resources.padmc.stat;
@@ -89,7 +89,7 @@ fn handle_tx(resources: &mut Resources) {
     }
 }
 
-fn handle_rx(resources: &mut Resources) {
+fn handle_rx(state: &mut State) {
     let rx_fifo = &resources.padmc.rx_fifo;
 
     if rx_fifo.is_empty() {
@@ -100,7 +100,7 @@ fn handle_rx(resources: &mut Resources) {
     stat.write_bitfield(STAT_RXFIFO_READY, 1);
 }
 
-fn handle_baud_timer(resources: &mut Resources) {
+fn handle_baud_timer(state: &mut State) {
     let stat = &mut resources.padmc.stat;
     let timer_value = stat.read_bitfield(STAT_TIMER).wrapping_sub(1);
     stat.write_bitfield(STAT_TIMER, timer_value);

@@ -1,12 +1,12 @@
 use std::time::Duration;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::timers::*;
 use crate::controllers::timers::timer::*;
 use crate::controllers::timers::irq::*;
 use crate::system::timers::timer::*;
 use crate::constants::timers::*;
 
-pub fn handle_count(resources: &mut Resources, timer_id: usize, duration: Duration) {
+pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
     let count = get_count(resources, timer_id);
     let state = get_state(resources, timer_id);
 
@@ -23,12 +23,12 @@ pub fn handle_count(resources: &mut Resources, timer_id: usize, duration: Durati
     }
 }
 
-pub fn handle_count_clear(resources: &mut Resources, timer_id: usize) {
+pub fn handle_count_clear(state: &mut State, timer_id: usize) {
     let count = get_count(resources, timer_id);
     count.write_u32(0);
 }
 
-fn handle_count_reset(resources: &mut Resources, timer_id: usize) -> IrqType {
+fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
     let mode = get_mode(resources, timer_id);
     let count = get_count(resources, timer_id);
     let count_value = count.read_u32() & 0xFFFF;

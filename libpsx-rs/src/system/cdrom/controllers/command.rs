@@ -1,51 +1,51 @@
 use std::sync::atomic::Ordering;
 use crate::backends::cdrom::CdromBackend;
-use crate::system::Resources;
-use crate::system::cdrom::*;
-use crate::controllers::cdrom::command_impl;
+use crate::system::types::State;
+use crate::system::cdrom::constants::*;
+use crate::system::cdrom::controllers::command_impl;
 
 type LengthFn = fn(usize) -> usize;
 
-type HandlerFn = fn(&mut Resources, &CdromBackend, usize) -> bool;
+type HandlerFn = fn(&mut State, &CdromBackend, usize) -> bool;
 
-pub fn handle_command(resources: &mut Resources, cdrom_backend: &CdromBackend) -> bool {
-    if resources.cdrom.command_index.is_none() {
+pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
+    if state.cdrom.command_index.is_none() {
         // Read a new command if available.
-        if !resources.cdrom.command.write_latch.load(Ordering::Acquire) {
+        if !state.cdrom.command.write_latch.load(Ordering::Acquire) {
             return false;
         }
 
-        resources.cdrom.status.write_bitfield(STATUS_BUSYSTS, 1);
-        let command_value = resources.cdrom.command.register.read_u8();
+        state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 1);
+        let command_value = state.cdrom.command.register.read_u8();
         
-        resources.cdrom.command.write_latch.store(false, Ordering::Release);
+        state.cdrom.command.write_latch.store(false, Ordering::Release);
 
-        resources.cdrom.command_index = Some(command_value);
-        resources.cdrom.command_iteration = 0;
+        state.cdrom.command_index = Some(command_value);
+        state.cdrom.command_iteration = 0;
     }
 
-    let command_index = resources.cdrom.command_index.unwrap();
-    let command_iteration = resources.cdrom.command_iteration;
+    let command_index = state.cdrom.command_index.unwrap();
+    let command_iteration = state.cdrom.command_iteration;
     let handler = get_handler_fn(command_index);
 
-    let parameter_count = resources.cdrom.parameter.read_available();
+    let parameter_count = state.cdrom.parameter.read_available();
     if parameter_count < (handler.0)(command_iteration) {
         return false;
     }
 
-    assert!(resources.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
+    assert!(state.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
 
-    let finished = (handler.1)(resources, cdrom_backend, command_iteration);
+    let finished = (handler.1)(state, cdrom_backend, command_iteration);
 
     if !finished {
-        resources.cdrom.command_iteration += 1;
+        state.cdrom.command_iteration += 1;
     } else {
-        resources.cdrom.command_index = None;
+        state.cdrom.command_index = None;
     }
 
-    assert!(resources.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
+    assert!(state.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
 
-    resources.cdrom.status.write_bitfield(STATUS_BUSYSTS, 0);
+    state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 0);
 
     true
 }

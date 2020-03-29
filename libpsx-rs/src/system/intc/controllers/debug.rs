@@ -1,5 +1,5 @@
 use log::trace;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::intc::*;
 use crate::types::bitfield::Bitfield;
 

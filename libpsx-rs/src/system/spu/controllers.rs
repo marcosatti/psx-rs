@@ -11,24 +11,24 @@ pub mod interrupt;
 
 use std::time::Duration;
 use crate::audio::AudioBackend;
-use crate::controllers::ControllerState;
-use crate::system::Resources;
+use crate::system::types::ControllerContext;
+use crate::system::types::State;
 use crate::constants::spu::*;
 use crate::constants::spu::dac::*;
-use crate::controllers::Event;
+use crate::system::types::Event;
 use crate::controllers::spu::transfer::*;
 use crate::controllers::spu::interrupt::*;
 use crate::controllers::spu::dac::*;
 use crate::controllers::spu::sound::*;
 use crate::system::spu::*;
 
-pub fn run(state: &mut ControllerState, event: Event) {
+pub fn run(context: &mut ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(state.resources, state.audio_backend, time),
     }
 }
 
-fn run_time(resources: &mut Resources, audio_backend: &AudioBackend, duration: Duration) {
+fn run_time(state: &mut State, audio_backend: &AudioBackend, duration: Duration) {
     {
         let control = &resources.spu.control;
 
@@ -53,18 +53,18 @@ fn run_time(resources: &mut Resources, audio_backend: &AudioBackend, duration: D
     }
 }
 
-fn tick(resources: &mut Resources) {
+fn tick(state: &mut State) {
     handle_current_volume(resources);
     handle_transfer(resources);
     handle_interrupt_check(resources);
 }
 
-fn handle_current_duration_tick(resources: &mut Resources, duration: Duration) {
+fn handle_current_duration_tick(state: &mut State, duration: Duration) {
     let current_duration = &mut resources.spu.dac.current_duration;
     *current_duration += duration;
 }
 
-fn handle_current_duration_update(resources: &mut Resources) -> bool {
+fn handle_current_duration_update(state: &mut State) -> bool {
     let current_duration = &mut resources.spu.dac.current_duration;
 
     if *current_duration >= SAMPLE_RATE_PERIOD {

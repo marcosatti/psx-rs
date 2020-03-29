@@ -1,5 +1,5 @@
 use std::time::Duration;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::timers::register::*;
 use crate::system::timers::timer::*;
 use crate::types::register::b32_register::B32Register;
@@ -63,7 +63,7 @@ pub fn get_state<'a, 'b>(resources: &'a mut Resources, timer_id: usize) -> &'b m
     }
 }
 
-pub fn handle_duration_clear(resources: &mut Resources, timer_id: usize) {
+pub fn handle_duration_clear(state: &mut State, timer_id: usize) {
     let state = get_state(resources, timer_id);
     state.current_elapsed = Duration::from_secs(0);
     state.acknowledged_elapsed = Duration::from_secs(0);    

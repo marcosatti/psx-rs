@@ -1,4 +1,4 @@
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::backends::video::VideoBackend;
 use crate::system::gpu::*;
 use crate::controllers::gpu::command_gp0_impl;
@@ -10,7 +10,7 @@ type LengthFn = fn(&[u32]) -> Option<usize>;
 /// The handler logic for the command.
 type HandlerFn = fn(&mut Resources, video_backend: &VideoBackend, &[u32]);
 
-pub fn handle_command(resources: &mut Resources, video_backend: &VideoBackend) {
+pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
     // Update the command buffer with any new incoming data.
     {
         let fifo = &mut resources.gpu.gpu1810.gp0;

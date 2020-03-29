@@ -1,10 +1,10 @@
 use std::sync::atomic::Ordering;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::controllers::spu::voice::*;
 use crate::system::spu::*;
 use crate::system::spu::register::*;
 
-pub fn handle_transfer(resources: &mut Resources) {
+pub fn handle_transfer(state: &mut State) {
     let current_transfer_mode = resources.spu.current_transfer_mode;
 
     handle_current_transfer_address(resources);
@@ -25,7 +25,7 @@ pub fn handle_transfer(resources: &mut Resources) {
     } 
 }
 
-fn handle_current_transfer_address(resources: &mut Resources) {
+fn handle_current_transfer_address(state: &mut State) {
     let control = &resources.spu.control;
     let data_transfer_address = &mut resources.spu.data_transfer_address;
     let current_transfer_adderss = &mut resources.spu.current_transfer_address;
@@ -40,7 +40,7 @@ fn handle_current_transfer_address(resources: &mut Resources) {
     }
 }
 
-fn handle_new_transfer_initialization(resources: &mut Resources) {
+fn handle_new_transfer_initialization(state: &mut State) {
     let control = &resources.spu.control;
     let stat = &mut resources.spu.stat;
     let current_transfer_mode = &mut resources.spu.current_transfer_mode;
@@ -55,7 +55,7 @@ fn handle_new_transfer_initialization(resources: &mut Resources) {
     stat.write_bitfield(STAT_TRANSFER_MODE, transfer_mode_raw);
 }
 
-fn handle_manual_write_transfer(resources: &mut Resources) {
+fn handle_manual_write_transfer(state: &mut State) {
     let control = &mut resources.spu.control;
     let stat = &mut resources.spu.stat;
     let memory = &mut resources.spu.memory;
@@ -84,7 +84,7 @@ fn handle_manual_write_transfer(resources: &mut Resources) {
     }
 }
 
-fn handle_dma_write_transfer(resources: &mut Resources) {
+fn handle_dma_write_transfer(state: &mut State) {
     let data_transfer_control = &resources.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {
         unimplemented!("Data transfer control not set to normal mode");
@@ -93,7 +93,7 @@ fn handle_dma_write_transfer(resources: &mut Resources) {
     unimplemented!("DmaWrite transfer mode not implemented");
 }
 
-fn handle_dma_read_transfer(resources: &mut Resources) {
+fn handle_dma_read_transfer(state: &mut State) {
     let data_transfer_control = &resources.spu.data_transfer_control;
     if data_transfer_control.read_u16() != 0x4 {
         unimplemented!("Data transfer control not set to normal mode");

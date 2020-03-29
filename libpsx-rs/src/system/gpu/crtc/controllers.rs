@@ -4,13 +4,13 @@ pub mod interrupt;
 
 use std::time::Duration;
 use crate::video::VideoBackend;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::constants::gpu::crtc::*;
 use crate::controllers::gpu::crtc::display::*;
 use crate::controllers::gpu::crtc::interrupt::*;
 use crate::system::gpu::*;
 
-pub fn run_time(resources: &mut Resources, video_backend: &VideoBackend, duration: Duration) {
+pub fn run_time(state: &mut State, video_backend: &VideoBackend, duration: Duration) {
     resources.gpu.crtc.scanline_elapsed += duration;
     while resources.gpu.crtc.scanline_elapsed > SCANLINE_INTERVAL_NTSC {
         resources.gpu.crtc.scanline_elapsed -= SCANLINE_INTERVAL_NTSC;

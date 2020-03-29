@@ -10,27 +10,27 @@ use std::sync::atomic::Ordering;
 use log::warn;
 use crate::utilities::bool_to_flag;
 use crate::backends::cdrom::CdromBackend;
-use crate::system::Resources;
-use crate::controllers::cdrom::command::*;
-use crate::controllers::cdrom::read::*;
-use crate::system::cdrom::*;
+use crate::system::types::State;
+use crate::system::cdrom::controllers::command::*;
+use crate::system::cdrom::controllers::read::*;
+use crate::system::cdrom::constants::*;
 
-pub fn handle_tick(resources: &mut Resources, cdrom_backend: &CdromBackend) {
-    handle_interrupt_enable(resources);
-    handle_interrupt_flags(resources);
-    handle_request(resources);
+pub fn handle_tick(state: &mut State, cdrom_backend: &CdromBackend) {
+    handle_interrupt_enable(state);
+    handle_interrupt_flags(state);
+    handle_request(state);
 
-    handle_state(resources, cdrom_backend);
+    handle_state(state, cdrom_backend);
 
-    handle_parameter_fifo(resources);
-    handle_response_fifo(resources);
-    handle_data_fifo(resources);
+    handle_parameter_fifo(state);
+    handle_response_fifo(state);
+    handle_data_fifo(state);
 }
 
-fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend) {
+fn handle_state(state: &mut State, cdrom_backend: &CdromBackend) {
     // Don't run anything until all previous interrupts have been acknowledged, otherwise new ones could be missed.
     {
-        let int_flag = &resources.cdrom.int_flag;
+        let int_flag = &state.cdrom.int_flag;
         if int_flag.register.read_bitfield(INTERRUPT_FLAGS) != 0 {
             return;
         }
@@ -41,11 +41,11 @@ fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend) {
     let mut handled = false;
     
     if !handled {
-        handled = handle_command(resources, cdrom_backend);
+        handled = handle_command(state, cdrom_backend);
     }
 
     if !handled {
-        handled = handle_read(resources, cdrom_backend);
+        handled = handle_read(state, cdrom_backend);
     }
 
     if !handled {
@@ -53,8 +53,8 @@ fn handle_state(resources: &mut Resources, cdrom_backend: &CdromBackend) {
     }
 }
 
-fn handle_request(resources: &mut Resources) {
-    let request = &mut resources.cdrom.request;
+fn handle_request(state: &mut State) {
+    let request = &mut state.cdrom.request;
 
     if request.write_latch.load(Ordering::Acquire) {
         assert!(request.register.read_bitfield(REQUEST_SMEN) == 0);
@@ -62,8 +62,8 @@ fn handle_request(resources: &mut Resources) {
 
         let reset_data_fifo = request.register.read_bitfield(REQUEST_BFRD) == 0;
         if reset_data_fifo {
-            let count = resources.cdrom.data.read_available();
-            //resources.cdrom.data.clear();
+            let count = state.cdrom.data.read_available();
+            //state.cdrom.data.clear();
             warn!("Ignored Reset CDROM data FIFO (has {} bytes)", count);
         }
 
@@ -71,19 +71,19 @@ fn handle_request(resources: &mut Resources) {
     }
 }
 
-fn handle_interrupt_enable(resources: &mut Resources) {
-    let int_enable = &mut resources.cdrom.int_enable;
+fn handle_interrupt_enable(state: &mut State) {
+    let int_enable = &mut state.cdrom.int_enable;
 
     if int_enable.write_latch.load(Ordering::Acquire) {
         int_enable.write_latch.store(false, Ordering::Release);
     }
 }
 
-fn handle_interrupt_flags(resources: &mut Resources) {
-    let int_flag = &mut resources.cdrom.int_flag;
+fn handle_interrupt_flags(state: &mut State) {
+    let int_flag = &mut state.cdrom.int_flag;
 
     if int_flag.write_latch.load(Ordering::Acquire) {
-        resources.cdrom.response.clear();
+        state.cdrom.response.clear();
         int_flag.write_latch.store(false, Ordering::Release);
     }
 
@@ -91,14 +91,14 @@ fn handle_interrupt_flags(resources: &mut Resources) {
         // TODO: actually performing a reset causes problems, where the BIOS is writing the clear bit and the parameters at the same time,
         // before the controller gets a chance to run - this is an emulator level issue. There are asserts in the command handler that 
         // check if the parameter is empty after a command has been run (which it should be).
-        //resources.cdrom.parameter.clear();
+        //state.cdrom.parameter.clear();
         int_flag.parameter_reset.store(false, Ordering::Release);
     }
 }
 
-fn handle_parameter_fifo(resources: &mut Resources) {
-    let status = &mut resources.cdrom.status;
-    let fifo = &mut resources.cdrom.parameter;
+fn handle_parameter_fifo(state: &mut State) {
+    let status = &mut state.cdrom.status;
+    let fifo = &mut state.cdrom.parameter;
 
     let empty_bit = bool_to_flag(fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_PRMEMPT, empty_bit);
@@ -107,17 +107,17 @@ fn handle_parameter_fifo(resources: &mut Resources) {
     status.write_bitfield(STATUS_PRMWRDY, ready_bit);
 }
 
-fn handle_response_fifo(resources: &mut Resources) {
-    let status = &mut resources.cdrom.status;
-    let fifo = &mut resources.cdrom.response;
+fn handle_response_fifo(state: &mut State) {
+    let status = &mut state.cdrom.status;
+    let fifo = &mut state.cdrom.response;
 
     let ready_bit = bool_to_flag(!fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_RSLRRDY, ready_bit);
 }
 
-fn handle_data_fifo(resources: &mut Resources) {
-    let status = &mut resources.cdrom.status;
-    let fifo = &mut resources.cdrom.response;
+fn handle_data_fifo(state: &mut State) {
+    let status = &mut state.cdrom.status;
+    let fifo = &mut state.cdrom.response;
 
     let empty_bit = bool_to_flag(!fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_DRQSTS, empty_bit);

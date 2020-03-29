@@ -1,4 +1,4 @@
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::types::register::b16_register::B16Register;
 use crate::types::register::b32_register::B32Register;
 use crate::system::spu::*;
@@ -15,7 +15,7 @@ pub fn get_transfer_mode(control: &B16Register) -> TransferMode {
     }
 }
 
-pub fn get_voll(resources: &mut Resources, voice_id: usize) -> *mut B16Register {
+pub fn get_voll(state: &mut State, voice_id: usize) -> *mut B16Register {
     match voice_id {
         0 => &mut resources.spu.voice0_voll as *mut B16Register,
         1 => &mut resources.spu.voice1_voll as *mut B16Register,
@@ -45,7 +45,7 @@ pub fn get_voll(resources: &mut Resources, voice_id: usize) -> *mut B16Register 
     }
 }
 
-pub fn get_volr(resources: &mut Resources, voice_id: usize) -> *mut B16Register {
+pub fn get_volr(state: &mut State, voice_id: usize) -> *mut B16Register {
     match voice_id {
         0 => &mut resources.spu.voice0_volr as *mut B16Register,
         1 => &mut resources.spu.voice1_volr as *mut B16Register,
@@ -75,7 +75,7 @@ pub fn get_volr(resources: &mut Resources, voice_id: usize) -> *mut B16Register 
     }
 }
 
-pub fn get_adpcm_sr(resources: &mut Resources, voice_id: usize) -> *mut B16Register {
+pub fn get_adpcm_sr(state: &mut State, voice_id: usize) -> *mut B16Register {
     match voice_id {
         0 => &mut resources.spu.voice0_srate as *mut B16Register,
         1 => &mut resources.spu.voice1_srate as *mut B16Register,
@@ -105,7 +105,7 @@ pub fn get_adpcm_sr(resources: &mut Resources, voice_id: usize) -> *mut B16Regis
     }
 }
 
-pub fn get_adpcm_sa(resources: &mut Resources, voice_id: usize) -> *mut B16Register {
+pub fn get_adpcm_sa(state: &mut State, voice_id: usize) -> *mut B16Register {
     match voice_id {
         0 => &mut resources.spu.voice0_saddr as *mut B16Register,
         1 => &mut resources.spu.voice1_saddr as *mut B16Register,
@@ -135,7 +135,7 @@ pub fn get_adpcm_sa(resources: &mut Resources, voice_id: usize) -> *mut B16Regis
     }
 }
 
-pub fn get_adpcm_envelope(resources: &mut Resources, voice_id: usize) -> *mut B32Register {
+pub fn get_adpcm_envelope(state: &mut State, voice_id: usize) -> *mut B32Register {
     match voice_id {
         0 => &mut resources.spu.voice0_adsr as *mut B32Register,
         1 => &mut resources.spu.voice1_adsr as *mut B32Register,
@@ -165,7 +165,7 @@ pub fn get_adpcm_envelope(resources: &mut Resources, voice_id: usize) -> *mut B3
     }
 }
 
-pub fn get_adsr_cvol(resources: &mut Resources, voice_id: usize) -> *mut B16Register {
+pub fn get_adsr_cvol(state: &mut State, voice_id: usize) -> *mut B16Register {
     match voice_id {
         0 => &mut resources.spu.voice0_cvol as *mut B16Register,
         1 => &mut resources.spu.voice1_cvol as *mut B16Register,
@@ -195,7 +195,7 @@ pub fn get_adsr_cvol(resources: &mut Resources, voice_id: usize) -> *mut B16Regi
     }
 }
 
-pub fn get_adpcm_ra(resources: &mut Resources, voice_id: usize) -> *mut B16Register {
+pub fn get_adpcm_ra(state: &mut State, voice_id: usize) -> *mut B16Register {
     match voice_id {
         0 => &mut resources.spu.voice0_raddr as *mut B16Register,
         1 => &mut resources.spu.voice1_raddr as *mut B16Register,
@@ -225,7 +225,7 @@ pub fn get_adpcm_ra(resources: &mut Resources, voice_id: usize) -> *mut B16Regis
     }
 }
 
-pub fn get_play_state(resources: &mut Resources, voice_id: usize) -> *mut PlayState {
+pub fn get_play_state(state: &mut State, voice_id: usize) -> *mut PlayState {
     match voice_id {
         0 => &mut resources.spu.dac.voice0_state as *mut PlayState,
         1 => &mut resources.spu.dac.voice1_state as *mut PlayState,

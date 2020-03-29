@@ -1,9 +1,10 @@
-use crate::system::Resources;
-use crate::system::cdrom::*;
+use crate::system::types::State;
+use crate::system::cdrom::constants::*;
+use crate::system::intc::types::Line;
 
-pub fn raise_irq(resources: &mut Resources, irq_line: usize) {
-    let int_enable = &resources.cdrom.int_enable;
-    let int_flag = &mut resources.cdrom.int_flag;
+pub fn raise_irq(state: &mut State, irq_line: usize) {
+    let int_enable = &state.cdrom.int_enable;
+    let int_flag = &mut state.cdrom.int_flag;
 
     int_flag.set_interrupt(irq_line);
 
@@ -17,8 +18,7 @@ pub fn raise_irq(resources: &mut Resources, irq_line: usize) {
     }
     
     if (int_enable_value & int_flag_value) > 0 {
-        use crate::system::intc::register::Line;
-        let stat = &resources.intc.stat;
+        let stat = &state.intc.stat;
         stat.assert_line(Line::Cdrom);
     }
 }

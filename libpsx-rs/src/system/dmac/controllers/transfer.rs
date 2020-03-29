@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use std::cmp::min;
 use log::warn;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::controllers::dmac::channel::*;
 use crate::constants::dmac::*;
 use crate::system::dmac::*;
@@ -9,7 +9,7 @@ use crate::system::dmac::channel::*;
 use crate::controllers::dmac::debug;
 use crate::controllers::dmac::linked_list;
 
-pub fn handle_transfer(resources: &mut Resources, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+pub fn handle_transfer(state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
     let transfer_state = get_transfer_state(resources, channel_id);
 
     handle_transfer_start(resources, channel_id);
@@ -26,7 +26,7 @@ pub fn handle_transfer(resources: &mut Resources, channel_id: usize, word_transf
     }
 }
 
-fn handle_transfer_start(resources: &mut Resources, channel_id: usize) {
+fn handle_transfer_start(state: &mut State, channel_id: usize) {
     let chcr = get_chcr(resources, channel_id);
     let madr = get_madr(resources, channel_id);
     let bcr = get_bcr(resources, channel_id);
@@ -51,7 +51,7 @@ fn handle_transfer_start(resources: &mut Resources, channel_id: usize) {
     }
 }
 
-fn handle_transfer_finish(resources: &mut Resources, channel_id: usize, bcr_value: Option<u32>, madr_value: Option<u32>) {
+fn handle_transfer_finish(state: &mut State, channel_id: usize, bcr_value: Option<u32>, madr_value: Option<u32>) {
     let chcr = get_chcr(resources, channel_id);
     let madr = get_madr(resources, channel_id);
     let bcr = get_bcr(resources, channel_id);
@@ -74,7 +74,7 @@ fn handle_transfer_finish(resources: &mut Resources, channel_id: usize, bcr_valu
     debug::transfer_end(resources, channel_id);
 }
 
-fn handle_continuous_transfer(state: &mut ContinuousState, resources: &mut Resources, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+fn handle_continuous_transfer(state: &mut ContinuousState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
     let chcr = get_chcr(resources, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
@@ -106,7 +106,7 @@ fn handle_continuous_transfer(state: &mut ContinuousState, resources: &mut Resou
     Ok(word_transfers_count)
 }
 
-fn handle_blocks_transfer(state: &mut BlocksState, resources: &mut Resources, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+fn handle_blocks_transfer(state: &mut BlocksState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
     let chcr = get_chcr(resources, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
     let madr_step_direction = get_step_direction(chcr);
@@ -138,7 +138,7 @@ fn handle_blocks_transfer(state: &mut BlocksState, resources: &mut Resources, ch
     Ok(word_transfers_count)
 }
 
-fn handle_linked_list_transfer(state: &mut LinkedListState, resources: &mut Resources, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
+fn handle_linked_list_transfer(state: &mut LinkedListState, state: &mut State, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
     let chcr = get_chcr(resources, channel_id);
     let transfer_direction = get_transfer_direction(chcr);
 

@@ -1,7 +1,7 @@
 use crate::types::bitfield::Bitfield;
 use crate::types::color::Color;
 use crate::types::geometry::*;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::gpu::*;
 use crate::backends::video::VideoBackend;
 use crate::controllers::gpu::data::*;
@@ -12,14 +12,14 @@ pub fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_00_handler(_resources: &mut Resources, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_00_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
 }
 
 pub fn command_01_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_01_handler(_resources: &mut Resources, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_01_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
     // Flush cache (NOP)
 }
 
@@ -27,7 +27,7 @@ pub fn command_02_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub fn command_02_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_02_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
@@ -49,7 +49,7 @@ pub fn command_05_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_05_handler(_resources: &mut Resources, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_05_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
     // NOP
 }
 
@@ -57,7 +57,7 @@ pub fn command_06_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_06_handler(_resources: &mut Resources, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_06_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
     // NOP
 }
 
@@ -65,7 +65,7 @@ pub fn command_0c_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_0c_handler(_resources: &mut Resources, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_0c_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
     // NOP
 }
 
@@ -73,7 +73,7 @@ pub fn command_28_length(_data: &[u32]) -> Option<usize> {
     Some(5)
 }
 
-pub fn command_28_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_28_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
     
     let color = extract_color_rgb(data[0], std::u8::MAX);
@@ -86,7 +86,7 @@ pub fn command_2c_length(_data: &[u32]) -> Option<usize> {
     Some(9)
 }
 
-pub fn command_2c_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_2c_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured four-point polygon, opaque, texture-blending", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -106,7 +106,7 @@ pub fn command_2d_length(_data: &[u32]) -> Option<usize> {
     Some(9)
 }
 
-pub fn command_2d_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_2d_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured four-point polygon, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -125,7 +125,7 @@ pub fn command_30_length(_data: &[u32]) -> Option<usize> {
     Some(6)
 }
 
-pub fn command_30_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_30_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
@@ -138,7 +138,7 @@ pub fn command_38_length(_data: &[u32]) -> Option<usize> {
     Some(8)
 }
 
-pub fn command_38_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_38_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
     
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
@@ -151,7 +151,7 @@ pub fn command_3c_length(_data: &[u32]) -> Option<usize> {
     Some(12)
 }
 
-pub fn command_3c_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_3c_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded Textured four-point polygon, opaque, texture-blending", data);
 }
 
@@ -159,7 +159,7 @@ pub fn command_50_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_50_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_50_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded line, opaque", data);
 }
 
@@ -167,7 +167,7 @@ pub fn command_65_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_65_handler(resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_65_handler(state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -199,7 +199,7 @@ pub fn command_6f_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub fn command_6f_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_6f_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture", data);
 }
 
@@ -207,7 +207,7 @@ pub fn command_80_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_80_handler(_resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_80_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (VRAM to VRAM)", data);
 }
 
@@ -224,7 +224,7 @@ pub fn command_a0_length(data: &[u32]) -> Option<usize> {
     return Some(data_words);
 }
 
-pub fn command_a0_handler(_resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_a0_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
     
     let base_point = extract_point_normalized(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
@@ -271,7 +271,7 @@ pub fn command_c0_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub fn command_c0_handler(resources: &mut Resources, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_c0_handler(state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
     let origin = extract_point(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
@@ -310,7 +310,7 @@ pub fn command_e1_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e1_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e1_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Draw Mode setting", data);
     
     let stat = &mut resources.gpu.gpu1814.stat;
@@ -347,7 +347,7 @@ pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e2_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e2_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Texture Window setting", data);
 
     resources.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
@@ -361,7 +361,7 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e3_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e3_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area top left", data);
 
     resources.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
@@ -377,7 +377,7 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e4_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e4_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
 
     resources.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
@@ -393,7 +393,7 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e5_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e5_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Offset", data);
 
     let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;
@@ -414,7 +414,7 @@ pub fn command_e6_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e6_handler(resources: &mut Resources, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e6_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Mask Bit Setting", data);
 
     let stat = &mut resources.gpu.gpu1814.stat;

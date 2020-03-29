@@ -16,17 +16,17 @@ use log::info;
 use crate::backends::video::{self, VideoBackend};
 use crate::backends::audio::{self, AudioBackend};
 use crate::backends::cdrom::{self, CdromBackend};
-use crate::system::Resources;
-use crate::controllers::Event;
+use crate::system::types::State;
+use crate::system::types::Event;
 
-pub struct State<'a: 'b, 'b: 'c, 'c> {
-    pub resources: *mut Resources,
+pub struct Context<'a: 'b, 'b: 'c, 'c> {
+    pub state: *mut State,
     pub video_backend: &'c VideoBackend<'a, 'b>,
     pub audio_backend: &'c AudioBackend<'a, 'b>,
     pub cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
-unsafe impl<'a: 'b, 'b: 'c, 'c> Sync for State<'a, 'b, 'c> {}
+unsafe impl<'a: 'b, 'b: 'c, 'c> Sync for Context<'a, 'b, 'c> {}
 
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
@@ -39,7 +39,7 @@ pub struct Config<'a: 'b, 'b> {
 }
 
 pub struct Core<'a: 'b, 'b> {
-    pub resources: Pin<Box<Resources>>,
+    pub state: Pin<Box<State>>,
     task_executor: ThreadPool,
     config: Config<'a, 'b>,
 }
@@ -49,14 +49,14 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
         info!("Main thread ID: {}", thread_id::get());
 
-        let mut resources = Resources::new();
+        let mut state = State::new();
 
         let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
 
         unsafe {
-            let resources_mut = resources.as_mut().get_unchecked_mut();
-            Resources::initialize(resources_mut);
-            Resources::load_bios(resources_mut, &bios_path);
+            let state_mut = state.as_mut().get_unchecked_mut();
+            State::initialize(state_mut);
+            State::load_bios(state_mut, &bios_path);
         }
 
         let task_executor = ThreadPoolBuilder::new()
@@ -73,19 +73,19 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         cdrom::setup(&config.cdrom_backend);
 
         Core {
-            resources: resources,
+            state: state,
             task_executor: task_executor,
             config: config,
         }
     }
 
     pub fn step(&mut self) {
-        let resources_mut = unsafe { 
-            self.resources.as_mut().get_unchecked_mut()  
+        let state_mut = unsafe { 
+            self.state.as_mut().get_unchecked_mut()  
         };
         
-        let state = State {
-            resources: resources_mut as *mut Resources,
+        let state = Context {
+            state: state_mut as *mut State,
             video_backend: &self.config.video_backend,
             audio_backend: &self.config.audio_backend,
             cdrom_backend: &self.config.cdrom_backend,

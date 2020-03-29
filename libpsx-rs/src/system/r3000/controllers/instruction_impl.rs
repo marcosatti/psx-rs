@@ -1,5 +1,5 @@
 use std::intrinsics::{likely, unlikely};
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::constants::r3000::INSTRUCTION_SIZE;
 use crate::types::mips1::instruction::Instruction;
 use crate::controllers::r3000::{InstResult, set_exception};
@@ -9,7 +9,7 @@ use crate::system::r3000::cp0::{STATUS_ISC, CAUSE_EXCCODE_SYSCALL};
 use crate::utilities::mips1::{pc_calc_jump_target, status_pop_exception};
 use crate::controllers::r3000::debug;
 
-pub fn sll(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sll(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
     let shamt = instruction.shamt();
@@ -19,7 +19,7 @@ pub fn sll(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn srl(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn srl(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
     let shamt = instruction.shamt();
@@ -29,7 +29,7 @@ pub fn srl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sra(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sra(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32() as i32;
     let shamt = instruction.shamt();
@@ -39,7 +39,7 @@ pub fn sra(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sllv(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sllv(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -56,7 +56,7 @@ pub fn sllv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn srlv(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn srlv(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -73,7 +73,7 @@ pub fn srlv(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn srav(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn srav(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -94,13 +94,13 @@ pub fn srav(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn jr(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn jr(state: &mut State, instruction: Instruction) -> InstResult {
     let target = resources.r3000.gpr[instruction.rs()].read_u32();
     resources.r3000.branch_delay.set(target, 1);
     Ok(())
 }
 
-pub fn jalr(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn jalr(state: &mut State, instruction: Instruction) -> InstResult {
     let target = resources.r3000.gpr[instruction.rs()].read_u32();
     resources.r3000.branch_delay.set(target, 1);
     let pc = resources.r3000.pc.read_u32();
@@ -109,7 +109,7 @@ pub fn jalr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn syscall(resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn syscall(state: &mut State, _instruction: Instruction) -> InstResult {
     debug::trace_syscall(resources);
 
     if resources.r3000.branch_delay.branching() {
@@ -120,11 +120,11 @@ pub fn syscall(resources: &mut Resources, _instruction: Instruction) -> InstResu
     Ok(())
 }
 
-pub fn break_(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn break_(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction break not implemented");
 }
 
-pub fn mfhi(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mfhi(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.hi.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value);
@@ -132,14 +132,14 @@ pub fn mfhi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn mthi(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mthi(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     resources.r3000.hi.write_u32(value);
     Ok(())
 }
 
-pub fn mflo(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mflo(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.lo.read_u32();
     let rd = &mut resources.r3000.gpr[instruction.rd()];
     rd.write_u32(value);
@@ -147,14 +147,14 @@ pub fn mflo(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn mtlo(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mtlo(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     resources.r3000.lo.write_u32(value);
     Ok(())
 }
 
-pub fn mult(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mult(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32 as i64;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -173,7 +173,7 @@ pub fn mult(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn multu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn multu(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as u64;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -192,7 +192,7 @@ pub fn multu(resources: &mut Resources, instruction: Instruction) -> InstResult 
     Ok(())
 }
 
-pub fn div(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn div(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -213,7 +213,7 @@ pub fn div(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn divu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn divu(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -234,7 +234,7 @@ pub fn divu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn add(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn add(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -252,7 +252,7 @@ pub fn add(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn addu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn addu(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -264,11 +264,11 @@ pub fn addu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sub(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn sub(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction sub not implemented");
 }
 
-pub fn subu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn subu(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &resources.r3000.gpr[instruction.rt()];
@@ -279,7 +279,7 @@ pub fn subu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn and(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn and(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -290,7 +290,7 @@ pub fn and(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn or(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn or(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -301,7 +301,7 @@ pub fn or(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn xor(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn xor(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -312,7 +312,7 @@ pub fn xor(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn nor(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn nor(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -323,7 +323,7 @@ pub fn nor(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn slt(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn slt(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32;
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -340,7 +340,7 @@ pub fn slt(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sltu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sltu(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -357,7 +357,7 @@ pub fn sltu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn bltz(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn bltz(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -370,7 +370,7 @@ pub fn bltz(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn bgez(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn bgez(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -383,21 +383,21 @@ pub fn bgez(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn bltzal(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn bltzal(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bltzal not implemented");
 }
 
-pub fn bgezal(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn bgezal(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bgezal not implemented");
 }
 
-pub fn j(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn j(state: &mut State, instruction: Instruction) -> InstResult {
     let target = pc_calc_jump_target(resources.r3000.pc.read_u32(), instruction.addr());
     resources.r3000.branch_delay.set(target, 1);
     Ok(())
 }
 
-pub fn jal(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn jal(state: &mut State, instruction: Instruction) -> InstResult {
     let target = pc_calc_jump_target(resources.r3000.pc.read_u32(), instruction.addr());
     resources.r3000.branch_delay.set(target, 1);
 
@@ -407,7 +407,7 @@ pub fn jal(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn beq(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn beq(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = resources.r3000.gpr[instruction.rs()].read_u32();
     let value2 = resources.r3000.gpr[instruction.rt()].read_u32();
@@ -421,7 +421,7 @@ pub fn beq(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn bne(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn bne(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = resources.r3000.gpr[instruction.rs()].read_u32();
     let value2 = resources.r3000.gpr[instruction.rt()].read_u32();
@@ -435,7 +435,7 @@ pub fn bne(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn blez(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn blez(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -448,7 +448,7 @@ pub fn blez(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn bgtz(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn bgtz(state: &mut State, instruction: Instruction) -> InstResult {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = resources.r3000.gpr[instruction.rs()].read_u32() as i32;
     
@@ -461,7 +461,7 @@ pub fn bgtz(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn addi(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn addi(state: &mut State, instruction: Instruction) -> InstResult {
     let imm = instruction.i_imm() as i32;
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value: u32 = rs.read_u32();
@@ -478,7 +478,7 @@ pub fn addi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn addiu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn addiu(state: &mut State, instruction: Instruction) -> InstResult {
     let imm = instruction.i_imm() as i32 as u32;
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
@@ -488,7 +488,7 @@ pub fn addiu(resources: &mut Resources, instruction: Instruction) -> InstResult 
     Ok(())
 }
 
-pub fn slti(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn slti(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32() as i32;
     let imm = instruction.i_imm() as i32;
@@ -504,7 +504,7 @@ pub fn slti(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sltiu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sltiu(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &mut resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let imm = instruction.i_imm() as i32 as u32;
@@ -520,7 +520,7 @@ pub fn sltiu(resources: &mut Resources, instruction: Instruction) -> InstResult 
     Ok(())
 }
 
-pub fn andi(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn andi(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -529,7 +529,7 @@ pub fn andi(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn ori(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn ori(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -538,7 +538,7 @@ pub fn ori(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn xori(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn xori(state: &mut State, instruction: Instruction) -> InstResult {
     let rs = &resources.r3000.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -547,7 +547,7 @@ pub fn xori(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lui(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lui(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = instruction.rt();
     let imm = (instruction.u_imm() as u32) << 16;
     resources.r3000.gpr[rt].write_u32(imm);
@@ -555,7 +555,7 @@ pub fn lui(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn mfc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mfc0(state: &mut State, instruction: Instruction) -> InstResult {
     let rd = unsafe { resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
     let value = rd.read_u32();
     let rt = &mut resources.r3000.gpr[instruction.rt()];
@@ -564,7 +564,7 @@ pub fn mfc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn mtc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mtc0(state: &mut State, instruction: Instruction) -> InstResult {
     let rt = &mut resources.r3000.gpr[instruction.rt()];
     let value = rt.read_u32();
     let rd = unsafe { resources.r3000.cp0.register[instruction.rd()].as_mut().unwrap().as_mut() };
@@ -572,31 +572,31 @@ pub fn mtc0(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn bc0f(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn bc0f(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bc0f not implemented");
 }
 
-pub fn bc0t(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn bc0t(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction bc0t not implemented");
 }
 
-pub fn tlbr(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn tlbr(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbr not implemented");
 }
 
-pub fn tlbwi(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn tlbwi(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbwi not implemented");
 }
 
-pub fn tlbwr(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn tlbwr(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbwr not implemented");
 }
 
-pub fn tlbp(_resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn tlbp(_state: &mut State, _instruction: Instruction) -> InstResult {
     unimplemented!("Instruction tlbp not implemented");
 }
 
-pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn rfe(state: &mut State, _instruction: Instruction) -> InstResult {
     debug::trace_rfe(resources);
     let status = &mut resources.r3000.cp0.status;
     let old_status_value = status.read_u32();
@@ -616,7 +616,7 @@ pub fn rfe(resources: &mut Resources, _instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lb(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lb(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -634,7 +634,7 @@ pub fn lb(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lh(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lh(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -652,7 +652,7 @@ pub fn lh(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lwl(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lwl(state: &mut State, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0x00FF_FFFF, 0x0000_FFFF, 0x0000_00FF, 0x0000_0000];
     const SHIFT: [usize; 4] = [24, 16, 8, 0];
 
@@ -680,7 +680,7 @@ pub fn lwl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lw(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lw(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -698,7 +698,7 @@ pub fn lw(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lbu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lbu(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -716,7 +716,7 @@ pub fn lbu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lhu(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lhu(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -734,7 +734,7 @@ pub fn lhu(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn lwr(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lwr(state: &mut State, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0x0000_0000, 0xFF00_0000, 0xFFFF_0000, 0xFFFF_FF00];
     const SHIFT: [usize; 4] = [0, 8, 16, 24];
 
@@ -762,7 +762,7 @@ pub fn lwr(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sb(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sb(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u8(0);
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -777,7 +777,7 @@ pub fn sb(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sh(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sh(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u16(0);
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -792,7 +792,7 @@ pub fn sh(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn swl(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn swl(state: &mut State, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0xFFFF_FF00, 0xFFFF_0000, 0xFF00_0000, 0x0000_0000];
     const SHIFT: [usize; 4] = [24, 16, 8, 0];
 
@@ -822,7 +822,7 @@ pub fn swl(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn sw(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sw(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u32();
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -837,7 +837,7 @@ pub fn sw(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn swr(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn swr(state: &mut State, instruction: Instruction) -> InstResult {
     const MASK: [u32; 4] = [0x0000_0000, 0x0000_00FF, 0x0000_FFFF, 0x00FF_FFFF];
     const SHIFT: [usize; 4] = [0, 8, 16, 24];
 

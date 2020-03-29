@@ -1,5 +1,5 @@
 use log::trace;
-use crate::system::Resources;
+use crate::system::types::State;
 
 const REGISTER_NAMES: [&str; 32] = [
     "zero",

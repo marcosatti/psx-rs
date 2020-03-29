@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::sync::atomic::AtomicBool;
+use std::time::Duration;
 use log::info;
 use crate::system::r3000::constants::{BIOS_SIZE, MAIN_MEMORY_SIZE};
 use crate::types::memory::b8_memory::B8Memory;
@@ -27,6 +28,33 @@ use crate::system::cdrom::types::State as CdromState;
 use crate::system::cdrom::types::initialize as cdrom_initialize;
 use crate::system::padmc::types::State as PadmcState;
 use crate::system::padmc::types::initialize as padmc_initialize;
+use crate::Context;
+use crate::backends::video::VideoBackend;
+use crate::backends::audio::AudioBackend;
+use crate::backends::cdrom::CdromBackend;
+
+#[derive(Copy, Clone, Debug)]
+pub enum Event {
+    Time(Duration),
+}
+
+pub struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
+    pub state: &'c mut State,
+    pub video_backend: &'c VideoBackend<'a, 'b>,
+    pub audio_backend: &'c AudioBackend<'a, 'b>,
+    pub cdrom_backend: &'c CdromBackend<'a, 'b>,
+}
+
+impl<'a: 'b, 'b: 'c, 'c> ControllerContext<'a, 'b, 'c> {
+    pub unsafe fn from_core_context(context: &Context<'a, 'b, 'c>) -> ControllerContext<'a, 'b, 'c> {
+        ControllerContext {
+            state: context.state.as_mut().unwrap(),
+            video_backend: context.video_backend,
+            audio_backend: context.audio_backend,
+            cdrom_backend: context.cdrom_backend,
+        }
+    }
+}
 
 pub struct State {
     _pin: PhantomPinned,

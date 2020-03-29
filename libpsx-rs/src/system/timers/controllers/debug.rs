@@ -1,17 +1,17 @@
 use log::trace;
 use crate::system::timers::*;
 use crate::controllers::timers::timer::*;
-use crate::system::Resources;
+use crate::system::types::State;
 
 const ENABLE_MODE_WRITE_TRACE: bool = false;
 
-pub fn trace_timers(resources: &mut Resources) {
+pub fn trace_timers(state: &mut State) {
     for i in 0..3 {
         trace_timer(resources, i);
     }
 }
 
-pub fn trace_timer(resources: &mut Resources, timer_id: usize) {
+pub fn trace_timer(state: &mut State, timer_id: usize) {
     let count = get_count(resources, timer_id);
     let mode = get_mode(resources, timer_id);
     let target = get_target(resources, timer_id);
@@ -27,7 +27,7 @@ pub fn trace_timer(resources: &mut Resources, timer_id: usize) {
     trace_mode(resources, timer_id);
 }
 
-pub fn trace_mode(resources: &mut Resources, timer_id: usize) {
+pub fn trace_mode(state: &mut State, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
 
     let sync_enable = mode.register.read_bitfield(MODE_SYNC_EN);
@@ -48,7 +48,7 @@ pub fn trace_mode(resources: &mut Resources, timer_id: usize) {
     trace!("irq_status = {}, target_hit = {}, overflow_hit = {}", irq_status, target_hit, overflow_hit);
 }
 
-pub fn trace_mode_write(resources: &mut Resources, timer_id: usize) {
+pub fn trace_mode_write(state: &mut State, timer_id: usize) {
     if !ENABLE_MODE_WRITE_TRACE {
         return;
     }

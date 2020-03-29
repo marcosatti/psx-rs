@@ -1,4 +1,4 @@
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::backends::video::VideoBackend;
 use crate::controllers::gpu::crtc::backend_dispatch;
 use crate::system::gpu::*;

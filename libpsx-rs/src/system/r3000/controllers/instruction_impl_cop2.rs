@@ -3,7 +3,7 @@ use typenum::*;
 use crate::types::bitfield::Bitfield;
 use crate::utilities::numeric::*;
 use crate::utilities::packed::*;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::types::mips1::instruction::Instruction;
 use crate::system::r3000::cp2::instruction::GteInstruction;
 use crate::controllers::r3000::InstResult;
@@ -15,7 +15,7 @@ use crate::utilities::*;
 // Note: probably ok to disregard SRA != division by 2^N (https://en.wikipedia.org/wiki/Arithmetic_shift), as it just results in a small rounding error.
 // In practice, this means its ok to perform the SRA's as divisions by 4096, etc below.
 
-fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_: u32) {
+fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
     handle_cp2_flag_reset(resources);
 
     let trx_value = resources.r3000.cp2.gc[5].read_u32() as i32 as f64;
@@ -124,7 +124,7 @@ fn rtps_vector(resources: &mut Resources, shift: bool, vector_xy: u32, vector_z_
     handle_cp2_sxyp_mirror(resources);
 }
 
-fn normal_color(resources: &mut Resources, shift: bool, lm: bool, color: bool, depth: bool, vector_xy: u32, vector_z_: u32) {
+fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bool, vector_xy: u32, vector_z_: u32) {
     if depth {
         assert!(color, "Depth calculation shouldn't be set without color calculation");
     }
@@ -257,7 +257,7 @@ fn normal_color(resources: &mut Resources, shift: bool, lm: bool, color: bool, d
     handle_cp2_flag_error_bit(resources);
 }
 
-pub fn lwc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn lwc2(state: &mut State, instruction: Instruction) -> InstResult {
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -276,7 +276,7 @@ pub fn lwc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn swc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn swc2(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.cp2.gd[instruction.rt()].read_u32();
     let mut addr = resources.r3000.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -291,19 +291,19 @@ pub fn swc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn mfc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mfc2(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.cp2.gd[instruction.rd()].read_u32();
     resources.r3000.gpr[instruction.rt()].write_u32(value);
     Ok(())
 }
 
-pub fn cfc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn cfc2(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.cp2.gc[instruction.rd()].read_u32();
     resources.r3000.gpr[instruction.rt()].write_u32(value);
     Ok(())
 }
 
-pub fn mtc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mtc2(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u32();
     resources.r3000.cp2.gd[instruction.rd()].write_u32(value);
     handle_cp2_sxyp_write(resources, instruction.rd());
@@ -311,13 +311,13 @@ pub fn mtc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn ctc2(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn ctc2(state: &mut State, instruction: Instruction) -> InstResult {
     let value = resources.r3000.gpr[instruction.rt()].read_u32();
     resources.r3000.cp2.gc[instruction.rd()].write_u32(value);
     Ok(())
 }
 
-pub fn rtps(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn rtps(state: &mut State, instruction: Instruction) -> InstResult {
     // Operates on V0.
     let instruction = GteInstruction::new(instruction);
     let vector_0_xy = resources.r3000.cp2.gd[0].read_u32();
@@ -326,7 +326,7 @@ pub fn rtps(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn nclip(resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn nclip(state: &mut State, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
     handle_cp2_flag_reset(resources);
@@ -353,27 +353,27 @@ pub fn nclip(resources: &mut Resources, _instruction: Instruction) -> InstResult
     Ok(())
 }
 
-pub fn op(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn op(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction op not implemented");
 }
 
-pub fn dpcs(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn dpcs(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dpcs not implemented");
 }
 
-pub fn intpl(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn intpl(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction intpl not implemented");
 }
 
-pub fn mvmva(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn mvmva(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction mvmva not implemented");
 }
 
-pub fn ncds(resources: &mut Resources, instruction: Instruction) -> InstResult {    
+pub fn ncds(state: &mut State, instruction: Instruction) -> InstResult {    
     // Operates on V0.
     let instruction = GteInstruction::new(instruction);
     let vector_0_xy = resources.r3000.cp2.gd[0].read_u32();
@@ -382,56 +382,56 @@ pub fn ncds(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn cdp(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn cdp(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction cdp not implemented");
 }
 
-pub fn ncdt(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn ncdt(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncdt not implemented");
     Ok(())
 }
 
-pub fn nccs(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn nccs(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction nccs not implemented");
     Ok(())
 }
 
-pub fn cc(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn cc(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction cc not implemented");
 }
 
-pub fn ncs(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn ncs(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncs not implemented");
     Ok(())
 }
 
-pub fn nct(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn nct(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction nct not implemented");
     Ok(())
 }
 
-pub fn sqr(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn sqr(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction sqr not implemented");
 }
 
-pub fn dcpl(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn dcpl(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dcpl not implemented");
 }
 
-pub fn dpct(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn dpct(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dpct not implemented");
 }
 
-pub fn avsz3(resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn avsz3(state: &mut State, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
     handle_cp2_flag_reset(resources);
@@ -460,7 +460,7 @@ pub fn avsz3(resources: &mut Resources, _instruction: Instruction) -> InstResult
     Ok(())
 }
 
-pub fn avsz4(resources: &mut Resources, _instruction: Instruction) -> InstResult {
+pub fn avsz4(state: &mut State, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
     handle_cp2_flag_reset(resources);
@@ -490,7 +490,7 @@ pub fn avsz4(resources: &mut Resources, _instruction: Instruction) -> InstResult
     Ok(())
 }
 
-pub fn rtpt(resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn rtpt(state: &mut State, instruction: Instruction) -> InstResult {
     // Operates on V0, V1, V2.
     let instruction = GteInstruction::new(instruction);
     for i in 0..3 {
@@ -502,17 +502,17 @@ pub fn rtpt(resources: &mut Resources, instruction: Instruction) -> InstResult {
     Ok(())
 }
 
-pub fn gpf(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn gpf(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction gpf not implemented");
 }
 
-pub fn gpl(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn gpl(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction gpl not implemented");
 }
 
-pub fn ncct(_resources: &mut Resources, instruction: Instruction) -> InstResult {
+pub fn ncct(_state: &mut State, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncct not implemented");
     Ok(())

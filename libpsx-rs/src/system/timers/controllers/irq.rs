@@ -1,10 +1,10 @@
 use log::warn;
 use log::debug;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::timers::*;
 use crate::controllers::timers::timer::*;
 
-pub fn handle_irq_trigger(resources: &mut Resources, timer_id: usize, irq_type: IrqType) {
+pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType) {
     let mode = get_mode(resources, timer_id);
     let state = get_state(resources, timer_id);
 
@@ -37,7 +37,7 @@ pub fn handle_irq_trigger(resources: &mut Resources, timer_id: usize, irq_type: 
     }
 }
 
-pub fn handle_irq_raise(resources: &mut Resources, timer_id: usize) {
+pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
 
     let mut raise_irq = false;
@@ -62,7 +62,7 @@ pub fn handle_irq_raise(resources: &mut Resources, timer_id: usize) {
     }
 
     if raise_irq {
-        use crate::system::intc::register::Line;
+        use crate::system::intc::types::Line;
 
         let irq_line = match timer_id {
             0 => Line::Tmr0,

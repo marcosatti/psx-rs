@@ -13,7 +13,7 @@ use crate::controllers::r3000::hazard::*;
 use crate::controllers::r3000::debug::disassembler::*;
 use crate::controllers::r3000::debug::register::*;
 use crate::controllers::r3000::memory_controller::translate_address;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::r3000::cp0::*;
 use crate::debug::DEBUG_CORE_EXIT;
 

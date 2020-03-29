@@ -1,5 +1,5 @@
 use crate::constants::spu::dac::*;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::backends::audio::AudioBackend;
 use crate::types::bitfield::Bitfield;
 use crate::controllers::spu::voice::*;
@@ -11,7 +11,7 @@ use crate::controllers::spu::interpolation::*;
 use crate::system::spu::*;
 use crate::system::spu::voice::*;
 
-pub fn generate_sound(resources: &mut Resources, audio_backend: &AudioBackend) {
+pub fn generate_sound(state: &mut State, audio_backend: &AudioBackend) {
     let pmon_value = resources.spu.voice_channel_fm.read_u32();
     if pmon_value > 0 {
         unimplemented!("Pitch modulation not implemented: 0x{:X}", pmon_value);
@@ -52,7 +52,7 @@ pub fn generate_sound(resources: &mut Resources, audio_backend: &AudioBackend) {
     }
 }
 
-fn handle_key_on(resources: &mut Resources, voice_id: usize) {
+fn handle_key_on(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
     let start_address = unsafe { &mut *get_adpcm_sa(resources, voice_id) };
     let key_on = &mut resources.spu.voice_key_on;
@@ -79,7 +79,7 @@ fn handle_key_on(resources: &mut Resources, voice_id: usize) {
     }
 }
 
-fn handle_key_off(resources: &mut Resources, voice_id: usize) {
+fn handle_key_off(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
     let key_off = &mut resources.spu.voice_key_off;
 
@@ -95,7 +95,7 @@ fn handle_key_off(resources: &mut Resources, voice_id: usize) {
     }
 }
 
-fn handle_play_sound_buffer(resources: &mut Resources, audio_backend: &AudioBackend, voice_id: usize) {
+fn handle_play_sound_buffer(state: &mut State, audio_backend: &AudioBackend, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
     let control = &resources.spu.control;
 
@@ -110,7 +110,7 @@ fn handle_play_sound_buffer(resources: &mut Resources, audio_backend: &AudioBack
     }
 }
 
-fn decode_adpcm_block(resources: &mut Resources, voice_id: usize) {
+fn decode_adpcm_block(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
     let repeat_address = unsafe { &mut *get_adpcm_ra(resources, voice_id) };
     let status = &mut resources.spu.voice_channel_status;
@@ -149,7 +149,7 @@ fn decode_adpcm_block(resources: &mut Resources, voice_id: usize) {
     play_state.current_address = next_address;
 }
 
-fn handle_pitch_counter(resources: &mut Resources, voice_id: usize) {
+fn handle_pitch_counter(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(resources, voice_id) };
     let sample_rate = unsafe { &mut *get_adpcm_sr(resources, voice_id) };
 

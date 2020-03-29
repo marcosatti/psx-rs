@@ -1,5 +1,5 @@
 use log::warn;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::types::register::b32_register::B32Register;
 use crate::types::bitfield::Bitfield;
 use crate::system::dmac::channel::*;
@@ -153,7 +153,7 @@ pub fn get_sync_mode(chcr: &Chcr) -> SyncMode {
     }
 }
 
-pub fn raise_irq(resources: &mut Resources, channel: usize) {
+pub fn raise_irq(state: &mut State, channel: usize) {
     let dicr = &mut resources.dmac.dicr;
 
     let _lock = dicr.mutex.lock();

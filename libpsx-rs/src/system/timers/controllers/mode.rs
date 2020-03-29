@@ -1,12 +1,12 @@
 use std::sync::atomic::Ordering;
-use crate::system::Resources;
+use crate::system::types::State;
 use crate::system::timers::*;
 use crate::system::timers::timer::*;
 use crate::controllers::timers::timer::*;
 use crate::controllers::timers::count::*;
 use crate::controllers::timers::debug;
 
-pub fn handle_mode_write(resources: &mut Resources, timer_id: usize) {
+pub fn handle_mode_write(state: &mut State, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
 
     if !mode.write_latch.load(Ordering::Acquire) {
@@ -32,7 +32,7 @@ pub fn handle_mode_write(resources: &mut Resources, timer_id: usize) {
     mode.write_latch.store(false, Ordering::Release);
 }
 
-pub fn handle_mode_read(resources: &mut Resources, timer_id: usize) {
+pub fn handle_mode_read(state: &mut State, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
 
     if !mode.read_latch.load(Ordering::Acquire) {
@@ -45,7 +45,7 @@ pub fn handle_mode_read(resources: &mut Resources, timer_id: usize) {
     mode.write_latch.store(false, Ordering::Release);
 }
 
-pub fn handle_clock_source(resources: &mut Resources, timer_id: usize) {
+pub fn handle_clock_source(state: &mut State, timer_id: usize) {
     let mode = get_mode(resources, timer_id);
     let state = get_state(resources, timer_id);
 
@@ -84,7 +84,7 @@ pub fn handle_clock_source(resources: &mut Resources, timer_id: usize) {
 }
 
 
-pub fn handle_oneshot_clear(resources: &mut Resources, timer_id: usize) {
+pub fn handle_oneshot_clear(state: &mut State, timer_id: usize) {
     let state = get_state(resources, timer_id);
     state.irq_raised = false;
 }

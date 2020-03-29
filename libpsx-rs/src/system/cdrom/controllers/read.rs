@@ -1,53 +1,53 @@
 use crate::backends::cdrom::CdromBackend;
-use crate::system::Resources;
-use crate::controllers::cdrom::backend_dispatch;
-use crate::controllers::cdrom::interrupt::*;
-use crate::controllers::cdrom::state::*;
-use crate::system::cdrom::*;
+use crate::system::types::State;
+use crate::system::cdrom::controllers::backend_dispatch;
+use crate::system::cdrom::controllers::interrupt::*;
+use crate::system::cdrom::controllers::state::*;
+use crate::system::cdrom::constants::*;
 
-pub fn handle_read(resources: &mut Resources, cdrom_backend: &CdromBackend) -> bool {
+pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
     // Buffer some data first (INT1 means ready to send data?).
     // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the BIOS expects it...
-    if resources.cdrom.read_buffer.is_empty() {
-        if resources.cdrom.pausing {
+    if state.cdrom.read_buffer.is_empty() {
+        if state.cdrom.pausing {
             // Stop reading and raise interrupt.
-            resources.cdrom.pausing = false;
-            resources.cdrom.reading = false;
-            let stat_value = stat_value(resources);
-            let response = &mut resources.cdrom.response;
+            state.cdrom.pausing = false;
+            state.cdrom.reading = false;
+            let stat_value = stat_value(state);
+            let response = &mut state.cdrom.response;
             response.write_one(stat_value).unwrap();
-            raise_irq(resources, 2);
+            raise_irq(state, 2);
             return true;
         }
 
-        if !resources.cdrom.reading {
+        if !state.cdrom.reading {
             return false;
         }
         
         // Make sure FIFO is empty.
-        if !resources.cdrom.data.is_empty() {
+        if !state.cdrom.data.is_empty() {
             return true;
         }
 
-        let data_block = backend_dispatch::read_sector(cdrom_backend, resources.cdrom.lba_address).expect("Tried to read a sector when no backend is available");
+        let data_block = backend_dispatch::read_sector(cdrom_backend, state.cdrom.lba_address).expect("Tried to read a sector when no backend is available");
         assert_eq!(data_block.len(), 2048);
 
-        resources.cdrom.lba_address += 1;
-        resources.cdrom.read_buffer.extend(&data_block);
+        state.cdrom.lba_address += 1;
+        state.cdrom.read_buffer.extend(&data_block);
 
         // Raise the interrupt - we have read a sector ok and have some data ready.
-        let stat_value = stat_value(resources);
-        let response = &mut resources.cdrom.response;
+        let stat_value = stat_value(state);
+        let response = &mut state.cdrom.response;
         response.write_one(stat_value).unwrap();
-        raise_irq(resources, 1);
+        raise_irq(state, 1);
     }
 
     // Check if the CPU is ready for data and send it.
-    let request = &mut resources.cdrom.request;
+    let request = &mut state.cdrom.request;
     let load_data = request.register.read_bitfield(REQUEST_BFRD) > 0;
     if load_data {
-        let read_buffer = &mut resources.cdrom.read_buffer;
-        let data = &mut resources.cdrom.data;
+        let read_buffer = &mut state.cdrom.read_buffer;
+        let data = &mut state.cdrom.data;
 
         loop {
             if data.is_full() {
