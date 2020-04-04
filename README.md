@@ -14,6 +14,7 @@ See BUILD.md for build details.
 - Video starting to work, needs implementing / bug fixing.
 - Audio starting to work, needs implementing / bug fixing, but you can make out the BIOS intro reasonably well.
 - Input not done at all (Hi-Z always).
+- CDROM starting to work, has timing issues / needs implementing (reading sectors is working).
 
 ## Running
 You will need to put the BIOS (scph5501.bin) into the folder ${cwd}/workspace/bios.
