@@ -5,7 +5,7 @@ pub enum VideoBackend<'a: 'b, 'b> {
     None,
     #[cfg(opengl)]
     Opengl(opengl::BackendParams<'a, 'b>),
-    _Phantom(std::marker::PhantomData<(&'a (), &'b())>),
+    _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
 pub fn setup(video_backend: &VideoBackend) {

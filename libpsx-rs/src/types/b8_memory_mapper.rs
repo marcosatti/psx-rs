@@ -1,9 +1,17 @@
-use std::ptr::NonNull;
-use std::mem::size_of;
-use std::convert::TryInto;
-use std::fmt::{UpperHex, Debug};
-use num_traits::{Unsigned, PrimInt};
 use crate::types::bitfield::Bitfield;
+use num_traits::{
+    PrimInt,
+    Unsigned,
+};
+use std::{
+    convert::TryInto,
+    fmt::{
+        Debug,
+        UpperHex,
+    },
+    mem::size_of,
+    ptr::NonNull,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub enum ReadError {
@@ -23,7 +31,7 @@ pub trait B8MemoryMap {
     fn read_u8(&mut self, _offset: u32) -> ReadResult<u8> {
         unimplemented!();
     }
-    
+
     fn write_u8(&mut self, _offset: u32, _value: u8) -> WriteResult {
         unimplemented!();
     }
@@ -31,7 +39,7 @@ pub trait B8MemoryMap {
     fn read_u16(&mut self, _offset: u32) -> ReadResult<u16> {
         unimplemented!();
     }
-    
+
     fn write_u16(&mut self, _offset: u32, _value: u16) -> WriteResult {
         unimplemented!();
     }
@@ -39,7 +47,7 @@ pub trait B8MemoryMap {
     fn read_u32(&mut self, _offset: u32) -> ReadResult<u32> {
         unimplemented!();
     }
-    
+
     fn write_u32(&mut self, _offset: u32, _value: u32) -> WriteResult {
         unimplemented!();
     }
@@ -52,7 +60,7 @@ pub struct B8MemoryMapper<T: PrimInt + Unsigned> {
     offset_mask: Bitfield,
 }
 
-impl<T> B8MemoryMapper<T> 
+impl<T> B8MemoryMapper<T>
 where
     T: PrimInt + Unsigned + TryInto<usize> + TryInto<u32> + Debug + UpperHex,
     <T as std::convert::TryInto<usize>>::Error: std::fmt::Debug,
@@ -68,9 +76,9 @@ where
 
         B8MemoryMapper {
             mappings: vec![None; 1 << directory_bits],
-            directory_mask: directory_mask,
-            page_mask: page_mask,
-            offset_mask: offset_mask,
+            directory_mask,
+            page_mask,
+            offset_mask,
         }
     }
 
@@ -109,8 +117,7 @@ where
         }
     }
 
-    fn object_at(&self, address: T) -> (*mut dyn B8MemoryMap, T)
-    {
+    fn object_at(&self, address: T) -> (*mut dyn B8MemoryMap, T) {
         unsafe {
             let directory_index: usize = self.directory_mask.extract_from(address).try_into().unwrap();
             let directory = match self.mappings.get_unchecked(directory_index).as_ref() {

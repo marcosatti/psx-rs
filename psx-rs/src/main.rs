@@ -1,26 +1,58 @@
 mod backend;
 
-use std::path::{Path, PathBuf};
-use std::panic;
-use std::env::args;
-use std::time::Duration;
-use std::sync::atomic::{Ordering, AtomicBool};
-use std::time::Instant;
-use sdl2::EventPump;
-use sdl2::video::GLProfile;
-use libpsx_rs::{Core, Config};
-use libpsx_rs::controllers::r3000::debug::{ENABLE_INTERRUPT_TRACING, ENABLE_STATE_TRACING, ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, ENABLE_REGISTER_TRACING};
-use libpsx_rs::controllers::gpu::debug::{ENABLE_GP0_COMMAND_TRACING, ENABLE_GP0_RENDER_PER_CALL};
-use libpsx_rs::debug::DEBUG_CORE_EXIT;
-use libpsx_rs::debug::analysis as debug_analysis;
+use libpsx_rs::{
+    debug::{
+        analysis as debug_analysis,
+        DEBUG_CORE_EXIT,
+    },
+    system::{
+        gpu::controllers::debug::{
+            ENABLE_GP0_COMMAND_TRACING,
+            ENABLE_GP0_RENDER_PER_CALL,
+        },
+        r3000::controllers::debug::{
+            ENABLE_INTERRUPT_TRACING,
+            ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ,
+            ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE,
+            ENABLE_REGISTER_TRACING,
+            ENABLE_STATE_TRACING,
+        },
+    },
+    Config,
+    Core,
+};
+use sdl2::{
+    video::GLProfile,
+    EventPump,
+};
+use std::{
+    env::args,
+    panic,
+    path::{
+        Path,
+        PathBuf,
+    },
+    sync::atomic::{
+        AtomicBool,
+        Ordering,
+    },
+    time::{
+        Duration,
+        Instant,
+    },
+};
 
 fn main() {
     // Signal handlers
     setup_signal_handler();
-    
+
     // Working directory / workspace
     let workspace_path = PathBuf::from(r"./workspace/");
-    println!("Working directory: {}, workspace directory: {}", std::env::current_dir().unwrap().to_str().unwrap(), workspace_path.to_str().unwrap());
+    println!(
+        "Working directory: {}, workspace directory: {}",
+        std::env::current_dir().unwrap().to_str().unwrap(),
+        workspace_path.to_str().unwrap()
+    );
 
     // Setup logging
     let logs_path = workspace_path.join(r"logs/");
@@ -55,13 +87,13 @@ fn main() {
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
-        video_backend: video_backend,
-        audio_backend: audio_backend,
-        cdrom_backend: cdrom_backend,
+        video_backend,
+        audio_backend,
+        cdrom_backend,
         time_delta: Duration::from_micros(time_delta_us as u64),
-        worker_threads: worker_threads,
+        worker_threads,
     };
-    
+
     main_inner(&mut event_pump, config);
 
     // CDROM teardown
@@ -113,25 +145,28 @@ fn main_inner(event_pump: &mut EventPump, config: Config) {
     }
 
     // Do event loop
-    let result = panic::catch_unwind(
-        panic::AssertUnwindSafe(|| {
-            'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
-                for event in event_pump.poll_iter() {
-                    match event {
-                        sdl2::event::Event::Quit { .. } => break 'event_loop,
-                        sdl2::event::Event::KeyDown { keycode, .. } => {
-                            if let Some(key) = keycode {
-                                handle_keycode(key);
-                            }
-                        },
-                        _ => {},
-                    }
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
+            for event in event_pump.poll_iter() {
+                match event {
+                    sdl2::event::Event::Quit {
+                        ..
+                    } => break 'event_loop,
+                    sdl2::event::Event::KeyDown {
+                        keycode,
+                        ..
+                    } => {
+                        if let Some(key) = keycode {
+                            handle_keycode(key);
+                        }
+                    },
+                    _ => {},
                 }
-
-                core.step();
             }
-        })
-    );
+
+            core.step();
+        }
+    }));
 
     if result.is_err() {
         log::error!("Panic occurred, exiting");
@@ -142,10 +177,10 @@ fn main_inner(event_pump: &mut EventPump, config: Config) {
 }
 
 fn setup_signal_handler() {
-    let ctrl_c_handler = || { 
+    let ctrl_c_handler = || {
         DEBUG_CORE_EXIT.store(true, Ordering::Release);
     };
-    
+
     ctrlc::set_handler(ctrl_c_handler).unwrap();
 }
 
@@ -153,13 +188,27 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
     use sdl2::keyboard::Keycode;
 
     match keycode {
-        Keycode::F1 => { toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output"); },
-        Keycode::F2 => { toggle_debug_option(&ENABLE_STATE_TRACING, "R3000 state tracing"); },
-        Keycode::F3 => { toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, "spin loop detection (read)"); },
-        Keycode::F4 => { toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, "spin loop detection (write)"); },
-        Keycode::F5 => { toggle_debug_option(&ENABLE_INTERRUPT_TRACING, "interrupt tracing"); },
-        Keycode::F6 => { toggle_debug_option(&ENABLE_GP0_RENDER_PER_CALL, "GPU rendering per draw call"); },
-        Keycode::F7 => { toggle_debug_option(&ENABLE_GP0_COMMAND_TRACING, "GPU GP0 command tracing"); },
+        Keycode::F1 => {
+            toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
+        },
+        Keycode::F2 => {
+            toggle_debug_option(&ENABLE_STATE_TRACING, "R3000 state tracing");
+        },
+        Keycode::F3 => {
+            toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, "spin loop detection (read)");
+        },
+        Keycode::F4 => {
+            toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, "spin loop detection (write)");
+        },
+        Keycode::F5 => {
+            toggle_debug_option(&ENABLE_INTERRUPT_TRACING, "interrupt tracing");
+        },
+        Keycode::F6 => {
+            toggle_debug_option(&ENABLE_GP0_RENDER_PER_CALL, "GPU rendering per draw call");
+        },
+        Keycode::F7 => {
+            toggle_debug_option(&ENABLE_GP0_COMMAND_TRACING, "GPU GP0 command tracing");
+        },
         _ => {},
     }
 }

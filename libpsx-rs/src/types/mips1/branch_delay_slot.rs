@@ -5,12 +5,12 @@ pub struct BranchDelaySlot {
 
 impl BranchDelaySlot {
     pub fn new() -> BranchDelaySlot {
-        BranchDelaySlot { 
+        BranchDelaySlot {
             target: None,
             slots: 0,
         }
     }
-    
+
     pub fn advance(&mut self) -> Option<u32> {
         if self.target.is_none() {
             return None;
@@ -57,7 +57,7 @@ impl BranchDelaySlot {
         self.target = None;
         self.slots = 0;
     }
-    
+
     pub fn target_or_null(&self) -> u32 {
         self.target.unwrap_or(0x0)
     }

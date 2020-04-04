@@ -1,12 +1,16 @@
 pub mod benchmark;
 
-use std::path::PathBuf;
-use std::fs::File;
-use std::io::Write;
-use std::sync::atomic::AtomicBool;
+use crate::{
+    system::types::State,
+    Core,
+};
 use log::debug;
-use crate::Core;
-use crate::resources::Resources;
+use std::{
+    fs::File,
+    io::Write,
+    path::PathBuf,
+    sync::atomic::AtomicBool,
+};
 
 pub static DEBUG_CORE_EXIT: AtomicBool = AtomicBool::new(false);
 
@@ -14,57 +18,57 @@ pub fn analysis(core: &mut Core) {
     debug!("Core debug analysis:");
     let debug_path = core.config.workspace_path.join(r"debug/");
     std::fs::create_dir_all(&debug_path).unwrap();
-    dump_memory(&debug_path, &core.resources);
+    dump_memory(&debug_path, &core.state);
     unsafe {
-        trace(core.resources.as_mut().get_unchecked_mut());
+        trace(core.state.as_mut().get_unchecked_mut());
     }
 }
 
-pub fn dump_memory(base_dir_path: &PathBuf, resources: &Resources) {
-    dump_memory_main(resources, base_dir_path);
-    dump_memory_spu(resources, base_dir_path);
+pub fn dump_memory(base_dir_path: &PathBuf, state: &State) {
+    dump_memory_main(state, base_dir_path);
+    dump_memory_spu(state, base_dir_path);
 }
 
-pub fn dump_memory_main(resources: &Resources, base_dir_path: &PathBuf) {
+pub fn dump_memory_main(state: &State, base_dir_path: &PathBuf) {
     let memory_path = base_dir_path.join(r"main_memory.bin");
     let mut f = File::create(&memory_path).unwrap();
-    f.write(&resources.main_memory.read_raw(0)).unwrap();
+    f.write(&state.main_memory.read_raw(0)).unwrap();
     debug!("Dumped main memory to {}", memory_path.to_str().unwrap());
 }
 
-pub fn dump_memory_spu(resources: &Resources, base_dir_path: &PathBuf) {
+pub fn dump_memory_spu(state: &State, base_dir_path: &PathBuf) {
     let memory_path = base_dir_path.join(r"spu_memory.bin");
     let mut f = File::create(&memory_path).unwrap();
-    f.write(&resources.spu.memory.read_raw(0)).unwrap();
+    f.write(&state.spu.memory.read_raw(0)).unwrap();
     debug!("Dumped SPU memory to {}", memory_path.to_str().unwrap());
 }
 
-pub fn trace(resources: &mut Resources) {
-    trace_r3000(resources);
-    trace_intc(resources, false);
-    trace_dmac(resources, false);
-    trace_timers(resources);
-    trace_cdrom(resources);
+pub fn trace(state: &mut State) {
+    trace_r3000(state);
+    trace_intc(state, false);
+    trace_dmac(state, false);
+    trace_timers(state);
+    trace_cdrom(state);
 }
 
-pub fn trace_r3000(resources: &Resources) {
-    crate::controllers::r3000::debug::trace_pc(resources);
-    crate::controllers::r3000::debug::disassembler::trace_instructions_at_pc(resources, None);
-    crate::controllers::r3000::debug::register::trace_registers(resources);
+pub fn trace_r3000(state: &State) {
+    crate::system::r3000::controllers::debug::trace_pc(state);
+    crate::system::r3000::controllers::debug::disassembler::trace_instructions_at_pc(state, None);
+    crate::system::r3000::controllers::debug::register::trace_registers(state);
 }
 
-pub fn trace_intc(resources: &Resources, only_enabled: bool) {
-    crate::controllers::intc::debug::trace_intc(resources, only_enabled, false);
+pub fn trace_intc(state: &State, only_enabled: bool) {
+    crate::system::intc::controllers::debug::trace_intc(state, only_enabled, false);
 }
 
-pub fn trace_dmac(resources: &Resources, only_enabled: bool) {
-    crate::controllers::dmac::debug::trace_dmac(resources, only_enabled);
+pub fn trace_dmac(state: &State, only_enabled: bool) {
+    crate::system::dmac::controllers::debug::trace_dmac(state, only_enabled);
 }
 
-pub fn trace_timers(resources: &mut Resources) {
-    crate::controllers::timers::debug::trace_timers(resources);
+pub fn trace_timers(state: &mut State) {
+    crate::system::timers::controllers::debug::trace_timers(state);
 }
 
-pub fn trace_cdrom(resources: &Resources) {
-    crate::controllers::cdrom::debug::trace_cdrom(resources);
+pub fn trace_cdrom(state: &State) {
+    crate::system::cdrom::controllers::debug::trace_cdrom(state);
 }

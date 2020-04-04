@@ -1,7 +1,15 @@
-use std::fmt::{Display, UpperHex};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use log::trace;
 use crate::types::fifo::*;
+use log::trace;
+use std::{
+    fmt::{
+        Display,
+        UpperHex,
+    },
+    sync::atomic::{
+        AtomicUsize,
+        Ordering,
+    },
+};
 
 const ENABLE_READ_TRACE: bool = false;
 const ENABLE_WRITE_TRACE: bool = false;
@@ -17,22 +25,20 @@ pub struct DebugState {
 impl DebugState {
     pub fn new(identifier: &'static str, trace_reads: bool, trace_writes: bool) -> DebugState {
         DebugState {
-            identifier: identifier,
-            trace_reads: trace_reads,
-            trace_writes: trace_writes,
+            identifier,
+            trace_reads,
+            trace_writes,
             read_count: AtomicUsize::new(0),
             write_count: AtomicUsize::new(0),
         }
     }
 }
 
-pub fn trace_read<T>(fifo: &Fifo<T>, data: T) 
-where
-    T: Copy + Default + Display + UpperHex
-{
+pub fn trace_read<T>(fifo: &Fifo<T>, data: T)
+where T: Copy + Default + Display + UpperHex {
     if !ENABLE_READ_TRACE {
         return;
-    } 
+    }
 
     let debug_state = match fifo.debug_state {
         None => panic!("Debug state is required to trace FIFO reads"),
@@ -46,12 +52,10 @@ where
 }
 
 pub fn trace_write<T>(fifo: &Fifo<T>, data: T)
-where
-    T: Copy + Default + Display + UpperHex
-{
+where T: Copy + Default + Display + UpperHex {
     if !ENABLE_WRITE_TRACE {
         return;
-    } 
+    }
 
     let debug_state = match fifo.debug_state {
         None => panic!("Debug state is required to trace FIFO writes"),

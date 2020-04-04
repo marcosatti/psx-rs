@@ -9,9 +9,9 @@ SOME = "Some(({}, {}))"
 NONE = "None"
 BRACE_CLOSE = "},"
 BRACE_CLOSE_NC = "}"
-INSTRUCTION_FN_DECL = "type InstructionFn = fn(&mut Resources, Instruction) -> InstResult;"
+INSTRUCTION_FN_DECL = "type InstructionFn = fn(&mut State, Instruction) -> InstResult;"
 HEADER = "pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {"
-INST_HEADER = "pub fn {}(_resources: &mut Resources, _instruction: Instruction) -> InstResult {{"
+INST_HEADER = "pub fn {}(_state: &mut State, _instruction: Instruction) -> InstResult {{"
 UNIMPLEMENTED = "unimplemented!(\"Instruction {} not implemented\");"
 
 START_KEY_COLUMN = 3 # opcode column

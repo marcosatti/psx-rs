@@ -1,5 +1,7 @@
-use crate::types::b8_memory_mapper::*;
-use crate::types::bitfield::Bitfield;
+use crate::types::{
+    b8_memory_mapper::*,
+    bitfield::Bitfield,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -15,8 +17,10 @@ pub struct B16Register {
 
 impl B16Register {
     pub fn new() -> B16Register {
-        B16Register { 
-            value: B16Register_ { v16: 0 },
+        B16Register {
+            value: B16Register_ {
+                v16: 0,
+            },
         }
     }
 
@@ -33,7 +37,9 @@ impl B16Register {
     }
 
     pub fn write_u8(&mut self, offset: u32, value: u8) {
-        unsafe { self.value.v8[offset as usize] = value; }
+        unsafe {
+            self.value.v8[offset as usize] = value;
+        }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
@@ -50,7 +56,7 @@ impl B8MemoryMap for B16Register {
     fn read_u8(&mut self, offset: u32) -> ReadResult<u8> {
         Ok(Self::read_u8(self, offset))
     }
-    
+
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         Self::write_u8(self, offset, value);
         Ok(())
@@ -60,7 +66,7 @@ impl B8MemoryMap for B16Register {
         assert!(offset == 0, "Invalid offset");
         Ok(Self::read_u16(self))
     }
-    
+
     fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
         assert!(offset == 0, "Invalid offset");
         Self::write_u16(self, value);

@@ -1,4 +1,7 @@
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::{
+    Mutex,
+    MutexGuard,
+};
 
 type AcquireFn<'context, 'closure, T> = Box<dyn (Fn() -> &'context T) + 'closure>;
 type ReleaseFn<'closure> = Box<dyn (Fn()) + 'closure>;
@@ -19,7 +22,12 @@ impl<'a: 'b, 'b: 'c, 'c, T> BackendContext<'a, 'b, T> {
     pub fn guard(&'c self) -> (ContextGuard<'a, 'b, 'c, T>, &'c T) {
         let lock = self.context.lock();
         let context = (lock.0)();
-        (ContextGuard { guard: lock }, context)
+        (
+            ContextGuard {
+                guard: lock,
+            },
+            context,
+        )
     }
 }
 
@@ -28,7 +36,7 @@ pub struct ContextGuard<'a: 'b, 'b: 'c, 'c, T> {
 }
 
 impl<'a: 'b, 'b: 'c, 'c, T> Drop for ContextGuard<'a, 'b, 'c, T> {
-    fn drop(&mut self) { 
+    fn drop(&mut self) {
         (self.guard.1)();
     }
 }

@@ -1,11 +1,18 @@
 pub mod state;
 
-use std::path::Path;
-use std::ffi::{CString, CStr};
+use crate::backends::{
+    cdrom::libmirage::state::*,
+    context::*,
+};
 use libmirage_sys::*;
 use log::info;
-use crate::backends::cdrom::libmirage::state::*;
-use crate::backends::context::*;
+use std::{
+    ffi::{
+        CStr,
+        CString,
+    },
+    path::Path,
+};
 
 static mut INITIALIZED: bool = false;
 

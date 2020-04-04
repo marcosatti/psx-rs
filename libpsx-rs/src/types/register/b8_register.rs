@@ -1,5 +1,7 @@
-use crate::types::b8_memory_mapper::*;
-use crate::types::bitfield::Bitfield;
+use crate::types::{
+    b8_memory_mapper::*,
+    bitfield::Bitfield,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -14,8 +16,10 @@ pub struct B8Register {
 
 impl B8Register {
     pub fn new() -> B8Register {
-        B8Register { 
-            value: B8Register_ { v8: 0 },
+        B8Register {
+            value: B8Register_ {
+                v8: 0,
+            },
         }
     }
 
@@ -26,7 +30,7 @@ impl B8Register {
     pub fn write_u8(&mut self, value: u8) {
         self.value.v8 = value;
     }
-    
+
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u8 {
         bitfield.extract_from(self.read_u8())
     }
@@ -42,7 +46,7 @@ impl B8MemoryMap for B8Register {
         assert!(offset == 0, "Invalid offset");
         Ok(Self::read_u8(self))
     }
-    
+
     fn write_u8(&mut self, offset: u32, value: u8) -> WriteResult {
         assert!(offset == 0, "Invalid offset");
         Self::write_u8(self, value);

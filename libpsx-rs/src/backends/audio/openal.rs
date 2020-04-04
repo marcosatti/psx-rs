@@ -1,9 +1,13 @@
 pub mod rendering;
 
+use crate::{
+    backends::{
+        audio::openal::rendering::*,
+        context::*,
+    },
+    system::spu::constants::VOICES_COUNT,
+};
 use openal_sys::*;
-use crate::backends::context::*;
-use crate::backends::audio::openal::rendering::*;
-use crate::constants::spu::dac::VOICES_COUNT;
 
 static mut INITIALIZED: bool = false;
 
@@ -16,7 +20,7 @@ pub fn setup(backend_params: &BackendParams) {
 
     unsafe {
         assert_eq!(INITIALIZED, false);
-        
+
         alGenSources(rendering::SOURCES.len() as ALsizei, rendering::SOURCES.as_mut_ptr());
         alGenBuffers(rendering::BUFFERS.len() as ALsizei, rendering::BUFFERS.as_mut_ptr());
 
@@ -40,7 +44,7 @@ pub fn teardown(backend_params: &BackendParams) {
 
             alDeleteBuffers(rendering::BUFFERS.len() as ALsizei, rendering::BUFFERS.as_mut_ptr());
             alDeleteSources(rendering::SOURCES.len() as ALsizei, rendering::SOURCES.as_mut_ptr());
-            
+
             INITIALIZED = false;
         }
     }

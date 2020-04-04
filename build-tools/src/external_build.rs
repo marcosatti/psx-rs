@@ -1,11 +1,15 @@
-use std::env;
-use std::path::PathBuf;
-use std::process::Command;
-use std::fs::write;
+use crate::{
+    external_check::external_check_inner,
+    python,
+};
 use bindgen::Builder;
 use serde::Deserialize;
-use crate::external_check::external_check_inner;
-use crate::python;
+use std::{
+    env,
+    fs::write,
+    path::PathBuf,
+    process::Command,
+};
 
 #[derive(Deserialize, Debug)]
 struct Output {
@@ -83,16 +87,12 @@ pub fn external_build(external_name: &str) {
         builder = builder.whitelist_var(whitelist_variable_regex);
     }
 
-    builder
-        .generate()
-        .unwrap()
-        .write_to_file(&out_file_path)
-        .unwrap();
+    builder.generate().unwrap().write_to_file(&out_file_path).unwrap();
 
     for library_search_path in output.library_search_paths {
         println!("cargo:rustc-link-search={}", &library_search_path);
     }
-    
+
     for library_name in output.library_names {
         println!("cargo:rustc-link-lib={}", &library_name);
     }

@@ -1,8 +1,8 @@
-use std::ffi::CString;
 use hashbrown::HashMap;
 use lazy_static::lazy_static;
-use parking_lot::Mutex;
 use opengl_sys::*;
+use parking_lot::Mutex;
+use std::ffi::CString;
 
 pub mod vertex {
     pub const SOLID_POLYGON: &'static str = include_str!("./shaders/vertex/solid_polygon.glsl");
@@ -32,7 +32,7 @@ pub fn compile_shader(code: &'static str, type_: GLenum) -> GLuint {
                 let shader_codes = [shader_code.as_c_str().as_ptr()];
                 glShaderSource(shader_id, 1, shader_codes.as_ptr(), std::ptr::null());
                 glCompileShader(shader_id);
-                
+
                 let mut status = 0;
                 glGetShaderiv(shader_id, GL_COMPILE_STATUS, &mut status);
                 if status == (GL_FALSE as GLint) {
@@ -54,7 +54,9 @@ pub fn compile_shader(code: &'static str, type_: GLenum) -> GLuint {
 pub fn create_program(shaders: &[GLuint]) -> GLuint {
     unsafe {
         let program_id = glCreateProgram();
-        for &id in shaders.iter() { glAttachShader(program_id, id); }
+        for &id in shaders.iter() {
+            glAttachShader(program_id, id);
+        }
         glLinkProgram(program_id);
 
         let mut status = 0;

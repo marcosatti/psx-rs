@@ -1,10 +1,15 @@
-pub mod shaders;
-pub mod rendering;
 pub mod debug;
+pub mod rendering;
+pub mod shaders;
 
+use crate::{
+    backends::context::*,
+    system::gpu::constants::{
+        VRAM_HEIGHT_LINES,
+        VRAM_WIDTH_16B,
+    },
+};
 use opengl_sys::*;
-use crate::backends::context::*;
-use crate::constants::gpu::{VRAM_WIDTH_16B, VRAM_HEIGHT_LINES}; 
 
 static mut INITIALIZED: bool = false;
 
@@ -35,20 +40,35 @@ pub fn setup(backend_params: &BackendParams) {
         let mut texture = 0;
         glGenTextures(1, &mut texture);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGB as GLint,
+            VRAM_WIDTH_16B as GLint,
+            VRAM_HEIGHT_LINES as GLint,
+            0,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);  
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
 
         // RBO
         let mut rbo = 0;
         glGenRenderbuffers(1, &mut rbo);
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint);
-        
+        glRenderbufferStorage(
+            GL_RENDERBUFFER,
+            GL_DEPTH24_STENCIL8,
+            VRAM_WIDTH_16B as GLint,
+            VRAM_HEIGHT_LINES as GLint,
+        );
+
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); 
+        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
         // Other
         glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -64,25 +84,45 @@ pub fn setup(backend_params: &BackendParams) {
 
 pub fn teardown(backend_params: &BackendParams) {
     // TODO: shader programs are not free'd.
-    
+
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
         if INITIALIZED {
             // RBO
             let mut param = 0;
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
+            glGetFramebufferAttachmentParameteriv(
+                GL_DRAW_FRAMEBUFFER,
+                GL_DEPTH_STENCIL_ATTACHMENT,
+                GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+                &mut param,
+            );
             assert!(param == (GL_RENDERBUFFER as GLint));
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
+            glGetFramebufferAttachmentParameteriv(
+                GL_DRAW_FRAMEBUFFER,
+                GL_DEPTH_STENCIL_ATTACHMENT,
+                GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+                &mut param,
+            );
 
             let rbo = param as GLuint;
             glDeleteRenderbuffers(1, &rbo);
 
             // Texture
             let mut param = 0;
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
+            glGetFramebufferAttachmentParameteriv(
+                GL_DRAW_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0,
+                GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+                &mut param,
+            );
             assert!(param == (GL_TEXTURE as GLint));
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
+            glGetFramebufferAttachmentParameteriv(
+                GL_DRAW_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0,
+                GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+                &mut param,
+            );
 
             let texture = param as GLuint;
             glDeleteTextures(1, &texture);
@@ -97,7 +137,14 @@ pub fn teardown(backend_params: &BackendParams) {
 
             // Debug
             glDebugMessageCallbackARB(None, std::ptr::null());
-            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_FALSE as GLboolean);
+            glDebugMessageControlARB(
+                GL_DONT_CARE,
+                GL_DONT_CARE,
+                GL_DONT_CARE,
+                0,
+                std::ptr::null(),
+                GL_FALSE as GLboolean,
+            );
 
             if glGetError() != GL_NO_ERROR {
                 panic!("Error tearing down OpenGL video backend");

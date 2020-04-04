@@ -1,4 +1,17 @@
-use fixed::{traits::{FromFixed, ToFixed}, types::extra::{LeEqU16, LeEqU32}, FixedI16, FixedI32, FixedU16, FixedU32};
+use fixed::{
+    traits::{
+        FromFixed,
+        ToFixed,
+    },
+    types::extra::{
+        LeEqU16,
+        LeEqU32,
+    },
+    FixedI16,
+    FixedI32,
+    FixedU16,
+    FixedU32,
+};
 
 pub trait FromFixedBits {
     fn from_fixed_bits_u16<U: LeEqU16>(value: u16) -> Self;

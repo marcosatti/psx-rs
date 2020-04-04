@@ -2,7 +2,7 @@ import os
 
 BASE_DIR = './tools/Register Generation/'
 
-NAMESPACE = 'resources.spu'
+NAMESPACE = 'state.spu'
 
 CHANNELS = [
     'voice' + str(i)
@@ -28,7 +28,7 @@ for i, channel in enumerate(CHANNELS):
         definition_lines.append(f'{name}: {info[0]}::new(),\n')
         address = '0x{:08X}'.format(info[2] + i * info[3])
         address = address[:6] + '_' + address[6:]
-        memory_map_lines.append(f'resources.r3000.memory_mapper.map::<u32>({address}, {info[1]}, &mut {NAMESPACE}.{name} as *mut dyn B8MemoryMap);\n')
+        memory_map_lines.append(f'state.r3000.memory_mapper.map::<u32>({address}, {info[1]}, &mut {NAMESPACE}.{name} as *mut dyn B8MemoryMap);\n')
     declaration_lines.append('\n')
 
 with open(os.path.join(BASE_DIR, 'declarations.txt'), 'w') as f:

@@ -1,7 +1,9 @@
-use std::path::PathBuf;
-use std::process::Command;
-use serde::Deserialize;
 use crate::python;
+use serde::Deserialize;
+use std::{
+    path::PathBuf,
+    process::Command,
+};
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct Output {
