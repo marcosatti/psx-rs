@@ -1,18 +1,17 @@
 use hashbrown::hash_map::DefaultHashBuilder;
 use lazy_static::*;
 use lru::LruCache;
-use std::cell::UnsafeCell;
+use parking_lot::Mutex;
 
-struct AccessState(UnsafeCell<LruCache<u32, usize, DefaultHashBuilder>>);
+struct AccessState(Mutex<LruCache<u32, usize, DefaultHashBuilder>>);
 
 impl AccessState {
     fn new() -> AccessState {
-        let hasher = DefaultHashBuilder::default();
-        AccessState(UnsafeCell::new(LruCache::with_hasher(32, hasher)))
+        AccessState(Mutex::new(LruCache::with_hasher(32, DefaultHashBuilder::default())))
     }
 
     fn update(&self, address: u32) -> usize {
-        let cache = unsafe { &mut *self.0.get() };
+        let mut cache = self.0.lock();
         match cache.get_mut(&address) {
             None => {
                 cache.put(address, 1);
@@ -26,12 +25,10 @@ impl AccessState {
     }
 
     fn clear(&self, address: u32) {
-        let cache = unsafe { &mut *self.0.get() };
-        cache.pop(&address).unwrap();
+        self.0.lock().pop(&address).unwrap();
     }
 }
 
-// Only ever accessed in a single threaded environment.
 unsafe impl Sync for AccessState {
 }
 
