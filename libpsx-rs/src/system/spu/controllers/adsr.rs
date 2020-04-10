@@ -64,10 +64,7 @@ pub fn handle_adsr_envelope(state: &mut State, voice_id: usize) {
 
     // Volume should never go below 0 or above 1...
     if play_state.adsr_current_volume < 0.0 || play_state.adsr_current_volume > 1.0 {
-        warn!(
-            "ADSR volume for voice {} went below zero or above one ({})...",
-            voice_id, play_state.adsr_current_volume
-        );
+        warn!("ADSR volume for voice {} went below zero or above one ({})...", voice_id, play_state.adsr_current_volume);
     }
 
     play_state.adsr_current_volume = clamp(play_state.adsr_current_volume, 0.0, 1.0);

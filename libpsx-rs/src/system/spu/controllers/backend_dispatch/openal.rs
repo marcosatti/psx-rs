@@ -18,13 +18,7 @@ pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voic
         };
 
         let samples_size = (samples.len() * std::mem::size_of::<Stereo>()) as ALsizei;
-        alBufferData(
-            BUFFERS[buffer_index],
-            AL_FORMAT_STEREO16 as ALenum,
-            samples.as_ptr() as *const std::ffi::c_void,
-            samples_size,
-            44100,
-        );
+        alBufferData(BUFFERS[buffer_index], AL_FORMAT_STEREO16 as ALenum, samples.as_ptr() as *const std::ffi::c_void, samples_size, 44100);
 
         alSourceStop(SOURCES[voice_id]);
         alSourcei(SOURCES[voice_id], AL_BUFFER as ALenum, BUFFERS[buffer_index] as ALint);

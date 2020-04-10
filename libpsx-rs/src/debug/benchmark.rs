@@ -2,14 +2,12 @@ use average::{
     Estimate,
     Mean,
 };
+use hashbrown::HashMap;
 use log::debug;
 use parking_lot::Mutex;
-use std::{
-    collections::HashMap,
-    time::{
-        Duration,
-        Instant,
-    },
+use std::time::{
+    Duration,
+    Instant,
 };
 
 const ENABLE_BENCHMARK_TRACING: bool = true;
@@ -81,28 +79,17 @@ pub fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed: Durati
         state.average_guest_time_elapsed.add(guest_time_elapsed.as_secs_f64());
 
         for controller_result in benchmark.consume().iter() {
-            state
-                .average_host_time_elapsed_controllers
-                .entry(controller_result.0)
-                .or_insert_with(|| Mean::new())
-                .add(controller_result.1.as_secs_f64());
+            state.average_host_time_elapsed_controllers.entry(controller_result.0).or_insert_with(|| Mean::new()).add(controller_result.1.as_secs_f64());
         }
 
         if state.last_reported.elapsed() > REPORTING_PERIOD {
-            let overall_time_elapsed_percent =
-                state.total_host_time_elapsed.as_secs_f64() / state.total_guest_time_elapsed.as_secs_f64() * 100.0;
-            let average_host_time_elapsed =
-                Duration::from_secs_f64(state.average_host_time_elapsed.estimate()).as_micros();
-            let average_guest_time_elapsed =
-                Duration::from_secs_f64(state.average_guest_time_elapsed.estimate()).as_micros();
+            let overall_time_elapsed_percent = state.total_host_time_elapsed.as_secs_f64() / state.total_guest_time_elapsed.as_secs_f64() * 100.0;
+            let average_host_time_elapsed = Duration::from_secs_f64(state.average_host_time_elapsed.estimate()).as_micros();
+            let average_guest_time_elapsed = Duration::from_secs_f64(state.average_guest_time_elapsed.estimate()).as_micros();
 
             let mut controller_results_str = Vec::with_capacity(state.average_host_time_elapsed_controllers.len());
             for controller_result in state.average_host_time_elapsed_controllers.iter() {
-                controller_results_str.push(format!(
-                    "{} = {}",
-                    controller_result.0,
-                    Duration::from_secs_f64(controller_result.1.estimate()).as_micros()
-                ))
+                controller_results_str.push(format!("{} = {}", controller_result.0, Duration::from_secs_f64(controller_result.1.estimate()).as_micros()))
             }
 
             controller_results_str.sort_unstable();

@@ -123,13 +123,7 @@ pub fn trace_interrupt(state: &State) {
         let branching = state.r3000.branch_delay.branching();
         if false {
             if is_pending(state, line) {
-                trace!(
-                    "[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}",
-                    debug_tick_count,
-                    pc_va,
-                    branching,
-                    line_name
-                );
+                trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}, line = {}", debug_tick_count, pc_va, branching, line_name);
             }
         } else {
             trace!("[{:X}] Interrupt, pc = 0x{:0X}, branching = {}", debug_tick_count, pc_va, branching);
@@ -175,9 +169,7 @@ pub fn track_memory_read_pending<T>(state: &State, physical_address: u32) {
         return;
     }
 
-    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START
-        && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END)
-    {
+    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END) {
         return;
     }
 
@@ -194,9 +186,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(state: &State, physical_address: u3
         return;
     }
 
-    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START
-        && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END)
-    {
+    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END) {
         return;
     }
 
@@ -206,10 +196,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(state: &State, physical_address: u3
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = state.r3000.pc.read_u32();
-        debug!(
-            "[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end",
-            tick_count, pc, type_name, physical_address, value
-        );
+        debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
     trace_memory_spin_loop_detection_read(state, physical_address, count);
@@ -220,9 +207,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &State, physical_ad
         return;
     }
 
-    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START
-        && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END)
-    {
+    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END) {
         return;
     }
 
@@ -230,10 +215,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &State, physical_ad
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = state.r3000.pc.read_u32();
-        debug!(
-            "[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} start",
-            tick_count, pc, type_name, physical_address, value
-        );
+        debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} start", tick_count, pc, type_name, physical_address, value);
     }
 }
 
@@ -242,9 +224,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(state: &State, physical_address: u
         return;
     }
 
-    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START
-        && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END)
-    {
+    if !(physical_address >= MEMORY_TRACKING_ADDRESS_RANGE_START && physical_address < MEMORY_TRACKING_ADDRESS_RANGE_END) {
         return;
     }
 
@@ -254,10 +234,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(state: &State, physical_address: u
         let tick_count = unsafe { DEBUG_TICK_COUNT };
         let type_name = core::any::type_name::<T>();
         let pc = state.r3000.pc.read_u32();
-        debug!(
-            "[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end",
-            tick_count, pc, type_name, physical_address, value
-        );
+        debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
     trace_memory_spin_loop_detection_write(state, physical_address, count);

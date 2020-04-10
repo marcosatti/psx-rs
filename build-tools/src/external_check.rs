@@ -11,11 +11,7 @@ pub(crate) struct Output {
 }
 
 pub(crate) fn external_check_inner(external_name: &str) -> Output {
-    let output = Command::new(python::bin_name())
-        .current_dir(PathBuf::from(".."))
-        .arg(format!("external/{}/check.py", external_name))
-        .output()
-        .unwrap();
+    let output = Command::new(python::bin_name()).current_dir(PathBuf::from("..")).arg(format!("external/{}/check.py", external_name)).output().unwrap();
 
     let output_str_stdout = String::from_utf8(output.stdout).unwrap();
     let output_str_stderr = String::from_utf8(output.stderr).unwrap();
@@ -35,6 +31,9 @@ pub fn external_check(external_name: &str) {
     let output = external_check_inner(external_name);
 
     if output.enable {
+        println!("cargo:warning=Enabling {}", external_name);
         println!("cargo:rustc-cfg={}", external_name);
+    } else {
+        println!("cargo:warning=Disabling {}", external_name);
     }
 }

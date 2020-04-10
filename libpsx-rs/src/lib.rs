@@ -1,5 +1,6 @@
 #![feature(core_intrinsics)]
 #![feature(no_more_cas)]
+#![recursion_limit = "256"]
 
 pub mod backends;
 pub mod debug;
@@ -29,10 +30,6 @@ use crate::{
     },
 };
 use log::info;
-use rayon::{
-    ThreadPool,
-    ThreadPoolBuilder,
-};
 use std::{
     path::{
         Path,
@@ -43,6 +40,10 @@ use std::{
         Duration,
         Instant,
     },
+};
+use tokio::runtime::{
+    Builder,
+    Runtime,
 };
 
 pub struct Context<'a: 'b, 'b: 'c, 'c> {
@@ -67,18 +68,13 @@ pub struct Config<'a: 'b, 'b> {
 
 pub struct Core<'a: 'b, 'b> {
     pub state: Pin<Box<State>>,
-    task_executor: ThreadPool,
+    task_runtime: Runtime,
     config: Config<'a, 'b>,
 }
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
     pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
-        info!(
-            "Initializing libpsx-rs with {} time delta (us) and {} worker threads",
-            config.time_delta.as_micros(),
-            config.worker_threads
-        );
-        info!("Main thread ID: {}", thread_id::get());
+        info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
 
         let mut state = State::new();
 
@@ -90,14 +86,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
             State::load_bios(state_mut, &bios_path);
         }
 
-        let task_executor = ThreadPoolBuilder::new()
-            .num_threads(config.worker_threads)
-            .thread_name(|id| format!("libpsx-rs:{}:{}", thread_id::get(), id))
-            .start_handler(|_| {
-                info!("Worker thread ID: {:?}", thread_id::get());
-            })
-            .build()
-            .unwrap();
+        let task_runtime = Builder::new().threaded_scheduler().core_threads(config.worker_threads).thread_name("libpsx-rs-worker").build().unwrap();
 
         video::setup(&config.video_backend);
         audio::setup(&config.audio_backend);
@@ -105,7 +94,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         Core {
             state,
-            task_executor,
+            task_runtime,
             config,
         }
     }
@@ -124,7 +113,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         let event = Event::Time(time);
 
         let timer = Instant::now();
-        let benchmark_results = executor::atomic_broadcast(&self.task_executor, &state, event);
+        let benchmark_results = executor::atomic_broadcast(&mut self.task_runtime, &state, event);
         let scope_duration = timer.elapsed();
 
         debug::benchmark::trace_performance(time, scope_duration, benchmark_results);

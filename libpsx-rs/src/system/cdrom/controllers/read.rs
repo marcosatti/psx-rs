@@ -38,8 +38,7 @@ pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
             return true;
         }
 
-        let data_block = backend_dispatch::read_sector(cdrom_backend, state.cdrom.lba_address)
-            .expect("Tried to read a sector when no backend is available");
+        let data_block = backend_dispatch::read_sector(cdrom_backend, state.cdrom.lba_address).expect("Tried to read a sector when no backend is available");
         assert_eq!(data_block.len(), 2048);
 
         state.cdrom.lba_address += 1;

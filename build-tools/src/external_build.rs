@@ -34,11 +34,7 @@ pub fn external_build(external_name: &str) {
         return;
     }
 
-    let output = Command::new(python::bin_name())
-        .current_dir(PathBuf::from(".."))
-        .arg(format!("external/{}/build.py", external_name))
-        .output()
-        .unwrap();
+    let output = Command::new(python::bin_name()).current_dir(PathBuf::from("..")).arg(format!("external/{}/build.py", external_name)).output().unwrap();
 
     let output_str_stdout = String::from_utf8(output.stdout).unwrap();
     let output_str_stderr = String::from_utf8(output.stderr).unwrap();

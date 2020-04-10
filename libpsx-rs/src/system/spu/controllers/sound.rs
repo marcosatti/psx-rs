@@ -40,13 +40,8 @@ pub fn generate_sound(state: &mut State, audio_backend: &AudioBackend) {
 
         let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
         let mut adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
-        adpcm_sample_raw = interpolate_sample(
-            adpcm_sample_raw,
-            &mut play_state.old_sample,
-            &mut play_state.older_sample,
-            &mut play_state.oldest_sample,
-            play_state.pitch_counter_interp,
-        );
+        adpcm_sample_raw =
+            interpolate_sample(adpcm_sample_raw, &mut play_state.old_sample, &mut play_state.older_sample, &mut play_state.oldest_sample, play_state.pitch_counter_interp);
 
         handle_pitch_counter(state, voice_id);
 
@@ -130,20 +125,14 @@ fn decode_adpcm_block(state: &mut State, voice_id: usize) {
     let memory = &state.spu.memory;
 
     // ADPCM header.
-    let header =
-        [memory.read_u8(play_state.current_address as u32), memory.read_u8((play_state.current_address + 1) as u32)];
+    let header = [memory.read_u8(play_state.current_address as u32), memory.read_u8((play_state.current_address + 1) as u32)];
     play_state.adpcm_state.params = decode_header(header);
 
     // ADPCM (packed) samples are from indexes 2 -> 15, with each byte containing 2 real samples.
     let mut sample_buffer = [0; 28];
     for i in 0..14 {
         let data = memory.read_u8((play_state.current_address + (2 + i)) as u32);
-        let samples = decode_frame(
-            data,
-            &play_state.adpcm_state.params,
-            &mut play_state.adpcm_state.old_sample,
-            &mut play_state.adpcm_state.older_sample,
-        );
+        let samples = decode_frame(data, &play_state.adpcm_state.params, &mut play_state.adpcm_state.old_sample, &mut play_state.adpcm_state.older_sample);
         sample_buffer[i * 2] = samples[0];
         sample_buffer[(i * 2) + 1] = samples[1];
     }

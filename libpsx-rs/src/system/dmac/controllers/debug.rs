@@ -47,8 +47,14 @@ pub fn transfer_start(state: &mut State, channel: usize) {
     });
 
     trace!(
-        "Starting transfer [{}] on channel {}, sync_mode = {:?}, direction = {:?}, bs (raw) = {}, ba (raw) = {}, madr (raw) = 0x{:0X}", 
-        transfer_id, channel, sync_mode, transfer_direction, bcr.read_bitfield(BCR_BLOCKSIZE), bcr.read_bitfield(BCR_BLOCKAMOUNT), madr.read_u32()
+        "Starting transfer [{}] on channel {}, sync_mode = {:?}, direction = {:?}, bs (raw) = {}, ba (raw) = {}, madr (raw) = 0x{:0X}",
+        transfer_id,
+        channel,
+        sync_mode,
+        transfer_direction,
+        bcr.read_bitfield(BCR_BLOCKSIZE),
+        bcr.read_bitfield(BCR_BLOCKAMOUNT),
+        madr.read_u32()
     );
 }
 
@@ -116,9 +122,7 @@ pub fn trace_dmac(state: &State, only_enabled: bool) {
     trace!("DMAC DICR: master enable = {}", dicr_irq_master_enable_value);
     let dicr_irq_force_value = DICR_IRQ_FORCE.extract_from(dicr) != 0;
     trace!("DMAC DICR: irq force = {}", dicr_irq_force_value);
-    for (name, (enable_bitfield, flag_bitfield)) in
-        DMA_CHANNEL_NAMES.iter().zip(DICR_IRQ_ENABLE_BITFIELDS.iter().zip(DICR_IRQ_FLAG_BITFIELDS.iter()))
-    {
+    for (name, (enable_bitfield, flag_bitfield)) in DMA_CHANNEL_NAMES.iter().zip(DICR_IRQ_ENABLE_BITFIELDS.iter().zip(DICR_IRQ_FLAG_BITFIELDS.iter())) {
         let dicr_enable_value = enable_bitfield.extract_from(dicr) != 0;
         let dicr_flag_value = flag_bitfield.extract_from(dicr) != 0;
 
@@ -137,8 +141,5 @@ pub fn trace_linked_list_null_header(header_address: u32) {
         return;
     }
 
-    trace!(
-        "Null linked list transfer header value (address 0x{:08X}) - CPU is probably too slow (or bad timing)!",
-        header_address
-    );
+    trace!("Null linked list transfer header value (address 0x{:08X}) - CPU is probably too slow (or bad timing)!", header_address);
 }

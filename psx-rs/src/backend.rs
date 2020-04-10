@@ -31,15 +31,9 @@ pub(crate) fn initialize_video_backend<'a: 'b, 'b>(window: &'a Window) -> VideoB
     let opengl_release_context = || {};
 
     opengl_acquire_context();
-    let opengl_vendor_string = unsafe {
-        std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned()
-    };
-    let opengl_version_string = unsafe {
-        std::ffi::CStr::from_ptr(glGetString(GL_VERSION as GLenum) as *const i8).to_string_lossy().into_owned()
-    };
-    let opengl_renderer_string = unsafe {
-        std::ffi::CStr::from_ptr(glGetString(GL_RENDERER as GLenum) as *const i8).to_string_lossy().into_owned()
-    };
+    let opengl_vendor_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned() };
+    let opengl_version_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VERSION as GLenum) as *const i8).to_string_lossy().into_owned() };
+    let opengl_renderer_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_RENDERER as GLenum) as *const i8).to_string_lossy().into_owned() };
     unsafe {
         glClearColor(0.0, 0.0, 0.0, 1.0);
     }
@@ -104,18 +98,10 @@ pub(crate) fn initialize_audio_backend<'a: 'b, 'b>() -> AudioBackend<'a, 'b> {
         unsafe { alListener3f(AL_POSITION as ALenum, 0.0, 0.0, 0.0) };
         unsafe { alListener3f(AL_VELOCITY as ALenum, 0.0, 0.0, 0.0) };
         unsafe { alListenerfv(AL_ORIENTATION as ALenum, [0.0, 0.0, -1.0, 0.0, 1.0, 0.0].as_ptr()) };
-        let openal_vendor_string =
-            unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VENDOR as ALenum)).to_string_lossy().into_owned() };
-        let openal_version_string =
-            unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VERSION as ALenum)).to_string_lossy().into_owned() };
-        let openal_renderer_string =
-            unsafe { std::ffi::CStr::from_ptr(alGetString(AL_RENDERER as ALenum)).to_string_lossy().into_owned() };
-        log::info!(
-            "Audio initialized: {}, {}, {}",
-            openal_vendor_string,
-            openal_version_string,
-            openal_renderer_string
-        );
+        let openal_vendor_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VENDOR as ALenum)).to_string_lossy().into_owned() };
+        let openal_version_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_VERSION as ALenum)).to_string_lossy().into_owned() };
+        let openal_renderer_string = unsafe { std::ffi::CStr::from_ptr(alGetString(AL_RENDERER as ALenum)).to_string_lossy().into_owned() };
+        log::info!("Audio initialized: {}, {}, {}", openal_vendor_string, openal_version_string, openal_renderer_string);
         openal_release_context();
 
         AudioBackend::Openal(openal::BackendParams {
@@ -168,8 +154,7 @@ pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
 
     let libmirage_acquire_context = || unsafe { &LIBMIRAGE_CONTEXT };
     let libmirage_release_context = || {};
-    let libmirage_version_string =
-        unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
+    let libmirage_version_string = unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
     log::info!("CDROM initialized: libmirage {}", libmirage_version_string);
 
     CdromBackend::Libmirage(libmirage::BackendParams {

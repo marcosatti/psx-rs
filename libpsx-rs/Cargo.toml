@@ -13,17 +13,17 @@ parking_lot = "*"
 log = "*"
 ansi_term = "*"
 euclid = "*"
-rayon = "*"
 num-traits = "*"
 lazy_static = "*"
 sdl2 = "*"
-thread-id = "*"
 average = "*"
 capstone = "*"
 hashbrown = "*"
 lru = "*"
 fixed = "*"
 typenum = "*"
+tokio = { version = "*", features = ["rt-core", "rt-threaded", "parking_lot"] }
+futures-util = "*"
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }

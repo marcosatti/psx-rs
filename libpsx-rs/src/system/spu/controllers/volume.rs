@@ -119,16 +119,6 @@ fn transform_sample_fixed(sample: i16, volume15: u16) -> i16 {
     result
 }
 
-fn transform_sample_sweep(
-    sample: i16, step: usize, shift: usize, phase: SweepPhase, direction: SweepDirection, mode: SweepMode,
-) -> i16 {
-    unimplemented!(
-        "sample: {}, step: {}, shift: {}, phase: {:?}, direction: {:?}, mode: {:?}",
-        sample,
-        step,
-        shift,
-        phase,
-        direction,
-        mode
-    );
+fn transform_sample_sweep(sample: i16, step: usize, shift: usize, phase: SweepPhase, direction: SweepDirection, mode: SweepMode) -> i16 {
+    unimplemented!("sample: {}, step: {}, shift: {}, phase: {:?}, direction: {:?}, mode: {:?}", sample, step, shift, phase, direction, mode);
 }

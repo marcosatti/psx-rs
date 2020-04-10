@@ -20,13 +20,7 @@ pub fn trace_timer(state: &mut State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
     let target = get_target(state, timer_id);
 
-    trace!(
-        "Timer {}: count = 0x{:08X}, mode = 0x{:08X}, target = 0x{:08X}",
-        timer_id,
-        count.read_u32(),
-        mode.register.read_u32(),
-        target.read_u32(),
-    );
+    trace!("Timer {}: count = 0x{:08X}, mode = 0x{:08X}, target = 0x{:08X}", timer_id, count.read_u32(), mode.register.read_u32(), target.read_u32(),);
 
     trace_mode(state, timer_id);
 }
@@ -48,13 +42,7 @@ pub fn trace_mode(state: &mut State, timer_id: usize) {
 
     trace!("Timer {} mode details:", timer_id);
     trace!("sync_enable = {}, sync_mode = {}, reset = {}, irq_target = {}", sync_enable, sync_mode, reset, irq_target);
-    trace!(
-        "irq_overflow = {}, irq_repeat = {}, irq_pulse = {}, clk_src = {}",
-        irq_overflow,
-        irq_repeat,
-        irq_pulse,
-        clk_src
-    );
+    trace!("irq_overflow = {}, irq_repeat = {}, irq_pulse = {}, clk_src = {}", irq_overflow, irq_repeat, irq_pulse, clk_src);
     trace!("irq_status = {}, target_hit = {}, overflow_hit = {}", irq_status, target_hit, overflow_hit);
 }
 

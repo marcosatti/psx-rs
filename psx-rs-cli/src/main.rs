@@ -33,11 +33,7 @@ fn main() {
 
     // Working directory / workspace
     let workspace_path = PathBuf::from(r"./workspace/");
-    println!(
-        "Working directory: {}, workspace directory: {}",
-        std::env::current_dir().unwrap().to_str().unwrap(),
-        workspace_path.to_str().unwrap()
-    );
+    println!("Working directory: {}, workspace directory: {}", std::env::current_dir().unwrap().to_str().unwrap(), workspace_path.to_str().unwrap());
 
     // Setup logging
     let logs_path = workspace_path.join(r"logs/");
@@ -70,15 +66,7 @@ fn setup_log_file(logs_path: &Path) -> PathBuf {
 fn setup_logger(log_file_path: &Path) {
     let now = Instant::now();
     fern::Dispatch::new()
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "[{}ms][{}][{}] {}",
-                now.elapsed().as_millis(),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
+        .format(move |out, message, record| out.finish(format_args!("[{}ms][{}][{}] {}", now.elapsed().as_millis(), record.target(), record.level(), message)))
         .level(log::LevelFilter::Trace)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file_path).unwrap())

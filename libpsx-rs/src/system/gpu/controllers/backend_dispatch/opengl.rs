@@ -13,15 +13,12 @@ use crate::{
 use opengl_sys::*;
 use std::convert::TryInto;
 
-pub fn draw_polygon_3_shaded(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3],
-) {
+pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 6] =
-        [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
+    let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
     let (r0, g0, b0, a0) = colors[0].normalize();
     let (r1, g1, b1, a1) = colors[1].normalize();
@@ -44,23 +41,13 @@ pub fn draw_polygon_3_shaded(
             let mut vbo_position = 0;
             glGenBuffers(1, &mut vbo_position);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                6 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 6 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             let mut vbo_color = 0;
             glGenBuffers(1, &mut vbo_color);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_color);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                12 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 12 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             if glGetError() != GL_NO_ERROR {
@@ -74,20 +61,10 @@ pub fn draw_polygon_3_shaded(
         glUseProgram(program_context.program_id);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            6 * std::mem::size_of::<f32>() as GLsizeiptr,
-            positions_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[1]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            12 * std::mem::size_of::<f32>() as GLsizeiptr,
-            colors_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * std::mem::size_of::<f32>() as GLsizeiptr, colors_flat.as_ptr() as *const GLvoid);
 
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -99,16 +76,7 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
 
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 8] = [
-        positions[2].x,
-        positions[2].y,
-        positions[0].x,
-        positions[0].y,
-        positions[1].x,
-        positions[1].y,
-        positions[3].x,
-        positions[3].y,
-    ];
+    let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
     let (r, g, b, a) = color.normalize();
 
@@ -126,12 +94,7 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
             let mut vbo_position = 0;
             glGenBuffers(1, &mut vbo_position);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                8 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             if glGetError() != GL_NO_ERROR {
@@ -145,40 +108,23 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
         glUseProgram(program_context.program_id);
 
         let in_color_cstr = b"in_color\0";
-        let uniform_in_color =
-            glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
+        let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
         glUniform4f(uniform_in_color, r, g, b, a);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            8 * std::mem::size_of::<f32>() as GLsizeiptr,
-            positions_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
 
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 }
 
-pub fn draw_polygon_4_shaded(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4],
-) {
+pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 8] = [
-        positions[2].x,
-        positions[2].y,
-        positions[0].x,
-        positions[0].y,
-        positions[1].x,
-        positions[1].y,
-        positions[3].x,
-        positions[3].y,
-    ];
+    let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
     let (r2, g2, b2, a2) = colors[2].normalize();
     let (r0, g0, b0, a0) = colors[0].normalize();
@@ -202,23 +148,13 @@ pub fn draw_polygon_4_shaded(
             let mut vbo_position = 0;
             glGenBuffers(1, &mut vbo_position);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                8 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             let mut vbo_color = 0;
             glGenBuffers(1, &mut vbo_color);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_color);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                16 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 16 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             if glGetError() != GL_NO_ERROR {
@@ -232,20 +168,10 @@ pub fn draw_polygon_4_shaded(
         glUseProgram(program_context.program_id);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            8 * std::mem::size_of::<f32>() as GLsizeiptr,
-            positions_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[1]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            16 * std::mem::size_of::<f32>() as GLsizeiptr,
-            colors_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * std::mem::size_of::<f32>() as GLsizeiptr, colors_flat.as_ptr() as *const GLvoid);
 
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -253,35 +179,17 @@ pub fn draw_polygon_4_shaded(
 }
 
 pub fn draw_polygon_4_textured(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
-    texture_width: usize, texture_height: usize, texture_data: &[Color],
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize,
+    texture_data: &[Color],
 )
 {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 8] = [
-        positions[2].x,
-        positions[2].y,
-        positions[0].x,
-        positions[0].y,
-        positions[1].x,
-        positions[1].y,
-        positions[3].x,
-        positions[3].y,
-    ];
+    let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
-    let texcoords_flat: [f32; 8] = [
-        texcoords[2].x,
-        texcoords[2].y,
-        texcoords[0].x,
-        texcoords[0].y,
-        texcoords[1].x,
-        texcoords[1].y,
-        texcoords[3].x,
-        texcoords[3].y,
-    ];
+    let texcoords_flat: [f32; 8] = [texcoords[2].x, texcoords[2].y, texcoords[0].x, texcoords[0].y, texcoords[1].x, texcoords[1].y, texcoords[3].x, texcoords[3].y];
 
     unsafe {
         if PROGRAM_CONTEXT.is_none() {
@@ -298,23 +206,13 @@ pub fn draw_polygon_4_textured(
             let mut vbo_position = 0;
             glGenBuffers(1, &mut vbo_position);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                8 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             let mut vbo_texcoord = 0;
             glGenBuffers(1, &mut vbo_texcoord);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoord);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                8 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             let mut texture = 0;
@@ -325,17 +223,7 @@ pub fn draw_polygon_4_textured(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
-            glTexImage2D(
-                GL_TEXTURE_2D,
-                0,
-                GL_RGBA as GLint,
-                texture_width as GLsizei,
-                texture_height as GLsizei,
-                0,
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-                std::ptr::null(),
-            );
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, texture_width as GLsizei, texture_height as GLsizei, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
 
             if glGetError() != GL_NO_ERROR {
                 panic!("Error initializing OpenGL program: draw_polygon_4_textured");
@@ -366,54 +254,24 @@ pub fn draw_polygon_4_textured(
         glUniform1i(uniform_tex2d, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            8 * std::mem::size_of::<f32>() as GLsizeiptr,
-            positions_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[1]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            8 * std::mem::size_of::<f32>() as GLsizeiptr,
-            texcoords_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, texcoords_flat.as_ptr() as *const GLvoid);
 
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 }
 
-pub fn draw_polygon_4_textured_framebuffer(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
-) {
+pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let positions_flat: [f32; 8] = [
-        positions[2].x,
-        positions[2].y,
-        positions[0].x,
-        positions[0].y,
-        positions[1].x,
-        positions[1].y,
-        positions[3].x,
-        positions[3].y,
-    ];
+    let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
-    let texcoords_flat: [f32; 8] = [
-        texcoords[2].x,
-        texcoords[2].y,
-        texcoords[0].x,
-        texcoords[0].y,
-        texcoords[1].x,
-        texcoords[1].y,
-        texcoords[3].x,
-        texcoords[3].y,
-    ];
+    let texcoords_flat: [f32; 8] = [texcoords[2].x, texcoords[2].y, texcoords[0].x, texcoords[0].y, texcoords[1].x, texcoords[1].y, texcoords[3].x, texcoords[3].y];
 
     unsafe {
         glFinish();
@@ -432,23 +290,13 @@ pub fn draw_polygon_4_textured_framebuffer(
             let mut vbo_position = 0;
             glGenBuffers(1, &mut vbo_position);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                8 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             let mut vbo_texcoord = 0;
             glGenBuffers(1, &mut vbo_texcoord);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoord);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                8 * std::mem::size_of::<f32>() as GLsizeiptr,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW,
-            );
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
             if glGetError() != GL_NO_ERROR {
@@ -462,12 +310,7 @@ pub fn draw_polygon_4_textured_framebuffer(
         glUseProgram(program_context.program_id);
 
         let mut texture = 0;
-        glGetFramebufferAttachmentParameteriv(
-            GL_DRAW_FRAMEBUFFER,
-            GL_COLOR_ATTACHMENT0,
-            GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
-            &mut texture,
-        );
+        glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture as GLuint);
 
@@ -476,33 +319,20 @@ pub fn draw_polygon_4_textured_framebuffer(
         glUniform1i(uniform_tex2d, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            8 * std::mem::size_of::<f32>() as GLsizeiptr,
-            positions_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
 
         glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[1]);
-        glBufferSubData(
-            GL_ARRAY_BUFFER,
-            0,
-            8 * std::mem::size_of::<f32>() as GLsizeiptr,
-            texcoords_flat.as_ptr() as *const GLvoid,
-        );
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, texcoords_flat.as_ptr() as *const GLvoid);
 
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 }
 
-pub fn read_framebuffer_5551(
-    backend_params: &BackendParams, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>,
-) -> Vec<u16> {
+pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>) -> Vec<u16> {
     let (_context_guard, _context) = backend_params.context.guard();
 
-    let opengl_origin: Point2D<isize, Pixel> =
-        Point2D::new(origin.x, (VRAM_HEIGHT_LINES as isize) - origin.y - size.height);
+    let opengl_origin: Point2D<isize, Pixel> = Point2D::new(origin.x, (VRAM_HEIGHT_LINES as isize) - origin.y - size.height);
 
     let mut buffer: Vec<u8> = Vec::new();
     let buffer_size = size.width * size.height * (std::mem::size_of::<u16>() as isize);

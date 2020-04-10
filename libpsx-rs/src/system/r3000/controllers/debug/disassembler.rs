@@ -40,8 +40,7 @@ pub fn trace_instructions_at_pc(state: &State, instruction_count: Option<usize>)
 }
 
 fn dump_instructions(base_address: u32, raw_instructions: &[u8], count: usize) -> String {
-    let cs =
-        Capstone::new().mips().mode(arch::mips::ArchMode::Mips32).endian(Endian::Little).detail(true).build().unwrap();
+    let cs = Capstone::new().mips().mode(arch::mips::ArchMode::Mips32).endian(Endian::Little).detail(true).build().unwrap();
 
     let instructions = cs.disasm_all(raw_instructions, base_address as u64).unwrap();
 

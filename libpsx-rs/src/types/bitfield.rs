@@ -43,13 +43,7 @@ impl Bitfield {
 
     #[must_use]
     pub fn insert_into<T>(&self, destination: T, source: T) -> T
-    where T: Shl<usize, Output = T>
-            + Sub<T, Output = T>
-            + One
-            + Shr<usize, Output = T>
-            + BitAnd<T, Output = T>
-            + BitOr<T, Output = T>
-            + Not<Output = T> {
+    where T: Shl<usize, Output = T> + Sub<T, Output = T> + One + Shr<usize, Output = T> + BitAnd<T, Output = T> + BitOr<T, Output = T> + Not<Output = T> {
         let destination_masked = destination & (!self.shifted_mask::<T>());
         let source_masked = (source & self.unshifted_mask()) << self.start;
         destination_masked | source_masked
@@ -73,13 +67,7 @@ impl Bitfield {
 
     #[must_use]
     pub fn copy<T>(&self, destination: T, source: T) -> T
-    where T: Shl<usize, Output = T>
-            + Sub<T, Output = T>
-            + One
-            + Shr<usize, Output = T>
-            + BitAnd<T, Output = T>
-            + BitOr<T, Output = T>
-            + Not<Output = T> {
+    where T: Shl<usize, Output = T> + Sub<T, Output = T> + One + Shr<usize, Output = T> + BitAnd<T, Output = T> + BitOr<T, Output = T> + Not<Output = T> {
         self.insert_into(destination, self.extract_from(source))
     }
 }

@@ -39,10 +39,7 @@ pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
         return false;
     }
 
-    assert!(
-        state.cdrom.response.read_available() == 0,
-        "CDROM response FIFO still had bytes when a new command was run!"
-    );
+    assert!(state.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
 
     let finished = (handler.1)(state, cdrom_backend, command_iteration);
 
@@ -52,10 +49,7 @@ pub fn handle_command(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
         state.cdrom.command_index = None;
     }
 
-    assert!(
-        state.cdrom.parameter.read_available() == 0,
-        "CDROM parameter FIFO still had bytes when a command was just run!"
-    );
+    assert!(state.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
 
     state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 0);
 

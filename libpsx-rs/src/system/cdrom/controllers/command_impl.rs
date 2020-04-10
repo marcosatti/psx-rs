@@ -45,8 +45,7 @@ pub fn command_02_handler(state: &mut State, cdrom_backend: &CdromBackend, comma
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
 
-    let lba_address = backend_dispatch::msf_to_lba(cdrom_backend, minute, second, frame)
-        .expect("SetLoc was called when no backend is available");
+    let lba_address = backend_dispatch::msf_to_lba(cdrom_backend, minute, second, frame).expect("SetLoc was called when no backend is available");
 
     state.cdrom.lba_address = lba_address;
 
@@ -199,8 +198,7 @@ pub fn command_1a_handler(state: &mut State, cdrom_backend: &CdromBackend, comma
             };
 
             if disc_loaded {
-                let mode =
-                    backend_dispatch::disc_mode(cdrom_backend).expect("GetID was called when no backend is available");
+                let mode = backend_dispatch::disc_mode(cdrom_backend).expect("GetID was called when no backend is available");
                 match mode {
                     2 => {
                         response.write_one(0x02).unwrap();

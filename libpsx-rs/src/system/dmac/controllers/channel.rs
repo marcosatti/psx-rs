@@ -168,9 +168,7 @@ pub fn raise_irq(state: &mut State, channel: usize) {
     }
 }
 
-pub fn initialize_transfer_state(
-    transfer_state: &mut TransferState, chcr: &Chcr, madr: &B32Register, bcr: &B32Register,
-) {
+pub fn initialize_transfer_state(transfer_state: &mut TransferState, chcr: &Chcr, madr: &B32Register, bcr: &B32Register) {
     let bcr_calculate = |v| {
         if v == 0 {
             0x1_0000

@@ -119,8 +119,7 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(13, 1), bool_to_flag(sy2_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(14, 1), bool_to_flag(sx2_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(17, 1), bool_to_flag(plane_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(sz3_overflow_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
@@ -129,12 +128,9 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
 
     handle_cp2_flag_error_bit(state);
     handle_cp2_sxyp_mirror(state);
@@ -266,12 +262,9 @@ fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bo
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
 
     handle_cp2_flag_error_bit(state);
 }
@@ -365,8 +358,7 @@ pub fn nclip(state: &mut State, _instruction: Instruction) -> InstResult {
     state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
 
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
 
     handle_cp2_flag_error_bit(state);
 
@@ -472,8 +464,7 @@ pub fn avsz3(state: &mut State, _instruction: Instruction) -> InstResult {
     state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
 
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
 
     handle_cp2_flag_error_bit(state);
@@ -503,8 +494,7 @@ pub fn avsz4(state: &mut State, _instruction: Instruction) -> InstResult {
     state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
 
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31]
-        .write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
     state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
 
     handle_cp2_flag_error_bit(state);

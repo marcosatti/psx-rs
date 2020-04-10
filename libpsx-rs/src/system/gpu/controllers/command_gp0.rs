@@ -68,8 +68,7 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
 
     // Execute it.
     {
-        let command_buffer_slice: &[u32] =
-            unsafe { &(&state.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()[0..required_length_value] };
+        let command_buffer_slice: &[u32] = unsafe { &(&state.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()[0..required_length_value] };
 
         (command_handler.1)(state, video_backend, command_buffer_slice);
 
