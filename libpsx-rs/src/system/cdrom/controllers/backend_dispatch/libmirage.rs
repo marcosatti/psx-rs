@@ -38,16 +38,19 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
 pub fn msf_to_lba_address(backend_params: &BackendParams, minute: u8, second: u8, frame: u8) -> usize {
     let (_context_guard, _context) = backend_params.context.guard();
 
-    unsafe { mirage_helper_msf2lba(minute, second, frame, 1) as usize }
+    unsafe {  }
 }
 
-pub fn read_sector(backend_params: &BackendParams, lba_address: usize) -> Vec<u8> {
+pub fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Vec<u8> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
         assert!(!DISC.is_null(), "No disc loaded");
 
         let mut error: *mut GError = std::ptr::null_mut();
+
+        let mut lba_address = mirage_helper_msf2lba(msf_address_base.0, msf_address_base.1, msf_address_base.2, 1) as usize;
+        lba_address += msf_address_offset;
 
         let mut sector = mirage_disc_get_sector(DISC, lba_address as gint, &mut error as *mut *mut GError);
         assert!(!sector.is_null());

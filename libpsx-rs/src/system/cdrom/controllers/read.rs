@@ -38,10 +38,12 @@ pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
             return true;
         }
 
-        let data_block = backend_dispatch::read_sector(cdrom_backend, state.cdrom.lba_address).expect("Tried to read a sector when no backend is available");
+        let msf_address_base = state.cdrom.msf_address_base;
+        let msf_address_offset = state.cdrom.msf_address_offset;
+        let data_block = backend_dispatch::read_sector(cdrom_backend, msf_address_base, msf_address_offset).expect("Tried to read a sector when no backend is available");
         assert_eq!(data_block.len(), 2048);
 
-        state.cdrom.lba_address += 1;
+        state.cdrom.msf_address_offset += 1;
         state.cdrom.read_buffer.extend(&data_block);
 
         // Raise the interrupt - we have read a sector ok and have some data ready.

@@ -316,8 +316,9 @@ pub struct State {
     /// Reading status.
     pub reading: bool,
     pub read_buffer: VecDeque<u8>,
-    /// Current LBA address.
-    pub lba_address: usize,
+    /// Current MSF address.
+    pub msf_address_base: (u8, u8, u8),
+    pub msf_address_offset: usize, 
 }
 
 impl State {
@@ -340,7 +341,8 @@ impl State {
             seeking: false,
             reading: false,
             read_buffer: VecDeque::with_capacity(2048),
-            lba_address: 0,
+            msf_address_base: (0, 0, 0),
+            msf_address_offset: 0,
         }
     }
 }

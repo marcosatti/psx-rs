@@ -33,7 +33,7 @@ pub fn command_02_length(_command_iteration: usize) -> usize {
     3
 }
 
-pub fn command_02_handler(state: &mut State, cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub fn command_02_handler(state: &mut State, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Setloc
 
     // TODO: Assumed to be absolute addressing?
@@ -45,9 +45,8 @@ pub fn command_02_handler(state: &mut State, cdrom_backend: &CdromBackend, comma
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
 
-    let lba_address = backend_dispatch::msf_to_lba(cdrom_backend, minute, second, frame).expect("SetLoc was called when no backend is available");
-
-    state.cdrom.lba_address = lba_address;
+    state.cdrom.msf_address_base = (minute, second, frame);
+    state.cdrom.msf_address_offset = 0;
 
     let stat_value = stat_value(state);
     let response = &mut state.cdrom.response;
