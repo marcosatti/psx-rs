@@ -13,6 +13,7 @@ ctrlc = "*"
 opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }
+libcdio-sys = { path = "../libcdio-sys" }
 libpsx-rs = { path = "../libpsx-rs" }
 
 [build-dependencies]

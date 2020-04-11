@@ -1,6 +1,6 @@
 [package]
-name = "opengl-sys"
-version = "3.3.0"
+name = "libcdio-sys"
+version = "2.1.0"
 authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 

@@ -1,15 +1,14 @@
 #![allow(non_upper_case_globals)]
 
-use crate::backends::cdrom::libmirage::{
-    state::*,
-    *,
-};
+use crate::backends::cdrom::libmirage::*;
 use libmirage_sys::*;
 
 pub(crate) fn disc_loaded(backend_params: &BackendParams) -> bool {
     let (_context_guard, _context) = backend_params.context.guard();
 
-    unsafe { !DISC.is_null() }
+    unsafe { 
+        !DISC.is_null() 
+    }
 }
 
 pub fn disc_mode(backend_params: &BackendParams) -> usize {
@@ -28,17 +27,10 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
         match sector_type {
             _MirageSectorType_MIRAGE_SECTOR_MODE2
             | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM1
-            | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM2
-            | _MirageSectorType_MIRAGE_SECTOR_MODE2_MIXED => 2,
+            | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM2 => 2,
             _ => unimplemented!("Unknown sector type encountered"),
         }
     }
-}
-
-pub fn msf_to_lba_address(backend_params: &BackendParams, minute: u8, second: u8, frame: u8) -> usize {
-    let (_context_guard, _context) = backend_params.context.guard();
-
-    unsafe {  }
 }
 
 pub fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Vec<u8> {
@@ -49,7 +41,10 @@ pub fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8
 
         let mut error: *mut GError = std::ptr::null_mut();
 
-        let mut lba_address = mirage_helper_msf2lba(msf_address_base.0, msf_address_base.1, msf_address_base.2, 1) as usize;
+        let minute = mirage_helper_bcd2hex(msf_address_base.0);
+        let second = mirage_helper_bcd2hex(msf_address_base.1);
+        let frame = mirage_helper_bcd2hex(msf_address_base.2);
+        let mut lba_address = mirage_helper_msf2lba(minute, second, frame, 1) as usize;
         lba_address += msf_address_offset;
 
         let mut sector = mirage_disc_get_sector(DISC, lba_address as gint, &mut error as *mut *mut GError);

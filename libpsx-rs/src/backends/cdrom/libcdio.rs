@@ -1,20 +1,17 @@
 use crate::backends::context::*;
-use libmirage_sys::*;
+use libcdio_sys::*;
 use log::info;
 use std::{
-    ffi::{
-        CStr,
-        CString,
-    },
+    ffi::CString,
     path::Path,
 };
 
 static mut INITIALIZED: bool = false;
 
-pub static mut DISC: *mut MirageDisc = std::ptr::null_mut();
+pub static mut DISC: *mut CdIo_t = std::ptr::null_mut();
 
 pub struct BackendParams<'a: 'b, 'b> {
-    pub context: BackendContext<'a, 'b, *mut MirageContext>,
+    pub context: BackendContext<'a, 'b, ()>,
 }
 
 pub fn setup(backend_params: &BackendParams) {
@@ -35,7 +32,8 @@ pub fn teardown(backend_params: &BackendParams) {
     unsafe {
         if INITIALIZED {
             if !DISC.is_null() {
-                g_clear_object((&mut DISC as *mut *mut MirageDisc) as *mut *mut GObject);
+                cdio_destroy(DISC);
+                DISC = std::ptr::null_mut();
             }
         }
 
@@ -49,24 +47,19 @@ pub fn change_disc(backend_params: &BackendParams, path: &Path) {
     unsafe {
         if INITIALIZED {
             if !DISC.is_null() {
-                g_clear_object((&mut DISC as *mut *mut MirageDisc) as *mut *mut GObject);
+                cdio_destroy(DISC);
+                DISC = std::ptr::null_mut();
             }
 
             assert!(DISC.is_null());
 
             let cstr = CString::new(path.to_string_lossy().as_ref().to_owned()).unwrap();
-            let buffer = [cstr.as_bytes_with_nul().as_ptr(), std::ptr::null_mut()];
-            let mut error: *mut GError = std::ptr::null_mut();
 
             info!("Changing disc to {}", path.display());
-            DISC = mirage_context_load_image(*context, buffer.as_ptr() as *mut *mut i8, &mut error as *mut *mut GError);
+            DISC = cdio_open(cstr.as_bytes_with_nul().as_ptr() as *const i8, driver_id_t_DRIVER_UNKNOWN);
 
             if DISC.is_null() {
-                assert!(!error.is_null());
-                let error_cstr = CStr::from_ptr((*error).message).to_string_lossy();
-                panic!("Changing disc failed: {}", error_cstr.as_ref());
-            } else {
-                assert!(error.is_null());
+                panic!("Changing disc failed: NULL disc returned; check it's supported by libcdio");
             }
         }
     }

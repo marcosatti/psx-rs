@@ -162,7 +162,27 @@ pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
     })
 }
 
-#[cfg(not(libmirage))]
+#[cfg(libcdio)]
+pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
+    use libcdio_sys::*;
+    use libpsx_rs::backends::context::BackendContext;
+
+    unsafe {
+        let result = cdio_init();
+        assert_eq!(result, 1);
+    }
+
+    let libcdio_acquire_context = || { &() };
+    let libcdio_release_context = || {};
+    let libcdio_version_string = unsafe { std::ffi::CStr::from_ptr(cdio_version_string).to_string_lossy().into_owned() };
+    log::info!("CDROM initialized: libcdio {}", libcdio_version_string);
+
+    CdromBackend::Libcdio(libcdio::BackendParams {
+        context: BackendContext::new(Box::new(libcdio_acquire_context), Box::new(libcdio_release_context)),
+    })
+}
+
+#[cfg(not(any(libmirage, libcdio)))]
 pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
     CdromBackend::None
 }
@@ -177,6 +197,10 @@ pub(crate) fn terminate_cdrom_backend() {
     }
 }
 
-#[cfg(not(libmirage))]
+#[cfg(libcdio)]
+pub(crate) fn terminate_cdrom_backend() {
+}
+
+#[cfg(not(any(libmirage, libcdio)))]
 pub(crate) fn terminate_cdrom_backend() {
 }

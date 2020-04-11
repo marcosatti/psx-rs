@@ -4,4 +4,5 @@ fn main() {
     external_check("opengl");
     external_check("openal");
     external_check("libmirage");
+    external_check("libcdio");
 }

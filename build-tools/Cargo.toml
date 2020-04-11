@@ -5,6 +5,6 @@ authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-bindgen = "0.53"
-serde = { version = "1.0" , features = ["derive"] }
-serde_json = "1.0"
+bindgen = "*"
+serde = { version = "*" , features = ["derive"] }
+serde_json = "*"

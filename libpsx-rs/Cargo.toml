@@ -8,6 +8,7 @@ edition = "2018"
 opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }
+libcdio-sys = { path = "../libcdio-sys" }
 spsc-ringbuffer = { git = "https://github.com/marcosatti/spsc-ringbuffer" }
 parking_lot = "*"
 log = "*"

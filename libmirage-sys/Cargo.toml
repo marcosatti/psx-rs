@@ -6,4 +6,3 @@ edition = "2018"
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }
-bindgen = "0.53"
