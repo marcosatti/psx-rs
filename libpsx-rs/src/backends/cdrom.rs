@@ -1,9 +1,9 @@
 #![allow(unused_variables)]
 
-#[cfg(libmirage)]
-pub mod libmirage;
 #[cfg(libcdio)]
 pub mod libcdio;
+#[cfg(libmirage)]
+pub mod libmirage;
 
 use std::path::Path;
 

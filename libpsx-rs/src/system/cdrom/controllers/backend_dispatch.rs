@@ -1,9 +1,9 @@
 #![allow(unused_variables)]
 
-#[cfg(libmirage)]
-mod libmirage;
 #[cfg(libcdio)]
 mod libcdio;
+#[cfg(libmirage)]
+mod libmirage;
 
 use crate::backends::cdrom::CdromBackend;
 

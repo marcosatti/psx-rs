@@ -10,6 +10,8 @@ chrono = "*"
 fern = "*"
 log = "*"
 ctrlc = "*"
+toml = "*"
+serde = { version = "*" , features = ["derive"] }
 opengl-sys = { path = "../opengl-sys" }
 openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }

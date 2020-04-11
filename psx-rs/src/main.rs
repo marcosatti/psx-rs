@@ -1,4 +1,5 @@
 mod backend;
+mod config;
 
 use libpsx_rs::{
     debug::{
@@ -18,7 +19,7 @@ use libpsx_rs::{
             ENABLE_STATE_TRACING,
         },
     },
-    Config,
+    Config as CoreConfig,
     Core,
 };
 use sdl2::{
@@ -36,10 +37,7 @@ use std::{
         AtomicBool,
         Ordering,
     },
-    time::{
-        Duration,
-        Instant,
-    },
+    time::Instant,
 };
 
 fn main() {
@@ -49,6 +47,9 @@ fn main() {
     // Working directory / workspace
     let workspace_path = PathBuf::from(r"./workspace/");
     println!("Working directory: {}, workspace directory: {}", std::env::current_dir().unwrap().to_str().unwrap(), workspace_path.to_str().unwrap());
+
+    // Read config
+    let config = config::load(&workspace_path);
 
     // Setup logging
     let logs_path = workspace_path.join(r"logs/");
@@ -69,37 +70,35 @@ fn main() {
     log::info!("SDL initialized");
 
     // Initialize video
-    let video_backend = backend::initialize_video_backend(&window);
+    let video_backend = backend::initialize_video_backend(config.video_backend_kind, &window);
 
     // Initialize audio
-    let audio_backend = backend::initialize_audio_backend();
+    let audio_backend = backend::initialize_audio_backend(config.audio_backend_kind);
 
     // Initialize CDROM
-    let cdrom_backend = backend::initialize_cdrom_backend();
+    let cdrom_backend = backend::initialize_cdrom_backend(config.cdrom_backend_kind);
 
     // Initialize psx_rs core
-    let time_delta_us = args().nth(2).map_or(25, |v| v.parse::<usize>().unwrap());
-    let worker_threads = args().nth(3).map_or(2, |v| v.parse::<usize>().unwrap());
-    let config = Config {
+    let core_config = CoreConfig {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
         video_backend,
         audio_backend,
         cdrom_backend,
-        time_delta: Duration::from_micros(time_delta_us as u64),
-        worker_threads,
+        time_delta: config.time_delta,
+        worker_threads: config.worker_threads,
     };
 
-    main_inner(&mut event_pump, config);
+    main_inner(&mut event_pump, core_config);
 
     // CDROM teardown
-    backend::terminate_cdrom_backend();
+    backend::terminate_cdrom_backend(config.cdrom_backend_kind);
 
     // Audio teardown
-    backend::terminate_audio_backend();
+    backend::terminate_audio_backend(config.audio_backend_kind);
 
     // Video teardown
-    backend::terminate_video_backend();
+    backend::terminate_video_backend(config.video_backend_kind);
 }
 
 fn setup_log_file(logs_path: &Path) -> PathBuf {
@@ -119,7 +118,7 @@ fn setup_logger(log_file_path: &Path) {
         .unwrap();
 }
 
-fn main_inner(event_pump: &mut EventPump, config: Config) {
+fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
     let mut core = Core::new(config);
     log::info!("Core initialized");
 

@@ -319,7 +319,7 @@ pub struct State {
     /// Current MSF address.
     /// Base is stored in BCD format.
     pub msf_address_base: (u8, u8, u8),
-    pub msf_address_offset: usize, 
+    pub msf_address_offset: usize,
 }
 
 impl State {

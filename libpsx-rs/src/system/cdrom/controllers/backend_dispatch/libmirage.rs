@@ -6,9 +6,7 @@ use libmirage_sys::*;
 pub(crate) fn disc_loaded(backend_params: &BackendParams) -> bool {
     let (_context_guard, _context) = backend_params.context.guard();
 
-    unsafe { 
-        !DISC.is_null() 
-    }
+    unsafe { !DISC.is_null() }
 }
 
 pub fn disc_mode(backend_params: &BackendParams) -> usize {
@@ -25,9 +23,7 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
         let sector_type = mirage_track_get_sector_type(track);
 
         match sector_type {
-            _MirageSectorType_MIRAGE_SECTOR_MODE2
-            | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM1
-            | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM2 => 2,
+            _MirageSectorType_MIRAGE_SECTOR_MODE2 | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM1 | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM2 => 2,
             _ => unimplemented!("Unknown sector type encountered"),
         }
     }
@@ -41,9 +37,9 @@ pub fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8
 
         let mut error: *mut GError = std::ptr::null_mut();
 
-        let minute = mirage_helper_bcd2hex(msf_address_base.0);
-        let second = mirage_helper_bcd2hex(msf_address_base.1);
-        let frame = mirage_helper_bcd2hex(msf_address_base.2);
+        let minute = mirage_helper_bcd2hex(msf_address_base.0 as gint) as guint8;
+        let second = mirage_helper_bcd2hex(msf_address_base.1 as gint) as guint8;
+        let frame = mirage_helper_bcd2hex(msf_address_base.2 as gint) as guint8;
         let mut lba_address = mirage_helper_msf2lba(minute, second, frame, 1) as usize;
         lba_address += msf_address_offset;
 
