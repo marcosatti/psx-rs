@@ -3,7 +3,7 @@ pub mod exception;
 pub mod instruction;
 pub mod instruction_impl;
 pub mod instruction_impl_cop2;
-pub mod memory_controller;
+pub mod memory;
 pub mod register;
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
             controllers::{
                 exception::*,
                 instruction::lookup as instruction_lookup,
-                memory_controller::translate_address,
+                memory::translate_address,
             },
         },
         types::{

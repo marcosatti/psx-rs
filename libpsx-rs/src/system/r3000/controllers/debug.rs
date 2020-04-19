@@ -12,7 +12,7 @@ use crate::{
                     disassembler::*,
                     register::*,
                 },
-                memory_controller::translate_address,
+                memory::translate_address,
             },
             cp0::constants::*,
             types::*,

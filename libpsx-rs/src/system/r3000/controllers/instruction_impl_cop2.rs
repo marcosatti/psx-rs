@@ -2,7 +2,7 @@ use crate::{
     system::{
         r3000::{
             controllers::{
-                memory_controller::*,
+                memory::*,
                 register::*,
             },
             cp0::constants::STATUS_ISC,

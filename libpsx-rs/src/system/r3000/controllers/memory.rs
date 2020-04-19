@@ -10,8 +10,7 @@ use std::sync::atomic::Ordering;
 pub fn translate_address(va: u32) -> u32 {
     match va {
         // kuseg.
-        // The PSX doesn't have a TLB, but it also uses a special mapping that
-        // differs from the standard MIPS documentation.
+        // The PSX doesn't have a TLB, but it also uses a special mapping that differs from the standard MIPS documentation.
         0x0000_0000..=0x7FFF_FFFF => va,
         // kseg0.
         0x8000_0000..=0x9FFF_FFFF => va - 0x8000_0000,

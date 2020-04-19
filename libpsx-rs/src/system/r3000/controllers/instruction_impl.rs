@@ -4,7 +4,7 @@ use crate::{
             constants::INSTRUCTION_SIZE,
             controllers::{
                 debug,
-                memory_controller::*,
+                memory::*,
                 register::*,
                 set_exception,
             },

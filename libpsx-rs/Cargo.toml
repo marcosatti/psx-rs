@@ -23,6 +23,7 @@ hashbrown = "*"
 lru = "*"
 fixed = "*"
 typenum = "*"
+smallvec = { version = "*", features = ["union"] }
 tokio = { version = "*", features = ["rt-core", "rt-threaded", "parking_lot"] }
 futures-util = "*"
 

@@ -21,9 +21,9 @@ use crate::{
             initialize as intc_initialize,
             State as IntcState,
         },
-        memory_control::types::{
-            initialize as memory_control_initialize,
-            State as MemoryControlState,
+        memory::types::{
+            initialize as memory_initialize,
+            State as MemoryState,
         },
         padmc::types::{
             initialize as padmc_initialize,
@@ -49,9 +49,7 @@ use crate::{
         },
     },
     types::{
-        b8_memory_mapper::B8MemoryMap,
         memory::b8_memory::B8Memory,
-        register::b8_register::B8Register,
     },
     Context,
 };
@@ -103,7 +101,7 @@ pub struct State {
     pub dmac: DmacState,
     pub timers: TimersState,
     pub spu: SpuState,
-    pub memory_control: MemoryControlState,
+    pub memory: MemoryState,
     pub gpu: GpuState,
     pub cdrom: CdromState,
     pub padmc: PadmcState,
@@ -123,7 +121,7 @@ impl State {
             dmac: DmacState::new(),
             timers: TimersState::new(),
             spu: SpuState::new(),
-            memory_control: MemoryControlState::new(),
+            memory: MemoryState::new(),
             gpu: GpuState::new(),
             cdrom: CdromState::new(),
             padmc: PadmcState::new(),
@@ -138,15 +136,12 @@ impl State {
         r3000_initialize(state);
         intc_initialize(state);
         timers_initialize(state);
-        memory_control_initialize(state);
+        memory_initialize(state);
         spu_initialize(state);
         dmac_initialize(state);
         gpu_initialize(state);
         cdrom_initialize(state);
         padmc_initialize(state);
-
-        state.r3000.memory_mapper.map(0x1F80_2041, 1, &mut state.post_display as *mut dyn B8MemoryMap);
-        state.r3000.memory_mapper.map(0x1F00_0000, 0x100, &mut state.pio as *mut dyn B8MemoryMap);
     }
 
     pub fn load_bios(state: &mut State, path: &Path) {

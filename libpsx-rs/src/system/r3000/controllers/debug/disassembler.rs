@@ -1,7 +1,7 @@
 use crate::system::{
     r3000::{
         constants::INSTRUCTION_SIZE,
-        controllers::memory_controller::translate_address,
+        controllers::memory::translate_address,
     },
     types::State,
 };
