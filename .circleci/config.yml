@@ -14,6 +14,10 @@ jobs:
           name: Install Python 3
           command: |
             apt install -y python3
+      - run:
+          name: Install rustfmt
+          command: |
+            rustup component add rustfmt
       - checkout
       - run:
           name: Make external directory structure
@@ -30,10 +34,19 @@ jobs:
             cp external-sample/check-disable.py external/libmirage/check.py
             cp external-sample/check-disable.py external/libcdio/check.py
       - run:
-          name: Build
+          name: Build libpsx-rs
           command: |
             cd libpsx-rs
             cargo build
+      - run:
+          name: Test libpsx-rs
+          command: |
+            cd libpsx-rs
+            echo "Not implemented yet; see issue 10"
+      - run:
+          name: Formatting check
+          command: |
+            cargo fmt -- --check
 workflows:
   version: 2
   main:
