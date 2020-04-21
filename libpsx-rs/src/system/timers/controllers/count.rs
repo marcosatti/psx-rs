@@ -11,7 +11,7 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
+pub fn handle_count(state: &State, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
     let timer_state = get_state(state, timer_id);
 
@@ -28,12 +28,12 @@ pub fn handle_count(state: &mut State, timer_id: usize, duration: Duration) {
     }
 }
 
-pub fn handle_count_clear(state: &mut State, timer_id: usize) {
+pub fn handle_count_clear(state: &State, timer_id: usize) {
     let count = get_count(state, timer_id);
     count.write_u32(0);
 }
 
-fn handle_count_reset(state: &mut State, timer_id: usize) -> IrqType {
+fn handle_count_reset(state: &State, timer_id: usize) -> IrqType {
     let mode = get_mode(state, timer_id);
     let count = get_count(state, timer_id);
     let count_value = count.read_u32() & 0xFFFF;

@@ -21,10 +21,7 @@ use crate::{
             initialize as intc_initialize,
             State as IntcState,
         },
-        memory::types::{
-            initialize as memory_initialize,
-            State as MemoryState,
-        },
+        memory::types::State as MemoryState,
         padmc::types::{
             initialize as padmc_initialize,
             State as PadmcState,
@@ -43,14 +40,9 @@ use crate::{
             initialize as spu_initialize,
             State as SpuState,
         },
-        timers::types::{
-            initialize as timers_initialize,
-            State as TimersState,
-        },
+        timers::types::State as TimersState,
     },
-    types::{
-        memory::b8_memory::B8Memory,
-    },
+    types::memory::b8_memory::B8Memory,
     Context,
 };
 use log::info;
@@ -107,7 +99,7 @@ pub struct State {
     pub padmc: PadmcState,
     pub bios: B8Memory,
     pub main_memory: B8Memory,
-    pub post_display: B8Register,
+    pub post_display: B8Memory,
     pub pio: B8Memory,
 }
 
@@ -127,7 +119,7 @@ impl State {
             padmc: PadmcState::new(),
             bios: B8Memory::new(BIOS_SIZE),
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
-            post_display: B8Register::new(),
+            post_display: B8Memory::new(1),
             pio: B8Memory::new_initialized(0x100, 0xFF),
         })
     }
@@ -135,8 +127,6 @@ impl State {
     pub fn initialize(state: &mut State) {
         r3000_initialize(state);
         intc_initialize(state);
-        timers_initialize(state);
-        memory_initialize(state);
         spu_initialize(state);
         dmac_initialize(state);
         gpu_initialize(state);

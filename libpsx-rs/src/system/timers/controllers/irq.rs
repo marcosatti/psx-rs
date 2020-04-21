@@ -2,6 +2,7 @@ use crate::system::{
     timers::{
         constants::*,
         controllers::timer::*,
+        types::*,
     },
     types::State,
 };
@@ -10,7 +11,7 @@ use log::{
     warn,
 };
 
-pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType) {
+pub fn handle_irq_trigger(state: &State, timer_id: usize, irq_type: IrqType) {
     let mode = get_mode(state, timer_id);
     let timer_state = get_state(state, timer_id);
 
@@ -43,7 +44,7 @@ pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType)
     }
 }
 
-pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
+pub fn handle_irq_raise(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
 
     let mut raise_irq = false;

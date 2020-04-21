@@ -12,7 +12,7 @@ use crate::system::{
 };
 use std::sync::atomic::Ordering;
 
-pub fn handle_mode_write(state: &mut State, timer_id: usize) {
+pub fn handle_mode_write(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
 
     if !mode.write_latch.load(Ordering::Acquire) {
@@ -38,7 +38,7 @@ pub fn handle_mode_write(state: &mut State, timer_id: usize) {
     mode.write_latch.store(false, Ordering::Release);
 }
 
-pub fn handle_mode_read(state: &mut State, timer_id: usize) {
+pub fn handle_mode_read(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
 
     if !mode.read_latch.load(Ordering::Acquire) {
@@ -51,7 +51,7 @@ pub fn handle_mode_read(state: &mut State, timer_id: usize) {
     mode.write_latch.store(false, Ordering::Release);
 }
 
-pub fn handle_clock_source(state: &mut State, timer_id: usize) {
+pub fn handle_clock_source(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
     let state = get_state(state, timer_id);
 
@@ -89,7 +89,7 @@ pub fn handle_clock_source(state: &mut State, timer_id: usize) {
     state.clock_source = clock_source;
 }
 
-pub fn handle_oneshot_clear(state: &mut State, timer_id: usize) {
+pub fn handle_oneshot_clear(state: &State, timer_id: usize) {
     let state = get_state(state, timer_id);
     state.irq_raised = false;
 }
