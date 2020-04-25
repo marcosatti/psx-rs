@@ -8,6 +8,7 @@ pub mod sound;
 pub mod transfer;
 pub mod voice;
 pub mod volume;
+pub mod memory;
 
 use crate::{
     audio::AudioBackend,

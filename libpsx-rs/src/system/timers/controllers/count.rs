@@ -11,9 +11,9 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn handle_count(state: &State, timer_id: usize, duration: Duration) {
+pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
-    let timer_state = get_state(state, timer_id);
+    let timer_state = get_state(controller_state, timer_id);
 
     timer_state.current_elapsed += duration;
     let delta_elapsed = timer_state.current_elapsed - timer_state.acknowledged_elapsed;

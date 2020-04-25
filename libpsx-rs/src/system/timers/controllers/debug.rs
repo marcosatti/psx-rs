@@ -20,7 +20,7 @@ pub fn trace_timer(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
     let target = get_target(state, timer_id);
 
-    trace!("Timer {}: count = 0x{:08X}, mode = 0x{:08X}, target = 0x{:08X}", timer_id, count.read_u32(), mode.register.read_u32(), target.read_u32(),);
+    trace!("Timer {}: count = 0x{:08X}, mode = 0x{:08X}, target = 0x{:08X}", timer_id, count.read_u32(), mode.register.read_u32(), target.read_u32());
 
     trace_mode(state, timer_id);
 }

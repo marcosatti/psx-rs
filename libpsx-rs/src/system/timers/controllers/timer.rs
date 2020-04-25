@@ -3,11 +3,11 @@ use crate::{
         timers::types::*,
         types::State,
     },
-    types::memory::b8_memory::B8Memory,
+    types::memory::*,
 };
 use std::time::Duration;
 
-pub fn get_count(state: &State, timer_id: usize) -> &B8Memory {
+pub fn get_count(state: &State, timer_id: usize) -> &B32Register {
     match timer_id {
         0 => &state.timers.timer0_count,
         1 => &state.timers.timer1_count,
@@ -25,7 +25,7 @@ pub fn get_mode(state: &State, timer_id: usize) -> &Mode {
     }
 }
 
-pub fn get_target(state: &State, timer_id: usize) -> &B8Memory {
+pub fn get_target(state: &State, timer_id: usize) -> &B32Register {
     match timer_id {
         0 => &mut state.timers.timer0_target,
         1 => &mut state.timers.timer1_target,
@@ -47,4 +47,9 @@ pub fn handle_duration_clear(controller_state: &mut ControllerState, timer_id: u
     let state = get_state(controller_state, timer_id);
     state.current_elapsed = Duration::from_secs(0);
     state.acknowledged_elapsed = Duration::from_secs(0);
+}
+
+pub fn handle_oneshot_clear(controller_state: &mut ControllerState, timer_id: usize) {
+    let state = get_state(controller_state, timer_id);
+    state.irq_raised = false;
 }

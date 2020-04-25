@@ -36,13 +36,10 @@ use crate::{
                 State as R3000State,
             },
         },
-        spu::types::{
-            initialize as spu_initialize,
-            State as SpuState,
-        },
+        spu::types::State as SpuState,
         timers::types::State as TimersState,
     },
-    types::memory::b8_memory::B8Memory,
+    types::memory::*,
     Context,
 };
 use log::info;
@@ -99,7 +96,7 @@ pub struct State {
     pub padmc: PadmcState,
     pub bios: B8Memory,
     pub main_memory: B8Memory,
-    pub post_display: B8Memory,
+    pub post_display: B8Register,
     pub pio: B8Memory,
 }
 
@@ -119,7 +116,7 @@ impl State {
             padmc: PadmcState::new(),
             bios: B8Memory::new(BIOS_SIZE),
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
-            post_display: B8Memory::new(1),
+            post_display: B8Register::new(),
             pio: B8Memory::new_initialized(0x100, 0xFF),
         })
     }
@@ -127,7 +124,6 @@ impl State {
     pub fn initialize(state: &mut State) {
         r3000_initialize(state);
         intc_initialize(state);
-        spu_initialize(state);
         dmac_initialize(state);
         gpu_initialize(state);
         cdrom_initialize(state);
@@ -140,6 +136,6 @@ impl State {
         let mut buffer = Vec::new();
         f.read_to_end(&mut buffer).unwrap();
 
-        state.bios.write_raw(&buffer, 0);
+        state.bios.write_raw(0, &buffer);
     }
 }

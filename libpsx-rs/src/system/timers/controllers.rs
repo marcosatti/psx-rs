@@ -26,10 +26,10 @@ pub fn run(context: &ControllerContext, event: Event) {
 
 fn run_time(state: &State, duration: Duration) {
     for i in 0..3 {
-        let _controller_state = state.timers.controller_state.try_lock().unwrap();
+        let controller_state = state.timers.controller_state.try_lock().unwrap();
 
-        handle_mode_write(state, i);
-        handle_mode_read(state, i);
-        handle_count(state, i, duration);
+        handle_mode_write(state, controller_state, i);
+        handle_mode_read(state, controller_state, i);
+        handle_count(state, controller_state, i, duration);
     }
 }

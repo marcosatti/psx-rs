@@ -1,4 +1,4 @@
-use crate::types::memory::b8_memory::B8Memory;
+use crate::types::memory::*;
 use std::{
     sync::atomic::{
         AtomicBool,
@@ -58,17 +58,17 @@ impl ControllerState {
 }
 
 pub struct State {
-    pub timer0_count: B8Memory,
+    pub timer0_count: B32Register,
     pub timer0_mode: Mode,
-    pub timer0_target: B8Memory,
+    pub timer0_target: B32Register,
 
-    pub timer1_count: B8Memory,
+    pub timer1_count: B32Register,
     pub timer1_mode: Mode,
-    pub timer1_target: B8Memory,
+    pub timer1_target: B32Register,
 
-    pub timer2_count: B8Memory,
+    pub timer2_count: B32Register,
     pub timer2_mode: Mode,
-    pub timer2_target: B8Memory,
+    pub timer2_target: B32Register,
 
     pub controller_state: Mutex<ControllerState>,
 }
@@ -76,22 +76,22 @@ pub struct State {
 impl State {
     pub fn new() -> State {
         State {
-            timer0_count: B8Memory::new(4),
+            timer0_count: B32Register::new(),
             timer0_mode: Mode::new(),
-            timer0_target: B8Memory::new(4),
-            timer1_count: B8Memory::new(4),
+            timer0_target: B32Register::new(),
+            timer1_count: B32Register::new(),
             timer1_mode: Mode::new(),
-            timer1_target: B8Memory::new(4),
-            timer2_count: B8Memory::new(4),
+            timer1_target: B32Register::new(),
+            timer2_count: B32Register::new(),
             timer2_mode: Mode::new(),
-            timer2_target: B8Memory::new(4),
+            timer2_target: B32Register::new(),
             controller_state: Mutex::new(ControllerState::new()),
         }
     }
 }
 
 pub struct Mode {
-    pub register: B8Memory,
+    pub register: B32Register,
     pub write_latch: AtomicBool,
     pub read_latch: AtomicBool,
 }
@@ -99,35 +99,35 @@ pub struct Mode {
 impl Mode {
     pub fn new() -> Mode {
         Mode {
-            register: B8Memory::new(4),
+            register: B32Register::new(),
             write_latch: AtomicBool::new(false),
             read_latch: AtomicBool::new(false),
         }
     }
 
-    pub fn read_u16(&self, offset: u32) -> u16 {
-        let result = self.register.read_u16(offset);
+    pub fn read_u16(&self) -> u16 {
+        let result = self.register.read_u16();
         self.read_latch.store(true, Ordering::Release);
         result
     }
 
-    pub fn write_u16(&self, offset: u32, value: u16) {
+    pub fn write_u16(&self, value: u16) {
         // BIOS writes consecutively to this register without a chance to acknowledge...
         // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
-        self.register.write_u16(offset, value);
+        self.register.write_u16(value);
     }
 
-    pub fn read_u32(&self, offset: u32) -> u32 {
-        let result = self.register.read_u32(offset);
+    pub fn read_u32(&self) -> u32 {
+        let result = self.register.read_u32();
         self.read_latch.store(true, Ordering::Release);
         result
     }
 
-    pub fn write_u32(&self, offset: u32, value: u32) {
+    pub fn write_u32(&self, value: u32) {
         // BIOS writes consecutively to this register without a chance to acknowledge...
         // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
-        self.register.write_u32(offset, value);
+        self.register.write_u32(value);
     }
 }
