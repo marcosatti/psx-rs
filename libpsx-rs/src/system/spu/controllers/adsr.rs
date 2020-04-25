@@ -69,12 +69,12 @@ pub fn handle_adsr_envelope(state: &mut State, voice_id: usize) {
 
     play_state.adsr_current_volume = clamp(play_state.adsr_current_volume, 0.0, 1.0);
 
-    let adsr_cvol = unsafe { &mut *get_adsr_cvol(state, voice_id) };
+    let adsr_cvol = unsafe { &mut *get_cvol(state, voice_id) };
     adsr_cvol.write_u16((play_state.adsr_current_volume * std::i16::MAX as f64) as u16);
 }
 
 fn get_adsr_attack_params(state: &mut State, voice_id: usize) -> (usize, usize, Direction, bool) {
-    let adsr = unsafe { &mut *get_adpcm_envelope(state, voice_id) };
+    let adsr = unsafe { &mut *get_adsr(state, voice_id) };
 
     let adsr_value = adsr.read_u32();
 
@@ -87,7 +87,7 @@ fn get_adsr_attack_params(state: &mut State, voice_id: usize) -> (usize, usize, 
 }
 
 fn get_adsr_decay_params(state: &mut State, voice_id: usize) -> (usize, usize, Direction, bool) {
-    let adsr = unsafe { &mut *get_adpcm_envelope(state, voice_id) };
+    let adsr = unsafe { &mut *get_adsr(state, voice_id) };
 
     let adsr_value = adsr.read_u32();
 
@@ -100,13 +100,13 @@ fn get_adsr_decay_params(state: &mut State, voice_id: usize) -> (usize, usize, D
 }
 
 fn get_adsr_sustain_level(state: &mut State, voice_id: usize) -> usize {
-    let adsr = unsafe { &mut *get_adpcm_envelope(state, voice_id) };
+    let adsr = unsafe { &mut *get_adsr(state, voice_id) };
     let adsr_value = adsr.read_u32();
     min(((Bitfield::new(0, 4).extract_from(adsr_value) as usize) + 1) * 0x800, std::i16::MAX as usize)
 }
 
 fn get_adsr_sustain_params(state: &mut State, voice_id: usize) -> (usize, usize, Direction, bool) {
-    let adsr = unsafe { &mut *get_adpcm_envelope(state, voice_id) };
+    let adsr = unsafe { &mut *get_adsr(state, voice_id) };
 
     let adsr_value = adsr.read_u32();
 
@@ -128,7 +128,7 @@ fn get_adsr_sustain_params(state: &mut State, voice_id: usize) -> (usize, usize,
 }
 
 fn get_adsr_release_params(state: &mut State, voice_id: usize) -> (usize, usize, Direction, bool) {
-    let adsr = unsafe { &mut *get_adpcm_envelope(state, voice_id) };
+    let adsr = unsafe { &mut *get_adsr(state, voice_id) };
 
     let adsr_value = adsr.read_u32();
 

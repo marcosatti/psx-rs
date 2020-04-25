@@ -51,3 +51,13 @@ pub fn data_fifo_write_u16(state: &State, offset: u32, value: u16) -> WriteResul
     assert_eq!(offset, 0);
     state.spu.data_fifo.write_one(value).map_err(|_| WriteErrorKind::Full)
 }
+
+pub fn voice_voll_read_u16(state: &State, offset: u32, voice_id: usize) -> ReadResult<u16> {
+    assert_eq!(offset, 0);
+    Ok(get_voll(state, voice_id).read_u16())
+}
+
+pub fn voice_voll_write_u16(state: &State, offset: u32, value: u16, voice_id: usize) -> WriteResult {
+    assert_eq!(offset, 0);
+    Ok(get_voll(state, voice_id).write_u16(value))
+}

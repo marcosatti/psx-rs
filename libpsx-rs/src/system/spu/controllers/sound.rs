@@ -62,7 +62,7 @@ pub fn generate_sound(state: &mut State, audio_backend: &AudioBackend) {
 
 fn handle_key_on(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(state, voice_id) };
-    let start_address = unsafe { &mut *get_adpcm_sa(state, voice_id) };
+    let start_address = unsafe { &mut *get_saddr(state, voice_id) };
     let key_on = &mut state.spu.voice_key_on;
     let key_off = &mut state.spu.voice_key_off;
     let status = &mut state.spu.voice_channel_status;
@@ -120,7 +120,7 @@ fn handle_play_sound_buffer(state: &mut State, audio_backend: &AudioBackend, voi
 
 fn decode_adpcm_block(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(state, voice_id) };
-    let repeat_address = unsafe { &mut *get_adpcm_ra(state, voice_id) };
+    let repeat_address = unsafe { &mut *get_raddr(state, voice_id) };
     let status = &mut state.spu.voice_channel_status;
     let memory = &state.spu.memory;
 
@@ -159,7 +159,7 @@ fn decode_adpcm_block(state: &mut State, voice_id: usize) {
 
 fn handle_pitch_counter(state: &mut State, voice_id: usize) {
     let play_state = unsafe { &mut *get_play_state(state, voice_id) };
-    let sample_rate = unsafe { &mut *get_adpcm_sr(state, voice_id) };
+    let sample_rate = unsafe { &mut *get_srate(state, voice_id) };
 
     let sample_rate_value = sample_rate.read_u16() as u32;
     let interp_value = Bitfield::new(0, 12).extract_from(sample_rate_value) as usize;

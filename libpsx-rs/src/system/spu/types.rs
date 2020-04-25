@@ -267,6 +267,24 @@ impl PlayState {
     }
 }
 
+pub struct ControllerState {
+    pub memory: Vec<u8>,
+    pub current_transfer_mode: TransferMode,
+    pub current_transfer_address: u32,
+    pub dac: DacState,
+}
+
+impl ControllerState {
+    pub fn new() -> ControllerState {
+        ControllerState {
+            memory: vec![0; 0x8_0000],
+            current_transfer_mode: TransferMode::Stop,
+            current_transfer_address: 0,
+            dac: DacState::new(),
+        }
+    }
+}
+
 pub struct State {
     pub main_volume_left: B16Register,
     pub main_volume_right: B16Register,
@@ -507,13 +525,8 @@ pub struct State {
     pub voice23_raddr: B16Register,
 
     pub data_fifo: Fifo<u16>,
-
-    pub memory: B8Memory,
-
-    pub current_transfer_mode: TransferMode,
-    pub current_transfer_address: u32,
-
-    pub dac: DacState,
+    
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
@@ -730,10 +743,7 @@ impl State {
             voice23_cvol: B16Register::new(),
             voice23_raddr: B16Register::new(),
             data_fifo: Fifo::new(64, Some(DebugState::new("SPU FIFO", false, false))),
-            memory: B8Memory::new(0x80_000),
-            current_transfer_mode: TransferMode::Stop,
-            current_transfer_address: 0,
-            dac: DacState::new(),
+            controller_state: Mutex::new(ControllerState::new()),
         }
     }
 }
