@@ -1,11 +1,12 @@
 use crate::{
     system::{
         spu::controllers::voice::*,
-        types::State,
+        spu::types::*,
+        types::State as SystemState,
     },
     types::{
         bitfield::Bitfield,
-        register::b16_register::*,
+        memory::*,
         stereo::*,
     },
 };
@@ -29,14 +30,14 @@ pub enum SweepPhase {
     Negative,
 }
 
-pub fn transform_voice_adsr_volume(state: &mut State, voice_id: usize, adpcm_sample: i16) -> i16 {
-    let play_state = unsafe { &mut *get_play_state(state, voice_id) };
+pub fn transform_voice_adsr_volume(controller_state: &mut ControllerState, voice_id: usize, adpcm_sample: i16) -> i16 {
+    let play_state = get_play_state(controller_state, voice_id);
     (adpcm_sample as f64 * play_state.adsr_current_volume) as i16
 }
 
-pub fn transform_voice_volume(state: &mut State, voice_id: usize, adpcm_sample: i16) -> Stereo {
-    let vol_left = unsafe { &mut *get_voll(state, voice_id) };
-    let vol_right = unsafe { &mut *get_volr(state, voice_id) };
+pub fn transform_voice_volume(state: &SystemState, voice_id: usize, adpcm_sample: i16) -> Stereo {
+    let vol_left = get_voll(state, voice_id);
+    let vol_right = get_volr(state, voice_id);
 
     let process_sample = |vol: &mut B16Register| -> i16 {
         let vol_value = vol.read_u16();
@@ -56,11 +57,11 @@ pub fn transform_voice_volume(state: &mut State, voice_id: usize, adpcm_sample: 
     Stereo::new(left_sample, right_sample)
 }
 
-pub fn transform_main_volume(state: &mut State, pcm_frame: Stereo) -> Stereo {
-    let mvol_left = &mut state.spu.main_volume_left;
-    let mvol_right = &mut state.spu.main_volume_right;
+pub fn transform_main_volume(state: &SystemState, pcm_frame: Stereo) -> Stereo {
+    let mvol_left = &state.spu.main_volume_left;
+    let mvol_right = &state.spu.main_volume_right;
 
-    let process_sample = |sample, mvol: &mut B16Register| -> i16 {
+    let process_sample = |sample, mvol: &B16Register| -> i16 {
         let mvol_value = mvol.read_u16();
         let volume_mode = Bitfield::new(15, 1).extract_from(mvol_value);
         if volume_mode != 0 {
