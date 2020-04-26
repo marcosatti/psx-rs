@@ -1,21 +1,15 @@
 use crate::{
     system::{
         intc::constants::*,
-        types::State as SystemState,
     },
-    types::{
-        b8_memory_mapper::{
-            B8MemoryMap,
-            *,
-        },
-        register::b32_register::B32Register,
-    },
+    types::memory::*,
     utilities::bool_to_flag,
 };
 use std::sync::atomic::{
     AtomicBool,
     Ordering,
 };
+use parking_lot::Mutex;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Line {
@@ -32,10 +26,22 @@ pub enum Line {
     Pio,
 }
 
+pub struct ControllerState {
+    old_masked_value: u32,
+}
+
+impl ControllerState {
+    pub fn new() -> ControllerState {
+        ControllerState {
+            old_masked_value: 0,
+        }
+    }
+}
+
 pub struct State {
     pub stat: Stat,
     pub mask: B32Register,
-    pub old_masked_value: u32,
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
@@ -43,7 +49,7 @@ impl State {
         State {
             stat: Stat::new(),
             mask: B32Register::new(),
-            old_masked_value: 0,
+            controller_state: Mutex::new(ControllerState::new()),
         }
     }
 }
@@ -133,27 +139,22 @@ impl Stat {
         value = PIO.insert_into(value, bool_to_flag(self.pio.load(Ordering::Acquire)));
         value
     }
-}
 
-impl B8MemoryMap for Stat {
-    fn read_u16(&mut self, _offset: u32) -> ReadResult<u16> {
-        Ok(self.value() as u16)
+    fn read_u16(&mut self, offset: u32) -> u16 {
+        assert_eq!(offset, 0);
+        self.value() as u16
     }
 
-    fn write_u16(&mut self, _offset: u32, value: u16) -> WriteResult {
-        Ok(self.acknowledge(value as u32))
+    fn write_u16(&mut self, offset: u32, value: u16) {
+        assert_eq!(offset, 0);
+        self.acknowledge(value as u32)
     }
 
-    fn read_u32(&mut self, _offset: u32) -> ReadResult<u32> {
-        Ok(self.value() as u32)
+    fn read_u32(&mut self) -> u32 {
+        self.value() as u32
     }
 
-    fn write_u32(&mut self, _offset: u32, value: u32) -> WriteResult {
-        Ok(self.acknowledge(value))
+    fn write_u32(&mut self, value: u32) {
+        self.acknowledge(value)
     }
-}
-
-pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(0x1F80_1070, 4, &mut state.intc.stat as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1074, 4, &mut state.intc.mask as *mut dyn B8MemoryMap);
 }

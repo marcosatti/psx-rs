@@ -17,29 +17,19 @@ use crate::{
             initialize as gpu_initialize,
             State as GpuState,
         },
-        intc::types::{
-            initialize as intc_initialize,
-            State as IntcState,
-        },
+        intc::types::State as IntcState,
         memory::types::State as MemoryState,
         padmc::types::{
             initialize as padmc_initialize,
             State as PadmcState,
         },
-        r3000::{
-            constants::{
-                BIOS_SIZE,
-                MAIN_MEMORY_SIZE,
-            },
-            types::{
-                initialize as r3000_initialize,
-                State as R3000State,
-            },
+        r3000::types::{
+            initialize as r3000_initialize,
+            State as R3000State,
         },
         spu::types::State as SpuState,
         timers::types::State as TimersState,
     },
-    types::memory::*,
     Context,
 };
 use log::info;
@@ -94,10 +84,6 @@ pub struct State {
     pub gpu: GpuState,
     pub cdrom: CdromState,
     pub padmc: PadmcState,
-    pub bios: B8Memory,
-    pub main_memory: B8Memory,
-    pub post_display: B8Register,
-    pub pio: B8Memory,
 }
 
 impl State {
@@ -114,16 +100,11 @@ impl State {
             gpu: GpuState::new(),
             cdrom: CdromState::new(),
             padmc: PadmcState::new(),
-            bios: B8Memory::new(BIOS_SIZE),
-            main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
-            post_display: B8Register::new(),
-            pio: B8Memory::new_initialized(0x100, 0xFF),
         })
     }
 
     pub fn initialize(state: &mut State) {
         r3000_initialize(state);
-        intc_initialize(state);
         dmac_initialize(state);
         gpu_initialize(state);
         cdrom_initialize(state);
