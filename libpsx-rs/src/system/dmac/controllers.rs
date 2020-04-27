@@ -2,6 +2,7 @@ pub mod channel;
 pub mod debug;
 pub mod linked_list;
 pub mod transfer;
+pub mod memory;
 
 use crate::system::{
     dmac::{

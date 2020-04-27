@@ -76,7 +76,7 @@ impl B8Memory {
     }
 
     pub fn read_bitfield_u8(&self, byte_offset: u32, bitfield: Bitfield) -> u8 {
-        bitfield.extract_from(self.read_u8(byte_offset));
+        bitfield.extract_from(self.read_u8(byte_offset))
     }
 
     pub fn write_bitfield_u8(&self, byte_offset: u32, bitfield: Bitfield, value: u8) {
@@ -84,7 +84,7 @@ impl B8Memory {
     }
 
     pub fn read_bitfield_u16(&self, byte_offset: u32, bitfield: Bitfield) -> u16 {
-        bitfield.extract_from(self.read_u16(byte_offset));
+        bitfield.extract_from(self.read_u16(byte_offset))
     }
 
     pub fn write_bitfield_u16(&self, byte_offset: u32, bitfield: Bitfield, value: u16) {
@@ -92,7 +92,7 @@ impl B8Memory {
     }
 
     pub fn read_bitfield_u32(&self, byte_offset: u32, bitfield: Bitfield) -> u32 {
-        bitfield.extract_from(self.read_u32(byte_offset));
+        bitfield.extract_from(self.read_u32(byte_offset))
     }
 
     pub fn write_bitfield_u32(&self, byte_offset: u32, bitfield: Bitfield, value: u32) {
@@ -112,7 +112,7 @@ impl B32Register {
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
-        self.memory.read_u8(offset);
+        self.memory.read_u8(offset)
     }
 
     pub fn write_u8(&self, offset: u32, value: u8) {
@@ -120,7 +120,7 @@ impl B32Register {
     }
 
     pub fn read_u16(&self, offset: u32) -> u16 {
-        self.memory.read_u16(offset * 2);
+        self.memory.read_u16(offset * 2)
     }
 
     pub fn write_u16(&self, offset: u32, value: u16) {
@@ -128,7 +128,7 @@ impl B32Register {
     }
 
     pub fn read_u32(&self) -> u32 {
-        self.memory.read_u32(0);
+        self.memory.read_u32(0)
     }
 
     pub fn write_u32(&self, value: u32) {
@@ -136,7 +136,7 @@ impl B32Register {
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
-        self.memory.read_bitfield_u32(0, bitfield);
+        self.memory.read_bitfield_u32(0, bitfield)
     }
 
     pub fn write_bitfield(&self, bitfield: Bitfield, value: u32) {
@@ -156,7 +156,7 @@ impl B16Register {
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
-        self.memory.read_u8(offset);
+        self.memory.read_u8(offset)
     }
 
     pub fn write_u8(&self, offset: u32, value: u8) {
@@ -164,7 +164,7 @@ impl B16Register {
     }
 
     pub fn read_u16(&self) -> u16 {
-        self.memory.read_u16(0);
+        self.memory.read_u16(0)
     }
 
     pub fn write_u16(&self, value: u16) {
@@ -172,7 +172,7 @@ impl B16Register {
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
-        self.memory.read_bitfield_u16(0, bitfield);
+        self.memory.read_bitfield_u16(0, bitfield)
     }
 
     pub fn write_bitfield(&self, bitfield: Bitfield, value: u16) {
@@ -192,7 +192,7 @@ impl B8Register {
     }
 
     pub fn read_u8(&self) -> u8 {
-        self.memory.read_u8(0);
+        self.memory.read_u8(0)
     }
 
     pub fn write_u8(&self, value: u8) {
@@ -200,7 +200,7 @@ impl B8Register {
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u8 {
-        self.memory.read_bitfield_u8(0, bitfield);
+        self.memory.read_bitfield_u8(0, bitfield)
     }
 
     pub fn write_bitfield(&self, bitfield: Bitfield, value: u8) {

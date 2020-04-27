@@ -9,13 +9,13 @@ use crate::{
     },
     types::{
         bitfield::Bitfield,
-        register::b32_register::B32Register,
+        memory::*,
     },
 };
 use log::warn;
 
-pub fn get_madr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Register {
-    let madr = match channel {
+pub fn get_madr(state: &State, channel_id: usize) -> &B32Register {
+    match channel_id {
         0 => &mut state.dmac.mdecin_madr,
         1 => &mut state.dmac.mdecout_madr,
         2 => &mut state.dmac.gpu_madr,
@@ -24,13 +24,11 @@ pub fn get_madr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Regi
         5 => &mut state.dmac.pio_madr,
         6 => &mut state.dmac.otc_madr,
         _ => unreachable!("Invalid DMAC channel"),
-    };
-
-    unsafe { (madr as *mut B32Register).as_mut().unwrap() }
+    }
 }
 
-pub fn get_bcr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Register {
-    let bcr = match channel {
+pub fn get_bcr(state: &State, channel_id: usize) -> &B32Register {
+    match channel_id {
         0 => &mut state.dmac.mdecin_bcr,
         1 => &mut state.dmac.mdecout_bcr,
         2 => &mut state.dmac.gpu_bcr,
@@ -39,39 +37,33 @@ pub fn get_bcr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut B32Regis
         5 => &mut state.dmac.pio_bcr,
         6 => &mut state.dmac.otc_bcr,
         _ => unreachable!("Invalid DMAC channel"),
-    };
-
-    unsafe { (bcr as *mut B32Register).as_mut().unwrap() }
+    }
 }
 
-pub fn get_chcr<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut Chcr {
-    let chcr = match channel {
+pub fn get_chcr(state: &State, channel_id: usize) -> &Chcr {
+    match channel_id {
         0 => &mut state.dmac.mdecin_chcr,
         1 => &mut state.dmac.mdecout_chcr,
         2 => &mut state.dmac.gpu_chcr,
         3 => &mut state.dmac.cdrom_chcr,
         4 => &mut state.dmac.spu_chcr,
         5 => &mut state.dmac.pio_chcr,
-        6 => &mut state.dmac.otc_chcr.chcr,
+        6 => &mut state.dmac.otc_chcr,
         _ => unreachable!("Invalid DMAC channel"),
-    };
-
-    unsafe { (chcr as *mut Chcr).as_mut().unwrap() }
+    }
 }
 
-pub fn get_transfer_state<'a, 'b>(state: &'a mut State, channel: usize) -> &'b mut TransferState {
-    let transfer_state = match channel {
-        0 => &mut state.dmac.mdecin_transfer_state,
-        1 => &mut state.dmac.mdecout_transfer_state,
-        2 => &mut state.dmac.gpu_transfer_state,
-        3 => &mut state.dmac.cdrom_transfer_state,
-        4 => &mut state.dmac.spu_transfer_state,
-        5 => &mut state.dmac.pio_transfer_state,
-        6 => &mut state.dmac.otc_transfer_state,
+pub fn get_transfer_state(state: &mut ControllerState, channel_id: usize) -> &mut TransferState {
+    match channel_id {
+        0 => &mut state.mdecin_transfer_state,
+        1 => &mut state.mdecout_transfer_state,
+        2 => &mut state.gpu_transfer_state,
+        3 => &mut state.cdrom_transfer_state,
+        4 => &mut state.spu_transfer_state,
+        5 => &mut state.pio_transfer_state,
+        6 => &mut state.otc_transfer_state,
         _ => unreachable!("Invalid DMAC channel"),
-    };
-
-    unsafe { (transfer_state as *mut TransferState).as_mut().unwrap() }
+    }
 }
 
 fn get_otc_value(madr_value: u32, last_transfer: bool) -> u32 {
@@ -82,12 +74,12 @@ fn get_otc_value(madr_value: u32, last_transfer: bool) -> u32 {
     }
 }
 
-pub fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
-    match channel {
+pub fn pop_channel_data(state: &State, channel_id: usize, madr: u32, last_transfer: bool) -> Result<u32, ()> {
+    match channel_id {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
         2 => {
-            let fifo = &state.gpu.gpu1810.read;
+            let fifo = &state.gpu.read;
             let handle_error = |e| {
                 debug::trace_hazard_empty(fifo);
                 e
@@ -113,12 +105,12 @@ pub fn pop_channel_data(state: &State, channel: usize, madr: u32, last_transfer:
     }
 }
 
-pub fn push_channel_data(state: &State, channel: usize, value: u32) -> Result<(), ()> {
-    match channel {
+pub fn push_channel_data(state: &State, channel_id: usize, value: u32) -> Result<(), ()> {
+    match channel_id {
         0 => unimplemented!("Unhandled DMAC channel 0"),
         1 => unimplemented!("Unhandled DMAC channel 1"),
         2 => {
-            let fifo = &state.gpu.gpu1810.gp0;
+            let fifo = &state.gpu.gp0;
             let handle_error = |e| {
                 debug::trace_hazard_full(fifo);
                 e
@@ -158,13 +150,13 @@ pub fn get_sync_mode(chcr: &Chcr) -> SyncMode {
     }
 }
 
-pub fn raise_irq(state: &mut State, channel: usize) {
+pub fn raise_irq(state: &mut State, channel_id: usize) {
     let dicr = &mut state.dmac.dicr;
 
     let _lock = dicr.mutex.lock();
 
-    if dicr.register.read_bitfield(DICR_IRQ_ENABLE_BITFIELDS[channel]) != 0 {
-        dicr.register.write_bitfield(DICR_IRQ_FLAG_BITFIELDS[channel], 1);
+    if dicr.register.read_bitfield(DICR_IRQ_ENABLE_BITFIELDS[channel_id]) != 0 {
+        dicr.register.write_bitfield(DICR_IRQ_FLAG_BITFIELDS[channel_id], 1);
     }
 }
 

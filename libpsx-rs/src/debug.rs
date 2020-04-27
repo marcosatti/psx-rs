@@ -32,7 +32,7 @@ pub fn dump_memory(base_dir_path: &PathBuf, state: &State) {
 pub fn dump_memory_main(state: &State, base_dir_path: &PathBuf) {
     let memory_path = base_dir_path.join(r"main_memory.bin");
     let mut f = File::create(&memory_path).unwrap();
-    f.write(&state.main_memory.read_raw(0)).unwrap();
+    f.write(&state.memory.main_memory.read_raw(0)).unwrap();
     debug!("Dumped main memory to {}", memory_path.to_str().unwrap());
 }
 

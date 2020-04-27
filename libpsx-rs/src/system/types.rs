@@ -6,10 +6,7 @@ use crate::{
     },
     system::{
         cdrom::types::State as CdromState,
-        dmac::types::{
-            initialize as dmac_initialize,
-            State as DmacState,
-        },
+        dmac::types::State as DmacState,
         gpu::types::State as GpuState,
         intc::types::State as IntcState,
         memory::types::State as MemoryState,
@@ -96,15 +93,13 @@ impl State {
 
     pub fn initialize(state: &mut State) {
         r3000_initialize(state);
-        dmac_initialize(state);
     }
 
     pub fn load_bios(state: &mut State, path: &Path) {
         info!("Loading BIOS from {}", path.to_str().unwrap());
-        let mut f = File::open(path).unwrap();
+        let mut file = File::open(path).unwrap();
         let mut buffer = Vec::new();
-        f.read_to_end(&mut buffer).unwrap();
-
-        state.bios.write_raw(0, &buffer);
+        file.read_to_end(&mut buffer).unwrap();
+        state.memory.bios.write_raw(0, &buffer);
     }
 }

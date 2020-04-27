@@ -50,11 +50,7 @@ pub struct IntEnable {
 impl IntEnable {
     pub fn new() -> IntEnable {
         IntEnable {
-            register: { 
-                let r = B8Register::new(); 
-                r.write_u8(0xE0);
-                r
-            },
+            register: B8Register::new(),
             write_latch: AtomicBool::new(false),
         }
     }
@@ -104,11 +100,7 @@ pub struct IntFlag {
 impl IntFlag {
     pub fn new() -> IntFlag {
         IntFlag {
-            register: { 
-                let r = B8Register::new(); 
-                r.write_u8(0xE0);
-                r
-            },
+            register: B8Register::new(),
             write_latch: AtomicBool::new(false),
             parameter_reset: AtomicBool::new(false),
         }
