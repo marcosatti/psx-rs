@@ -102,7 +102,7 @@ impl ControllerState {
 }
 
 pub struct State {
-    controller_state: Mutex<ControllerState>,
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {

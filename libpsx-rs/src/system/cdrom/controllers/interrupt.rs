@@ -4,9 +4,9 @@ use crate::system::{
     types::State,
 };
 
-pub fn raise_irq(state: &mut State, irq_line: usize) {
+pub fn raise_irq(state: &State, irq_line: usize) {
     let int_enable = &state.cdrom.int_enable;
-    let int_flag = &mut state.cdrom.int_flag;
+    let int_flag = &state.cdrom.int_flag;
 
     int_flag.set_interrupt(irq_line);
 

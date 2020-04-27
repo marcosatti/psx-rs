@@ -31,11 +31,11 @@ impl Command {
         }
     }
 
-    fn read_u8(&self) -> u8 {
+    pub fn read_u8(&self) -> u8 {
         self.register.read_u8()
     }
 
-    fn write_u8(&self, value: u8) {
+    pub fn write_u8(&self, value: u8) {
         assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
         self.register.write_u8(value);
@@ -55,11 +55,11 @@ impl IntEnable {
         }
     }
 
-    fn read_u8(&self) -> u8 {
+    pub fn read_u8(&self) -> u8 {
         self.register.read_u8()
     }
 
-    fn write_u8(&self, value: u8) {
+    pub fn write_u8(&self, value: u8) {
         assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         let mut register_value = self.register.read_u8();
         register_value = INTERRUPT_FLAGS.insert_into(register_value, value);
@@ -80,11 +80,11 @@ impl Request {
         }
     }
 
-    fn read_u8(&self) -> u8 {
+    pub fn read_u8(&self) -> u8 {
         self.register.read_u8()
     }
 
-    fn write_u8(&self, value: u8) {
+    pub fn write_u8(&self, value: u8) {
         // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         self.write_latch.store(true, Ordering::Release);
         self.register.write_u8(value);
@@ -112,11 +112,11 @@ impl IntFlag {
         self.register.write_u8(value);
     }
 
-    fn read_u8(&self) -> u8 {
+    pub fn read_u8(&self) -> u8 {
         self.register.read_u8()
     }
 
-    fn write_u8(&mut self, value: u8) {
+    pub fn write_u8(&mut self, value: u8) {
         assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         assert!(!self.parameter_reset.load(Ordering::Acquire), "Parameter FIFO reset still pending");
         self.write_latch.store(true, Ordering::Release);

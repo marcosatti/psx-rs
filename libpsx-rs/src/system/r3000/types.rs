@@ -4,8 +4,12 @@ use crate::{
             cp0::types::{
                 initialize as cp0_initialize,
                 State as Cp0State,
+                ControllerState as Cp0ControllerState,
             },
-            cp2::types::State as Cp2State,
+            cp2::types::{
+                State as Cp2State,
+                ControllerState as Cp2ControllerState,
+            }
         },
         types::State as SystemState,
     },
@@ -16,6 +20,7 @@ use crate::{
 };
 use std::fmt;
 use parking_lot::Mutex;
+use crate::types::mips1::instruction::Instruction;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Hazard {
@@ -42,7 +47,16 @@ impl fmt::Debug for Hazard {
     }
 }
 
+pub struct ControllerContext<'a> {
+    pub state: &'a SystemState,
+    pub r3000_state: &'a mut ControllerState, 
+    pub cp0_state: &'a mut Cp0ControllerState, 
+    pub cp2_state: &'a mut Cp2ControllerState,
+}
+
 pub type InstResult = Result<(), Hazard>;
+
+pub type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
 
 pub struct ControllerState {
     pub pc: Register,

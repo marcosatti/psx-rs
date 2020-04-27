@@ -25,11 +25,11 @@ impl Ctrl {
         }
     }
 
-    fn read_u16(&self) -> u16 {
+    pub fn read_u16(&self) -> u16 {
         self.register.read_u16()
     }
 
-    fn write_u16(&self, value: u16) {
+    pub fn write_u16(&self, value: u16) {
         // BIOS writes consecutively to this register without a chance to acknowledge...
         // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);

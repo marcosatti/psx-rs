@@ -7,4 +7,5 @@ pub mod padmc;
 pub mod r3000;
 pub mod spu;
 pub mod timers;
+pub mod bus;
 pub mod types;

@@ -5,14 +5,11 @@ use crate::{
                 instruction_impl::*,
                 instruction_impl_cop2::*,
             },
-            types::*,
+            types::InstructionFn,
         },
-        types::State,
     },
     types::mips1::instruction::Instruction,
 };
-
-type InstructionFn = fn(&mut State, Instruction) -> InstResult;
 
 pub fn lookup(inst: Instruction) -> Option<(InstructionFn, usize)> {
     match inst.opcode() {

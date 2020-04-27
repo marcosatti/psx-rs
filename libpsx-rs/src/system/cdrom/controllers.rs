@@ -16,6 +16,7 @@ use crate::{
                 command::*,
                 read::*,
             },
+            types::ControllerState,
         },
         types::State,
     },
@@ -24,19 +25,19 @@ use crate::{
 use log::warn;
 use std::sync::atomic::Ordering;
 
-pub fn handle_tick(state: &mut State, cdrom_backend: &CdromBackend) {
+pub fn handle_tick(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     handle_interrupt_enable(state);
     handle_interrupt_flags(state);
     handle_request(state);
 
-    handle_state(state, cdrom_backend);
+    handle_state(state, cdrom_state, cdrom_backend);
 
     handle_parameter_fifo(state);
     handle_response_fifo(state);
     handle_data_fifo(state);
 }
 
-fn handle_state(state: &mut State, cdrom_backend: &CdromBackend) {
+fn handle_state(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     // Don't run anything until all previous interrupts have been acknowledged, otherwise new ones could be missed.
     {
         let int_flag = &state.cdrom.int_flag;
@@ -50,11 +51,11 @@ fn handle_state(state: &mut State, cdrom_backend: &CdromBackend) {
     let mut handled = false;
 
     if !handled {
-        handled = handle_command(state, cdrom_backend);
+        handled = handle_command(state, cdrom_state, cdrom_backend);
     }
 
     if !handled {
-        handled = handle_read(state, cdrom_backend);
+        handled = handle_read(state, cdrom_state, cdrom_backend);
     }
 
     if !handled {
@@ -62,8 +63,8 @@ fn handle_state(state: &mut State, cdrom_backend: &CdromBackend) {
     }
 }
 
-fn handle_request(state: &mut State) {
-    let request = &mut state.cdrom.request;
+fn handle_request(state: &State) {
+    let request = &state.cdrom.request;
 
     if request.write_latch.load(Ordering::Acquire) {
         assert!(request.register.read_bitfield(REQUEST_SMEN) == 0);
@@ -80,7 +81,7 @@ fn handle_request(state: &mut State) {
     }
 }
 
-fn handle_interrupt_enable(state: &mut State) {
+fn handle_interrupt_enable(state: &State) {
     let int_enable = &mut state.cdrom.int_enable;
 
     if int_enable.write_latch.load(Ordering::Acquire) {
@@ -88,8 +89,8 @@ fn handle_interrupt_enable(state: &mut State) {
     }
 }
 
-fn handle_interrupt_flags(state: &mut State) {
-    let int_flag = &mut state.cdrom.int_flag;
+fn handle_interrupt_flags(state: &State) {
+    let int_flag = &state.cdrom.int_flag;
 
     if int_flag.write_latch.load(Ordering::Acquire) {
         state.cdrom.response.clear();
@@ -105,9 +106,9 @@ fn handle_interrupt_flags(state: &mut State) {
     }
 }
 
-fn handle_parameter_fifo(state: &mut State) {
-    let status = &mut state.cdrom.status;
-    let fifo = &mut state.cdrom.parameter;
+fn handle_parameter_fifo(state: &State) {
+    let status = &state.cdrom.status;
+    let fifo = &state.cdrom.parameter;
 
     let empty_bit = bool_to_flag(fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_PRMEMPT, empty_bit);
@@ -116,17 +117,17 @@ fn handle_parameter_fifo(state: &mut State) {
     status.write_bitfield(STATUS_PRMWRDY, ready_bit);
 }
 
-fn handle_response_fifo(state: &mut State) {
-    let status = &mut state.cdrom.status;
-    let fifo = &mut state.cdrom.response;
+fn handle_response_fifo(state: &State) {
+    let status = &state.cdrom.status;
+    let fifo = &state.cdrom.response;
 
     let ready_bit = bool_to_flag(!fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_RSLRRDY, ready_bit);
 }
 
-fn handle_data_fifo(state: &mut State) {
-    let status = &mut state.cdrom.status;
-    let fifo = &mut state.cdrom.response;
+fn handle_data_fifo(state: &State) {
+    let status = &state.cdrom.status;
+    let fifo = &state.cdrom.response;
 
     let empty_bit = bool_to_flag(!fifo.is_empty()) as u8;
     status.write_bitfield(STATUS_DRQSTS, empty_bit);

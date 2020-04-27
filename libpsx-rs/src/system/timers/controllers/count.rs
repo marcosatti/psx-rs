@@ -11,9 +11,9 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
+pub fn handle_count(state: &State, timers_state: &mut ControllerState, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
-    let timer_state = get_state(controller_state, timer_id);
+    let timer_state = get_state(timers_state, timer_id);
 
     timer_state.current_elapsed += duration;
     let delta_elapsed = timer_state.current_elapsed - timer_state.acknowledged_elapsed;
@@ -24,7 +24,7 @@ pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer
         let value = count.read_u32() + 1;
         count.write_u32(value);
         let irq_type = handle_count_reset(state, timer_id);
-        handle_irq_trigger(state, timer_id, irq_type);
+        handle_irq_trigger(state, timers_state, timer_id, irq_type);
     }
 }
 

@@ -4,7 +4,6 @@ use crate::{
         types::State as SystemState,
     },
     types::mips1::register::*,
-    utilities::bool_to_flag,
 };
 use std::{
     sync::atomic::{
@@ -19,15 +18,13 @@ pub enum IrqLine {
     Intc,
 }
 
-pub struct Cause {
-    pub register: Register,
+pub struct Interrupt {
     intc_pending: AtomicBool,
 }
 
-impl Cause {
-    pub fn new() -> Cause {
-        Cause {
-            register: Register::new(),
+impl Interrupt {
+    pub fn new() -> Interrupt {
+        Interrupt {
             intc_pending: AtomicBool::new(false),
         }
     }
@@ -44,13 +41,10 @@ impl Cause {
         }
     }
 
-    pub fn update_ip_field(&mut self) {
-        self.register.write_bitfield(CAUSE_IP_INTC, bool_to_flag(self.intc_pending.load(Ordering::Acquire)));
-    }
-
-    pub fn clear_ip_field(&mut self) {
-        self.intc_pending.store(false, Ordering::Release);
-        self.register.write_bitfield(CAUSE_IP, 0);
+    pub fn line_interrupted(&self, irq_line: IrqLine) -> bool {
+        match irq_line {
+            IrqLine::Intc => self.intc_pending.load(Ordering::Acquire),
+        }
     }
 }
 
@@ -62,7 +56,7 @@ pub struct ControllerState {
     pub bdam: Register,
     pub bpcm: Register,
     pub status: Register,
-    pub cause: Cause,
+    pub cause: Register,
     pub epc: Register,
     pub prid: Register,
 }
@@ -77,7 +71,7 @@ impl ControllerState {
             bdam: Register::new(),
             bpcm: Register::new(),
             status: Register::new(),
-            cause: Cause::new(),
+            cause: Register::new(),
             epc: Register::new(),
             prid: Register::new(),
         }
@@ -85,12 +79,14 @@ impl ControllerState {
 }
 
 pub struct State {
-    controller_state: Mutex<ControllerState>,
+    pub interrupt: Interrupt,
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
     pub fn new() -> State {
         State {
+            interrupt: Interrupt::new(),
             controller_state: Mutex::new(ControllerState::new()),
         }
     }

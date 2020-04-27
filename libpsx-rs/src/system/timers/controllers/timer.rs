@@ -34,22 +34,22 @@ pub fn get_target(state: &State, timer_id: usize) -> &B32Register {
     }
 }
 
-pub fn get_state(controller_state: &mut ControllerState, timer_id: usize) -> &mut TimerState {
+pub fn get_state(timers_state: &mut ControllerState, timer_id: usize) -> &mut TimerState {
     match timer_id {
-        0 => &mut controller_state.timer0_state,
-        1 => &mut controller_state.timer1_state,
-        2 => &mut controller_state.timer2_state,
+        0 => &mut timers_state.timer0_state,
+        1 => &mut timers_state.timer1_state,
+        2 => &mut timers_state.timer2_state,
         _ => unreachable!("Invalid timer ID"),
     }
 }
 
-pub fn handle_duration_clear(controller_state: &mut ControllerState, timer_id: usize) {
-    let state = get_state(controller_state, timer_id);
+pub fn handle_duration_clear(timers_state: &mut ControllerState, timer_id: usize) {
+    let state = get_state(timers_state, timer_id);
     state.current_elapsed = Duration::from_secs(0);
     state.acknowledged_elapsed = Duration::from_secs(0);
 }
 
-pub fn handle_oneshot_clear(controller_state: &mut ControllerState, timer_id: usize) {
-    let state = get_state(controller_state, timer_id);
+pub fn handle_oneshot_clear(timers_state: &mut ControllerState, timer_id: usize) {
+    let state = get_state(timers_state, timer_id);
     state.irq_raised = false;
 }
