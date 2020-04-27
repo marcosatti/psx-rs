@@ -1,5 +1,6 @@
 pub mod command;
 pub mod debug;
+pub mod memory;
 
 use crate::system::{
     padmc::constants::*,

@@ -5,24 +5,15 @@ use crate::{
         video::VideoBackend,
     },
     system::{
-        cdrom::types::{
-            initialize as cdrom_initialize,
-            State as CdromState,
-        },
+        cdrom::types::State as CdromState,
         dmac::types::{
             initialize as dmac_initialize,
             State as DmacState,
         },
-        gpu::types::{
-            initialize as gpu_initialize,
-            State as GpuState,
-        },
+        gpu::types::State as GpuState,
         intc::types::State as IntcState,
         memory::types::State as MemoryState,
-        padmc::types::{
-            initialize as padmc_initialize,
-            State as PadmcState,
-        },
+        padmc::types::State as PadmcState,
         r3000::types::{
             initialize as r3000_initialize,
             State as R3000State,
@@ -69,12 +60,6 @@ impl<'a: 'b, 'b: 'c, 'c> ControllerContext<'a, 'b, 'c> {
 pub struct State {
     _pin: PhantomPinned,
 
-    /// Bus lock status
-    /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening.
-    /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing
-    /// the DMA controller to read/write garbage if the CPU is allowed to continue to run.
-    pub bus_locked: AtomicBool,
-
     pub r3000: R3000State,
     pub intc: IntcState,
     pub dmac: DmacState,
@@ -84,13 +69,18 @@ pub struct State {
     pub gpu: GpuState,
     pub cdrom: CdromState,
     pub padmc: PadmcState,
+
+    /// Bus lock status
+    /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening.
+    /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing
+    /// the DMA controller to read/write garbage if the CPU is allowed to continue to run.
+    pub bus_locked: AtomicBool,
 }
 
 impl State {
     pub fn new() -> Pin<Box<State>> {
         Box::pin(State {
             _pin: PhantomPinned,
-            bus_locked: AtomicBool::new(false),
             r3000: R3000State::new(),
             intc: IntcState::new(),
             dmac: DmacState::new(),
@@ -100,15 +90,13 @@ impl State {
             gpu: GpuState::new(),
             cdrom: CdromState::new(),
             padmc: PadmcState::new(),
+            bus_locked: AtomicBool::new(false),
         })
     }
 
     pub fn initialize(state: &mut State) {
         r3000_initialize(state);
         dmac_initialize(state);
-        gpu_initialize(state);
-        cdrom_initialize(state);
-        padmc_initialize(state);
     }
 
     pub fn load_bios(state: &mut State, path: &Path) {
