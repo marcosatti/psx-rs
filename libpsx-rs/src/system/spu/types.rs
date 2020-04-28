@@ -131,12 +131,12 @@ impl VoiceKey {
         }
     }
 
-    fn read_u16(&self, offset: u32) -> u16 {
+    pub fn read_u16(&self, offset: u32) -> u16 {
         self.register.read_u16(offset)
     }
 
-    fn write_u16(&self, offset: u32, value: u16) {
-        let write_latch = self.mutex.lock().unwrap();
+    pub fn write_u16(&self, offset: u32, value: u16) {
+        let write_latch = self.write_latch.lock();
         self.register.write_u16(offset, value);
         for i in 0..16 {
             let write_latch_offset = ((offset * 8) + (i as u32)) as usize;
@@ -144,12 +144,12 @@ impl VoiceKey {
         }
     }
 
-    fn read_u32(&self) -> u32 {
+    pub fn read_u32(&self) -> u32 {
         self.register.read_u32()
     }
 
-    fn write_u32(&self, value: u32) {
-        let write_latch = self.mutex.lock().unwrap();
+    pub fn write_u32(&self, value: u32) {
+        let write_latch = self.write_latch.lock();
         self.register.write_u32(value);
         for i in 0..32 {
             write_latch[i] = Bitfield::new(i, 1).extract_from(value) != 0;

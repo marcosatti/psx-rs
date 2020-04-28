@@ -1,7 +1,7 @@
 use crate::system::types::State;
 use crate::system::memory::types::*;
 
-fn gpu1810_read_u32(state: &State, offset: u32) -> u32 {
+fn gpu1810_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.gpu.read.read_one().unwrap_or_else(|_| {
         log::warn!("GPUREAD is empty - returning 0xFFFF_FFFF");

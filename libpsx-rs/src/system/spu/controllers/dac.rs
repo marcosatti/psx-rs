@@ -1,6 +1,6 @@
 use crate::system::types::State;
 
-pub fn handle_current_volume(state: &mut State) {
+pub fn handle_current_volume(state: &State) {
     let main_volume_left = &mut state.spu.main_volume_left;
     let main_volume_right = &mut state.spu.main_volume_right;
     let current_volume_left = &mut state.spu.current_volume_left;

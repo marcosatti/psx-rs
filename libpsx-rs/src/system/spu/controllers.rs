@@ -21,6 +21,7 @@ use crate::{
                 sound::*,
                 transfer::*,
             },
+            types::ControllerState,
         },
         types::{
             ControllerContext,
@@ -31,13 +32,13 @@ use crate::{
 };
 use std::time::Duration;
 
-pub fn run(context: &mut ControllerContext, event: Event) {
+pub fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, context.audio_backend, time),
     }
 }
 
-fn run_time(state: &mut State, audio_backend: &AudioBackend, duration: Duration) {
+fn run_time(state: &State, audio_backend: &AudioBackend, duration: Duration) {
     {
         let control = &state.spu.control;
 
@@ -46,35 +47,37 @@ fn run_time(state: &mut State, audio_backend: &AudioBackend, duration: Duration)
         }
     }
 
+    let spu_state = &mut state.spu.controller_state.lock();
+
     {
         let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
         for _ in 0..ticks {
-            tick(state);
+            tick(state, spu_state);
         }
     }
 
     {
-        handle_current_duration_tick(state, duration);
-        while handle_current_duration_update(state) {
-            generate_sound(state, audio_backend);
+        handle_current_duration_tick(spu_state, duration);
+        while handle_current_duration_update(spu_state) {
+            generate_sound(state, spu_state, audio_backend);
         }
     }
 }
 
-fn tick(state: &mut State) {
+fn tick(state: &State, spu_state: &mut ControllerState) {
     handle_current_volume(state);
-    handle_transfer(state);
+    handle_transfer(state, spu_state);
     handle_interrupt_check(state);
 }
 
-fn handle_current_duration_tick(state: &mut State, duration: Duration) {
-    let current_duration = &mut state.spu.dac.current_duration;
+fn handle_current_duration_tick(state: &mut ControllerState, duration: Duration) {
+    let current_duration = &mut state.dac.current_duration;
     *current_duration += duration;
 }
 
-fn handle_current_duration_update(state: &mut State) -> bool {
-    let current_duration = &mut state.spu.dac.current_duration;
+fn handle_current_duration_update(state: &mut ControllerState) -> bool {
+    let current_duration = &mut state.dac.current_duration;
 
     if *current_duration >= SAMPLE_RATE_PERIOD {
         *current_duration -= SAMPLE_RATE_PERIOD;

@@ -150,7 +150,7 @@ pub fn get_sync_mode(chcr: &Chcr) -> SyncMode {
     }
 }
 
-pub fn raise_irq(state: &mut State, channel_id: usize) {
+pub fn raise_irq(state: &State, channel_id: usize) {
     let dicr = &mut state.dmac.dicr;
 
     let _lock = dicr.mutex.lock();

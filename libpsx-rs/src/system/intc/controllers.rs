@@ -12,13 +12,13 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn run(context: &mut ControllerContext, event: Event) {
+pub fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(state: &mut State, duration: Duration) {
+fn run_time(state: &State, duration: Duration) {
     let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
     for _ in 0..ticks {
@@ -31,8 +31,8 @@ fn tick(state: &State) {
 }
 
 fn handle_interrupt_check(state: &State) {
-    let stat = &mut state.intc.stat;
-    let mask = &mut state.intc.mask;
+    let stat = &state.intc.stat;
+    let mask = &state.intc.mask;
 
     let stat_value = stat.value();
     let mask_value = mask.read_u32();

@@ -18,15 +18,12 @@ use crate::{
         spu::types::State as SpuState,
         timers::types::State as TimersState,
     },
-    Context,
 };
 use log::info;
 use std::{
     fs::File,
     io::Read,
-    marker::PhantomPinned,
     path::Path,
-    pin::Pin,
     sync::atomic::AtomicBool,
     time::Duration,
 };
@@ -37,26 +34,13 @@ pub enum Event {
 }
 
 pub struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
-    pub state: &'c mut State,
+    pub state: &'c State,
     pub video_backend: &'c VideoBackend<'a, 'b>,
     pub audio_backend: &'c AudioBackend<'a, 'b>,
     pub cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
-impl<'a: 'b, 'b: 'c, 'c> ControllerContext<'a, 'b, 'c> {
-    pub unsafe fn from_core_context(context: &Context<'a, 'b, 'c>) -> ControllerContext<'a, 'b, 'c> {
-        ControllerContext {
-            state: context.state.as_mut().unwrap(),
-            video_backend: context.video_backend,
-            audio_backend: context.audio_backend,
-            cdrom_backend: context.cdrom_backend,
-        }
-    }
-}
-
 pub struct State {
-    _pin: PhantomPinned,
-
     pub r3000: R3000State,
     pub intc: IntcState,
     pub dmac: DmacState,
@@ -75,9 +59,8 @@ pub struct State {
 }
 
 impl State {
-    pub fn new() -> Pin<Box<State>> {
-        Box::pin(State {
-            _pin: PhantomPinned,
+    pub fn new() -> Box<State> {
+        Box::new(State {
             r3000: R3000State::new(),
             intc: IntcState::new(),
             dmac: DmacState::new(),

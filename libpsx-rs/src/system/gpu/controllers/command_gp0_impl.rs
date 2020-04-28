@@ -8,6 +8,7 @@ use crate::{
                 data::*,
                 debug,
             },
+            types::ControllerState,
         },
         types::State,
     },
@@ -22,14 +23,14 @@ pub fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_00_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_00_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
 }
 
 pub fn command_01_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_01_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_01_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
     // Flush cache (NOP)
 }
 
@@ -37,7 +38,7 @@ pub fn command_02_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub fn command_02_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_02_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
@@ -59,7 +60,7 @@ pub fn command_05_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_05_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_05_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
     // NOP
 }
 
@@ -67,7 +68,7 @@ pub fn command_06_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_06_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_06_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
     // NOP
 }
 
@@ -75,7 +76,7 @@ pub fn command_0c_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_0c_handler(_state: &mut State, _video_backend: &VideoBackend, _data: &[u32]) {
+pub fn command_0c_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
     // NOP
 }
 
@@ -83,7 +84,7 @@ pub fn command_28_length(_data: &[u32]) -> Option<usize> {
     Some(5)
 }
 
-pub fn command_28_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_28_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
@@ -96,7 +97,7 @@ pub fn command_2c_length(_data: &[u32]) -> Option<usize> {
     Some(9)
 }
 
-pub fn command_2c_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_2c_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured four-point polygon, opaque, texture-blending", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -116,7 +117,7 @@ pub fn command_2d_length(_data: &[u32]) -> Option<usize> {
     Some(9)
 }
 
-pub fn command_2d_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_2d_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured four-point polygon, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -135,7 +136,7 @@ pub fn command_30_length(_data: &[u32]) -> Option<usize> {
     Some(6)
 }
 
-pub fn command_30_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_30_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
@@ -148,7 +149,7 @@ pub fn command_38_length(_data: &[u32]) -> Option<usize> {
     Some(8)
 }
 
-pub fn command_38_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_38_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
 
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
@@ -161,7 +162,7 @@ pub fn command_3c_length(_data: &[u32]) -> Option<usize> {
     Some(12)
 }
 
-pub fn command_3c_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_3c_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded Textured four-point polygon, opaque, texture-blending", data);
 }
 
@@ -169,7 +170,7 @@ pub fn command_50_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_50_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_50_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Shaded line, opaque", data);
 }
 
@@ -177,7 +178,7 @@ pub fn command_65_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_65_handler(state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_65_handler(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -187,8 +188,8 @@ pub fn command_65_handler(state: &mut State, video_backend: &VideoBackend, data:
     // Upper left corner is starting point.
     let base_point = extract_point_normalized(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
     let size = extract_size_normalized(data[3], default_render_x_size_modifier, default_render_y_size_modifier);
-    let clut_mode = state.gpu.clut_mode;
-    let texpage_base = Point2D::new(state.gpu.texpage_base_x, state.gpu.texpage_base_y);
+    let clut_mode = gpu_state.clut_mode;
+    let texpage_base = Point2D::new(gpu_state.texpage_base_x, gpu_state.texpage_base_y);
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let _clut = extract_clut_base_normalized(data[2]);
 
@@ -206,7 +207,7 @@ pub fn command_6f_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub fn command_6f_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_6f_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture", data);
 }
 
@@ -214,7 +215,7 @@ pub fn command_80_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_80_handler(_state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_80_handler(_state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (VRAM to VRAM)", data);
 }
 
@@ -231,7 +232,7 @@ pub fn command_a0_length(data: &[u32]) -> Option<usize> {
     return Some(data_words);
 }
 
-pub fn command_a0_handler(_state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_a0_handler(_state: &State, _gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
 
     let base_point = extract_point_normalized(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
@@ -274,7 +275,7 @@ pub fn command_c0_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub fn command_c0_handler(state: &mut State, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_c0_handler(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
     let origin = extract_point(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
@@ -296,9 +297,9 @@ pub fn command_c0_handler(state: &mut State, video_backend: &VideoBackend, data:
         data.push(0);
     }
 
-    state.gpu.gpu1810.read.clear();
+    state.gpu.read.clear();
 
-    let read_buffer = &mut state.gpu.gp0_read_buffer;
+    let read_buffer = &mut gpu_state.gp0_read_buffer;
     read_buffer.clear();
 
     for i in 0..fifo_words {
@@ -313,26 +314,26 @@ pub fn command_e1_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e1_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e1_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Draw Mode setting", data);
 
-    let stat = &mut state.gpu.gpu1814.stat;
+    let stat = &state.gpu.stat;
 
     let texpage_base_x = Bitfield::new(0, 4).extract_from(data[0]);
     stat.write_bitfield(STAT_TEXPAGEX, texpage_base_x);
-    state.gpu.texpage_base_x = texpage_base_x as isize;
+    gpu_state.texpage_base_x = texpage_base_x as isize;
 
     let texpage_base_y = Bitfield::new(4, 1).extract_from(data[0]);
     stat.write_bitfield(STAT_TEXPAGEY, texpage_base_y);
-    state.gpu.texpage_base_y = texpage_base_y as isize;
+    gpu_state.texpage_base_y = texpage_base_y as isize;
 
     let transparency_mode_raw = Bitfield::new(5, 2).extract_from(data[0]);
     stat.write_bitfield(STAT_TRANSPARENCY, transparency_mode_raw);
-    state.gpu.transparency_mode = extract_texpage_transparency_mode(data[0]);
+    gpu_state.transparency_mode = extract_texpage_transparency_mode(data[0]);
 
     let clut_mode_raw = Bitfield::new(7, 2).extract_from(data[0]);
     stat.write_bitfield(STAT_TEXPAGE_COLORS, clut_mode_raw);
-    state.gpu.clut_mode = extract_texpage_clut_mode(data[0]);
+    gpu_state.clut_mode = extract_texpage_clut_mode(data[0]);
 
     stat.write_bitfield(STAT_DITHER, Bitfield::new(9, 1).extract_from(data[0]));
 
@@ -340,9 +341,9 @@ pub fn command_e1_handler(state: &mut State, _video_backend: &VideoBackend, data
 
     stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
 
-    state.gpu.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
+    gpu_state.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
 
-    state.gpu.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
+    gpu_state.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
     // warn!("GP0(E1h) not properly implemented");
 }
 
@@ -350,13 +351,13 @@ pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e2_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e2_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Texture Window setting", data);
 
-    state.gpu.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
-    state.gpu.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
-    state.gpu.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
-    state.gpu.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
+    gpu_state.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
+    gpu_state.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
+    gpu_state.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
+    gpu_state.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
     // warn!("GP0(E2h) not properly implemented");
 }
 
@@ -364,15 +365,15 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e3_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e3_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area top left", data);
 
-    state.gpu.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
-    state.gpu.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+    gpu_state.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
+    gpu_state.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     // warn!("GP0(E3h) not properly implemented");
 
-    if (state.gpu.drawing_area_x1 != 0) || (state.gpu.drawing_area_y1 != 0) {
-        log::debug!("Non zero drawing area x1 y1: {}, {}", state.gpu.drawing_area_x1, state.gpu.drawing_area_y1);
+    if (gpu_state.drawing_area_x1 != 0) || (gpu_state.drawing_area_y1 != 0) {
+        log::debug!("Non zero drawing area x1 y1: {}, {}", gpu_state.drawing_area_x1, gpu_state.drawing_area_y1);
     }
 }
 
@@ -380,15 +381,15 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e4_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e4_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
 
-    state.gpu.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
-    state.gpu.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
+    gpu_state.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
+    gpu_state.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
     // warn!("GP0(E4h) not properly implemented");
 
-    if (state.gpu.drawing_area_x2 != 0) || (state.gpu.drawing_area_y2 != 0) {
-        // log::debug!("Non zero drawing area x2 y2: {}, {}", state.gpu.drawing_area_x2, state.gpu.drawing_area_y2);
+    if (gpu_state.drawing_area_x2 != 0) || (gpu_state.drawing_area_y2 != 0) {
+        // log::debug!("Non zero drawing area x2 y2: {}, {}", gpu_state.drawing_area_x2, gpu_state.drawing_area_y2);
     }
 }
 
@@ -396,7 +397,7 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e5_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e5_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Offset", data);
 
     let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;
@@ -404,13 +405,13 @@ pub fn command_e5_handler(state: &mut State, _video_backend: &VideoBackend, data
     // warn!("GP0(E5h) not properly implemented");
 
     // Sign extend from 11-bit to 16-bit.
-    state.gpu.drawing_offset_x = ((x_offset << 5) >> 5) as isize;
-    state.gpu.drawing_offset_y = ((y_offset << 5) >> 5) as isize;
+    gpu_state.drawing_offset_x = ((x_offset << 5) >> 5) as isize;
+    gpu_state.drawing_offset_y = ((y_offset << 5) >> 5) as isize;
 
     // debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset,
-    // state.gpu.drawing_offset_x, y_offset, state.gpu.drawing_offset_y);
+    // gpu_state.drawing_offset_x, y_offset, gpu_state.drawing_offset_y);
     if (x_offset != 0) || (y_offset != 0) {
-        log::debug!("Non zero drawing offset: {}, {}", state.gpu.drawing_offset_x, state.gpu.drawing_offset_y);
+        log::debug!("Non zero drawing offset: {}, {}", gpu_state.drawing_offset_x, gpu_state.drawing_offset_y);
     }
 }
 
@@ -418,10 +419,10 @@ pub fn command_e6_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e6_handler(state: &mut State, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e6_handler(state: &State, _gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Mask Bit Setting", data);
 
-    let stat = &mut state.gpu.gpu1814.stat;
+    let stat = &state.gpu.stat;
     stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
     stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
     // warn!("GP0(E6h) not properly implemented");

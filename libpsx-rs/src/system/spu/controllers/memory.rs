@@ -47,7 +47,7 @@ pub fn voice_adsr_read_u16(state: &State, offset: u32, voice_id: usize) -> ReadR
 }
 
 pub fn voice_adsr_write_u16(state: &State, offset: u32, value: u16, voice_id: usize) -> WriteResult {
-    Ok(get_adsr(state, voice_id).write_u16(offset / 2))
+    Ok(get_adsr(state, voice_id).write_u16(offset / 2, value))
 }
 
 pub fn voice_cvol_read_u16(state: &State, offset: u32, voice_id: usize) -> ReadResult<u16> {

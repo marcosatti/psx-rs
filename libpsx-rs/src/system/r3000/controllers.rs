@@ -36,7 +36,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &mut ControllerContext, event: Event) {
+pub fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(duration) => run_time(context.state, context.cdrom_backend, duration),
     }
