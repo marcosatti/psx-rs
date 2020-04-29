@@ -70,10 +70,8 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
 
-        unsafe {
-            State::initialize(&mut state);
-            State::load_bios(&mut state, &bios_path);
-        }
+        State::initialize(&mut state);
+        State::load_bios(&mut state, &bios_path);
 
         let task_runtime = Builder::new().threaded_scheduler().core_threads(config.worker_threads).thread_name("libpsx-rs-worker").build().unwrap();
 

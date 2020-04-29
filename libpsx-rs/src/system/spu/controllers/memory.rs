@@ -146,7 +146,8 @@ pub fn data_transfer_address_write_u16(state: &State, offset: u32, value: u16) -
     Ok(state.spu.data_transfer_address.write_u16(value))
 }
 
-pub fn data_fifo_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+pub fn data_fifo_read_u16(_state: &State, offset: u32) -> ReadResult<u16> {
+    assert_eq!(offset, 0);
     unimplemented!();
 }
 

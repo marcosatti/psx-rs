@@ -140,21 +140,21 @@ impl Stat {
         value
     }
 
-    pub fn read_u16(&mut self, offset: u32) -> u16 {
+    pub fn read_u16(&self, offset: u32) -> u16 {
         assert_eq!(offset, 0);
         self.value() as u16
     }
 
-    pub fn write_u16(&mut self, offset: u32, value: u16) {
+    pub fn write_u16(&self, offset: u32, value: u16) {
         assert_eq!(offset, 0);
         self.acknowledge(value as u32)
     }
 
-    pub fn read_u32(&mut self) -> u32 {
+    pub fn read_u32(&self) -> u32 {
         self.value() as u32
     }
 
-    pub fn write_u32(&mut self, value: u32) {
+    pub fn write_u32(&self, value: u32) {
         self.acknowledge(value)
     }
 }

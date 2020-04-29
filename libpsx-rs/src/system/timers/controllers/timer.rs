@@ -18,18 +18,18 @@ pub fn get_count(state: &State, timer_id: usize) -> &B32Register {
 
 pub fn get_mode(state: &State, timer_id: usize) -> &Mode {
     match timer_id {
-        0 => &mut state.timers.timer0_mode,
-        1 => &mut state.timers.timer1_mode,
-        2 => &mut state.timers.timer2_mode,
+        0 => &state.timers.timer0_mode,
+        1 => &state.timers.timer1_mode,
+        2 => &state.timers.timer2_mode,
         _ => unreachable!("Invalid timer ID"),
     }
 }
 
 pub fn get_target(state: &State, timer_id: usize) -> &B32Register {
     match timer_id {
-        0 => &mut state.timers.timer0_target,
-        1 => &mut state.timers.timer1_target,
-        2 => &mut state.timers.timer2_target,
+        0 => &state.timers.timer0_target,
+        1 => &state.timers.timer1_target,
+        2 => &state.timers.timer2_target,
         _ => unreachable!("Invalid timer ID"),
     }
 }

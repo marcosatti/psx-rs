@@ -70,7 +70,6 @@ pub fn set_exception(r3000_state: &mut ControllerState, cp0_state: &mut Cp0Contr
 
 pub fn handle_interrupts(state: &State, r3000_state: &mut ControllerState, cp0_state: &mut Cp0ControllerState) {
     let status = &cp0_state.status;
-    let cause = &mut cp0_state.cause;
 
     if status.read_bitfield(STATUS_IEC) == 0 {
         return;

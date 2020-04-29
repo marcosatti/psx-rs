@@ -125,7 +125,7 @@ fn handle_play_sound_buffer(state: &State, spu_state: &mut ControllerState, audi
 fn decode_adpcm_block(state: &State, spu_state: &mut ControllerState, voice_id: usize) {
     let play_state = get_play_state(spu_state, voice_id);
     let repeat_address = get_raddr(state, voice_id);
-    let status = &mut state.spu.voice_channel_status;
+    let status = &state.spu.voice_channel_status;
     let memory = &spu_state.memory;
 
     // ADPCM header.

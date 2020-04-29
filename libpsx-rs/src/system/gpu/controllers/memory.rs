@@ -15,6 +15,7 @@ fn gpu1810_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
 }
 
 fn gpu1814_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
+    assert_eq!(offset, 0);
     Ok(state.gpu.stat.read_u32())
 }
 

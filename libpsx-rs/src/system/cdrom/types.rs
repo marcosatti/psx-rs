@@ -116,7 +116,7 @@ impl IntFlag {
         self.register.read_u8()
     }
 
-    pub fn write_u8(&mut self, value: u8) {
+    pub fn write_u8(&self, value: u8) {
         assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still pending");
         assert!(!self.parameter_reset.load(Ordering::Acquire), "Parameter FIFO reset still pending");
         self.write_latch.store(true, Ordering::Release);

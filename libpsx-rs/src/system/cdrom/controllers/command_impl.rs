@@ -150,7 +150,7 @@ pub fn command_19_length(_command_iteration: usize) -> usize {
     1
 }
 
-pub fn command_19_handler(state: &State, cdrom_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub fn command_19_handler(state: &State, _cdrom_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Test
 
     assert_eq!(command_iteration, 0);

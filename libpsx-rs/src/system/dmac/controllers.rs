@@ -132,7 +132,7 @@ fn handle_bus_unlock(state: &State, dmac_state: &mut ControllerState) {
 
 /// Performs interrupt check for raising an IRQ on the INTC.
 fn handle_irq_check(state: &State) {
-    let dicr = &mut state.dmac.dicr;
+    let dicr = &state.dmac.dicr;
     let _icr_lock = dicr.mutex.lock();
 
     let force_irq = dicr.register.read_bitfield(DICR_IRQ_FORCE) != 0;

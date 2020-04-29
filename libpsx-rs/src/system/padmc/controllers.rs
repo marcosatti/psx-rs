@@ -90,7 +90,7 @@ fn handle_tx(state: &State) {
     command::handle_command(state, data);
 
     {
-        let stat = &mut state.padmc.stat;
+        let stat = &state.padmc.stat;
         stat.write_bitfield(STAT_TXRDY_1, 0);
         stat.write_bitfield(STAT_TXRDY_2, 1);
     }

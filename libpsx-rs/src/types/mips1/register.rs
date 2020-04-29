@@ -45,7 +45,7 @@ impl Register {
         }
     }
 
-    pub fn write_u8(&self, offset: u32, value: u8) {
+    pub fn write_u8(&mut self, offset: u32, value: u8) {
         unsafe {
             self.memory.v8[offset as usize] = value;
         }
@@ -57,7 +57,7 @@ impl Register {
         }
     }
 
-    pub fn write_u16(&self, offset: u32, value: u16) {
+    pub fn write_u16(&mut self, offset: u32, value: u16) {
         unsafe {
             self.memory.v16[offset as usize] = value;
         }
@@ -69,17 +69,15 @@ impl Register {
         }
     }
 
-    pub fn write_u32(&self, value: u32) {
-        unsafe {
-            self.memory.v32 = value;
-        }
+    pub fn write_u32(&mut self, value: u32) {
+        self.memory.v32 = value;
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
         bitfield.extract_from(self.read_u32())
     }
 
-    pub fn write_bitfield(&self, bitfield: Bitfield, value: u32) {
+    pub fn write_bitfield(&mut self, bitfield: Bitfield, value: u32) {
         self.write_u32(bitfield.insert_into(self.read_u32(), value));
     }
 }

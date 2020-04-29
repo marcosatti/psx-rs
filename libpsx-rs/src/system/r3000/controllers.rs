@@ -43,16 +43,16 @@ pub fn run(context: &ControllerContext, event: Event) {
 }
 
 fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
-    let r3000_state = state.r3000.controller_state.lock();
-    let cp0_state = state.r3000.cp0.controller_state.lock();
-    let cp2_state = state.r3000.cp2.controller_state.lock();
-    let cdrom_state = state.cdrom.controller_state.lock();
+    let r3000_state = &mut state.r3000.controller_state.lock();
+    let cp0_state = &mut state.r3000.cp0.controller_state.lock();
+    let cp2_state = &mut state.r3000.cp2.controller_state.lock();
+    let cdrom_state = &mut state.cdrom.controller_state.lock();
 
     let mut context = R3000ControllerContext {
         state,
-        r3000_state: &mut r3000_state,
-        cp0_state: &mut cp0_state,
-        cp2_state: &mut cp2_state,
+        r3000_state,
+        cp0_state,
+        cp2_state,
     };
     
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
@@ -64,7 +64,7 @@ fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
 
             // Synchronous controllers - timing is way off when done asynchronously, causing problems.
             if ticks % 128 == 0 {
-                tick_cdrom(state, &mut cdrom_state, cdrom_backend);
+                tick_cdrom(state, cdrom_state, cdrom_backend);
             }
         }
     }

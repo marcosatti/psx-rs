@@ -62,17 +62,17 @@ pub fn command_04(state: &State, _gpu_state: &mut ControllerState, _video_backen
     state.gpu.stat.write_bitfield(STAT_DMA_DIRECTION, dma_direction);
 }
 
-pub fn command_05(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) {
+pub fn command_05(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) {
     gpu_state.display_area_start_x = Bitfield::new(0, 10).extract_from(command) as usize;
     gpu_state.display_area_start_y = Bitfield::new(10, 9).extract_from(command) as usize;
 }
 
-pub fn command_06(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) {
+pub fn command_06(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) {
     gpu_state.horizontal_display_range_x1 = Bitfield::new(0, 12).extract_from(command) as usize;
     gpu_state.horizontal_display_range_x2 = Bitfield::new(12, 12).extract_from(command) as usize;
 }
 
-pub fn command_07(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) {
+pub fn command_07(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) {
     gpu_state.vertical_display_range_y1 = Bitfield::new(0, 10).extract_from(command) as usize;
     gpu_state.vertical_display_range_y2 = Bitfield::new(10, 10).extract_from(command) as usize;
 }

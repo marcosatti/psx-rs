@@ -178,7 +178,7 @@ pub fn command_65_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub fn command_65_handler(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_65_handler(_state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -351,7 +351,7 @@ pub fn command_e2_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e2_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e2_handler(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Texture Window setting", data);
 
     gpu_state.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
@@ -365,7 +365,7 @@ pub fn command_e3_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e3_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e3_handler(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area top left", data);
 
     gpu_state.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
@@ -381,7 +381,7 @@ pub fn command_e4_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e4_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e4_handler(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
 
     gpu_state.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
@@ -397,7 +397,7 @@ pub fn command_e5_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub fn command_e5_handler(state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub fn command_e5_handler(_state: &State, gpu_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Set Drawing Offset", data);
 
     let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;

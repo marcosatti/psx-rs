@@ -46,7 +46,7 @@ fn handle_current_transfer_address(state: &State, spu_state: &mut ControllerStat
 
 fn handle_new_transfer_initialization(state: &State, spu_state: &mut ControllerState) {
     let control = &state.spu.control;
-    let stat = &mut state.spu.stat;
+    let stat = &state.spu.stat;
     let current_transfer_mode = &mut spu_state.current_transfer_mode;
 
     let new_transfer_mode = get_transfer_mode(control);
@@ -60,8 +60,8 @@ fn handle_new_transfer_initialization(state: &State, spu_state: &mut ControllerS
 }
 
 fn handle_manual_write_transfer(state: &State, spu_state: &mut ControllerState) {
-    let control = &mut state.spu.control;
-    let stat = &mut state.spu.stat;
+    let control = &state.spu.control;
+    let stat = &state.spu.stat;
     let memory = &mut spu_state.memory;
     let current_transfer_mode = &mut spu_state.current_transfer_mode;
     let current_transfer_address = &mut spu_state.current_transfer_address;

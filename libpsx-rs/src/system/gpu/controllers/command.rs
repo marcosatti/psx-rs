@@ -63,7 +63,7 @@ fn handle_stat_recv_cmd(state: &State) {
 }
 
 fn handle_stat_send_vram(state: &State, gpu_state: &ControllerState) {
-    let stat = &mut state.gpu.stat;
+    let stat = &state.gpu.stat;
     let read_buffer = &gpu_state.gp0_read_buffer;
     let read_fifo = &state.gpu.read;
 
@@ -80,7 +80,7 @@ fn handle_stat_send_vram(state: &State, gpu_state: &ControllerState) {
 }
 
 fn handle_stat_recv_dma(state: &State) {
-    let stat = &mut state.gpu.stat;
+    let stat = &state.gpu.stat;
 
     // TODO: currently GPU says it always wants commands/data.
     // This bit is used for DMA block mode - the DMAC is meant to wait for the line to be asserted before sending the

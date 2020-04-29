@@ -100,6 +100,12 @@ impl B8Memory {
     }
 }
 
+unsafe impl Send for B8Memory {
+}
+
+unsafe impl Sync for B8Memory {
+}
+
 pub struct B32Register {
     memory: B8Memory,
 }

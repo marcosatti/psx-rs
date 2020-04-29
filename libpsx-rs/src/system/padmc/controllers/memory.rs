@@ -14,14 +14,14 @@ pub fn padmc1040_write_u8(state: &State, offset: u32, value: u8) -> WriteResult 
     state.padmc.tx_fifo.write_one(value).map_err(|_| WriteErrorKind::Full)
 }
 
-pub fn padmc1040_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
+pub fn padmc1040_read_u32(_state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     unimplemented!();
     // warn!("PADMC RX FIFO u32 preview reads not properly implemented");
     // rx_fifo.read_one().map(|v| v as u32).map_err(|_| ReadError::Empty)
 }
 
-pub fn padmc1040_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
+pub fn padmc1040_write_u32(_state: &State, offset: u32, _value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     unimplemented!();
     // let value_u8 = value as u8;

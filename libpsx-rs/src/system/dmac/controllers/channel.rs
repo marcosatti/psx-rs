@@ -16,39 +16,39 @@ use log::warn;
 
 pub fn get_madr(state: &State, channel_id: usize) -> &B32Register {
     match channel_id {
-        0 => &mut state.dmac.mdecin_madr,
-        1 => &mut state.dmac.mdecout_madr,
-        2 => &mut state.dmac.gpu_madr,
-        3 => &mut state.dmac.cdrom_madr,
-        4 => &mut state.dmac.spu_madr,
-        5 => &mut state.dmac.pio_madr,
-        6 => &mut state.dmac.otc_madr,
+        0 => &state.dmac.mdecin_madr,
+        1 => &state.dmac.mdecout_madr,
+        2 => &state.dmac.gpu_madr,
+        3 => &state.dmac.cdrom_madr,
+        4 => &state.dmac.spu_madr,
+        5 => &state.dmac.pio_madr,
+        6 => &state.dmac.otc_madr,
         _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
 pub fn get_bcr(state: &State, channel_id: usize) -> &B32Register {
     match channel_id {
-        0 => &mut state.dmac.mdecin_bcr,
-        1 => &mut state.dmac.mdecout_bcr,
-        2 => &mut state.dmac.gpu_bcr,
-        3 => &mut state.dmac.cdrom_bcr,
-        4 => &mut state.dmac.spu_bcr,
-        5 => &mut state.dmac.pio_bcr,
-        6 => &mut state.dmac.otc_bcr,
+        0 => &state.dmac.mdecin_bcr,
+        1 => &state.dmac.mdecout_bcr,
+        2 => &state.dmac.gpu_bcr,
+        3 => &state.dmac.cdrom_bcr,
+        4 => &state.dmac.spu_bcr,
+        5 => &state.dmac.pio_bcr,
+        6 => &state.dmac.otc_bcr,
         _ => unreachable!("Invalid DMAC channel"),
     }
 }
 
 pub fn get_chcr(state: &State, channel_id: usize) -> &Chcr {
     match channel_id {
-        0 => &mut state.dmac.mdecin_chcr,
-        1 => &mut state.dmac.mdecout_chcr,
-        2 => &mut state.dmac.gpu_chcr,
-        3 => &mut state.dmac.cdrom_chcr,
-        4 => &mut state.dmac.spu_chcr,
-        5 => &mut state.dmac.pio_chcr,
-        6 => &mut state.dmac.otc_chcr,
+        0 => &state.dmac.mdecin_chcr,
+        1 => &state.dmac.mdecout_chcr,
+        2 => &state.dmac.gpu_chcr,
+        3 => &state.dmac.cdrom_chcr,
+        4 => &state.dmac.spu_chcr,
+        5 => &state.dmac.pio_chcr,
+        6 => &state.dmac.otc_chcr,
         _ => unreachable!("Invalid DMAC channel"),
     }
 }
@@ -151,7 +151,7 @@ pub fn get_sync_mode(chcr: &Chcr) -> SyncMode {
 }
 
 pub fn raise_irq(state: &State, channel_id: usize) {
-    let dicr = &mut state.dmac.dicr;
+    let dicr = &state.dmac.dicr;
 
     let _lock = dicr.mutex.lock();
 

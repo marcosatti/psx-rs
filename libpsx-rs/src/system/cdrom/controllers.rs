@@ -82,7 +82,7 @@ fn handle_request(state: &State) {
 }
 
 fn handle_interrupt_enable(state: &State) {
-    let int_enable = &mut state.cdrom.int_enable;
+    let int_enable = &state.cdrom.int_enable;
 
     if int_enable.write_latch.load(Ordering::Acquire) {
         int_enable.write_latch.store(false, Ordering::Release);
