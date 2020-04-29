@@ -36,7 +36,7 @@ pub fn cdrom1801_write_u8(state: &State, offset: u32, value: u8) -> WriteResult 
     }
 }
 
-fn cdrom1802_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
+pub fn cdrom1802_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);
     let index = state.cdrom.status.read_bitfield(STATUS_INDEX);
     match index {
@@ -48,7 +48,7 @@ fn cdrom1802_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     }
 }
 
-fn cdrom1802_write_u8(state: &State, offset: u32, value: u8) -> WriteResult {
+pub fn cdrom1802_write_u8(state: &State, offset: u32, value: u8) -> WriteResult {
     assert_eq!(offset, 0);
     let index = state.cdrom.status.read_bitfield(STATUS_INDEX);
     match index {
@@ -60,7 +60,7 @@ fn cdrom1802_write_u8(state: &State, offset: u32, value: u8) -> WriteResult {
     }
 }
 
-fn cdrom1803_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
+pub fn cdrom1803_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);
     let index = state.cdrom.status.read_bitfield(STATUS_INDEX);
     match index {
@@ -72,7 +72,7 @@ fn cdrom1803_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     }
 }
 
-fn cdrom1803_write_u8(state: &State, offset: u32, value: u8) -> WriteResult {
+pub fn cdrom1803_write_u8(state: &State, offset: u32, value: u8) -> WriteResult {
     assert_eq!(offset, 0);
     let index = state.cdrom.status.read_bitfield(STATUS_INDEX);
     match index {

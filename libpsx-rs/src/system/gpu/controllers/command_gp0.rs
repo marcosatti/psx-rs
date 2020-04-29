@@ -69,9 +69,8 @@ pub fn handle_command(state: &State, gpu_state: &mut ControllerState, video_back
 
     // Execute it.
     {
-        let command_buffer_slice: &[u32] = &gpu_state.gp0_command_buffer[0..required_length_value];
-
-        (command_handler.1)(state, gpu_state, video_backend, command_buffer_slice);
+        let command_buffer_slice = Box::<[u32]>::from(&gpu_state.gp0_command_buffer[0..required_length_value]);
+        (command_handler.1)(state, gpu_state, video_backend, &command_buffer_slice);
 
         if (command_buffer_slice[0] >> 24) < 0xE0 {
             debug::trace_gp0_command_render(state, video_backend);

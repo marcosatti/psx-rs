@@ -77,7 +77,7 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
         if translate_address(target) < 0x80 {
             debug!("PC about to jump into invalid memory! Breaking...");
             debug::trace_pc(context.r3000_state, context.cp0_state);
-            debug::disassembler::trace_instructions_at_pc(context.state, context.r3000_state, Some(50));
+            debug::disassembler::trace_instructions_at_pc(&context.state.memory.main_memory, &context.state.memory.bios, context.r3000_state.pc.read_u32(), Some(50));
             debug::register::trace_registers(context.r3000_state);
             unsafe {
                 std::intrinsics::breakpoint();

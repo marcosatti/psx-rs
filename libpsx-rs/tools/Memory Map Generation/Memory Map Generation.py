@@ -11,5 +11,7 @@ except IndexError:
 
 print(f'Parsing {file_name}')
 
-records = p.get_records(file_name=os.path.join(BASE_DIR, file_name), sheet_name='Sheet1', start_row=4)
-keys = list(records[0].keys())
+records = p.get_records(file_name=os.path.join(BASE_DIR, file_name), sheet_name='Sheet1', start_row=3)
+
+for record in records:
+    pass

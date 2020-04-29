@@ -9,7 +9,6 @@ use std::sync::atomic::{
     AtomicBool,
     Ordering,
 };
-use parking_lot::Mutex;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Line {
@@ -26,22 +25,9 @@ pub enum Line {
     Pio,
 }
 
-pub struct ControllerState {
-    old_masked_value: u32,
-}
-
-impl ControllerState {
-    pub fn new() -> ControllerState {
-        ControllerState {
-            old_masked_value: 0,
-        }
-    }
-}
-
 pub struct State {
     pub stat: Stat,
     pub mask: B32Register,
-    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
@@ -49,7 +35,6 @@ impl State {
         State {
             stat: Stat::new(),
             mask: B32Register::new(),
-            controller_state: Mutex::new(ControllerState::new()),
         }
     }
 }

@@ -1,10 +1,11 @@
-use crate::system::{
-    r3000::{
-        constants::INSTRUCTION_SIZE,
-        controllers::memory_controller::translate_address,
-        types::ControllerState,
+use crate::{
+    system::{
+        r3000::{
+            constants::INSTRUCTION_SIZE,
+            controllers::memory_controller::translate_address,
+        },
     },
-    types::State,
+    types::memory::*,
 };
 use ansi_term::Colour::Red;
 use capstone::{
@@ -15,18 +16,18 @@ use log::trace;
 
 const DEFAULT_TRACE_INSTRUCTIONS_LENGTH: usize = 10;
 
-pub fn trace_instructions_at_pc(state: &State, r3000_state: &ControllerState, instruction_count: Option<usize>) {
-    let pc = translate_address(r3000_state.pc.read_u32() - INSTRUCTION_SIZE);
+pub fn trace_instructions_at_pc(main_memory: &B8Memory, bios: &B8Memory, pc: u32, instruction_count: Option<usize>) {
+    let pc = translate_address(pc);
 
     let memory_offset;
     let memory = match pc {
         0..=0x1F_FFFF => {
             memory_offset = pc;
-            &state.memory.main_memory
+            main_memory
         },
         0x1FC0_0000..=0x1FC7_FFFF => {
             memory_offset = pc - 0x1FC0_0000;
-            &state.memory.bios
+            bios
         },
         _ => panic!("PC = 0x{:08X} is not inside memory", pc),
     };

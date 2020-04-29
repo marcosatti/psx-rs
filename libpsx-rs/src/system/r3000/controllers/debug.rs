@@ -24,13 +24,16 @@ use crate::{
     },
 };
 use std::{
-    cmp::max,
     fmt::UpperHex,
     sync::atomic::{
         AtomicBool,
         Ordering,
+        AtomicUsize,
+        AtomicIsize,
     },
 };
+use parking_lot::Mutex;
+use lazy_static::lazy_static;
 
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_STDOUT_PUTCHAR_TRACE: bool = true;
@@ -49,37 +52,35 @@ const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1800;
 const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1810;
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
-pub static mut DEBUG_TICK_COUNT: usize = 0;
-static mut DEBUG_BIOS_CALL_COUNT: usize = 0;
-static mut DEBUG_CRITICAL_SECTION_REFCOUNT: isize = 0;
+pub static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
+static DEBUG_BIOS_CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+static DEBUG_CRITICAL_SECTION_REFCOUNT: AtomicIsize = AtomicIsize::new(0);
 
 pub fn trace_state(state: &State, r3000_state: &ControllerState, cp0_state: &Cp0ControllerState) {
-    unsafe {
-        DEBUG_TICK_COUNT += 1;
+    let tick_count = DEBUG_TICK_COUNT.fetch_add(1, Ordering::AcqRel) + 1;
 
-        if !ENABLE_STATE_TRACING.load(Ordering::Acquire) {
-            return;
+    if !ENABLE_STATE_TRACING.load(Ordering::Acquire) {
+        return;
+    }
+
+    let pc_va = r3000_state.pc.read_u32() - INSTRUCTION_SIZE;
+
+    // let start = 1195;
+    // let end = 1196;
+    // if (start..=end).contains(&DEBUG_BIOS_CALL_COUNT) {
+    if true {
+        let iec = cp0_state.status.read_bitfield(STATUS_IEC) != 0;
+        let branching = r3000_state.branch_delay.branching();
+        log::debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
+        let pc = r3000_state.pc.read_u32();
+        trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, pc - INSTRUCTION_SIZE, Some(1));
+        if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
+            trace_registers(r3000_state);
         }
+    }
 
-        let tick_count = DEBUG_TICK_COUNT;
-        let pc_va = r3000_state.pc.read_u32() - INSTRUCTION_SIZE;
-
-        // let start = 1195;
-        // let end = 1196;
-        // if (start..=end).contains(&DEBUG_BIOS_CALL_COUNT) {
-        if true {
-            let iec = cp0_state.status.read_bitfield(STATUS_IEC) != 0;
-            let branching = r3000_state.branch_delay.branching();
-            log::debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
-            trace_instructions_at_pc(state, r3000_state, Some(1));
-            if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
-                trace_registers(r3000_state);
-            }
-        }
-
-        if false {
-            DEBUG_CORE_EXIT.store(true, Ordering::Release);
-        }
+    if false {
+        DEBUG_CORE_EXIT.store(true, Ordering::Release);
     }
 }
 
@@ -87,7 +88,7 @@ pub fn trace_pc(state: &ControllerState, cp0_state: &Cp0ControllerState) {
     let pc = state.pc.read_u32();
     let kuc = cp0_state.status.read_bitfield(STATUS_KUC);
     let iec = cp0_state.status.read_bitfield(STATUS_IEC);
-    let tick_count = unsafe { DEBUG_TICK_COUNT };
+    let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
     log::trace!("[{:X}] R3000 pc = 0x{:0X}, kuc = {}, iec = {}", tick_count, pc, kuc, iec);
 }
 
@@ -118,7 +119,7 @@ pub fn trace_interrupt(state: &State, r3000_state: &ControllerState) {
     let line_name = IRQ_NAMES[line_index];
 
     if ENABLE_INTERRUPT_TRACING.load(Ordering::Acquire) {
-        let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
+        let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let pc_va = r3000_state.pc.read_u32();
         let branching = r3000_state.branch_delay.branching();
         if false {
@@ -134,18 +135,21 @@ pub fn trace_interrupt(state: &State, r3000_state: &ControllerState) {
 
 pub fn trace_syscall(state: &ControllerState) {
     if ENABLE_SYSCALL_TRACING {
-        let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
+        let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let pc_va = state.pc.read_u32() - INSTRUCTION_SIZE;
 
         let opcode = match state.gpr[4].read_u32() {
             0 => "NoFunction".to_owned(),
-            1 => unsafe {
-                DEBUG_CRITICAL_SECTION_REFCOUNT += 1;
-                format!("EnterCriticalSection [{}]", DEBUG_CRITICAL_SECTION_REFCOUNT)
+            1 => {
+                let count = DEBUG_CRITICAL_SECTION_REFCOUNT.fetch_add(1, Ordering::AcqRel) + 1;
+                format!("EnterCriticalSection [{}]", count)
             },
-            2 => unsafe {
-                DEBUG_CRITICAL_SECTION_REFCOUNT = max(DEBUG_CRITICAL_SECTION_REFCOUNT - 1, 0);
-                format!("ExitCriticalSection [{}]", DEBUG_CRITICAL_SECTION_REFCOUNT)
+            2 => {
+                let count = DEBUG_CRITICAL_SECTION_REFCOUNT.fetch_sub(1, Ordering::AcqRel) - 1;
+                if count == -1 {
+                    DEBUG_CRITICAL_SECTION_REFCOUNT.store(0, Ordering::Release);
+                }
+                format!("ExitCriticalSection [{}]", count)
             },
             3 => "ChangeThreadSubFunction".to_owned(),
             _ => "DeliverEvent".to_owned(),
@@ -157,7 +161,7 @@ pub fn trace_syscall(state: &ControllerState) {
 
 pub fn trace_rfe(state: &ControllerState) {
     if ENABLE_RFE_TRACING {
-        let debug_tick_count = unsafe { DEBUG_TICK_COUNT };
+        let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let pc_va = state.pc.read_u32() - INSTRUCTION_SIZE;
         let branch_target = state.branch_delay.target_or_null();
         log::trace!("[{:X}] rfe, pc = 0x{:08X}, branch target = 0x{:08X}", debug_tick_count, pc_va, branch_target);
@@ -174,7 +178,7 @@ pub fn track_memory_read_pending<T>(state: &ControllerState, physical_address: u
     }
 
     if false {
-        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
         log::debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X} start", tick_count, pc, type_name, physical_address);
@@ -193,7 +197,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(state: &State, r3000_state: &Contro
     let count = memory::update_state_read(physical_address);
 
     if false {
-        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = r3000_state.pc.read_u32();
         log::debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
@@ -212,7 +216,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerState, p
     }
 
     if false {
-        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
         log::debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} start", tick_count, pc, type_name, physical_address, value);
@@ -231,7 +235,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(state: &State, r3000_state: &Contr
     let count = memory::update_state_write(physical_address);
 
     if false {
-        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = r3000_state.pc.read_u32();
         log::debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
@@ -246,9 +250,10 @@ fn trace_memory_spin_loop_detection_read(state: &State, r3000_state: &Controller
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
-        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         log::trace!("[{:X}] Memory read spin loop detected on address = 0x{:08X}", tick_count, physical_address);
-        trace_instructions_at_pc(state, r3000_state, Some(1));
+        let pc = r3000_state.pc.read_u32();
+        trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, pc, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(r3000_state);
         }
@@ -262,9 +267,10 @@ fn trace_memory_spin_loop_detection_write(state: &State, r3000_state: &Controlle
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
-        let tick_count = unsafe { DEBUG_TICK_COUNT };
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         log::trace!("[{:X}] Memory write spin loop detected on address = 0x{:08X}", tick_count, physical_address);
-        trace_instructions_at_pc(state, r3000_state, Some(1));
+        let pc = r3000_state.pc.read_u32();
+        trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, pc, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(r3000_state);
         }
@@ -273,7 +279,9 @@ fn trace_memory_spin_loop_detection_write(state: &State, r3000_state: &Controlle
 }
 
 pub fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0ControllerState) {
-    static mut BUFFER: String = String::new();
+    lazy_static! {
+        static ref BUFFER: Mutex<String> = Mutex::new(String::new());
+    }
 
     // BIOS call 0xA0, $t1 = 0x3C.
     if !ENABLE_STDOUT_PUTCHAR_TRACE {
@@ -285,20 +293,20 @@ pub fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0ControllerSt
     let t1 = state.gpr[9].read_u32();
 
     if ((pc == 0xA0) && (t1 == 0x3C)) || ((pc == 0xB0) && (t1 == 0x3D)) {
-        unsafe {
-            let a1 = state.gpr[4].read_u32();
-            assert!(a1 < 128, format!("stdout putchar a1 = 0x{:08X}", a1)); // Assumed to be ASCII encoding.
+        let buffer = &mut BUFFER.lock();
 
-            let ch = a1 as u8 as char;
+        let a1 = state.gpr[4].read_u32();
+        assert!(a1 < 128, format!("stdout putchar a1 = 0x{:08X}", a1)); // Assumed to be ASCII encoding.
 
-            if ch != '\n' {
-                BUFFER.push(ch);
-            } else {
-                let tick_count = DEBUG_TICK_COUNT;
-                let iec = cp0_state.status.read_bitfield(STATUS_IEC) != 0;
-                log::trace!("[{:X}] stdout: iec = {}, string = {}", tick_count, iec, &BUFFER);
-                BUFFER.clear();
-            }
+        let ch = a1 as u8 as char;
+
+        if ch != '\n' {
+            buffer.push(ch);
+        } else {
+            let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+            let iec = cp0_state.status.read_bitfield(STATUS_IEC) != 0;
+            log::trace!("[{:X}] stdout: iec = {}, string = {}", tick_count, iec, &buffer);
+            buffer.clear();
         }
     }
 }
@@ -381,8 +389,7 @@ pub fn trace_bios_call(state: &ControllerState) {
 
     let ra = state.gpr[31].read_u32();
 
-    unsafe {
-        DEBUG_BIOS_CALL_COUNT += 1;
-        log::trace!("[{:X}] BIOS call {} {}, ra = 0x{:08X}", DEBUG_TICK_COUNT, DEBUG_BIOS_CALL_COUNT, &string, ra);
-    }
+    let call_count = DEBUG_BIOS_CALL_COUNT.fetch_add(1, Ordering::AcqRel) + 1;
+    let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+    log::trace!("[{:X}] BIOS call {} {}, ra = 0x{:08X}", tick_count, call_count, &string, ra);
 }

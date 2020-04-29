@@ -30,23 +30,29 @@ pub fn generate_sound(state: &State, spu_state: &mut ControllerState, audio_back
     }
 
     for voice_id in 0..24 {
-        let play_state = get_play_state(spu_state, voice_id);
-
         handle_key_on(state, spu_state, voice_id);
 
-        if play_state.adpcm_state.sample_buffer.is_none() {
+        let need_data = {
+            let play_state = get_play_state(spu_state, voice_id);
+            play_state.adpcm_state.sample_buffer.is_none()
+        };
+
+        if need_data {
             decode_adpcm_block(state, spu_state, voice_id);
         }
 
-        let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
-        let mut adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
-        adpcm_sample_raw = interpolate_sample(
-            adpcm_sample_raw,
-            &mut play_state.old_sample,
-            &mut play_state.older_sample,
-            &mut play_state.oldest_sample,
-            play_state.pitch_counter_interp
-        );
+        let adpcm_sample_raw = {
+            let play_state = get_play_state(spu_state, voice_id);
+            let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
+            let adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
+            interpolate_sample(
+                adpcm_sample_raw,
+                &mut play_state.old_sample,
+                &mut play_state.older_sample,
+                &mut play_state.oldest_sample,
+                play_state.pitch_counter_interp
+            )
+        };
 
         handle_pitch_counter(state, spu_state, voice_id);
 
@@ -58,7 +64,10 @@ pub fn generate_sound(state: &State, spu_state: &mut ControllerState, audio_back
         pcm_frame = transform_main_volume(state, pcm_frame);
 
         // All processing done, ready to be played.
-        play_state.sample_buffer.push(pcm_frame);
+        {
+            let play_state = get_play_state(spu_state, voice_id);
+            play_state.sample_buffer.push(pcm_frame);
+        }
         handle_play_sound_buffer(state, spu_state, audio_backend, voice_id);
 
         handle_key_off(state, spu_state, voice_id);
@@ -123,30 +132,50 @@ fn handle_play_sound_buffer(state: &State, spu_state: &mut ControllerState, audi
 }
 
 fn decode_adpcm_block(state: &State, spu_state: &mut ControllerState, voice_id: usize) {
-    let play_state = get_play_state(spu_state, voice_id);
-    let repeat_address = get_raddr(state, voice_id);
-    let status = &state.spu.voice_channel_status;
-    let memory = &spu_state.memory;
+    let current_address = {
+        let play_state = get_play_state(spu_state, voice_id);
+        play_state.current_address
+    };
+
+    let header = {
+        let memory = &spu_state.memory;
+        [memory[current_address], memory[current_address + 1]]
+    };
+    
 
     // ADPCM header.
-    let header = [memory[play_state.current_address], memory[play_state.current_address + 1]];
-    play_state.adpcm_state.params = decode_header(header);
+    {
+        let play_state = get_play_state(spu_state, voice_id);
+        play_state.adpcm_state.params = decode_header(header);
+    }
 
     // ADPCM (packed) samples are from indexes 2 -> 15, with each byte containing 2 real samples.
     let mut sample_buffer = [0; 28];
     for i in 0..14 {
-        let data = memory[play_state.current_address + (2 + i)];
-        let samples = decode_frame(data, &play_state.adpcm_state.params, &mut play_state.adpcm_state.old_sample, &mut play_state.adpcm_state.older_sample);
+        let data = {
+            let memory = &spu_state.memory;
+            memory[current_address + (2 + i)]
+        };
+        let samples = {
+            let play_state = get_play_state(spu_state, voice_id);
+            decode_frame(data, &play_state.adpcm_state.params, &mut play_state.adpcm_state.old_sample, &mut play_state.adpcm_state.older_sample)
+        };
         sample_buffer[i * 2] = samples[0];
         sample_buffer[(i * 2) + 1] = samples[1];
     }
+
+
+    let play_state = get_play_state(spu_state, voice_id);
     play_state.adpcm_state.sample_buffer = Some(sample_buffer);
 
-    let mut next_address = (play_state.current_address + 16) & 0x7FFFF;
+    let mut next_address = (current_address + 16) & 0x7FFFF;
+
+    let repeat_address = get_raddr(state, voice_id);
+    let status = &state.spu.voice_channel_status;
 
     // Process header flags.
     if play_state.adpcm_state.params.loop_start {
-        repeat_address.write_u16((play_state.current_address / 8) as u16);
+        repeat_address.write_u16((current_address / 8) as u16);
     }
 
     if play_state.adpcm_state.params.loop_end {
