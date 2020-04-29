@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 use crate::system::timers::controllers::timer::*;
 
 pub fn count_read_u16(state: &State, offset: u32, timer_id: usize) -> ReadResult<u16> {

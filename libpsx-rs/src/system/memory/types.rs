@@ -1,20 +1,6 @@
 use crate::types::memory::*;
 use crate::system::memory::constants::*;
 
-#[derive(Clone, Copy, Debug)]
-pub enum ReadErrorKind {
-    Empty,
-}
-
-pub type ReadResult<T> = Result<T, ReadErrorKind>;
-
-#[derive(Clone, Copy, Debug)]
-pub enum WriteErrorKind {
-    Full,
-}
-
-pub type WriteResult = Result<(), WriteErrorKind>;
-
 pub struct State {
     pub main_memory: B8Memory,
     pub bios: B8Memory,

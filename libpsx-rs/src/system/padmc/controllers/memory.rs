@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 
 pub fn padmc1040_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);

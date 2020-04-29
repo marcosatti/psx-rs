@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 use crate::system::spu::controllers::voice::*;
 
 pub fn voice_voll_read_u16(state: &State, offset: u32, voice_id: usize) -> ReadResult<u16> {
@@ -88,6 +88,14 @@ pub fn main_volume_right_read_u16(state: &State, offset: u32) -> ReadResult<u16>
 pub fn main_volume_right_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.main_volume_right.write_u16(value))
+}
+
+pub fn reverb_volume_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.reverb_volume.read_u16(offset / 2))
+}
+
+pub fn reverb_volume_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.reverb_volume.write_u16(offset / 2, value))
 }
 
 pub fn reverb_volume_read_u32(state: &State, offset: u32) -> ReadResult<u32> {

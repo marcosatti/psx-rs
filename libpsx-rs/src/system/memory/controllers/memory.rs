@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 
 pub fn main_memory_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     Ok(state.memory.main_memory.read_u8(offset))

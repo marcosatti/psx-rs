@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 use crate::system::cdrom::constants::*;
 
 pub fn status_read_u8(state: &State, offset: u32) -> ReadResult<u8> {

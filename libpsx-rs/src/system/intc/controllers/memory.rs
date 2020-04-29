@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 
 pub fn stat_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
     Ok(state.intc.stat.read_u16(offset / 2))

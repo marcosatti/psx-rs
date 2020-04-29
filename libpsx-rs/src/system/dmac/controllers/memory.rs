@@ -1,5 +1,5 @@
 use crate::system::types::State;
-use crate::system::memory::types::*;
+use crate::system::bus::types::*;
 use crate::system::dmac::controllers::channel::*;
 
 pub fn madr_read_u32(state: &State, offset: u32, channel_id: usize) -> ReadResult<u32> {
