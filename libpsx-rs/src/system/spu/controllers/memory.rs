@@ -164,6 +164,14 @@ pub fn data_fifo_write_u16(state: &State, offset: u32, value: u16) -> WriteResul
     state.spu.data_fifo.write_one(value).map_err(|_| WriteErrorKind::Full)
 }
 
+pub fn voice_channel_fm_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.voice_channel_fm.read_u16(offset / 2))
+}
+
+pub fn voice_channel_fm_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.voice_channel_fm.write_u16(offset / 2, value))
+}
+
 pub fn voice_channel_fm_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.voice_channel_fm.read_u32())
@@ -172,6 +180,14 @@ pub fn voice_channel_fm_read_u32(state: &State, offset: u32) -> ReadResult<u32> 
 pub fn voice_channel_fm_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.voice_channel_fm.write_u32(value))
+}
+
+pub fn voice_channel_noise_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.voice_channel_noise.read_u16(offset / 2))
+}
+
+pub fn voice_channel_noise_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.voice_channel_noise.write_u16(offset / 2, value))
 }
 
 pub fn voice_channel_noise_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -184,6 +200,14 @@ pub fn voice_channel_noise_write_u32(state: &State, offset: u32, value: u32) -> 
     Ok(state.spu.voice_channel_noise.write_u32(value))
 }
 
+pub fn voice_channel_reverb_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.voice_channel_reverb.read_u16(offset / 2))
+}
+
+pub fn voice_channel_reverb_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.voice_channel_reverb.write_u16(offset / 2, value))
+}
+
 pub fn voice_channel_reverb_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.voice_channel_reverb.read_u32())
@@ -192,6 +216,14 @@ pub fn voice_channel_reverb_read_u32(state: &State, offset: u32) -> ReadResult<u
 pub fn voice_channel_reverb_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.voice_channel_reverb.write_u32(value))
+}
+
+pub fn voice_channel_status_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.voice_channel_status.read_u16(offset / 2))
+}
+
+pub fn voice_channel_status_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.voice_channel_status.write_u16(offset / 2, value))
 }
 
 pub fn voice_channel_status_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -264,6 +296,14 @@ pub fn stat_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
     Ok(state.spu.stat.write_u16(value))
 }
 
+pub fn cd_volume_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.cd_volume.read_u16(offset / 2))
+}
+
+pub fn cd_volume_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.cd_volume.write_u16(offset / 2, value))
+}
+
 pub fn cd_volume_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.cd_volume.read_u32())
@@ -272,6 +312,14 @@ pub fn cd_volume_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 pub fn cd_volume_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.cd_volume.write_u32(value))
+}
+
+pub fn extern_volume_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.extern_volume.read_u16(offset / 2))
+}
+
+pub fn extern_volume_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.extern_volume.write_u16(offset / 2, value))
 }
 
 pub fn extern_volume_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -302,6 +350,14 @@ pub fn current_volume_right_read_u16(state: &State, offset: u32) -> ReadResult<u
 pub fn current_volume_right_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.current_volume_right.write_u16(value))
+}
+
+pub fn unknown_1_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.unknown_1.read_u16(offset / 2))
+}
+
+pub fn unknown_1_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.unknown_1.write_u16(offset / 2, value))
 }
 
 pub fn unknown_1_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -414,6 +470,14 @@ pub fn vapf2_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
     Ok(state.spu.vapf2.write_u16(value))
 }
 
+pub fn msame_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.msame.read_u16(offset / 2))
+}
+
+pub fn msame_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.msame.write_u16(offset / 2, value))
+}
+
 pub fn msame_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.msame.read_u32())
@@ -422,6 +486,14 @@ pub fn msame_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 pub fn msame_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.msame.write_u32(value))
+}
+
+pub fn mcomb1_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mcomb1.read_u16(offset / 2))
+}
+
+pub fn mcomb1_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mcomb1.write_u16(offset / 2, value))
 }
 
 pub fn mcomb1_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -434,6 +506,14 @@ pub fn mcomb1_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     Ok(state.spu.mcomb1.write_u32(value))
 }
 
+pub fn mcomb2_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mcomb2.read_u16(offset / 2))
+}
+
+pub fn mcomb2_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mcomb2.write_u16(offset / 2, value))
+}
+
 pub fn mcomb2_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.mcomb2.read_u32())
@@ -442,6 +522,14 @@ pub fn mcomb2_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 pub fn mcomb2_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.mcomb2.write_u32(value))
+}
+
+pub fn dsame_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.dsame.read_u16(offset / 2))
+}
+
+pub fn dsame_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.dsame.write_u16(offset / 2, value))
 }
 
 pub fn dsame_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -454,6 +542,14 @@ pub fn dsame_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     Ok(state.spu.dsame.write_u32(value))
 }
 
+pub fn mdiff_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mdiff.read_u16(offset / 2))
+}
+
+pub fn mdiff_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mdiff.write_u16(offset / 2, value))
+}
+
 pub fn mdiff_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.mdiff.read_u32())
@@ -462,6 +558,14 @@ pub fn mdiff_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 pub fn mdiff_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.mdiff.write_u32(value))
+}
+
+pub fn mcomb3_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mcomb3.read_u16(offset / 2))
+}
+
+pub fn mcomb3_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mcomb3.write_u16(offset / 2, value))
 }
 
 pub fn mcomb3_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -474,6 +578,14 @@ pub fn mcomb3_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     Ok(state.spu.mcomb3.write_u32(value))
 }
 
+pub fn mcomb4_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mcomb4.read_u16(offset / 2))
+}
+
+pub fn mcomb4_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mcomb4.write_u16(offset / 2, value))
+}
+
 pub fn mcomb4_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.mcomb4.read_u32())
@@ -482,6 +594,14 @@ pub fn mcomb4_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 pub fn mcomb4_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.mcomb4.write_u32(value))
+}
+
+pub fn ddiff_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.ddiff.read_u16(offset / 2))
+}
+
+pub fn ddiff_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.ddiff.write_u16(offset / 2, value))
 }
 
 pub fn ddiff_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
@@ -494,6 +614,14 @@ pub fn ddiff_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     Ok(state.spu.ddiff.write_u32(value))
 }
 
+pub fn mapf1_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mapf1.read_u16(offset / 2))
+}
+
+pub fn mapf1_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mapf1.write_u16(offset / 2, value))
+}
+
 pub fn mapf1_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.mapf1.read_u32())
@@ -504,6 +632,14 @@ pub fn mapf1_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     Ok(state.spu.mapf1.write_u32(value))
 }
 
+pub fn mapf2_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.mapf2.read_u16(offset / 2))
+}
+
+pub fn mapf2_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.mapf2.write_u16(offset / 2, value))
+}
+
 pub fn mapf2_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
     Ok(state.spu.mapf2.read_u32())
@@ -512,6 +648,14 @@ pub fn mapf2_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 pub fn mapf2_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
     Ok(state.spu.mapf2.write_u32(value))
+}
+
+pub fn vin_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.spu.vin.read_u16(offset / 2))
+}
+
+pub fn vin_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.spu.vin.write_u16(offset / 2, value))
 }
 
 pub fn vin_read_u32(state: &State, offset: u32) -> ReadResult<u32> {

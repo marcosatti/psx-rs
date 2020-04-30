@@ -2,6 +2,7 @@ use crate::system::types::State;
 use crate::system::bus::types::*;
 
 pub fn bus_read_u8(state: &State, address: u32) -> ReadResult<u8> {
+    assert_eq!(address % 1, 0);
     match address {
         0x0000_0000..=0x001F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u8(state, address - 0x0000_0000),
         0x0020_0000..=0x003F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u8(state, address - 0x0020_0000),
@@ -21,6 +22,7 @@ pub fn bus_read_u8(state: &State, address: u32) -> ReadResult<u8> {
 }
 
 pub fn bus_write_u8(state: &State, address: u32, value: u8) -> WriteResult {
+    assert_eq!(address % 1, 0);
     match address {
         0x0000_0000..=0x001F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u8(state, address - 0x0000_0000, value),
         0x0020_0000..=0x003F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u8(state, address - 0x0020_0000, value),
@@ -40,12 +42,14 @@ pub fn bus_write_u8(state: &State, address: u32, value: u8) -> WriteResult {
 }
 
 pub fn bus_read_u16(state: &State, address: u32) -> ReadResult<u16> {
+    assert_eq!(address % 2, 0);
     match address {
         0x0000_0000..=0x001F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u16(state, address - 0x0000_0000),
         0x0020_0000..=0x003F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u16(state, address - 0x0020_0000),
         0x0040_0000..=0x005F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u16(state, address - 0x0040_0000),
         0x0060_0000..=0x007F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u16(state, address - 0x0060_0000),
         0x1F00_0000..=0x1F00_00FF => crate::system::memory::controllers::memory::pio_read_u16(state, address - 0x1F00_0000),
+        0x1F80_1044..=0x1F80_1047 => crate::system::padmc::controllers::memory::stat_read_u16(state, address - 0x1F80_1044),
         0x1F80_1048..=0x1F80_1049 => crate::system::padmc::controllers::memory::mode_read_u16(state, address - 0x1F80_1048),
         0x1F80_104A..=0x1F80_104B => crate::system::padmc::controllers::memory::ctrl_read_u16(state, address - 0x1F80_104A),
         0x1F80_104E..=0x1F80_104F => crate::system::padmc::controllers::memory::baud_reload_read_u16(state, address - 0x1F80_104E),
@@ -230,8 +234,13 @@ pub fn bus_read_u16(state: &State, address: u32) -> ReadResult<u16> {
         0x1F80_1D7E..=0x1F80_1D7F => crate::system::spu::controllers::memory::voice_raddr_read_u16(state, address - 0x1F80_1D7E, ((address - 0x1F80_1C0E) / 0x10) as usize),
         0x1F80_1D80..=0x1F80_1D81 => crate::system::spu::controllers::memory::main_volume_left_read_u16(state, address - 0x1F80_1D80),
         0x1F80_1D82..=0x1F80_1D83 => crate::system::spu::controllers::memory::main_volume_right_read_u16(state, address - 0x1F80_1D82),
+        0x1F80_1D84..=0x1F80_1D87 => crate::system::spu::controllers::memory::reverb_volume_read_u16(state, address - 0x1F80_1D84),
         0x1F80_1D88..=0x1F80_1D8B => crate::system::spu::controllers::memory::voice_key_on_read_u16(state, address - 0x1F80_1D88),
         0x1F80_1D8C..=0x1F80_1D8F => crate::system::spu::controllers::memory::voice_key_off_read_u16(state, address - 0x1F80_1D8C),
+        0x1F80_1D90..=0x1F80_1D93 => crate::system::spu::controllers::memory::voice_channel_fm_read_u16(state, address - 0x1F80_1D90),
+        0x1F80_1D94..=0x1F80_1D97 => crate::system::spu::controllers::memory::voice_channel_noise_read_u16(state, address - 0x1F80_1D94),
+        0x1F80_1D98..=0x1F80_1D9B => crate::system::spu::controllers::memory::voice_channel_reverb_read_u16(state, address - 0x1F80_1D98),
+        0x1F80_1D9C..=0x1F80_1D9F => crate::system::spu::controllers::memory::voice_channel_status_read_u16(state, address - 0x1F80_1D9C),
         0x1F80_1DA0..=0x1F80_1DA1 => crate::system::spu::controllers::memory::unknown_0_read_u16(state, address - 0x1F80_1DA0),
         0x1F80_1DA2..=0x1F80_1DA3 => crate::system::spu::controllers::memory::reverb_start_address_read_u16(state, address - 0x1F80_1DA2),
         0x1F80_1DA4..=0x1F80_1DA5 => crate::system::spu::controllers::memory::irq_address_read_u16(state, address - 0x1F80_1DA4),
@@ -240,8 +249,11 @@ pub fn bus_read_u16(state: &State, address: u32) -> ReadResult<u16> {
         0x1F80_1DAA..=0x1F80_1DAB => crate::system::spu::controllers::memory::control_read_u16(state, address - 0x1F80_1DAA),
         0x1F80_1DAC..=0x1F80_1DAD => crate::system::spu::controllers::memory::data_transfer_control_read_u16(state, address - 0x1F80_1DAC),
         0x1F80_1DAE..=0x1F80_1DAF => crate::system::spu::controllers::memory::stat_read_u16(state, address - 0x1F80_1DAE),
+        0x1F80_1DB0..=0x1F80_1DB3 => crate::system::spu::controllers::memory::cd_volume_read_u16(state, address - 0x1F80_1DB0),
+        0x1F80_1DB4..=0x1F80_1DB7 => crate::system::spu::controllers::memory::extern_volume_read_u16(state, address - 0x1F80_1DB4),
         0x1F80_1DB8..=0x1F80_1DB9 => crate::system::spu::controllers::memory::current_volume_left_read_u16(state, address - 0x1F80_1DB8),
         0x1F80_1DBA..=0x1F80_1DBB => crate::system::spu::controllers::memory::current_volume_right_read_u16(state, address - 0x1F80_1DBA),
+        0x1F80_1DBC..=0x1F80_1DBF => crate::system::spu::controllers::memory::unknown_1_read_u16(state, address - 0x1F80_1DBC),
         0x1F80_1DC0..=0x1F80_1DC1 => crate::system::spu::controllers::memory::dapf1_read_u16(state, address - 0x1F80_1DC0),
         0x1F80_1DC2..=0x1F80_1DC3 => crate::system::spu::controllers::memory::dapf2_read_u16(state, address - 0x1F80_1DC2),
         0x1F80_1DC4..=0x1F80_1DC5 => crate::system::spu::controllers::memory::viir_read_u16(state, address - 0x1F80_1DC4),
@@ -252,6 +264,17 @@ pub fn bus_read_u16(state: &State, address: u32) -> ReadResult<u16> {
         0x1F80_1DCE..=0x1F80_1DCF => crate::system::spu::controllers::memory::vwall_read_u16(state, address - 0x1F80_1DCE),
         0x1F80_1DD0..=0x1F80_1DD1 => crate::system::spu::controllers::memory::vapf1_read_u16(state, address - 0x1F80_1DD0),
         0x1F80_1DD2..=0x1F80_1DD3 => crate::system::spu::controllers::memory::vapf2_read_u16(state, address - 0x1F80_1DD2),
+        0x1F80_1DD4..=0x1F80_1DD7 => crate::system::spu::controllers::memory::msame_read_u16(state, address - 0x1F80_1DD4),
+        0x1F80_1DD8..=0x1F80_1DDB => crate::system::spu::controllers::memory::mcomb1_read_u16(state, address - 0x1F80_1DD8),
+        0x1F80_1DDC..=0x1F80_1DDF => crate::system::spu::controllers::memory::mcomb2_read_u16(state, address - 0x1F80_1DDC),
+        0x1F80_1DE0..=0x1F80_1DE3 => crate::system::spu::controllers::memory::dsame_read_u16(state, address - 0x1F80_1DE0),
+        0x1F80_1DE4..=0x1F80_1DE7 => crate::system::spu::controllers::memory::mdiff_read_u16(state, address - 0x1F80_1DE4),
+        0x1F80_1DE8..=0x1F80_1DEB => crate::system::spu::controllers::memory::mcomb3_read_u16(state, address - 0x1F80_1DE8),
+        0x1F80_1DEC..=0x1F80_1DEF => crate::system::spu::controllers::memory::mcomb4_read_u16(state, address - 0x1F80_1DEC),
+        0x1F80_1DF0..=0x1F80_1DF3 => crate::system::spu::controllers::memory::ddiff_read_u16(state, address - 0x1F80_1DF0),
+        0x1F80_1DF4..=0x1F80_1DF7 => crate::system::spu::controllers::memory::mapf1_read_u16(state, address - 0x1F80_1DF4),
+        0x1F80_1DF8..=0x1F80_1DFB => crate::system::spu::controllers::memory::mapf2_read_u16(state, address - 0x1F80_1DF8),
+        0x1F80_1DFC..=0x1F80_1DFF => crate::system::spu::controllers::memory::vin_read_u16(state, address - 0x1F80_1DFC),
         0x1FC0_0000..=0x1FC7_FFFF => crate::system::memory::controllers::memory::bios_read_u16(state, address - 0x1FC0_0000),
         0xFFFE_0000..=0xFFFF_FFFF => crate::system::memory::controllers::memory::cache_control_read_u16(state, address - 0xFFFE_0000),
         _ => panic!("Unhandled bus address 0x{:08X}", address),
@@ -259,12 +282,14 @@ pub fn bus_read_u16(state: &State, address: u32) -> ReadResult<u16> {
 }
 
 pub fn bus_write_u16(state: &State, address: u32, value: u16) -> WriteResult {
+    assert_eq!(address % 2, 0);
     match address {
         0x0000_0000..=0x001F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u16(state, address - 0x0000_0000, value),
         0x0020_0000..=0x003F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u16(state, address - 0x0020_0000, value),
         0x0040_0000..=0x005F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u16(state, address - 0x0040_0000, value),
         0x0060_0000..=0x007F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u16(state, address - 0x0060_0000, value),
         0x1F00_0000..=0x1F00_00FF => crate::system::memory::controllers::memory::pio_write_u16(state, address - 0x1F00_0000, value),
+        0x1F80_1044..=0x1F80_1047 => crate::system::padmc::controllers::memory::stat_write_u16(state, address - 0x1F80_1044, value),
         0x1F80_1048..=0x1F80_1049 => crate::system::padmc::controllers::memory::mode_write_u16(state, address - 0x1F80_1048, value),
         0x1F80_104A..=0x1F80_104B => crate::system::padmc::controllers::memory::ctrl_write_u16(state, address - 0x1F80_104A, value),
         0x1F80_104E..=0x1F80_104F => crate::system::padmc::controllers::memory::baud_reload_write_u16(state, address - 0x1F80_104E, value),
@@ -449,8 +474,13 @@ pub fn bus_write_u16(state: &State, address: u32, value: u16) -> WriteResult {
         0x1F80_1D7E..=0x1F80_1D7F => crate::system::spu::controllers::memory::voice_raddr_write_u16(state, address - 0x1F80_1D7E, value, ((address - 0x1F80_1C0E) / 0x10) as usize),
         0x1F80_1D80..=0x1F80_1D81 => crate::system::spu::controllers::memory::main_volume_left_write_u16(state, address - 0x1F80_1D80, value),
         0x1F80_1D82..=0x1F80_1D83 => crate::system::spu::controllers::memory::main_volume_right_write_u16(state, address - 0x1F80_1D82, value),
+        0x1F80_1D84..=0x1F80_1D87 => crate::system::spu::controllers::memory::reverb_volume_write_u16(state, address - 0x1F80_1D84, value),
         0x1F80_1D88..=0x1F80_1D8B => crate::system::spu::controllers::memory::voice_key_on_write_u16(state, address - 0x1F80_1D88, value),
         0x1F80_1D8C..=0x1F80_1D8F => crate::system::spu::controllers::memory::voice_key_off_write_u16(state, address - 0x1F80_1D8C, value),
+        0x1F80_1D90..=0x1F80_1D93 => crate::system::spu::controllers::memory::voice_channel_fm_write_u16(state, address - 0x1F80_1D90, value),
+        0x1F80_1D94..=0x1F80_1D97 => crate::system::spu::controllers::memory::voice_channel_noise_write_u16(state, address - 0x1F80_1D94, value),
+        0x1F80_1D98..=0x1F80_1D9B => crate::system::spu::controllers::memory::voice_channel_reverb_write_u16(state, address - 0x1F80_1D98, value),
+        0x1F80_1D9C..=0x1F80_1D9F => crate::system::spu::controllers::memory::voice_channel_status_write_u16(state, address - 0x1F80_1D9C, value),
         0x1F80_1DA0..=0x1F80_1DA1 => crate::system::spu::controllers::memory::unknown_0_write_u16(state, address - 0x1F80_1DA0, value),
         0x1F80_1DA2..=0x1F80_1DA3 => crate::system::spu::controllers::memory::reverb_start_address_write_u16(state, address - 0x1F80_1DA2, value),
         0x1F80_1DA4..=0x1F80_1DA5 => crate::system::spu::controllers::memory::irq_address_write_u16(state, address - 0x1F80_1DA4, value),
@@ -459,8 +489,11 @@ pub fn bus_write_u16(state: &State, address: u32, value: u16) -> WriteResult {
         0x1F80_1DAA..=0x1F80_1DAB => crate::system::spu::controllers::memory::control_write_u16(state, address - 0x1F80_1DAA, value),
         0x1F80_1DAC..=0x1F80_1DAD => crate::system::spu::controllers::memory::data_transfer_control_write_u16(state, address - 0x1F80_1DAC, value),
         0x1F80_1DAE..=0x1F80_1DAF => crate::system::spu::controllers::memory::stat_write_u16(state, address - 0x1F80_1DAE, value),
+        0x1F80_1DB0..=0x1F80_1DB3 => crate::system::spu::controllers::memory::cd_volume_write_u16(state, address - 0x1F80_1DB0, value),
+        0x1F80_1DB4..=0x1F80_1DB7 => crate::system::spu::controllers::memory::extern_volume_write_u16(state, address - 0x1F80_1DB4, value),
         0x1F80_1DB8..=0x1F80_1DB9 => crate::system::spu::controllers::memory::current_volume_left_write_u16(state, address - 0x1F80_1DB8, value),
         0x1F80_1DBA..=0x1F80_1DBB => crate::system::spu::controllers::memory::current_volume_right_write_u16(state, address - 0x1F80_1DBA, value),
+        0x1F80_1DBC..=0x1F80_1DBF => crate::system::spu::controllers::memory::unknown_1_write_u16(state, address - 0x1F80_1DBC, value),
         0x1F80_1DC0..=0x1F80_1DC1 => crate::system::spu::controllers::memory::dapf1_write_u16(state, address - 0x1F80_1DC0, value),
         0x1F80_1DC2..=0x1F80_1DC3 => crate::system::spu::controllers::memory::dapf2_write_u16(state, address - 0x1F80_1DC2, value),
         0x1F80_1DC4..=0x1F80_1DC5 => crate::system::spu::controllers::memory::viir_write_u16(state, address - 0x1F80_1DC4, value),
@@ -471,6 +504,17 @@ pub fn bus_write_u16(state: &State, address: u32, value: u16) -> WriteResult {
         0x1F80_1DCE..=0x1F80_1DCF => crate::system::spu::controllers::memory::vwall_write_u16(state, address - 0x1F80_1DCE, value),
         0x1F80_1DD0..=0x1F80_1DD1 => crate::system::spu::controllers::memory::vapf1_write_u16(state, address - 0x1F80_1DD0, value),
         0x1F80_1DD2..=0x1F80_1DD3 => crate::system::spu::controllers::memory::vapf2_write_u16(state, address - 0x1F80_1DD2, value),
+        0x1F80_1DD4..=0x1F80_1DD7 => crate::system::spu::controllers::memory::msame_write_u16(state, address - 0x1F80_1DD4, value),
+        0x1F80_1DD8..=0x1F80_1DDB => crate::system::spu::controllers::memory::mcomb1_write_u16(state, address - 0x1F80_1DD8, value),
+        0x1F80_1DDC..=0x1F80_1DDF => crate::system::spu::controllers::memory::mcomb2_write_u16(state, address - 0x1F80_1DDC, value),
+        0x1F80_1DE0..=0x1F80_1DE3 => crate::system::spu::controllers::memory::dsame_write_u16(state, address - 0x1F80_1DE0, value),
+        0x1F80_1DE4..=0x1F80_1DE7 => crate::system::spu::controllers::memory::mdiff_write_u16(state, address - 0x1F80_1DE4, value),
+        0x1F80_1DE8..=0x1F80_1DEB => crate::system::spu::controllers::memory::mcomb3_write_u16(state, address - 0x1F80_1DE8, value),
+        0x1F80_1DEC..=0x1F80_1DEF => crate::system::spu::controllers::memory::mcomb4_write_u16(state, address - 0x1F80_1DEC, value),
+        0x1F80_1DF0..=0x1F80_1DF3 => crate::system::spu::controllers::memory::ddiff_write_u16(state, address - 0x1F80_1DF0, value),
+        0x1F80_1DF4..=0x1F80_1DF7 => crate::system::spu::controllers::memory::mapf1_write_u16(state, address - 0x1F80_1DF4, value),
+        0x1F80_1DF8..=0x1F80_1DFB => crate::system::spu::controllers::memory::mapf2_write_u16(state, address - 0x1F80_1DF8, value),
+        0x1F80_1DFC..=0x1F80_1DFF => crate::system::spu::controllers::memory::vin_write_u16(state, address - 0x1F80_1DFC, value),
         0x1FC0_0000..=0x1FC7_FFFF => crate::system::memory::controllers::memory::bios_write_u16(state, address - 0x1FC0_0000, value),
         0xFFFE_0000..=0xFFFF_FFFF => crate::system::memory::controllers::memory::cache_control_write_u16(state, address - 0xFFFE_0000, value),
         _ => panic!("Unhandled bus address 0x{:08X}", address),
@@ -478,6 +522,7 @@ pub fn bus_write_u16(state: &State, address: u32, value: u16) -> WriteResult {
 }
 
 pub fn bus_read_u32(state: &State, address: u32) -> ReadResult<u32> {
+    assert_eq!(address % 4, 0);
     match address {
         0x0000_0000..=0x001F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u32(state, address - 0x0000_0000),
         0x0020_0000..=0x003F_FFFF => crate::system::memory::controllers::memory::main_memory_read_u32(state, address - 0x0020_0000),
@@ -560,6 +605,7 @@ pub fn bus_read_u32(state: &State, address: u32) -> ReadResult<u32> {
 }
 
 pub fn bus_write_u32(state: &State, address: u32, value: u32) -> WriteResult {
+    assert_eq!(address % 4, 0);
     match address {
         0x0000_0000..=0x001F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u32(state, address - 0x0000_0000, value),
         0x0020_0000..=0x003F_FFFF => crate::system::memory::controllers::memory::main_memory_write_u32(state, address - 0x0020_0000, value),
