@@ -3,6 +3,7 @@ use crate::system::{
         controllers::debug,
         types::*,
     },
+    bus::controllers::memory::*,
     types::State,
 };
 use std::sync::atomic::Ordering;
@@ -10,8 +11,7 @@ use std::sync::atomic::Ordering;
 pub fn translate_address(va: u32) -> u32 {
     match va {
         // kuseg.
-        // The PSX doesn't have a TLB, but it also uses a special mapping that
-        // differs from the standard MIPS documentation.
+        // The PSX doesn't have a TLB, but it also uses a special mapping that differs from the standard MIPS documentation.
         0x0000_0000..=0x7FFF_FFFF => va,
         // kseg0.
         0x8000_0000..=0x9FFF_FFFF => va - 0x8000_0000,
@@ -24,103 +24,103 @@ pub fn translate_address(va: u32) -> u32 {
     }
 }
 
-pub fn read_u8(state: &mut State, physical_address: u32) -> Result<u8, Hazard> {
+pub fn read_u8(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u8, Hazard> {
     let result = {
         if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
-        debug::track_memory_read_pending::<u8>(state, physical_address);
-        state.r3000.memory_mapper.read_u8(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
+        debug::track_memory_read_pending::<u8>(r3000_state, physical_address);
+        bus_read_u8(state, physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_read(state, physical_address, result.unwrap());
+        debug::track_memory_read(state, r3000_state, physical_address, result.unwrap());
     }
 
     result
 }
 
-pub fn write_u8(state: &mut State, physical_address: u32, value: u8) -> Result<(), Hazard> {
+pub fn write_u8(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u8) -> Result<(), Hazard> {
     let result = {
         if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
-        debug::track_memory_write_pending(state, physical_address, value);
-        state.r3000.memory_mapper.write_u8(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
+        debug::track_memory_write_pending(r3000_state, physical_address, value);
+        bus_write_u8(state, physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_write(state, physical_address, value);
+        debug::track_memory_write(state, r3000_state, physical_address, value);
     }
 
     result
 }
 
-pub fn read_u16(state: &mut State, physical_address: u32) -> Result<u16, Hazard> {
+pub fn read_u16(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u16, Hazard> {
     let result = {
         if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
-        debug::track_memory_read_pending::<u16>(state, physical_address);
-        state.r3000.memory_mapper.read_u16(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
+        debug::track_memory_read_pending::<u16>(r3000_state, physical_address);
+        bus_read_u16(state, physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_read(state, physical_address, result.unwrap());
+        debug::track_memory_read(state, r3000_state, physical_address, result.unwrap());
     }
 
     result
 }
 
-pub fn write_u16(state: &mut State, physical_address: u32, value: u16) -> Result<(), Hazard> {
+pub fn write_u16(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u16) -> Result<(), Hazard> {
     let result = {
         if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
-        debug::track_memory_write_pending(state, physical_address, value);
-        state.r3000.memory_mapper.write_u16(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
+        debug::track_memory_write_pending(r3000_state, physical_address, value);
+        bus_write_u16(state, physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_write(state, physical_address, value);
+        debug::track_memory_write(state, r3000_state, physical_address, value);
     }
 
     result
 }
 
-pub fn read_u32(state: &mut State, physical_address: u32) -> Result<u32, Hazard> {
+pub fn read_u32(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u32, Hazard> {
     let result = {
         if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
-        debug::track_memory_read_pending::<u32>(state, physical_address);
-        state.r3000.memory_mapper.read_u32(physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
+        debug::track_memory_read_pending::<u32>(r3000_state, physical_address);
+        bus_read_u32(state, physical_address).map_err(|_| Hazard::MemoryRead(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_read(state, physical_address, result.unwrap());
+        debug::track_memory_read(state, r3000_state, physical_address, result.unwrap());
     }
 
     result
 }
 
-pub fn write_u32(state: &mut State, physical_address: u32, value: u32) -> Result<(), Hazard> {
+pub fn write_u32(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u32) -> Result<(), Hazard> {
     let result = {
         if state.bus_locked.load(Ordering::Acquire) {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
-        debug::track_memory_write_pending(state, physical_address, value);
-        state.r3000.memory_mapper.write_u32(physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
+        debug::track_memory_write_pending(r3000_state, physical_address, value);
+        bus_write_u32(state, physical_address, value).map_err(|_| Hazard::MemoryWrite(physical_address))
     };
 
     if result.is_ok() {
-        debug::track_memory_write(state, physical_address, value);
+        debug::track_memory_write(state, r3000_state, physical_address, value);
     }
 
     result

@@ -1,10 +1,10 @@
 use crate::{
-    system::types::State,
+    system::cdrom::types::ControllerState,
     types::bitfield::Bitfield,
     utilities::bool_to_flag,
 };
 
-pub fn stat_value(state: &State) -> u8 {
+pub fn stat_value(state: &ControllerState) -> u8 {
     const _ERROR: Bitfield = Bitfield::new(0, 0);
     const MOTOR_ON: Bitfield = Bitfield::new(1, 1);
     const _SEEK_ERROR: Bitfield = Bitfield::new(2, 1);
@@ -16,8 +16,8 @@ pub fn stat_value(state: &State) -> u8 {
 
     const READ_SEEK_PLAY: Bitfield = Bitfield::new(5, 3);
 
-    let reading = state.cdrom.reading;
-    let seeking = state.cdrom.seeking;
+    let reading = state.reading;
+    let seeking = state.seeking;
 
     let mut value = 0;
 

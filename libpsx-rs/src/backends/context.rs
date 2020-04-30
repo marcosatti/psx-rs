@@ -4,6 +4,7 @@ use parking_lot::{
 };
 
 type AcquireFn<'context, 'closure, T> = Box<dyn (Fn() -> &'context T) + 'closure>;
+
 type ReleaseFn<'closure> = Box<dyn (Fn()) + 'closure>;
 
 pub struct BackendContext<'a: 'b, 'b, T> {
@@ -29,6 +30,12 @@ impl<'a: 'b, 'b: 'c, 'c, T> BackendContext<'a, 'b, T> {
             context,
         )
     }
+}
+
+unsafe impl<'a: 'b, 'b, T> Send for BackendContext<'a, 'b, T> {
+}
+
+unsafe impl<'a: 'b, 'b, T> Sync for BackendContext<'a, 'b, T> {
 }
 
 pub struct ContextGuard<'a: 'b, 'b: 'c, 'c, T> {

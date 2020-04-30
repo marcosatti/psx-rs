@@ -1,15 +1,12 @@
 use crate::{
-    system::{
-        r3000::{
-            controllers::{
-                memory_controller::*,
-                register::*,
-            },
-            cp0::constants::STATUS_ISC,
-            cp2::types::GteInstruction,
-            types::InstResult,
+    system::r3000::{
+        controllers::{
+            memory_controller::*,
+            register::*,
         },
-        types::State,
+        cp0::constants::STATUS_ISC,
+        cp2::types::GteInstruction,
+        types::{ControllerContext, InstResult},
     },
     types::{
         bitfield::Bitfield,
@@ -27,18 +24,18 @@ use typenum::*;
 // Note: probably ok to disregard SRA != division by 2^N (https://en.wikipedia.org/wiki/Arithmetic_shift), as it just results in a small rounding error.
 // In practice, this means its ok to perform the SRA's as divisions by 4096, etc below.
 
-fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
-    handle_cp2_flag_reset(state);
+fn rtps_vector(context: &mut ControllerContext, shift: bool, vector_xy: u32, vector_z_: u32) {
+    handle_cp2_flag_reset(context.cp2_state);
 
-    let trx_value = state.r3000.cp2.gc[5].read_u32() as i32 as f64;
-    let try_value = state.r3000.cp2.gc[6].read_u32() as i32 as f64;
-    let trz_value = state.r3000.cp2.gc[7].read_u32() as i32 as f64;
+    let trx_value = context.cp2_state.gc[5].read_u32() as i32 as f64;
+    let try_value = context.cp2_state.gc[6].read_u32() as i32 as f64;
+    let trz_value = context.cp2_state.gc[7].read_u32() as i32 as f64;
 
-    let (rt11_value, rt12_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[0].read_u32());
-    let (rt13_value, rt21_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[1].read_u32());
-    let (rt22_value, rt23_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[2].read_u32());
-    let (rt31_value, rt32_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[3].read_u32());
-    let (rt33_value, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[4].read_u32());
+    let (rt11_value, rt12_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[0].read_u32());
+    let (rt13_value, rt21_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[1].read_u32());
+    let (rt22_value, rt23_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[2].read_u32());
+    let (rt31_value, rt32_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[3].read_u32());
+    let (rt33_value, _) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[4].read_u32());
 
     let (vx0_value, vy0_value) = split_32_i16_f64(vector_xy);
     let (vz0_value, _) = split_32_i16_f64(vector_z_);
@@ -72,11 +69,11 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
 
     let (sz3_value, sz3_overflow_flag) = checked_clamp(sz3_value, std::u16::MIN as f64, std::u16::MAX as f64);
 
-    let ofx_value = f64::from_fixed_bits_u32::<U16>(state.r3000.cp2.gc[24].read_u32());
-    let ofy_value = f64::from_fixed_bits_u32::<U16>(state.r3000.cp2.gc[25].read_u32());
-    let h_value = state.r3000.cp2.gc[26].read_u16(0) as f64;
-    let dqa_value = f64::from_fixed_bits_u16::<U8>(state.r3000.cp2.gc[27].read_u16(0));
-    let dqb_value = f64::from_fixed_bits_u32::<U24>(state.r3000.cp2.gc[28].read_u32());
+    let ofx_value = f64::from_fixed_bits_u32::<U16>(context.cp2_state.gc[24].read_u32());
+    let ofy_value = f64::from_fixed_bits_u32::<U16>(context.cp2_state.gc[25].read_u32());
+    let h_value = context.cp2_state.gc[26].read_u16(0) as f64;
+    let dqa_value = f64::from_fixed_bits_u16::<U8>(context.cp2_state.gc[27].read_u16(0));
+    let dqb_value = f64::from_fixed_bits_u32::<U24>(context.cp2_state.gc[28].read_u32());
 
     let mut plane_constant = ((h_value * (0x20000 as f64) / sz3_value) + 1.0) / 2.0;
     let plane_overflow_flag = f64::abs(plane_constant) > (0x1FFFF as f64);
@@ -100,54 +97,54 @@ fn rtps_vector(state: &mut State, shift: bool, vector_xy: u32, vector_z_: u32) {
     let mac0_negative_flag = mac0_value < 0.0;
 
     // Write back.
-    handle_cp2_push_sz(state);
-    handle_cp2_push_sxy(state);
-    state.r3000.cp2.gd[25].write_u32(mac1_value as i32 as u32);
-    state.r3000.cp2.gd[9].write_u32(ir1_value as i32 as u32);
-    state.r3000.cp2.gd[26].write_u32(mac2_value as i32 as u32);
-    state.r3000.cp2.gd[10].write_u32(ir2_value as i32 as u32);
-    state.r3000.cp2.gd[27].write_u32(mac3_value as i32 as u32);
-    state.r3000.cp2.gd[11].write_u32(ir3_value as i32 as u32);
-    state.r3000.cp2.gd[19].write_u32(sz3_value as u16 as u32);
-    state.r3000.cp2.gd[14].write_u16(0, sx2_value as i16 as u16);
-    state.r3000.cp2.gd[14].write_u16(1, sy2_value as i16 as u16);
-    state.r3000.cp2.gd[8].write_u32(ir0_value as u32);
-    state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
+    handle_cp2_push_sz(context.cp2_state);
+    handle_cp2_push_sxy(context.cp2_state);
+    context.cp2_state.gd[25].write_u32(mac1_value as i32 as u32);
+    context.cp2_state.gd[9].write_u32(ir1_value as i32 as u32);
+    context.cp2_state.gd[26].write_u32(mac2_value as i32 as u32);
+    context.cp2_state.gd[10].write_u32(ir2_value as i32 as u32);
+    context.cp2_state.gd[27].write_u32(mac3_value as i32 as u32);
+    context.cp2_state.gd[11].write_u32(ir3_value as i32 as u32);
+    context.cp2_state.gd[19].write_u32(sz3_value as u16 as u32);
+    context.cp2_state.gd[14].write_u16(0, sx2_value as i16 as u16);
+    context.cp2_state.gd[14].write_u16(1, sy2_value as i16 as u16);
+    context.cp2_state.gd[8].write_u32(ir0_value as u32);
+    context.cp2_state.gd[24].write_u32(mac0_value as i32 as u32);
 
     // Flag register.
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(12, 1), bool_to_flag(ir0_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(13, 1), bool_to_flag(sy2_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(14, 1), bool_to_flag(sx2_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(17, 1), bool_to_flag(plane_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(sz3_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(12, 1), bool_to_flag(ir0_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(13, 1), bool_to_flag(sy2_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(14, 1), bool_to_flag(sx2_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(17, 1), bool_to_flag(plane_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(sz3_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
 
-    handle_cp2_flag_error_bit(state);
-    handle_cp2_sxyp_mirror(state);
+    handle_cp2_flag_error_bit(context.cp2_state);
+    handle_cp2_sxyp_mirror(context.cp2_state);
 }
 
-fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bool, vector_xy: u32, vector_z_: u32) {
+fn normal_color(context: &mut ControllerContext, shift: bool, lm: bool, color: bool, depth: bool, vector_xy: u32, vector_z_: u32) {
     if depth {
         assert!(color, "Depth calculation shouldn't be set without color calculation");
     }
 
-    handle_cp2_flag_reset(state);
+    handle_cp2_flag_reset(context.cp2_state);
 
-    let (llm11_value, llm12_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[8].read_u32());
-    let (llm13_value, llm21_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[9].read_u32());
-    let (llm22_value, llm23_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[10].read_u32());
-    let (llm31_value, llm32_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[11].read_u32());
-    let (llm33_value, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[12].read_u32());
+    let (llm11_value, llm12_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[8].read_u32());
+    let (llm13_value, llm21_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[9].read_u32());
+    let (llm22_value, llm23_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[10].read_u32());
+    let (llm31_value, llm32_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[11].read_u32());
+    let (llm33_value, _) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[12].read_u32());
 
     let (vx0_value, vy0_value) = split_32_i16_f64(vector_xy);
     let (vz0_value, _) = split_32_i16_f64(vector_z_);
@@ -162,15 +159,15 @@ fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bo
         ir3_value /= 4096.0;
     }
 
-    let (lcm11_value, lcm12_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[16].read_u32());
-    let (lcm13_value, lcm21_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[17].read_u32());
-    let (lcm22_value, lcm23_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[18].read_u32());
-    let (lcm31_value, lcm32_value) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[19].read_u32());
-    let (lcm33_value, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gc[20].read_u32());
+    let (lcm11_value, lcm12_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[16].read_u32());
+    let (lcm13_value, lcm21_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[17].read_u32());
+    let (lcm22_value, lcm23_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[18].read_u32());
+    let (lcm31_value, lcm32_value) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[19].read_u32());
+    let (lcm33_value, _) = split_32_fixedi16_f64::<U12>(context.cp2_state.gc[20].read_u32());
 
-    let rbk_value = f64::from_fixed_bits_i32::<U12>(state.r3000.cp2.gc[13].read_u32() as i32);
-    let gbk_value = f64::from_fixed_bits_i32::<U12>(state.r3000.cp2.gc[14].read_u32() as i32);
-    let bbk_value = f64::from_fixed_bits_i32::<U12>(state.r3000.cp2.gc[15].read_u32() as i32);
+    let rbk_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[13].read_u32() as i32);
+    let gbk_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[14].read_u32() as i32);
+    let bbk_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[15].read_u32() as i32);
 
     let lcm1_value = (ir1_value * lcm11_value) + (ir2_value * lcm12_value) + (ir3_value * lcm13_value);
     let lcm2_value = (ir1_value * lcm21_value) + (ir2_value * lcm22_value) + (ir3_value * lcm23_value);
@@ -191,19 +188,19 @@ fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bo
     let mut mac3_value = ir3_value;
 
     if color {
-        let r_value = state.r3000.cp2.gd[6].read_u8(0) as f64;
-        let g_value = state.r3000.cp2.gd[6].read_u8(1) as f64;
-        let b_value = state.r3000.cp2.gd[6].read_u8(2) as f64;
+        let r_value = context.cp2_state.gd[6].read_u8(0) as f64;
+        let g_value = context.cp2_state.gd[6].read_u8(1) as f64;
+        let b_value = context.cp2_state.gd[6].read_u8(2) as f64;
 
         mac1_value = (r_value * ir1_value) * 16.0;
         mac2_value = (g_value * ir2_value) * 16.0;
         mac3_value = (b_value * ir3_value) * 16.0;
 
         if depth {
-            let rfc_value = f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[21].read_u32() as i32);
-            let gfc_value = f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[22].read_u32() as i32);
-            let bfc_value = f64::from_fixed_bits_i32::<U4>(state.r3000.cp2.gc[23].read_u32() as i32);
-            let (ir0_value, _) = split_32_i16_f64(state.r3000.cp2.gd[8].read_u32());
+            let rfc_value = f64::from_fixed_bits_i32::<U4>(context.cp2_state.gc[21].read_u32() as i32);
+            let gfc_value = f64::from_fixed_bits_i32::<U4>(context.cp2_state.gc[22].read_u32() as i32);
+            let bfc_value = f64::from_fixed_bits_i32::<U4>(context.cp2_state.gc[23].read_u32() as i32);
+            let (ir0_value, _) = split_32_i16_f64(context.cp2_state.gd[8].read_u32());
 
             mac1_value = mac1_value + ((rfc_value - mac1_value) * ir0_value);
             mac2_value = mac2_value + ((gfc_value - mac2_value) * ir0_value);
@@ -240,112 +237,112 @@ fn normal_color(state: &mut State, shift: bool, lm: bool, color: bool, depth: bo
     let rgb1_value = checked_clamp(mac1_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
     let rgb2_value = checked_clamp(mac2_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
     let rgb3_value = checked_clamp(mac3_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
-    let code_value = state.r3000.cp2.gd[6].read_u8(3);
+    let code_value = context.cp2_state.gd[6].read_u8(3);
 
     // Write back.
-    handle_cp2_push_rgb(state);
-    state.r3000.cp2.gd[22].write_u8(0, rgb1_value as u8);
-    state.r3000.cp2.gd[22].write_u8(1, rgb2_value as u8);
-    state.r3000.cp2.gd[22].write_u8(2, rgb3_value as u8);
-    state.r3000.cp2.gd[22].write_u8(3, code_value as u8);
-    state.r3000.cp2.gd[25].write_u32(mac1_value as i32 as u32);
-    state.r3000.cp2.gd[9].write_u32(ir1_value as i32 as u32);
-    state.r3000.cp2.gd[26].write_u32(mac2_value as i32 as u32);
-    state.r3000.cp2.gd[10].write_u32(ir2_value as i32 as u32);
-    state.r3000.cp2.gd[27].write_u32(mac3_value as i32 as u32);
-    state.r3000.cp2.gd[11].write_u32(ir3_value as i32 as u32);
+    handle_cp2_push_rgb(context.cp2_state);
+    context.cp2_state.gd[22].write_u8(0, rgb1_value as u8);
+    context.cp2_state.gd[22].write_u8(1, rgb2_value as u8);
+    context.cp2_state.gd[22].write_u8(2, rgb3_value as u8);
+    context.cp2_state.gd[22].write_u8(3, code_value as u8);
+    context.cp2_state.gd[25].write_u32(mac1_value as i32 as u32);
+    context.cp2_state.gd[9].write_u32(ir1_value as i32 as u32);
+    context.cp2_state.gd[26].write_u32(mac2_value as i32 as u32);
+    context.cp2_state.gd[10].write_u32(ir2_value as i32 as u32);
+    context.cp2_state.gd[27].write_u32(mac3_value as i32 as u32);
+    context.cp2_state.gd[11].write_u32(ir3_value as i32 as u32);
 
     // Flag register.
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
 
-    handle_cp2_flag_error_bit(state);
+    handle_cp2_flag_error_bit(context.cp2_state);
 }
 
-pub fn lwc2(state: &mut State, instruction: Instruction) -> InstResult {
-    let mut addr = state.r3000.gpr[instruction.rs()].read_u32();
+pub fn lwc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+    let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
-    let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
+    let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u32(state, addr)?
+        read_u32(context.state, context.r3000_state, addr)?
     } else {
         0
     };
 
-    state.r3000.cp2.gd[instruction.rt()].write_u32(value);
+    context.cp2_state.gd[instruction.rt()].write_u32(value);
 
-    handle_cp2_sxyp_write(state, instruction.rt());
-    handle_cp2_sxyp_mirror(state);
+    handle_cp2_sxyp_write(context.cp2_state, instruction.rt());
+    handle_cp2_sxyp_mirror(context.cp2_state);
     Ok(())
 }
 
-pub fn swc2(state: &mut State, instruction: Instruction) -> InstResult {
-    let value = state.r3000.cp2.gd[instruction.rt()].read_u32();
-    let mut addr = state.r3000.gpr[instruction.rs()].read_u32();
+pub fn swc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+    let value = context.cp2_state.gd[instruction.rt()].read_u32();
+    let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
-    let isc = state.r3000.cp0.status.read_bitfield(STATUS_ISC) != 0;
+    let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
 
     if likely(!isc) {
-        write_u32(state, addr, value)?
+        write_u32(context.state, context.r3000_state, addr, value)?
     }
 
     Ok(())
 }
 
-pub fn mfc2(state: &mut State, instruction: Instruction) -> InstResult {
-    let value = state.r3000.cp2.gd[instruction.rd()].read_u32();
-    state.r3000.gpr[instruction.rt()].write_u32(value);
+pub fn mfc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+    let value = context.cp2_state.gd[instruction.rd()].read_u32();
+    context.r3000_state.gpr[instruction.rt()].write_u32(value);
     Ok(())
 }
 
-pub fn cfc2(state: &mut State, instruction: Instruction) -> InstResult {
-    let value = state.r3000.cp2.gc[instruction.rd()].read_u32();
-    state.r3000.gpr[instruction.rt()].write_u32(value);
+pub fn cfc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+    let value = context.cp2_state.gc[instruction.rd()].read_u32();
+    context.r3000_state.gpr[instruction.rt()].write_u32(value);
     Ok(())
 }
 
-pub fn mtc2(state: &mut State, instruction: Instruction) -> InstResult {
-    let value = state.r3000.gpr[instruction.rt()].read_u32();
-    state.r3000.cp2.gd[instruction.rd()].write_u32(value);
-    handle_cp2_sxyp_write(state, instruction.rd());
-    handle_cp2_sxyp_mirror(state);
+pub fn mtc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+    let value = context.r3000_state.gpr[instruction.rt()].read_u32();
+    context.cp2_state.gd[instruction.rd()].write_u32(value);
+    handle_cp2_sxyp_write(context.cp2_state, instruction.rd());
+    handle_cp2_sxyp_mirror(context.cp2_state);
     Ok(())
 }
 
-pub fn ctc2(state: &mut State, instruction: Instruction) -> InstResult {
-    let value = state.r3000.gpr[instruction.rt()].read_u32();
-    state.r3000.cp2.gc[instruction.rd()].write_u32(value);
+pub fn ctc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+    let value = context.r3000_state.gpr[instruction.rt()].read_u32();
+    context.cp2_state.gc[instruction.rd()].write_u32(value);
     Ok(())
 }
 
-pub fn rtps(state: &mut State, instruction: Instruction) -> InstResult {
+pub fn rtps(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     // Operates on V0.
     let instruction = GteInstruction::new(instruction);
-    let vector_0_xy = state.r3000.cp2.gd[0].read_u32();
-    let vector_0_z_ = state.r3000.cp2.gd[1].read_u32();
-    rtps_vector(state, instruction.sf(), vector_0_xy, vector_0_z_);
+    let vector_0_xy = context.cp2_state.gd[0].read_u32();
+    let vector_0_z_ = context.cp2_state.gd[1].read_u32();
+    rtps_vector(context, instruction.sf(), vector_0_xy, vector_0_z_);
     Ok(())
 }
 
-pub fn nclip(state: &mut State, _instruction: Instruction) -> InstResult {
+pub fn nclip(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
-    handle_cp2_flag_reset(state);
+    handle_cp2_flag_reset(context.cp2_state);
 
-    let sxy0 = state.r3000.cp2.gd[12].read_u32();
-    let sxy1 = state.r3000.cp2.gd[13].read_u32();
-    let sxy2 = state.r3000.cp2.gd[14].read_u32();
+    let sxy0 = context.cp2_state.gd[12].read_u32();
+    let sxy1 = context.cp2_state.gd[13].read_u32();
+    let sxy2 = context.cp2_state.gd[14].read_u32();
 
     let (sx0, sy0) = split_32_i16_f64(sxy0);
     let (sx1, sy1) = split_32_i16_f64(sxy1);
@@ -355,103 +352,103 @@ pub fn nclip(state: &mut State, _instruction: Instruction) -> InstResult {
     let mac0_overflow_flag = f64::abs(mac0_value) >= ((1u64 << 32) as f64);
     let mac0_negative_flag = mac0_value < 0.0;
 
-    state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
+    context.cp2_state.gd[24].write_u32(mac0_value as i32 as u32);
 
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
 
-    handle_cp2_flag_error_bit(state);
+    handle_cp2_flag_error_bit(context.cp2_state);
 
     Ok(())
 }
 
-pub fn op(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn op(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction op not implemented");
 }
 
-pub fn dpcs(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn dpcs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dpcs not implemented");
 }
 
-pub fn intpl(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn intpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction intpl not implemented");
 }
 
-pub fn mvmva(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn mvmva(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction mvmva not implemented");
 }
 
-pub fn ncds(state: &mut State, instruction: Instruction) -> InstResult {
+pub fn ncds(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     // Operates on V0.
     let instruction = GteInstruction::new(instruction);
-    let vector_0_xy = state.r3000.cp2.gd[0].read_u32();
-    let vector_0_z_ = state.r3000.cp2.gd[1].read_u32();
-    normal_color(state, instruction.sf(), instruction.lm(), true, true, vector_0_xy, vector_0_z_);
+    let vector_0_xy = context.cp2_state.gd[0].read_u32();
+    let vector_0_z_ = context.cp2_state.gd[1].read_u32();
+    normal_color(context, instruction.sf(), instruction.lm(), true, true, vector_0_xy, vector_0_z_);
     Ok(())
 }
 
-pub fn cdp(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn cdp(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction cdp not implemented");
 }
 
-pub fn ncdt(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn ncdt(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncdt not implemented");
     Ok(())
 }
 
-pub fn nccs(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn nccs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction nccs not implemented");
     Ok(())
 }
 
-pub fn cc(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn cc(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction cc not implemented");
 }
 
-pub fn ncs(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn ncs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncs not implemented");
     Ok(())
 }
 
-pub fn nct(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn nct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction nct not implemented");
     Ok(())
 }
 
-pub fn sqr(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn sqr(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction sqr not implemented");
 }
 
-pub fn dcpl(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn dcpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dcpl not implemented");
 }
 
-pub fn dpct(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn dpct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dpct not implemented");
 }
 
-pub fn avsz3(state: &mut State, _instruction: Instruction) -> InstResult {
+pub fn avsz3(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
-    handle_cp2_flag_reset(state);
+    handle_cp2_flag_reset(context.cp2_state);
 
-    let sz1 = state.r3000.cp2.gd[17].read_u16(0) as f64;
-    let sz2 = state.r3000.cp2.gd[18].read_u16(0) as f64;
-    let sz3 = state.r3000.cp2.gd[19].read_u16(0) as f64;
-    let (zsf3, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gd[29].read_u32());
+    let sz1 = context.cp2_state.gd[17].read_u16(0) as f64;
+    let sz2 = context.cp2_state.gd[18].read_u16(0) as f64;
+    let sz3 = context.cp2_state.gd[19].read_u16(0) as f64;
+    let (zsf3, _) = split_32_fixedi16_f64::<U12>(context.cp2_state.gd[29].read_u32());
 
     let mac0_value = zsf3 * (sz1 + sz2 + sz3);
     let mac0_overflow_flag = f64::abs(mac0_value) >= ((1u64 << 32) as f64);
@@ -460,28 +457,28 @@ pub fn avsz3(state: &mut State, _instruction: Instruction) -> InstResult {
     let otz_value = mac0_value / (0x1000 as f64);
     let (otz_value, otz_overflow_flag) = checked_clamp(otz_value, std::u16::MIN as f64, std::u16::MAX as f64);
 
-    state.r3000.cp2.gd[7].write_u32(otz_value as i32 as u32);
-    state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
+    context.cp2_state.gd[7].write_u32(otz_value as i32 as u32);
+    context.cp2_state.gd[24].write_u32(mac0_value as i32 as u32);
 
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
 
-    handle_cp2_flag_error_bit(state);
+    handle_cp2_flag_error_bit(context.cp2_state);
 
     Ok(())
 }
 
-pub fn avsz4(state: &mut State, _instruction: Instruction) -> InstResult {
+pub fn avsz4(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
-    handle_cp2_flag_reset(state);
+    handle_cp2_flag_reset(context.cp2_state);
 
-    let sz0 = state.r3000.cp2.gd[16].read_u16(0) as f64;
-    let sz1 = state.r3000.cp2.gd[17].read_u16(0) as f64;
-    let sz2 = state.r3000.cp2.gd[18].read_u16(0) as f64;
-    let sz3 = state.r3000.cp2.gd[19].read_u16(0) as f64;
-    let (zsf4, _) = split_32_fixedi16_f64::<U12>(state.r3000.cp2.gd[30].read_u32());
+    let sz0 = context.cp2_state.gd[16].read_u16(0) as f64;
+    let sz1 = context.cp2_state.gd[17].read_u16(0) as f64;
+    let sz2 = context.cp2_state.gd[18].read_u16(0) as f64;
+    let sz3 = context.cp2_state.gd[19].read_u16(0) as f64;
+    let (zsf4, _) = split_32_fixedi16_f64::<U12>(context.cp2_state.gd[30].read_u32());
 
     let mac0_value = zsf4 * (sz0 + sz1 + sz2 + sz3);
     let mac0_overflow_flag = f64::abs(mac0_value) >= ((1u64 << 32) as f64);
@@ -490,41 +487,41 @@ pub fn avsz4(state: &mut State, _instruction: Instruction) -> InstResult {
     let otz_value = mac0_value / (0x1000 as f64);
     let (otz_value, otz_overflow_flag) = checked_clamp(otz_value, std::u16::MIN as f64, std::u16::MAX as f64);
 
-    state.r3000.cp2.gd[7].write_u32(otz_value as i32 as u32);
-    state.r3000.cp2.gd[24].write_u32(mac0_value as i32 as u32);
+    context.cp2_state.gd[7].write_u32(otz_value as i32 as u32);
+    context.cp2_state.gd[24].write_u32(mac0_value as i32 as u32);
 
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
-    state.r3000.cp2.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(15, 1), bool_to_flag(mac0_overflow_flag && mac0_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(16, 1), bool_to_flag(mac0_overflow_flag && (!mac0_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(18, 1), bool_to_flag(otz_overflow_flag));
 
-    handle_cp2_flag_error_bit(state);
+    handle_cp2_flag_error_bit(context.cp2_state);
 
     Ok(())
 }
 
-pub fn rtpt(state: &mut State, instruction: Instruction) -> InstResult {
+pub fn rtpt(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     // Operates on V0, V1, V2.
     let instruction = GteInstruction::new(instruction);
     for i in 0..3 {
-        let vector_xy = state.r3000.cp2.gd[i * 2 + 0].read_u32();
-        let vector_z_ = state.r3000.cp2.gd[i * 2 + 1].read_u32();
-        rtps_vector(state, instruction.sf(), vector_xy, vector_z_);
+        let vector_xy = context.cp2_state.gd[i * 2 + 0].read_u32();
+        let vector_z_ = context.cp2_state.gd[i * 2 + 1].read_u32();
+        rtps_vector(context, instruction.sf(), vector_xy, vector_z_);
     }
 
     Ok(())
 }
 
-pub fn gpf(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn gpf(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction gpf not implemented");
 }
 
-pub fn gpl(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn gpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction gpl not implemented");
 }
 
-pub fn ncct(_state: &mut State, instruction: Instruction) -> InstResult {
+pub fn ncct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncct not implemented");
     Ok(())

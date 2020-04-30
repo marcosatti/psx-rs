@@ -1,20 +1,11 @@
 use crate::{
-    system::types::State as SystemState,
     types::{
-        b8_memory_mapper::{
-            B8MemoryMap,
-            *,
-        },
         bitfield::Bitfield,
         fifo::{
             debug::DebugState,
             Fifo,
         },
-        memory::b8_memory::B8Memory,
-        register::{
-            b16_register::B16Register,
-            b32_register::B32Register,
-        },
+        memory::*,
         stereo::*,
     },
 };
@@ -103,92 +94,66 @@ impl DacState {
     }
 }
 
-pub struct DataFifo {
-    pub fifo: Fifo<u16>,
-}
-
-impl DataFifo {
-    pub fn new() -> DataFifo {
-        DataFifo {
-            fifo: Fifo::new(64, Some(DebugState::new("SPU FIFO", false, false))),
-        }
-    }
-}
-
-impl B8MemoryMap for DataFifo {
-    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        assert!(offset == 0, "Invalid offset");
-        self.fifo.write_one(value).map_err(|_| WriteError::Full)
-    }
-}
-
-pub struct TransferAddress {
+pub struct DataTransferAddress {
     pub register: B16Register,
     pub write_latch: AtomicBool,
 }
 
-impl TransferAddress {
-    pub fn new() -> TransferAddress {
-        TransferAddress {
+impl DataTransferAddress {
+    pub fn new() -> DataTransferAddress {
+        DataTransferAddress {
             register: B16Register::new(),
             write_latch: AtomicBool::new(false),
         }
     }
-}
 
-impl B8MemoryMap for TransferAddress {
-    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
-        B8MemoryMap::read_u16(&mut self.register, offset)
+    pub fn read_u16(&self) -> u16 {
+        self.register.read_u16()
     }
 
-    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
+    pub fn write_u16(&self, value: u16) {
         assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
         self.write_latch.store(true, Ordering::Release);
-        B8MemoryMap::write_u16(&mut self.register, offset, value)
+        self.register.write_u16(value)
     }
 }
 
 pub struct VoiceKey {
     pub register: B32Register,
-    pub write_latch: [bool; 32],
-    pub mutex: Mutex<()>,
+    pub write_latch: Mutex<[bool; 32]>,
 }
 
 impl VoiceKey {
     pub fn new() -> VoiceKey {
         VoiceKey {
             register: B32Register::new(),
-            write_latch: [false; 32],
-            mutex: Mutex::new(()),
+            write_latch: Mutex::new([false; 32]),
         }
     }
-}
 
-impl B8MemoryMap for VoiceKey {
-    fn read_u16(&mut self, offset: u32) -> ReadResult<u16> {
-        B8MemoryMap::read_u16(&mut self.register, offset)
+    pub fn read_u16(&self, offset: u32) -> u16 {
+        self.register.read_u16(offset)
     }
 
-    fn write_u16(&mut self, offset: u32, value: u16) -> WriteResult {
-        let _lock = self.mutex.lock();
-        B8MemoryMap::write_u16(&mut self.register, offset, value).unwrap();
+    pub fn write_u16(&self, offset: u32, value: u16) {
+        let write_latch = &mut self.write_latch.lock();
+        self.register.write_u16(offset, value);
         for i in 0..16 {
-            self.write_latch[((offset * 8) + (i as u32)) as usize] = Bitfield::new(i, 1).extract_from(value) != 0;
+            let write_latch_offset = ((offset * 8) + (i as u32)) as usize;
+            write_latch[write_latch_offset] = Bitfield::new(i, 1).extract_from(value) != 0;
         }
-        Ok(())
     }
 
-    fn read_u32(&mut self, offset: u32) -> ReadResult<u32> {
-        B8MemoryMap::read_u32(&mut self.register, offset)
+    pub fn read_u32(&self) -> u32 {
+        self.register.read_u32()
     }
 
-    fn write_u32(&mut self, offset: u32, value: u32) -> WriteResult {
-        let _lock = self.mutex.lock();
-        B8MemoryMap::write_u32(&mut self.register, offset, value).unwrap();
+    pub fn write_u32(&self, value: u32) {
+        let write_latch = &mut self.write_latch.lock();
+        self.register.write_u32(value);
         for i in 0..32 {
-            self.write_latch[i] = Bitfield::new(i, 1).extract_from(value) != 0;
+            write_latch[i] = Bitfield::new(i, 1).extract_from(value) != 0;
         }
-        Ok(())
     }
 }
 
@@ -302,6 +267,24 @@ impl PlayState {
     }
 }
 
+pub struct ControllerState {
+    pub memory: Vec<u8>,
+    pub current_transfer_mode: TransferMode,
+    pub current_transfer_address: u32,
+    pub dac: DacState,
+}
+
+impl ControllerState {
+    pub fn new() -> ControllerState {
+        ControllerState {
+            memory: vec![0; 0x8_0000],
+            current_transfer_mode: TransferMode::Stop,
+            current_transfer_address: 0,
+            dac: DacState::new(),
+        }
+    }
+}
+
 pub struct State {
     pub main_volume_left: B16Register,
     pub main_volume_right: B16Register,
@@ -317,7 +300,7 @@ pub struct State {
     pub unknown_0: B16Register,
     pub reverb_start_address: B16Register,
     pub irq_address: B16Register,
-    pub data_transfer_address: TransferAddress,
+    pub data_transfer_address: DataTransferAddress,
     pub control: B16Register,
     pub data_transfer_control: B16Register,
     pub stat: B16Register,
@@ -541,14 +524,9 @@ pub struct State {
     pub voice23_cvol: B16Register,
     pub voice23_raddr: B16Register,
 
-    pub data_fifo: DataFifo,
-
-    pub memory: B8Memory,
-
-    pub current_transfer_mode: TransferMode,
-    pub current_transfer_address: u32,
-
-    pub dac: DacState,
+    pub data_fifo: Fifo<u16>,
+    
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
@@ -566,7 +544,7 @@ impl State {
             unknown_0: B16Register::new(),
             reverb_start_address: B16Register::new(),
             irq_address: B16Register::new(),
-            data_transfer_address: TransferAddress::new(),
+            data_transfer_address: DataTransferAddress::new(),
             control: B16Register::new(),
             data_transfer_control: B16Register::new(),
             stat: B16Register::new(),
@@ -764,225 +742,8 @@ impl State {
             voice23_adsr: B32Register::new(),
             voice23_cvol: B16Register::new(),
             voice23_raddr: B16Register::new(),
-            data_fifo: DataFifo::new(),
-            memory: B8Memory::new(0x80_000),
-            current_transfer_mode: TransferMode::Stop,
-            current_transfer_address: 0,
-            dac: DacState::new(),
+            data_fifo: Fifo::new(64, Some(DebugState::new("SPU FIFO", false, false))),
+            controller_state: Mutex::new(ControllerState::new()),
         }
     }
-}
-
-pub fn initialize(state: &mut SystemState) {
-    state.r3000.memory_mapper.map(0x1F80_1D80, 2, &mut state.spu.main_volume_left as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D82, 2, &mut state.spu.main_volume_right as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D84, 4, &mut state.spu.reverb_volume as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D88, 4, &mut state.spu.voice_key_on as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D8C, 4, &mut state.spu.voice_key_off as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D90, 4, &mut state.spu.voice_channel_fm as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D94, 4, &mut state.spu.voice_channel_noise as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D98, 4, &mut state.spu.voice_channel_reverb as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D9C, 4, &mut state.spu.voice_channel_status as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DA0, 2, &mut state.spu.unknown_0 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DA2, 2, &mut state.spu.reverb_start_address as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DA4, 2, &mut state.spu.irq_address as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DA6, 2, &mut state.spu.data_transfer_address as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DA8, 2, &mut state.spu.data_fifo as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DAA, 2, &mut state.spu.control as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DAC, 2, &mut state.spu.data_transfer_control as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DAE, 2, &mut state.spu.stat as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DB0, 4, &mut state.spu.cd_volume as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DB4, 4, &mut state.spu.extern_volume as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DB8, 2, &mut state.spu.current_volume_left as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DBA, 2, &mut state.spu.current_volume_right as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DBC, 4, &mut state.spu.unknown_1 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DC0, 2, &mut state.spu.dapf1 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DC2, 2, &mut state.spu.dapf2 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DC4, 2, &mut state.spu.viir as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DC6, 2, &mut state.spu.vcomb1 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DC8, 2, &mut state.spu.vcomb2 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DCA, 2, &mut state.spu.vcomb3 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DCC, 2, &mut state.spu.vcomb4 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DCE, 2, &mut state.spu.vwall as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DD0, 2, &mut state.spu.vapf1 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DD2, 2, &mut state.spu.vapf2 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DD4, 4, &mut state.spu.msame as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DD8, 4, &mut state.spu.mcomb1 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DDC, 4, &mut state.spu.mcomb2 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DE0, 4, &mut state.spu.dsame as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DE4, 4, &mut state.spu.mdiff as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DE8, 4, &mut state.spu.mcomb3 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DEC, 4, &mut state.spu.mcomb4 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DF0, 4, &mut state.spu.ddiff as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DF4, 4, &mut state.spu.mapf1 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DF8, 4, &mut state.spu.mapf2 as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1DFC, 4, &mut state.spu.vin as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C00, 2, &mut state.spu.voice0_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C02, 2, &mut state.spu.voice0_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C04, 2, &mut state.spu.voice0_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C06, 2, &mut state.spu.voice0_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C08, 4, &mut state.spu.voice0_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C0C, 2, &mut state.spu.voice0_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C0E, 2, &mut state.spu.voice0_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C10, 2, &mut state.spu.voice1_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C12, 2, &mut state.spu.voice1_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C14, 2, &mut state.spu.voice1_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C16, 2, &mut state.spu.voice1_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C18, 4, &mut state.spu.voice1_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C1C, 2, &mut state.spu.voice1_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C1E, 2, &mut state.spu.voice1_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C20, 2, &mut state.spu.voice2_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C22, 2, &mut state.spu.voice2_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C24, 2, &mut state.spu.voice2_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C26, 2, &mut state.spu.voice2_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C28, 4, &mut state.spu.voice2_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C2C, 2, &mut state.spu.voice2_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C2E, 2, &mut state.spu.voice2_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C30, 2, &mut state.spu.voice3_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C32, 2, &mut state.spu.voice3_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C34, 2, &mut state.spu.voice3_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C36, 2, &mut state.spu.voice3_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C38, 4, &mut state.spu.voice3_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C3C, 2, &mut state.spu.voice3_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C3E, 2, &mut state.spu.voice3_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C40, 2, &mut state.spu.voice4_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C42, 2, &mut state.spu.voice4_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C44, 2, &mut state.spu.voice4_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C46, 2, &mut state.spu.voice4_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C48, 4, &mut state.spu.voice4_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C4C, 2, &mut state.spu.voice4_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C4E, 2, &mut state.spu.voice4_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C50, 2, &mut state.spu.voice5_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C52, 2, &mut state.spu.voice5_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C54, 2, &mut state.spu.voice5_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C56, 2, &mut state.spu.voice5_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C58, 4, &mut state.spu.voice5_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C5C, 2, &mut state.spu.voice5_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C5E, 2, &mut state.spu.voice5_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C60, 2, &mut state.spu.voice6_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C62, 2, &mut state.spu.voice6_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C64, 2, &mut state.spu.voice6_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C66, 2, &mut state.spu.voice6_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C68, 4, &mut state.spu.voice6_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C6C, 2, &mut state.spu.voice6_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C6E, 2, &mut state.spu.voice6_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C70, 2, &mut state.spu.voice7_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C72, 2, &mut state.spu.voice7_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C74, 2, &mut state.spu.voice7_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C76, 2, &mut state.spu.voice7_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C78, 4, &mut state.spu.voice7_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C7C, 2, &mut state.spu.voice7_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C7E, 2, &mut state.spu.voice7_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C80, 2, &mut state.spu.voice8_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C82, 2, &mut state.spu.voice8_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C84, 2, &mut state.spu.voice8_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C86, 2, &mut state.spu.voice8_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C88, 4, &mut state.spu.voice8_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C8C, 2, &mut state.spu.voice8_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C8E, 2, &mut state.spu.voice8_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C90, 2, &mut state.spu.voice9_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C92, 2, &mut state.spu.voice9_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C94, 2, &mut state.spu.voice9_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C96, 2, &mut state.spu.voice9_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C98, 4, &mut state.spu.voice9_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C9C, 2, &mut state.spu.voice9_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1C9E, 2, &mut state.spu.voice9_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CA0, 2, &mut state.spu.voice10_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CA2, 2, &mut state.spu.voice10_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CA4, 2, &mut state.spu.voice10_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CA6, 2, &mut state.spu.voice10_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CA8, 4, &mut state.spu.voice10_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CAC, 2, &mut state.spu.voice10_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CAE, 2, &mut state.spu.voice10_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CB0, 2, &mut state.spu.voice11_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CB2, 2, &mut state.spu.voice11_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CB4, 2, &mut state.spu.voice11_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CB6, 2, &mut state.spu.voice11_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CB8, 4, &mut state.spu.voice11_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CBC, 2, &mut state.spu.voice11_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CBE, 2, &mut state.spu.voice11_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CC0, 2, &mut state.spu.voice12_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CC2, 2, &mut state.spu.voice12_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CC4, 2, &mut state.spu.voice12_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CC6, 2, &mut state.spu.voice12_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CC8, 4, &mut state.spu.voice12_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CCC, 2, &mut state.spu.voice12_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CCE, 2, &mut state.spu.voice12_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CD0, 2, &mut state.spu.voice13_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CD2, 2, &mut state.spu.voice13_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CD4, 2, &mut state.spu.voice13_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CD6, 2, &mut state.spu.voice13_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CD8, 4, &mut state.spu.voice13_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CDC, 2, &mut state.spu.voice13_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CDE, 2, &mut state.spu.voice13_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CE0, 2, &mut state.spu.voice14_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CE2, 2, &mut state.spu.voice14_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CE4, 2, &mut state.spu.voice14_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CE6, 2, &mut state.spu.voice14_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CE8, 4, &mut state.spu.voice14_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CEC, 2, &mut state.spu.voice14_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CEE, 2, &mut state.spu.voice14_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CF0, 2, &mut state.spu.voice15_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CF2, 2, &mut state.spu.voice15_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CF4, 2, &mut state.spu.voice15_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CF6, 2, &mut state.spu.voice15_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CF8, 4, &mut state.spu.voice15_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CFC, 2, &mut state.spu.voice15_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1CFE, 2, &mut state.spu.voice15_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D00, 2, &mut state.spu.voice16_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D02, 2, &mut state.spu.voice16_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D04, 2, &mut state.spu.voice16_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D06, 2, &mut state.spu.voice16_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D08, 4, &mut state.spu.voice16_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D0C, 2, &mut state.spu.voice16_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D0E, 2, &mut state.spu.voice16_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D10, 2, &mut state.spu.voice17_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D12, 2, &mut state.spu.voice17_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D14, 2, &mut state.spu.voice17_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D16, 2, &mut state.spu.voice17_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D18, 4, &mut state.spu.voice17_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D1C, 2, &mut state.spu.voice17_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D1E, 2, &mut state.spu.voice17_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D20, 2, &mut state.spu.voice18_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D22, 2, &mut state.spu.voice18_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D24, 2, &mut state.spu.voice18_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D26, 2, &mut state.spu.voice18_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D28, 4, &mut state.spu.voice18_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D2C, 2, &mut state.spu.voice18_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D2E, 2, &mut state.spu.voice18_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D30, 2, &mut state.spu.voice19_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D32, 2, &mut state.spu.voice19_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D34, 2, &mut state.spu.voice19_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D36, 2, &mut state.spu.voice19_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D38, 4, &mut state.spu.voice19_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D3C, 2, &mut state.spu.voice19_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D3E, 2, &mut state.spu.voice19_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D40, 2, &mut state.spu.voice20_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D42, 2, &mut state.spu.voice20_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D44, 2, &mut state.spu.voice20_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D46, 2, &mut state.spu.voice20_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D48, 4, &mut state.spu.voice20_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D4C, 2, &mut state.spu.voice20_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D4E, 2, &mut state.spu.voice20_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D50, 2, &mut state.spu.voice21_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D52, 2, &mut state.spu.voice21_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D54, 2, &mut state.spu.voice21_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D56, 2, &mut state.spu.voice21_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D58, 4, &mut state.spu.voice21_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D5C, 2, &mut state.spu.voice21_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D5E, 2, &mut state.spu.voice21_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D60, 2, &mut state.spu.voice22_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D62, 2, &mut state.spu.voice22_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D64, 2, &mut state.spu.voice22_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D66, 2, &mut state.spu.voice22_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D68, 4, &mut state.spu.voice22_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D6C, 2, &mut state.spu.voice22_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D6E, 2, &mut state.spu.voice22_raddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D70, 2, &mut state.spu.voice23_voll as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D72, 2, &mut state.spu.voice23_volr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D74, 2, &mut state.spu.voice23_srate as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D76, 2, &mut state.spu.voice23_saddr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D78, 4, &mut state.spu.voice23_adsr as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D7C, 2, &mut state.spu.voice23_cvol as *mut dyn B8MemoryMap);
-    state.r3000.memory_mapper.map(0x1F80_1D7E, 2, &mut state.spu.voice23_raddr as *mut dyn B8MemoryMap);
 }

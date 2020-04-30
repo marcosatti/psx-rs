@@ -7,29 +7,30 @@ use crate::{
                 backend_dispatch,
                 interrupt::*,
                 state::*,
-            },
-        },
+            }, 
+            types::ControllerState,
+        }, 
         types::State,
     },
 };
 
-pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
+pub fn handle_read(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> bool {
     // Buffer some data first (INT1 means ready to send data?).
     // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the
     // BIOS expects it...
-    if state.cdrom.read_buffer.is_empty() {
-        if state.cdrom.pausing {
+    if cdrom_state.read_buffer.is_empty() {
+        if cdrom_state.pausing {
             // Stop reading and raise interrupt.
-            state.cdrom.pausing = false;
-            state.cdrom.reading = false;
-            let stat_value = stat_value(state);
-            let response = &mut state.cdrom.response;
+            cdrom_state.pausing = false;
+            cdrom_state.reading = false;
+            let stat_value = stat_value(cdrom_state);
+            let response = &state.cdrom.response;
             response.write_one(stat_value).unwrap();
             raise_irq(state, 2);
             return true;
         }
 
-        if !state.cdrom.reading {
+        if !cdrom_state.reading {
             return false;
         }
 
@@ -38,27 +39,27 @@ pub fn handle_read(state: &mut State, cdrom_backend: &CdromBackend) -> bool {
             return true;
         }
 
-        let msf_address_base = state.cdrom.msf_address_base;
-        let msf_address_offset = state.cdrom.msf_address_offset;
+        let msf_address_base = cdrom_state.msf_address_base;
+        let msf_address_offset = cdrom_state.msf_address_offset;
         let data_block = backend_dispatch::read_sector(cdrom_backend, msf_address_base, msf_address_offset).expect("Tried to read a sector when no backend is available");
         assert_eq!(data_block.len(), 2048);
 
-        state.cdrom.msf_address_offset += 1;
-        state.cdrom.read_buffer.extend(&data_block);
+        cdrom_state.msf_address_offset += 1;
+        cdrom_state.read_buffer.extend(&data_block);
 
         // Raise the interrupt - we have read a sector ok and have some data ready.
-        let stat_value = stat_value(state);
-        let response = &mut state.cdrom.response;
+        let stat_value = stat_value(cdrom_state);
+        let response = &state.cdrom.response;
         response.write_one(stat_value).unwrap();
         raise_irq(state, 1);
     }
 
     // Check if the CPU is ready for data and send it.
-    let request = &mut state.cdrom.request;
+    let request = &state.cdrom.request;
     let load_data = request.register.read_bitfield(REQUEST_BFRD) > 0;
     if load_data {
-        let read_buffer = &mut state.cdrom.read_buffer;
-        let data = &mut state.cdrom.data;
+        let read_buffer = &mut cdrom_state.read_buffer;
+        let data = &state.cdrom.data;
 
         loop {
             if data.is_full() {

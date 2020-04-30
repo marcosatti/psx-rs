@@ -13,7 +13,6 @@ use crate::{
             Event,
         },
     },
-    Context,
 };
 use futures_util::try_join;
 use std::{
@@ -31,7 +30,7 @@ use tokio::{
     spawn,
 };
 
-pub fn atomic_broadcast(runtime: &mut Runtime, context: &Context, event: Event) -> BenchmarkResults {
+pub fn atomic_broadcast(runtime: &mut Runtime, context: &ControllerContext, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
 
     fence(Ordering::Acquire);
@@ -43,12 +42,16 @@ pub fn atomic_broadcast(runtime: &mut Runtime, context: &Context, event: Event) 
     benchmark_results
 }
 
-fn run_broadcast(runtime: &mut Runtime, context: &Context, event: Event, benchmark_results: &BenchmarkResults) {
+fn run_broadcast(runtime: &mut Runtime, context: &ControllerContext, event: Event, benchmark_results: &BenchmarkResults) {
     // Use of unsafe to force the context lifetime to be static (blocking until all tasks have complete).
 
-    let context: &'static Context = unsafe { std::mem::transmute(context) };
+    let context: &'static ControllerContext = unsafe { 
+        std::mem::transmute(context) 
+    };
 
-    let benchmark_results: &'static BenchmarkResults = unsafe { std::mem::transmute(benchmark_results) };
+    let benchmark_results: &'static BenchmarkResults = unsafe { 
+        std::mem::transmute(benchmark_results) 
+    };
 
     runtime.block_on(async move {
         let result = try_join!(
@@ -86,17 +89,8 @@ fn run_broadcast(runtime: &mut Runtime, context: &Context, event: Event, benchma
     });
 }
 
-fn atomic_run(controller_fn: fn(&mut ControllerContext, Event) -> (), context: &Context, event: Event) -> Duration {
+fn atomic_run(controller_fn: fn(&ControllerContext, Event) -> (), context: &ControllerContext, event: Event) -> Duration {
     let timer = Instant::now();
-
-    fence(Ordering::Acquire);
-
-    unsafe {
-        let mut controller_context = ControllerContext::from_core_context(context);
-        controller_fn(&mut controller_context, event);
-    }
-
-    fence(Ordering::Release);
-
+    controller_fn(context, event);
     timer.elapsed()
 }

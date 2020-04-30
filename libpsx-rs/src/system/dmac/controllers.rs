@@ -2,6 +2,7 @@ pub mod channel;
 pub mod debug;
 pub mod linked_list;
 pub mod transfer;
+pub mod memory;
 
 use crate::system::{
     dmac::{
@@ -10,6 +11,7 @@ use crate::system::{
             channel::*,
             transfer::*,
         },
+        types::ControllerState,
     },
     types::{
         ControllerContext,
@@ -23,29 +25,31 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &mut ControllerContext, event: Event) {
+pub fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(state: &mut State, duration: Duration) {
+fn run_time(state: &State, duration: Duration) {
     // TODO: Properly obey priorities of channels - usually its DMA6 -> DMA0, so just do that for now.
 
+    let dmac_state = &mut state.dmac.controller_state.lock();
+
     // Don't run if the CPU needs to use the bus.
-    if state.dmac.cooloff_runs > 0 {
+    if dmac_state.cooloff_runs > 0 {
         state.bus_locked.store(false, Ordering::Release);
-        state.dmac.cooloff_runs -= 1;
+        dmac_state.cooloff_runs -= 1;
         return;
     }
 
-    handle_bus_lock(state);
+    handle_bus_lock(state, dmac_state);
 
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
     let mut channel_id: usize = 6;
     let mut cooloff = false;
     while ticks > 0 {
-        match tick(state, channel_id, ticks as usize) {
+        match tick(state, dmac_state, channel_id, ticks as usize) {
             Ok(channel_ticks) => {
                 if channel_ticks == 0 {
                     ticks -= 16;
@@ -71,15 +75,15 @@ fn run_time(state: &mut State, duration: Duration) {
     }
 
     if cooloff {
-        state.dmac.cooloff_runs = 4;
+        dmac_state.cooloff_runs = 4;
     }
 
-    handle_bus_unlock(state);
+    handle_bus_unlock(state, dmac_state);
 
     handle_irq_check(state);
 }
 
-fn tick(state: &mut State, channel_id: usize, ticks_remaining: usize) -> Result<usize, usize> {
+fn tick(state: &State, dmac_state: &mut ControllerState, channel_id: usize, ticks_remaining: usize) -> Result<usize, usize> {
     // Number of ticks per word transfer.
     const TICK_WORD_RATIO: usize = 2;
 
@@ -93,7 +97,7 @@ fn tick(state: &mut State, channel_id: usize, ticks_remaining: usize) -> Result<
     word_transfers_allowed = min(word_transfers_allowed, 16);
 
     let word_transfers_actual = if dpcr.read_bitfield(enable) != 0 {
-        handle_transfer(state, channel_id, word_transfers_allowed)
+        handle_transfer(state, dmac_state, channel_id, word_transfers_allowed)
     } else {
         Ok(0)
     };
@@ -102,9 +106,9 @@ fn tick(state: &mut State, channel_id: usize, ticks_remaining: usize) -> Result<
 }
 
 /// Check if any channels are in progress, and acquires the bus lock if true.
-fn handle_bus_lock(state: &mut State) {
+fn handle_bus_lock(state: &State, dmac_state: &mut ControllerState) {
     for channel_id in 0..6 {
-        let transfer_state = get_transfer_state(state, channel_id);
+        let transfer_state = get_transfer_state(dmac_state, channel_id);
 
         if transfer_state.started {
             state.bus_locked.store(true, Ordering::Release);
@@ -114,9 +118,9 @@ fn handle_bus_lock(state: &mut State) {
 }
 
 /// Check if all channels are finished, and release the bus lock if true.
-fn handle_bus_unlock(state: &mut State) {
+fn handle_bus_unlock(state: &State, dmac_state: &mut ControllerState) {
     for channel_id in 0..6 {
-        let transfer_state = get_transfer_state(state, channel_id);
+        let transfer_state = get_transfer_state(dmac_state, channel_id);
 
         if transfer_state.started {
             return;
@@ -127,8 +131,8 @@ fn handle_bus_unlock(state: &mut State) {
 }
 
 /// Performs interrupt check for raising an IRQ on the INTC.
-fn handle_irq_check(state: &mut State) {
-    let dicr = &mut state.dmac.dicr;
+fn handle_irq_check(state: &State) {
+    let dicr = &state.dmac.dicr;
     let _icr_lock = dicr.mutex.lock();
 
     let force_irq = dicr.register.read_bitfield(DICR_IRQ_FORCE) != 0;

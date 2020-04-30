@@ -12,7 +12,7 @@ use crate::system::{
 };
 use std::sync::atomic::Ordering;
 
-pub fn handle_mode_write(state: &mut State, timer_id: usize) {
+pub fn handle_mode_write(state: &State, timers_state: &mut ControllerState, timer_id: usize) {
     let mode = get_mode(state, timer_id);
 
     if !mode.write_latch.load(Ordering::Acquire) {
@@ -29,16 +29,16 @@ pub fn handle_mode_write(state: &mut State, timer_id: usize) {
     handle_count_clear(state, timer_id);
 
     // Internal state initialization.
-    handle_duration_clear(state, timer_id);
-    handle_clock_source(state, timer_id);
-    handle_oneshot_clear(state, timer_id);
+    handle_duration_clear(timers_state, timer_id);
+    handle_clock_source(state, timers_state, timer_id);
+    handle_oneshot_clear(timers_state, timer_id);
 
     debug::trace_mode_write(state, timer_id);
 
     mode.write_latch.store(false, Ordering::Release);
 }
 
-pub fn handle_mode_read(state: &mut State, timer_id: usize) {
+pub fn handle_mode_read(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
 
     if !mode.read_latch.load(Ordering::Acquire) {
@@ -51,9 +51,9 @@ pub fn handle_mode_read(state: &mut State, timer_id: usize) {
     mode.write_latch.store(false, Ordering::Release);
 }
 
-pub fn handle_clock_source(state: &mut State, timer_id: usize) {
+pub fn handle_clock_source(state: &State, timers_state: &mut ControllerState, timer_id: usize) {
     let mode = get_mode(state, timer_id);
-    let state = get_state(state, timer_id);
+    let state = get_state(timers_state, timer_id);
 
     let clock_source_value = mode.register.read_bitfield(MODE_CLK_SRC);
 
@@ -87,9 +87,4 @@ pub fn handle_clock_source(state: &mut State, timer_id: usize) {
     };
 
     state.clock_source = clock_source;
-}
-
-pub fn handle_oneshot_clear(state: &mut State, timer_id: usize) {
-    let state = get_state(state, timer_id);
-    state.irq_raised = false;
 }

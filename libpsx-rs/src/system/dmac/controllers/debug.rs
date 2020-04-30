@@ -28,7 +28,7 @@ const ENABLE_LINKED_LIST_NULL_HEADER_TRACE: bool = true;
 
 static TRANSFER_ID: AtomicUsize = AtomicUsize::new(0);
 
-pub fn transfer_start(state: &mut State, channel: usize) {
+pub fn transfer_start(state: &State, dmac_state: &mut ControllerState, channel: usize) {
     if !ENABLE_CHANNEL_STATE_CHANGE_TRACE {
         return;
     }
@@ -40,7 +40,7 @@ pub fn transfer_start(state: &mut State, channel: usize) {
     let bcr = get_bcr(state, channel);
     let sync_mode = get_sync_mode(chcr);
     let transfer_direction = get_transfer_direction(chcr);
-    let transfer_state = get_transfer_state(state, channel);
+    let transfer_state = get_transfer_state(dmac_state, channel);
 
     transfer_state.debug_state = Some(DebugState {
         transfer_id,
@@ -58,14 +58,14 @@ pub fn transfer_start(state: &mut State, channel: usize) {
     );
 }
 
-pub fn transfer_end(state: &mut State, channel: usize) {
+pub fn transfer_end(state: &State, dmac_state: &mut ControllerState, channel: usize) {
     if !ENABLE_CHANNEL_STATE_CHANGE_TRACE {
         return;
     }
 
     let madr = get_madr(state, channel);
     let bcr = get_bcr(state, channel);
-    let transfer_state = get_transfer_state(state, channel);
+    let transfer_state = get_transfer_state(dmac_state, channel);
 
     let transfer_id = transfer_state.debug_state.unwrap().transfer_id;
 

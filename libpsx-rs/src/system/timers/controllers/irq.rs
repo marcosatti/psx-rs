@@ -2,17 +2,14 @@ use crate::system::{
     timers::{
         constants::*,
         controllers::timer::*,
+        types::*,
     },
     types::State,
 };
-use log::{
-    debug,
-    warn,
-};
 
-pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType) {
+pub fn handle_irq_trigger(state: &State, timers_state: &mut ControllerState, timer_id: usize, irq_type: IrqType) {
     let mode = get_mode(state, timer_id);
-    let timer_state = get_state(state, timer_id);
+    let timer_state = get_state(timers_state, timer_id);
 
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.
     let oneshot = mode.register.read_bitfield(MODE_IRQ_REPEAT) > 0;
@@ -43,7 +40,7 @@ pub fn handle_irq_trigger(state: &mut State, timer_id: usize, irq_type: IrqType)
     }
 }
 
-pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
+pub fn handle_irq_raise(state: &State, timer_id: usize) {
     let mode = get_mode(state, timer_id);
 
     let mut raise_irq = false;
@@ -52,7 +49,7 @@ pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
         0 => {
             // Pulse mode.
             // TODO: Do nothing? How long is a few clock cycles? Will the BIOS see this? Probably not...
-            warn!("Pulse IRQ mode not implemented properly?");
+            log::warn!("Pulse IRQ mode not implemented properly?");
             raise_irq = true;
         },
         1 => {
@@ -80,6 +77,6 @@ pub fn handle_irq_raise(state: &mut State, timer_id: usize) {
         let stat = &state.intc.stat;
         stat.assert_line(irq_line);
 
-        debug!("Raised INTC IRQ for timer {}", timer_id);
+        log::debug!("Raised INTC IRQ for timer {}", timer_id);
     }
 }

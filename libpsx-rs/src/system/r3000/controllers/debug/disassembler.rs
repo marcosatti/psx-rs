@@ -1,9 +1,11 @@
-use crate::system::{
-    r3000::{
-        constants::INSTRUCTION_SIZE,
-        controllers::memory_controller::translate_address,
+use crate::{
+    system::{
+        r3000::{
+            constants::INSTRUCTION_SIZE,
+            controllers::memory_controller::translate_address,
+        },
     },
-    types::State,
+    types::memory::*,
 };
 use ansi_term::Colour::Red;
 use capstone::{
@@ -14,18 +16,18 @@ use log::trace;
 
 const DEFAULT_TRACE_INSTRUCTIONS_LENGTH: usize = 10;
 
-pub fn trace_instructions_at_pc(state: &State, instruction_count: Option<usize>) {
-    let pc = translate_address(state.r3000.pc.read_u32() - INSTRUCTION_SIZE);
+pub fn trace_instructions_at_pc(main_memory: &B8Memory, bios: &B8Memory, pc: u32, instruction_count: Option<usize>) {
+    let pc = translate_address(pc);
 
     let memory_offset;
     let memory = match pc {
         0..=0x1F_FFFF => {
             memory_offset = pc;
-            &state.main_memory.memory
+            main_memory
         },
         0x1FC0_0000..=0x1FC7_FFFF => {
             memory_offset = pc - 0x1FC0_0000;
-            &state.bios.memory
+            bios
         },
         _ => panic!("PC = 0x{:08X} is not inside memory", pc),
     };
@@ -34,7 +36,7 @@ pub fn trace_instructions_at_pc(state: &State, instruction_count: Option<usize>)
     let u8_length2 = (instruction_count as u32 / 2) * INSTRUCTION_SIZE;
     let u8_start = memory_offset.checked_sub(u8_length2).unwrap() as usize;
     let u8_end = (memory_offset.checked_add(u8_length2).unwrap() + INSTRUCTION_SIZE) as usize;
-    let slice = &memory[u8_start..u8_end];
+    let slice = &memory.read_raw(u8_start as u32)[..u8_end];
     let trace_info = dump_instructions(u8_start as u32, slice, instruction_count);
     trace!("Instruction dump at 0x{:08X}:\n{}", pc, &trace_info);
 }

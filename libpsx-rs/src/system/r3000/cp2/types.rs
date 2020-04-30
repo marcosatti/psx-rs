@@ -1,10 +1,10 @@
 use crate::{
-    system::types::State as SystemState,
     types::{
         mips1::instruction::Instruction,
-        register::b32_register::B32Register,
+        mips1::register::*,
     },
 };
+use parking_lot::Mutex;
 
 pub enum MultiplyMatrix {
     Rotation,
@@ -85,21 +85,30 @@ impl GteInstruction {
     }
 }
 
-pub struct State {
+pub struct ControllerState {
     /// Data registers.
-    pub gd: [B32Register; 32],
+    pub gd: [Register; 32],
     /// Control registers.
-    pub gc: [B32Register; 32],
+    pub gc: [Register; 32],
+}
+
+impl ControllerState {
+    pub fn new() -> ControllerState {
+        ControllerState {
+            gd: [Register::new(); 32],
+            gc: [Register::new(); 32],
+        }
+    }
+}
+
+pub struct State {
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
     pub fn new() -> State {
         State {
-            gd: [B32Register::new(); 32],
-            gc: [B32Register::new(); 32],
+            controller_state: Mutex::new(ControllerState::new()),
         }
     }
-}
-
-pub fn initialize(_state: &mut SystemState) {
 }

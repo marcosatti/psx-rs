@@ -4,13 +4,14 @@ use crate::{
         gpu::{
             constants::*,
             controllers::command_gp1_impl,
+            types::ControllerState,
         },
         types::State,
     },
 };
 
-pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
-    let fifo = &mut state.gpu.gpu1814.gp1;
+pub fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
+    let fifo = &state.gpu.gp1;
 
     // Commands (GP1) are always of length 1.
 
@@ -34,5 +35,5 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
         _ => unimplemented!("Unknown GP1 command: 0x{:0X}", command_index),
     };
 
-    command_fn(state, video_backend, command);
+    command_fn(state, gpu_state, video_backend, command);
 }

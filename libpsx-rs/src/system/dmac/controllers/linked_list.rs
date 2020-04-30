@@ -5,7 +5,7 @@ use crate::{
     },
     types::{
         bitfield::Bitfield,
-        memory::b8_memory::B8Memory,
+        memory::*,
     },
 };
 

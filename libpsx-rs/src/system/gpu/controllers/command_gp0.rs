@@ -7,6 +7,7 @@ use crate::{
                 command_gp0_impl,
                 debug,
             },
+            types::ControllerState,
         },
         types::State,
     },
@@ -16,13 +17,13 @@ use crate::{
 type LengthFn = fn(&[u32]) -> Option<usize>;
 
 /// The handler logic for the command.
-type HandlerFn = fn(&mut State, video_backend: &VideoBackend, &[u32]);
+type HandlerFn = fn(&State, &mut ControllerState, &VideoBackend, &[u32]);
 
-pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
+pub fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
     // Update the command buffer with any new incoming data.
     {
-        let fifo = &mut state.gpu.gpu1810.gp0;
-        let command_buffer = &mut state.gpu.gp0_command_buffer;
+        let fifo = &state.gpu.gp0;
+        let command_buffer = &mut gpu_state.gp0_command_buffer;
 
         loop {
             match fifo.read_one() {
@@ -39,7 +40,7 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
 
     // Get the associated command handler.
     let command_handler = {
-        let command_buffer = &mut state.gpu.gp0_command_buffer;
+        let command_buffer = &mut gpu_state.gp0_command_buffer;
         let command = command_buffer[0];
         let command_index = GP_CMD.extract_from(command) as u8;
         get_command_handler(command_index)
@@ -47,8 +48,8 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
 
     // Try and get the required data length.
     let required_length_value = {
-        let command_buffer = &mut state.gpu.gp0_command_buffer;
-        let required_length = &mut state.gpu.gp0_command_required_length;
+        let command_buffer = &mut gpu_state.gp0_command_buffer;
+        let required_length = &mut gpu_state.gp0_command_required_length;
 
         if required_length.is_none() {
             match (command_handler.0)(&command_buffer) {
@@ -62,15 +63,14 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
     };
 
     // Check if we can execute the command.
-    if state.gpu.gp0_command_buffer.len() < required_length_value {
+    if gpu_state.gp0_command_buffer.len() < required_length_value {
         return;
     }
 
     // Execute it.
     {
-        let command_buffer_slice: &[u32] = unsafe { &(&state.gpu.gp0_command_buffer as *const Vec<u32>).as_ref().unwrap()[0..required_length_value] };
-
-        (command_handler.1)(state, video_backend, command_buffer_slice);
+        let command_buffer_slice = Box::<[u32]>::from(&gpu_state.gp0_command_buffer[0..required_length_value]);
+        (command_handler.1)(state, gpu_state, video_backend, &command_buffer_slice);
 
         if (command_buffer_slice[0] >> 24) < 0xE0 {
             debug::trace_gp0_command_render(state, video_backend);
@@ -78,8 +78,8 @@ pub fn handle_command(state: &mut State, video_backend: &VideoBackend) {
     }
 
     // Setup for the next one.
-    state.gpu.gp0_command_buffer.drain(0..required_length_value);
-    state.gpu.gp0_command_required_length = None;
+    gpu_state.gp0_command_buffer.drain(0..required_length_value);
+    gpu_state.gp0_command_required_length = None;
 }
 
 fn get_command_handler(command_index: u8) -> (LengthFn, HandlerFn) {
