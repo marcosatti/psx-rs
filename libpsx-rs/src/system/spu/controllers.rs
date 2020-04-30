@@ -4,11 +4,11 @@ pub mod backend_dispatch;
 pub mod dac;
 pub mod interpolation;
 pub mod interrupt;
+pub mod memory;
 pub mod sound;
 pub mod transfer;
 pub mod voice;
 pub mod volume;
-pub mod memory;
 
 use crate::{
     audio::AudioBackend,

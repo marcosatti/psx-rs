@@ -18,7 +18,7 @@ pub fn analysis(core: &mut Core) {
     debug!("Core debug analysis:");
     let debug_path = core.config.workspace_path.join(r"debug/");
     std::fs::create_dir_all(&debug_path).unwrap();
-    dump_memory(&mut core.state, &debug_path, );
+    dump_memory(&mut core.state, &debug_path);
     trace(&mut core.state);
 }
 
@@ -53,7 +53,8 @@ pub fn trace_r3000(state: &mut State) {
     let r3000_state = state.r3000.controller_state.get_mut();
     let cp0_state = state.r3000.cp0.controller_state.get_mut();
     crate::system::r3000::controllers::debug::trace_pc(r3000_state, cp0_state);
-    //crate::system::r3000::controllers::debug::disassembler::trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, r3000_state.pc.read_u32(), None);
+    // crate::system::r3000::controllers::debug::disassembler::trace_instructions_at_pc(&state.memory.main_memory,
+    // &state.memory.bios, r3000_state.pc.read_u32(), None);
     crate::system::r3000::controllers::debug::register::trace_registers(r3000_state);
 }
 

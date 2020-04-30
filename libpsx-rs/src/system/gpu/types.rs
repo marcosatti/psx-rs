@@ -1,15 +1,15 @@
 use crate::{
     system::gpu::crtc::types::Crtc,
     types::{
-        memory::*,
         fifo::{
             debug::DebugState,
             Fifo,
         },
+        memory::*,
     },
 };
-use std::collections::VecDeque;
 use parking_lot::Mutex;
+use std::collections::VecDeque;
 
 #[derive(Copy, Clone, Debug)]
 pub enum TransparencyMode {

@@ -45,13 +45,9 @@ pub fn atomic_broadcast(runtime: &mut Runtime, context: &ControllerContext, even
 fn run_broadcast(runtime: &mut Runtime, context: &ControllerContext, event: Event, benchmark_results: &BenchmarkResults) {
     // Use of unsafe to force the context lifetime to be static (blocking until all tasks have complete).
 
-    let context: &'static ControllerContext = unsafe { 
-        std::mem::transmute(context) 
-    };
+    let context: &'static ControllerContext = unsafe { std::mem::transmute(context) };
 
-    let benchmark_results: &'static BenchmarkResults = unsafe { 
-        std::mem::transmute(benchmark_results) 
-    };
+    let benchmark_results: &'static BenchmarkResults = unsafe { std::mem::transmute(benchmark_results) };
 
     runtime.block_on(async move {
         let result = try_join!(

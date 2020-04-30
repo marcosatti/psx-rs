@@ -1,8 +1,14 @@
-use crate::types::bitfield::Bitfield;
-use crate::system::r3000::types::ControllerState;
-use crate::system::r3000::cp2::types::ControllerState as Cp2ControllerState;
-use crate::system::r3000::cp0::types::ControllerState as Cp0ControllerState;
-use crate::types::mips1::register::Register;
+use crate::{
+    system::r3000::{
+        cp0::types::ControllerState as Cp0ControllerState,
+        cp2::types::ControllerState as Cp2ControllerState,
+        types::ControllerState,
+    },
+    types::{
+        bitfield::Bitfield,
+        mips1::register::Register,
+    },
+};
 
 pub fn handle_zero(state: &mut ControllerState) {
     state.gpr[0].write_u32(0);

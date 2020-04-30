@@ -1,7 +1,5 @@
 use crate::{
-    system::{
-        intc::constants::*,
-    },
+    system::intc::constants::*,
     types::memory::*,
     utilities::bool_to_flag,
 };

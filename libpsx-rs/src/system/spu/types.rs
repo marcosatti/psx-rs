@@ -1,13 +1,11 @@
-use crate::{
-    types::{
-        bitfield::Bitfield,
-        fifo::{
-            debug::DebugState,
-            Fifo,
-        },
-        memory::*,
-        stereo::*,
+use crate::types::{
+    bitfield::Bitfield,
+    fifo::{
+        debug::DebugState,
+        Fifo,
     },
+    memory::*,
+    stereo::*,
 };
 use parking_lot::Mutex;
 use std::{
@@ -525,7 +523,7 @@ pub struct State {
     pub voice23_raddr: B16Register,
 
     pub data_fifo: Fifo<u16>,
-    
+
     pub controller_state: Mutex<ControllerState>,
 }
 

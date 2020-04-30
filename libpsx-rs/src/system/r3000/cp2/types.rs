@@ -1,8 +1,6 @@
-use crate::{
-    types::{
-        mips1::instruction::Instruction,
-        mips1::register::*,
-    },
+use crate::types::mips1::{
+    instruction::Instruction,
+    register::*,
 };
 use parking_lot::Mutex;
 

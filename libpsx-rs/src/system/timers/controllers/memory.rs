@@ -1,6 +1,8 @@
-use crate::system::types::State;
-use crate::system::bus::types::*;
-use crate::system::timers::controllers::timer::*;
+use crate::system::{
+    bus::types::*,
+    timers::controllers::timer::*,
+    types::State,
+};
 
 pub fn count_read_u16(state: &State, offset: u32, timer_id: usize) -> ReadResult<u16> {
     assert_eq!(offset, 0);

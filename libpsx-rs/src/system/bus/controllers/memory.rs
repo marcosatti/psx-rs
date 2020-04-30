@@ -1,5 +1,7 @@
-use crate::system::types::State;
-use crate::system::bus::types::*;
+use crate::system::{
+    bus::types::*,
+    types::State,
+};
 
 pub fn bus_read_u8(state: &State, address: u32) -> ReadResult<u8> {
     assert_eq!(address % 1, 0);

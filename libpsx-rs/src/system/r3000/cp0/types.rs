@@ -5,13 +5,11 @@ use crate::{
     },
     types::mips1::register::*,
 };
-use std::{
-    sync::atomic::{
-        AtomicBool,
-        Ordering,
-    },
-};
 use parking_lot::Mutex;
+use std::sync::atomic::{
+    AtomicBool,
+    Ordering,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqLine {

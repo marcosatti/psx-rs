@@ -1,9 +1,9 @@
 use crate::system::{
+    bus::controllers::memory::*,
     r3000::{
         controllers::debug,
         types::*,
     },
-    bus::controllers::memory::*,
     types::State,
 };
 use std::sync::atomic::Ordering;

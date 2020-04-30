@@ -1,12 +1,10 @@
 use crate::{
-    system::{
-        r3000::{
-            controllers::{
-                instruction_impl::*,
-                instruction_impl_cop2::*,
-            },
-            types::InstructionFn,
+    system::r3000::{
+        controllers::{
+            instruction_impl::*,
+            instruction_impl_cop2::*,
         },
+        types::InstructionFn,
     },
     types::mips1::instruction::Instruction,
 };

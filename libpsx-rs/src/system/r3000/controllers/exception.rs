@@ -3,13 +3,21 @@ use crate::{
         r3000::{
             constants::INSTRUCTION_SIZE,
             controllers::debug,
-            cp0::constants::*,
-            cp0::types::{IrqLine, ControllerState as Cp0ControllerState}, 
+            cp0::{
+                constants::*,
+                types::{
+                    ControllerState as Cp0ControllerState,
+                    IrqLine,
+                },
+            },
             types::ControllerState,
         },
         types::State,
     },
-    utilities::{bool_to_flag, mips1::status_push_exception},
+    utilities::{
+        bool_to_flag,
+        mips1::status_push_exception,
+    },
 };
 use std::intrinsics::unlikely;
 

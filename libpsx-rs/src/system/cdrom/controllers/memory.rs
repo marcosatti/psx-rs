@@ -1,6 +1,8 @@
-use crate::system::types::State;
-use crate::system::bus::types::*;
-use crate::system::cdrom::constants::*;
+use crate::system::{
+    bus::types::*,
+    cdrom::constants::*,
+    types::State,
+};
 
 pub fn status_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);

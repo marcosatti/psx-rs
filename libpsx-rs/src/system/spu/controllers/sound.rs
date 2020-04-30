@@ -45,13 +45,7 @@ pub fn generate_sound(state: &State, spu_state: &mut ControllerState, audio_back
             let play_state = get_play_state(spu_state, voice_id);
             let adpcm_sample_buffer = play_state.adpcm_state.sample_buffer.as_ref().unwrap();
             let adpcm_sample_raw = adpcm_sample_buffer[play_state.pitch_counter_base];
-            interpolate_sample(
-                adpcm_sample_raw,
-                &mut play_state.old_sample,
-                &mut play_state.older_sample,
-                &mut play_state.oldest_sample,
-                play_state.pitch_counter_interp
-            )
+            interpolate_sample(adpcm_sample_raw, &mut play_state.old_sample, &mut play_state.older_sample, &mut play_state.oldest_sample, play_state.pitch_counter_interp)
         };
 
         handle_pitch_counter(state, spu_state, voice_id);
@@ -141,7 +135,6 @@ fn decode_adpcm_block(state: &State, spu_state: &mut ControllerState, voice_id: 
         let memory = &spu_state.memory;
         [memory[current_address], memory[current_address + 1]]
     };
-    
 
     // ADPCM header.
     {
@@ -163,7 +156,6 @@ fn decode_adpcm_block(state: &State, spu_state: &mut ControllerState, voice_id: 
         sample_buffer[i * 2] = samples[0];
         sample_buffer[(i * 2) + 1] = samples[1];
     }
-
 
     let play_state = get_play_state(spu_state, voice_id);
     play_state.adpcm_state.sample_buffer = Some(sample_buffer);

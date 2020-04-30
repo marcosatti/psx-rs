@@ -6,7 +6,10 @@ use crate::{
         },
         cp0::constants::STATUS_ISC,
         cp2::types::GteInstruction,
-        types::{ControllerContext, InstResult},
+        types::{
+            ControllerContext,
+            InstResult,
+        },
     },
     types::{
         bitfield::Bitfield,

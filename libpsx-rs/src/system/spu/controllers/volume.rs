@@ -1,7 +1,9 @@
 use crate::{
     system::{
-        spu::controllers::voice::*,
-        spu::types::*,
+        spu::{
+            controllers::voice::*,
+            types::*,
+        },
         types::State as SystemState,
     },
     types::{

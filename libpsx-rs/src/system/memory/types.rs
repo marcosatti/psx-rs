@@ -1,5 +1,7 @@
-use crate::types::memory::*;
-use crate::system::memory::constants::*;
+use crate::{
+    system::memory::constants::*,
+    types::memory::*,
+};
 
 pub struct State {
     pub main_memory: B8Memory,

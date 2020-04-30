@@ -3,24 +3,24 @@ use crate::{
         r3000::{
             cp0::types::{
                 initialize as cp0_initialize,
-                State as Cp0State,
                 ControllerState as Cp0ControllerState,
+                State as Cp0State,
             },
             cp2::types::{
-                State as Cp2State,
                 ControllerState as Cp2ControllerState,
-            }
+                State as Cp2State,
+            },
         },
         types::State as SystemState,
     },
     types::mips1::{
-        register::*,
         branch_delay_slot::BranchDelaySlot,
+        instruction::Instruction,
+        register::*,
     },
 };
-use std::fmt;
 use parking_lot::Mutex;
-use crate::types::mips1::instruction::Instruction;
+use std::fmt;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Hazard {
@@ -49,8 +49,8 @@ impl fmt::Debug for Hazard {
 
 pub struct ControllerContext<'a> {
     pub state: &'a SystemState,
-    pub r3000_state: &'a mut ControllerState, 
-    pub cp0_state: &'a mut Cp0ControllerState, 
+    pub r3000_state: &'a mut ControllerState,
+    pub cp0_state: &'a mut Cp0ControllerState,
     pub cp2_state: &'a mut Cp2ControllerState,
 }
 
@@ -67,7 +67,7 @@ pub struct ControllerState {
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState { 
+    pub fn new() -> ControllerState {
         ControllerState {
             pc: Register::new(),
             branch_delay: BranchDelaySlot::new(),

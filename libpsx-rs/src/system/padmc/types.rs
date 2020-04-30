@@ -1,11 +1,9 @@
-use crate::{
-    types::{
-        memory::*,
-        fifo::{
-            debug::DebugState,
-            Fifo,
-        },
+use crate::types::{
+    fifo::{
+        debug::DebugState,
+        Fifo,
     },
+    memory::*,
 };
 use std::sync::atomic::{
     AtomicBool,

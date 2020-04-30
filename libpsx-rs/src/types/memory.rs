@@ -1,6 +1,6 @@
-use std::cell::UnsafeCell;
-use smallvec::*;
 use crate::types::bitfield::Bitfield;
+use smallvec::*;
+use std::cell::UnsafeCell;
 
 // TODO: const generics once available.
 
@@ -24,9 +24,7 @@ impl B8Memory {
     }
 
     pub fn read_raw(&self, byte_offset: u32) -> &[u8] {
-        unsafe {
-            &(*self.memory.get())[byte_offset as usize..]
-        }
+        unsafe { &(*self.memory.get())[byte_offset as usize..] }
     }
 
     pub fn write_raw(&self, byte_offset: u32, data: &[u8]) {
@@ -36,9 +34,7 @@ impl B8Memory {
     }
 
     pub fn read_u8(&self, byte_offset: u32) -> u8 {
-        unsafe {
-            (*self.memory.get())[byte_offset as usize]
-        }
+        unsafe { (*self.memory.get())[byte_offset as usize] }
     }
 
     pub fn write_u8(&self, byte_offset: u32, value: u8) {
@@ -49,9 +45,7 @@ impl B8Memory {
 
     pub fn read_u16(&self, byte_offset: u32) -> u16 {
         assert_eq!(byte_offset % 2, 0);
-        unsafe { 
-            *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16) 
-        }
+        unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16) }
     }
 
     pub fn write_u16(&self, byte_offset: u32, value: u16) {
@@ -63,9 +57,7 @@ impl B8Memory {
 
     pub fn read_u32(&self, byte_offset: u32) -> u32 {
         assert_eq!(byte_offset % 4, 0);
-        unsafe { 
-            *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u32) 
-        }
+        unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u32) }
     }
 
     pub fn write_u32(&self, byte_offset: u32, value: u32) {

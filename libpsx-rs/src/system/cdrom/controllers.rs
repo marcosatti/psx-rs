@@ -3,9 +3,9 @@ pub mod command;
 pub mod command_impl;
 pub mod debug;
 pub mod interrupt;
+pub mod memory;
 pub mod read;
 pub mod state;
-pub mod memory;
 
 use crate::{
     backends::cdrom::CdromBackend,

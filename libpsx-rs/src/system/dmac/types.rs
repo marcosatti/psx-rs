@@ -1,8 +1,8 @@
 use crate::{
     system::dmac::constants::*,
     types::{
-        memory::*,
         bitfield::Bitfield,
+        memory::*,
     },
 };
 use parking_lot::Mutex;
@@ -91,9 +91,9 @@ impl Chcr {
         });
 
         Chcr {
-            register: register,
+            register,
             write_latch: AtomicBool::new(false),
-            is_otc: is_otc,
+            is_otc,
         }
     }
 

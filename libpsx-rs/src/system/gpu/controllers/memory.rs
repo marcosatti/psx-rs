@@ -1,5 +1,7 @@
-use crate::system::types::State;
-use crate::system::bus::types::*;
+use crate::system::{
+    bus::types::*,
+    types::State,
+};
 
 pub fn gpu1810_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);

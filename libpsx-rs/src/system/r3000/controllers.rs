@@ -9,6 +9,7 @@ pub mod register;
 use crate::{
     backends::cdrom::CdromBackend,
     system::{
+        bus::controllers::memory::bus_read_u32,
         cdrom::controllers::handle_tick as tick_cdrom,
         r3000::{
             constants::{
@@ -26,7 +27,7 @@ use crate::{
             ControllerContext,
             Event,
             State,
-        }, bus::controllers::memory::bus_read_u32,
+        },
     },
     types::mips1::instruction::Instruction,
 };
@@ -54,7 +55,7 @@ fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
         cp0_state,
         cp2_state,
     };
-    
+
     let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
 
     while ticks > 0 {

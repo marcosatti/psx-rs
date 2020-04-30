@@ -15,25 +15,28 @@ use crate::{
                 memory_controller::translate_address,
             },
             cp0::{
-                types::ControllerState as Cp0ControllerState,
                 constants::*,
+                types::ControllerState as Cp0ControllerState,
             },
-            types::{Hazard, ControllerState},
+            types::{
+                ControllerState,
+                Hazard,
+            },
         },
         types::State,
     },
 };
+use lazy_static::lazy_static;
+use parking_lot::Mutex;
 use std::{
     fmt::UpperHex,
     sync::atomic::{
         AtomicBool,
-        Ordering,
-        AtomicUsize,
         AtomicIsize,
+        AtomicUsize,
+        Ordering,
     },
 };
-use parking_lot::Mutex;
-use lazy_static::lazy_static;
 
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_STDOUT_PUTCHAR_TRACE: bool = true;

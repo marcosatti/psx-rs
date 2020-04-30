@@ -7,7 +7,7 @@ use crate::{
                 backend_dispatch,
                 interrupt::*,
                 state::*,
-            }, 
+            },
             types::ControllerState,
         },
         types::State,

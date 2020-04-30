@@ -3,6 +3,10 @@ use crate::{
         constants::INSTRUCTION_SIZE,
         controllers::{
             debug,
+            exception::{
+                clear_ip_field,
+                set_exception,
+            },
             memory_controller::*,
             register::*,
         },
@@ -22,7 +26,6 @@ use std::intrinsics::{
     likely,
     unlikely,
 };
-use crate::system::r3000::controllers::exception::{clear_ip_field, set_exception};
 
 pub fn sll(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let rt = &mut context.r3000_state.gpr[instruction.rt()];

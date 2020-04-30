@@ -1,6 +1,8 @@
-use crate::system::types::State;
-use crate::system::bus::types::*;
-use crate::system::spu::controllers::voice::*;
+use crate::system::{
+    bus::types::*,
+    spu::controllers::voice::*,
+    types::State,
+};
 
 pub fn voice_voll_read_u16(state: &State, offset: u32, voice_id: usize) -> ReadResult<u16> {
     assert_eq!(offset, 0);

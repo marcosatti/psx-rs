@@ -1,6 +1,8 @@
-use crate::system::types::State;
-use crate::system::bus::types::*;
-use crate::system::dmac::controllers::channel::*;
+use crate::system::{
+    bus::types::*,
+    dmac::controllers::channel::*,
+    types::State,
+};
 
 pub fn madr_read_u32(state: &State, offset: u32, channel_id: usize) -> ReadResult<u32> {
     assert_eq!(offset, 0);

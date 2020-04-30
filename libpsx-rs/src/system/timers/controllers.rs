@@ -1,9 +1,9 @@
 pub mod count;
 pub mod debug;
 pub mod irq;
+pub mod memory;
 pub mod mode;
 pub mod timer;
-pub mod memory;
 
 use crate::system::{
     timers::controllers::{

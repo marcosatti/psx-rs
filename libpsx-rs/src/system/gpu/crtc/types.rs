@@ -1,5 +1,5 @@
-use std::time::Duration;
 use parking_lot::Mutex;
+use std::time::Duration;
 
 pub struct ControllerState {
     pub frame_elapsed: Duration,
@@ -21,7 +21,7 @@ pub struct Crtc {
 
 impl Crtc {
     pub fn new() -> Crtc {
-        Crtc { 
+        Crtc {
             controller_state: Mutex::new(ControllerState::new()),
         }
     }

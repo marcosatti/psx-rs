@@ -1,14 +1,15 @@
 use crate::{
     system::cdrom::constants::*,
     types::{
-        memory::*,
         bitfield::Bitfield,
         fifo::{
             debug::DebugState,
             Fifo,
         },
+        memory::*,
     },
 };
+use parking_lot::Mutex;
 use std::{
     collections::VecDeque,
     sync::atomic::{
@@ -16,7 +17,6 @@ use std::{
         Ordering,
     },
 };
-use parking_lot::Mutex;
 
 pub struct Command {
     pub register: B8Register,

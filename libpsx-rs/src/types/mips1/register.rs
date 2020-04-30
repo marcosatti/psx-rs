@@ -33,16 +33,14 @@ pub struct Register {
 impl Register {
     pub fn new() -> Register {
         Register {
-            memory: Register_ { 
-                v32: 0 
+            memory: Register_ {
+                v32: 0,
             },
         }
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
-        unsafe {
-            self.memory.v8[offset as usize]
-        }
+        unsafe { self.memory.v8[offset as usize] }
     }
 
     pub fn write_u8(&mut self, offset: u32, value: u8) {
@@ -52,9 +50,7 @@ impl Register {
     }
 
     pub fn read_u16(&self, offset: u32) -> u16 {
-        unsafe {
-            self.memory.v16[offset as usize]
-        }
+        unsafe { self.memory.v16[offset as usize] }
     }
 
     pub fn write_u16(&mut self, offset: u32, value: u16) {
@@ -64,9 +60,7 @@ impl Register {
     }
 
     pub fn read_u32(&self) -> u32 {
-        unsafe {
-            self.memory.v32
-        }
+        unsafe { self.memory.v32 }
     }
 
     pub fn write_u32(&mut self, value: u32) {

@@ -18,12 +18,12 @@ use std::{
 
 pub fn handle_transfer(state: &State, dmac_state: &mut ControllerState, channel_id: usize, word_transfers_allowed: usize) -> Result<usize, usize> {
     handle_transfer_start(state, dmac_state, channel_id);
-    
+
     let handler = {
         let transfer_state = get_transfer_state(dmac_state, channel_id);
 
         if transfer_state.started {
-             match transfer_state.sync_mode_state {
+            match transfer_state.sync_mode_state {
                 SyncModeState::Undefined => unreachable!(),
                 SyncModeState::Continuous(_) => handle_continuous_transfer,
                 SyncModeState::Blocks(_) => handle_blocks_transfer,
@@ -143,7 +143,7 @@ fn handle_blocks_transfer(state: &State, dmac_state: &mut ControllerState, chann
     let (word_transfers_count, finished) = {
         let word_transfers_allowed = min(word_transfers_allowed, transfer_state.transfers_remaining());
         let mut word_transfers_count = 0;
-    
+
         while word_transfers_count < word_transfers_allowed {
             match transfer_direction {
                 TransferDirection::FromChannel => {
@@ -156,11 +156,11 @@ fn handle_blocks_transfer(state: &State, dmac_state: &mut ControllerState, chann
                     push_channel_data(state, channel_id, value).map_err(|_| word_transfers_count)?;
                 },
             }
-    
+
             transfer_state.increment(madr_step_direction);
             word_transfers_count += 1;
         }
-    
+
         let finished = transfer_state.transfers_remaining() == 0;
         (word_transfers_count, finished)
     };

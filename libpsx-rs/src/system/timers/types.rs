@@ -1,4 +1,5 @@
 use crate::types::memory::*;
+use parking_lot::Mutex;
 use std::{
     sync::atomic::{
         AtomicBool,
@@ -6,7 +7,6 @@ use std::{
     },
     time::Duration,
 };
-use parking_lot::Mutex;
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqType {
