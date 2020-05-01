@@ -25,7 +25,7 @@ fixed = "*"
 typenum = "*"
 smallvec = { version = "*", features = ["union"] }
 tokio = { version = "*", features = ["rt-core", "rt-threaded", "parking_lot"] }
-futures-util = "*"
+futures = "*"
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }

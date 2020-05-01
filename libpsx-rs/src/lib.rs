@@ -98,7 +98,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         let event = Event::Time(time);
 
         let timer = Instant::now();
-        let benchmark_results = executor::atomic_broadcast(&mut self.task_runtime, &context, event);
+        let benchmark_results = executor::run_event_broadcast_block(&mut self.task_runtime, &context, event);
         let scope_duration = timer.elapsed();
 
         debug::benchmark::trace_performance(time, scope_duration, benchmark_results);
