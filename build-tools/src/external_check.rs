@@ -1,9 +1,6 @@
 use crate::python;
 use serde::Deserialize;
-use std::{
-    path::PathBuf,
-    process::Command,
-};
+use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct Output {
@@ -11,14 +8,8 @@ pub(crate) struct Output {
 }
 
 pub(crate) fn external_check_inner(external_name: &str) -> Output {
-    let output = Command::new(python::bin_name()).current_dir(PathBuf::from("..")).arg(format!("external/{}/check.py", external_name)).output().unwrap();
-
-    let output_str_stdout = String::from_utf8(output.stdout).unwrap();
-    let output_str_stderr = String::from_utf8(output.stderr).unwrap();
-
-    if !output.status.success() {
-        panic!("Non-success return code: \nstdout: \n{}\nstderr: \n{}\n", &output_str_stdout, &output_str_stderr);
-    }
+    let path = PathBuf::from(format!("external/{}/check.py", external_name));
+    let (output_str_stdout, output_str_stderr) = python::run_script(&path);
 
     if false {
         panic!("Debug\nstdout: \n{}\nstderr: \n{}\n", output_str_stdout, output_str_stderr);

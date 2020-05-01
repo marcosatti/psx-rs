@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Copy, Clone)]
 pub struct Instruction {
     pub value: u32,
@@ -14,8 +16,8 @@ impl Instruction {
         ((self.value >> 26) & 0x3F) as usize
     }
 
-    pub fn c(&self) -> bool {
-        ((self.value >> 25) & 0x1) > 0
+    pub fn c(&self) -> u8 {
+        ((self.value >> 25) & 0x1) as u8
     }
 
     pub fn rs(&self) -> usize {
@@ -52,5 +54,21 @@ impl Instruction {
 
     pub fn addr(&self) -> u32 {
         (self.value & 0x3FF_FFFF) as u32
+    }
+}
+
+impl fmt::Debug for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Instruction")
+            .field("value", &format!("0x{:08X}", self.value))
+            .field("opcode", &self.opcode())
+            .field("rs", &self.rs())
+            .field("rt", &self.rt())
+            .field("rd", &self.rd())
+            .field("shamt", &self.shamt())
+            .field("funct", &self.funct())
+            .field("uimm", &format!("0x{:04X}", self.u_imm()))
+            .field("addr (shifted)", &format!("0x{:08X}", self.addr() << 2))
+            .finish()
     }
 }

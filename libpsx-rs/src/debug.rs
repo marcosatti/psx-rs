@@ -55,7 +55,7 @@ pub fn trace_r3000(state: &mut State) {
     crate::system::r3000::controllers::debug::trace_pc(r3000_state, cp0_state);
     // crate::system::r3000::controllers::debug::disassembler::trace_instructions_at_pc(&state.memory.main_memory,
     // &state.memory.bios, r3000_state.pc.read_u32(), None);
-    crate::system::r3000::controllers::debug::register::trace_registers(r3000_state);
+    // crate::system::r3000::controllers::debug::register::trace_registers(r3000_state);
 }
 
 pub fn trace_intc(state: &mut State, only_enabled: bool) {

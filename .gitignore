@@ -2,6 +2,7 @@
 /workspace/
 /external/
 /doc/
+/temp/
 
 **/*.rs.bk
 **/*.dll

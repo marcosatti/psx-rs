@@ -98,7 +98,7 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
 
     context.r3000_state.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
-    let (fn_ptr, cycles) = instruction_lookup(inst).unwrap_or_else(|| unimplemented!("Unknown R3000 instruction 0x{:08X} (address = 0x{:08X})", inst.value, pc_va));
+    let (fn_ptr, cycles) = instruction_lookup(inst);
 
     debug::trace_state(context.state, context.r3000_state, context.cp0_state);
 

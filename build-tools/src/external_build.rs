@@ -8,7 +8,6 @@ use std::{
     env,
     fs::write,
     path::PathBuf,
-    process::Command,
 };
 
 #[derive(Deserialize, Debug)]
@@ -34,14 +33,8 @@ pub fn external_build(external_name: &str) {
         return;
     }
 
-    let output = Command::new(python::bin_name()).current_dir(PathBuf::from("..")).arg(format!("external/{}/build.py", external_name)).output().unwrap();
-
-    let output_str_stdout = String::from_utf8(output.stdout).unwrap();
-    let output_str_stderr = String::from_utf8(output.stderr).unwrap();
-
-    if !output.status.success() {
-        panic!("Non-success return code: \nstdout: \n{}\nstderr: \n{}\n", &output_str_stdout, &output_str_stderr);
-    }
+    let path = PathBuf::from(format!("external/{}/build.py", external_name));
+    let (output_str_stdout, output_str_stderr) = python::run_script(&path);
 
     if false {
         panic!("Debug\nstdout: \n{}\nstderr: \n{}\n", output_str_stdout, output_str_stderr);
