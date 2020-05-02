@@ -41,10 +41,7 @@ use std::{
     },
 };
 use system::types::ControllerContext;
-use tokio::runtime::{
-    Builder,
-    Runtime,
-};
+use rayon::{ThreadPool, ThreadPoolBuilder};
 
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
@@ -58,7 +55,7 @@ pub struct Config<'a: 'b, 'b> {
 
 pub struct Core<'a: 'b, 'b> {
     pub state: Box<State>,
-    task_runtime: Runtime,
+    task_runtime: ThreadPool,
     config: Config<'a, 'b>,
 }
 
@@ -73,7 +70,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         State::initialize(&mut state);
         State::load_bios(&mut state, &bios_path);
 
-        let task_runtime = Builder::new().threaded_scheduler().core_threads(config.worker_threads).thread_name("libpsx-rs-worker").build().unwrap();
+        let task_runtime = ThreadPoolBuilder::new().num_threads(config.worker_threads).thread_name(|i| format!("libpsx-rs-worker-{}", i)).build().unwrap();
 
         video::setup(&config.video_backend);
         audio::setup(&config.audio_backend);
