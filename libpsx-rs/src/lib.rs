@@ -30,6 +30,10 @@ use crate::{
     },
 };
 use log::info;
+use rayon::{
+    ThreadPool,
+    ThreadPoolBuilder,
+};
 use std::{
     path::{
         Path,
@@ -41,7 +45,6 @@ use std::{
     },
 };
 use system::types::ControllerContext;
-use rayon::{ThreadPool, ThreadPoolBuilder};
 
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
