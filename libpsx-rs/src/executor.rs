@@ -14,21 +14,46 @@ use crate::{
         },
     },
 };
-use rayon::ThreadPool;
+use rayon::{
+    join,
+    ThreadPool,
+};
 use std::time::Instant;
 
 pub fn run_event_broadcast_block(runtime: &ThreadPool, context: &ControllerContext, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
     let benchmark_results_ref = &benchmark_results;
 
-    runtime.scope(|scope| {
-        scope.spawn(move |_| run_event("r3000", run_r3000, context, event, benchmark_results_ref));
-        scope.spawn(move |_| run_event("dmac", run_dmac, context, event, benchmark_results_ref));
-        scope.spawn(move |_| run_event("gpu", run_gpu, context, event, benchmark_results_ref));
-        scope.spawn(move |_| run_event("spu", run_spu, context, event, benchmark_results_ref));
-        scope.spawn(move |_| run_event("intc", run_intc, context, event, benchmark_results_ref));
-        scope.spawn(move |_| run_event("padmc", run_padmc, context, event, benchmark_results_ref));
-        scope.spawn(move |_| run_event("timers", run_timers, context, event, benchmark_results_ref));
+    runtime.install(|| {
+        join(
+            move || run_event("r3000", run_r3000, context, event, benchmark_results_ref),
+            || {
+                join(
+                    move || run_event("gpu", run_gpu, context, event, benchmark_results_ref),
+                    || {
+                        join(
+                            move || run_event("dmac", run_dmac, context, event, benchmark_results_ref),
+                            || {
+                                join(
+                                    move || run_event("spu", run_spu, context, event, benchmark_results_ref),
+                                    || {
+                                        join(
+                                            move || run_event("timers", run_timers, context, event, benchmark_results_ref),
+                                            || {
+                                                join(
+                                                    move || run_event("intc", run_intc, context, event, benchmark_results_ref),
+                                                    move || run_event("padmc", run_padmc, context, event, benchmark_results_ref),
+                                                )
+                                            },
+                                        )
+                                    },
+                                )
+                            },
+                        )
+                    },
+                )
+            },
+        );
     });
 
     benchmark_results

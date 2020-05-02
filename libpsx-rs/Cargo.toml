@@ -23,7 +23,6 @@ hashbrown = "*"
 lru = "*"
 fixed = "*"
 typenum = "*"
-smallvec = { version = "*", features = ["union"] }
 rayon = "*"
 
 [build-dependencies]

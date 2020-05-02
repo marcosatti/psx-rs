@@ -1,5 +1,4 @@
 use crate::types::bitfield::Bitfield;
-use smallvec::*;
 use std::cell::UnsafeCell;
 
 // TODO: const generics once available.
@@ -7,19 +6,19 @@ use std::cell::UnsafeCell;
 /// Shared memory (for both registers and blocks of memory).
 /// Synchronisation must happen through other means, such as latches.
 pub struct B8Memory {
-    memory: UnsafeCell<SmallVec<[u8; 4]>>,
+    memory: UnsafeCell<Vec<u8>>,
 }
 
 impl B8Memory {
     pub fn new(size: usize) -> B8Memory {
         B8Memory {
-            memory: UnsafeCell::new(smallvec![0; size]),
+            memory: UnsafeCell::new(vec![0; size]),
         }
     }
 
     pub fn new_initialized(size: usize, value: u8) -> B8Memory {
         B8Memory {
-            memory: UnsafeCell::new(smallvec![value; size]),
+            memory: UnsafeCell::new(vec![value; size]),
         }
     }
 
@@ -98,112 +97,169 @@ unsafe impl Send for B8Memory {
 unsafe impl Sync for B8Memory {
 }
 
+#[repr(C)]
+#[derive(Copy, Clone)]
+union B32Register_ {
+    v32: u32,
+    v16: [u16; 2],
+    v8: [u8; 4],
+}
+
 pub struct B32Register {
-    memory: B8Memory,
+    memory: UnsafeCell<B32Register_>,
 }
 
 impl B32Register {
     pub fn new() -> B32Register {
         B32Register {
-            memory: B8Memory::new(4),
+            memory: UnsafeCell::new(B32Register_ {
+                v32: 0,
+            }),
         }
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
-        self.memory.read_u8(offset)
+        unsafe { (*self.memory.get()).v8[offset as usize] }
     }
 
     pub fn write_u8(&self, offset: u32, value: u8) {
-        self.memory.write_u8(offset, value);
+        unsafe {
+            (*self.memory.get()).v8[offset as usize] = value;
+        }
     }
 
     pub fn read_u16(&self, offset: u32) -> u16 {
-        self.memory.read_u16(offset * 2)
+        unsafe { (*self.memory.get()).v16[offset as usize] }
     }
 
     pub fn write_u16(&self, offset: u32, value: u16) {
-        self.memory.write_u16(offset * 2, value);
+        unsafe {
+            (*self.memory.get()).v16[offset as usize] = value;
+        }
     }
 
     pub fn read_u32(&self) -> u32 {
-        self.memory.read_u32(0)
+        unsafe { (*self.memory.get()).v32 }
     }
 
     pub fn write_u32(&self, value: u32) {
-        self.memory.write_u32(0, value);
+        unsafe {
+            (*self.memory.get()).v32 = value;
+        }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
-        self.memory.read_bitfield_u32(0, bitfield)
+        bitfield.extract_from(self.read_u32())
     }
 
     pub fn write_bitfield(&self, bitfield: Bitfield, value: u32) {
-        self.memory.write_bitfield_u32(0, bitfield, value)
+        self.write_u32(bitfield.insert_into(self.read_u32(), value));
     }
 }
 
+unsafe impl Send for B32Register {
+}
+
+unsafe impl Sync for B32Register {
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+union B16Register_ {
+    v16: u16,
+    v8: [u8; 2],
+}
+
 pub struct B16Register {
-    memory: B8Memory,
+    memory: UnsafeCell<B16Register_>,
 }
 
 impl B16Register {
     pub fn new() -> B16Register {
         B16Register {
-            memory: B8Memory::new(2),
+            memory: UnsafeCell::new(B16Register_ {
+                v16: 0,
+            }),
         }
     }
 
     pub fn read_u8(&self, offset: u32) -> u8 {
-        self.memory.read_u8(offset)
+        unsafe { (*self.memory.get()).v8[offset as usize] }
     }
 
     pub fn write_u8(&self, offset: u32, value: u8) {
-        self.memory.write_u8(offset, value);
+        unsafe {
+            (*self.memory.get()).v8[offset as usize] = value;
+        }
     }
 
     pub fn read_u16(&self) -> u16 {
-        self.memory.read_u16(0)
+        unsafe { (*self.memory.get()).v16 }
     }
 
     pub fn write_u16(&self, value: u16) {
-        self.memory.write_u16(0, value);
+        unsafe {
+            (*self.memory.get()).v16 = value;
+        }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
-        self.memory.read_bitfield_u16(0, bitfield)
+        bitfield.extract_from(self.read_u16())
     }
 
     pub fn write_bitfield(&self, bitfield: Bitfield, value: u16) {
-        self.memory.write_bitfield_u16(0, bitfield, value)
+        self.write_u16(bitfield.insert_into(self.read_u16(), value));
     }
 }
 
+unsafe impl Send for B16Register {
+}
+
+unsafe impl Sync for B16Register {
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+union B8Register_ {
+    v8: u8,
+}
+
 pub struct B8Register {
-    memory: B8Memory,
+    memory: UnsafeCell<B8Register_>,
 }
 
 impl B8Register {
     pub fn new() -> B8Register {
         B8Register {
-            memory: B8Memory::new(1),
+            memory: UnsafeCell::new(B8Register_ {
+                v8: 0,
+            }),
         }
     }
 
     pub fn read_u8(&self) -> u8 {
-        self.memory.read_u8(0)
+        unsafe { (*self.memory.get()).v8 }
     }
 
     pub fn write_u8(&self, value: u8) {
-        self.memory.write_u8(0, value);
+        unsafe {
+            (*self.memory.get()).v8 = value;
+        }
     }
 
     pub fn read_bitfield(&self, bitfield: Bitfield) -> u8 {
-        self.memory.read_bitfield_u8(0, bitfield)
+        bitfield.extract_from(self.read_u8())
     }
 
     pub fn write_bitfield(&self, bitfield: Bitfield, value: u8) {
-        self.memory.write_bitfield_u8(0, bitfield, value)
+        self.write_u8(bitfield.insert_into(self.read_u8(), value));
     }
+}
+
+unsafe impl Send for B8Register {
+}
+
+unsafe impl Sync for B8Register {
 }
 
 #[test]

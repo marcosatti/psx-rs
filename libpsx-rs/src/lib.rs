@@ -1,6 +1,5 @@
 #![feature(core_intrinsics)]
 #![feature(no_more_cas)]
-#![recursion_limit = "256"]
 
 pub mod backends;
 pub mod debug;
