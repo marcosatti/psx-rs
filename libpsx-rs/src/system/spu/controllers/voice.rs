@@ -9,7 +9,7 @@ use crate::{
     types::memory::*,
 };
 
-pub fn get_transfer_mode(control: &B16Register) -> TransferMode {
+pub fn get_transfer_mode(control: &B16LevelRegister) -> TransferMode {
     match control.read_bitfield(CONTROL_TRANSFER_MODE) {
         0 => TransferMode::Stop,
         1 => TransferMode::ManualWrite,
@@ -19,7 +19,7 @@ pub fn get_transfer_mode(control: &B16Register) -> TransferMode {
     }
 }
 
-pub fn get_voll(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_voll(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_voll,
         1 => &state.spu.voice1_voll,
@@ -49,7 +49,7 @@ pub fn get_voll(state: &State, voice_id: usize) -> &B16Register {
     }
 }
 
-pub fn get_volr(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_volr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_volr,
         1 => &state.spu.voice1_volr,
@@ -79,7 +79,7 @@ pub fn get_volr(state: &State, voice_id: usize) -> &B16Register {
     }
 }
 
-pub fn get_srate(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_srate(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_srate,
         1 => &state.spu.voice1_srate,
@@ -109,7 +109,7 @@ pub fn get_srate(state: &State, voice_id: usize) -> &B16Register {
     }
 }
 
-pub fn get_saddr(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_saddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_saddr,
         1 => &state.spu.voice1_saddr,
@@ -139,7 +139,7 @@ pub fn get_saddr(state: &State, voice_id: usize) -> &B16Register {
     }
 }
 
-pub fn get_adsr(state: &State, voice_id: usize) -> &B32Register {
+pub fn get_adsr(state: &State, voice_id: usize) -> &B32LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_adsr,
         1 => &state.spu.voice1_adsr,
@@ -169,7 +169,7 @@ pub fn get_adsr(state: &State, voice_id: usize) -> &B32Register {
     }
 }
 
-pub fn get_cvol(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_cvol(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_cvol,
         1 => &state.spu.voice1_cvol,
@@ -199,7 +199,7 @@ pub fn get_cvol(state: &State, voice_id: usize) -> &B16Register {
     }
 }
 
-pub fn get_raddr(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_raddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_raddr,
         1 => &state.spu.voice1_raddr,

@@ -41,7 +41,7 @@ pub fn transform_voice_volume(state: &SystemState, voice_id: usize, adpcm_sample
     let vol_left = get_voll(state, voice_id);
     let vol_right = get_volr(state, voice_id);
 
-    let process_sample = |vol: &B16Register| -> i16 {
+    let process_sample = |vol: &B16LevelRegister| -> i16 {
         let vol_value = vol.read_u16();
         let volume_mode = Bitfield::new(15, 1).extract_from(vol_value);
         if volume_mode != 0 {
@@ -63,7 +63,7 @@ pub fn transform_main_volume(state: &SystemState, pcm_frame: Stereo) -> Stereo {
     let mvol_left = &state.spu.main_volume_left;
     let mvol_right = &state.spu.main_volume_right;
 
-    let process_sample = |sample, mvol: &B16Register| -> i16 {
+    let process_sample = |sample, mvol: &B16LevelRegister| -> i16 {
         let mvol_value = mvol.read_u16();
         let volume_mode = Bitfield::new(15, 1).extract_from(mvol_value);
         if volume_mode != 0 {

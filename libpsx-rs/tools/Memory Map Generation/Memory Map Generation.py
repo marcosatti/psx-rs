@@ -73,7 +73,7 @@ def make_match_statement(src_handler, start_address, length, handler_path, args,
     
     handler_path = handler_path.split('::')
     assert len(handler_path) == 2
-    handler_full_path = '::'.join(['crate', 'system', handler_path[0], 'controllers', 'memory', handler_path[1] + '_' + src_handler])
+    handler_full_path = '::'.join(['crate', 'system', handler_path[0], 'memory', handler_path[1] + '_' + src_handler])
 
     statement = f'        {match_address} => {handler_full_path}(state, address - {start_address}'
     if writing:

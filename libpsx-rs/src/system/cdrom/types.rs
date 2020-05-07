@@ -19,14 +19,14 @@ use std::{
 };
 
 pub struct Command {
-    pub register: B8Register,
+    pub register: B8LevelRegister,
     pub write_latch: AtomicBool,
 }
 
 impl Command {
     pub fn new() -> Command {
         Command {
-            register: B8Register::new(),
+            register: B8LevelRegister::new(),
             write_latch: AtomicBool::new(false),
         }
     }
@@ -43,14 +43,14 @@ impl Command {
 }
 
 pub struct IntEnable {
-    pub register: B8Register,
+    pub register: B8LevelRegister,
     pub write_latch: AtomicBool,
 }
 
 impl IntEnable {
     pub fn new() -> IntEnable {
         IntEnable {
-            register: B8Register::new(),
+            register: B8LevelRegister::new(),
             write_latch: AtomicBool::new(false),
         }
     }
@@ -68,14 +68,14 @@ impl IntEnable {
 }
 
 pub struct Request {
-    pub register: B8Register,
+    pub register: B8LevelRegister,
     pub write_latch: AtomicBool,
 }
 
 impl Request {
     pub fn new() -> Request {
         Request {
-            register: B8Register::new(),
+            register: B8LevelRegister::new(),
             write_latch: AtomicBool::new(false),
         }
     }
@@ -92,7 +92,7 @@ impl Request {
 }
 
 pub struct IntFlag {
-    pub register: B8Register,
+    pub register: B8LevelRegister,
     pub write_latch: AtomicBool,
     pub parameter_reset: AtomicBool,
 }
@@ -100,7 +100,7 @@ pub struct IntFlag {
 impl IntFlag {
     pub fn new() -> IntFlag {
         IntFlag {
-            register: B8Register::new(),
+            register: B8LevelRegister::new(),
             write_latch: AtomicBool::new(false),
             parameter_reset: AtomicBool::new(false),
         }
@@ -169,7 +169,7 @@ impl ControllerState {
 }
 
 pub struct State {
-    pub status: B8Register,
+    pub status: B8LevelRegister,
     pub command: Command,
     pub response: Fifo<u8>,
     pub parameter: Fifo<u8>,
@@ -183,7 +183,7 @@ pub struct State {
 impl State {
     pub fn new() -> State {
         State {
-            status: B8Register::new(),
+            status: B8LevelRegister::new(),
             command: Command::new(),
             response: Fifo::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),
             parameter: Fifo::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),

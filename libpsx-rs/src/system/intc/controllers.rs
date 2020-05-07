@@ -1,5 +1,4 @@
 pub mod debug;
-pub mod memory;
 
 use crate::system::{
     intc::constants::CLOCK_SPEED,

@@ -45,14 +45,14 @@ pub enum SyncModeState {
 
 pub struct Dicr {
     pub mutex: Mutex<()>,
-    pub register: B32Register,
+    pub register: B32LevelRegister,
 }
 
 impl Dicr {
     pub fn new() -> Dicr {
         Dicr {
             mutex: Mutex::new(()),
-            register: B32Register::new(),
+            register: B32LevelRegister::new(),
         }
     }
 
@@ -75,14 +75,14 @@ impl Dicr {
 }
 
 pub struct Chcr {
-    pub register: B32Register,
+    pub register: B32LevelRegister,
     pub write_latch: AtomicBool,
     pub is_otc: bool,
 }
 
 impl Chcr {
     pub fn new(is_otc: bool) -> Chcr {
-        let register = B32Register::new();
+        let register = B32LevelRegister::new();
 
         register.write_u32(if is_otc {
             0x0000_0002
@@ -238,35 +238,35 @@ impl ControllerState {
 }
 
 pub struct State {
-    pub dpcr: B32Register,
+    pub dpcr: B32LevelRegister,
     pub dicr: Dicr,
 
-    pub mdecin_madr: B32Register,
-    pub mdecin_bcr: B32Register,
+    pub mdecin_madr: B32LevelRegister,
+    pub mdecin_bcr: B32LevelRegister,
     pub mdecin_chcr: Chcr,
 
-    pub mdecout_madr: B32Register,
-    pub mdecout_bcr: B32Register,
+    pub mdecout_madr: B32LevelRegister,
+    pub mdecout_bcr: B32LevelRegister,
     pub mdecout_chcr: Chcr,
 
-    pub gpu_madr: B32Register,
-    pub gpu_bcr: B32Register,
+    pub gpu_madr: B32LevelRegister,
+    pub gpu_bcr: B32LevelRegister,
     pub gpu_chcr: Chcr,
 
-    pub cdrom_madr: B32Register,
-    pub cdrom_bcr: B32Register,
+    pub cdrom_madr: B32LevelRegister,
+    pub cdrom_bcr: B32LevelRegister,
     pub cdrom_chcr: Chcr,
 
-    pub spu_madr: B32Register,
-    pub spu_bcr: B32Register,
+    pub spu_madr: B32LevelRegister,
+    pub spu_bcr: B32LevelRegister,
     pub spu_chcr: Chcr,
 
-    pub pio_madr: B32Register,
-    pub pio_bcr: B32Register,
+    pub pio_madr: B32LevelRegister,
+    pub pio_bcr: B32LevelRegister,
     pub pio_chcr: Chcr,
 
-    pub otc_madr: B32Register,
-    pub otc_bcr: B32Register,
+    pub otc_madr: B32LevelRegister,
+    pub otc_bcr: B32LevelRegister,
     pub otc_chcr: Chcr,
 
     pub controller_state: Mutex<ControllerState>,
@@ -275,28 +275,28 @@ pub struct State {
 impl State {
     pub fn new() -> State {
         State {
-            dpcr: B32Register::new(),
+            dpcr: B32LevelRegister::new(),
             dicr: Dicr::new(),
-            mdecin_madr: B32Register::new(),
-            mdecin_bcr: B32Register::new(),
+            mdecin_madr: B32LevelRegister::new(),
+            mdecin_bcr: B32LevelRegister::new(),
             mdecin_chcr: Chcr::new(false),
-            mdecout_madr: B32Register::new(),
-            mdecout_bcr: B32Register::new(),
+            mdecout_madr: B32LevelRegister::new(),
+            mdecout_bcr: B32LevelRegister::new(),
             mdecout_chcr: Chcr::new(false),
-            gpu_madr: B32Register::new(),
-            gpu_bcr: B32Register::new(),
+            gpu_madr: B32LevelRegister::new(),
+            gpu_bcr: B32LevelRegister::new(),
             gpu_chcr: Chcr::new(false),
-            cdrom_madr: B32Register::new(),
-            cdrom_bcr: B32Register::new(),
+            cdrom_madr: B32LevelRegister::new(),
+            cdrom_bcr: B32LevelRegister::new(),
             cdrom_chcr: Chcr::new(false),
-            spu_madr: B32Register::new(),
-            spu_bcr: B32Register::new(),
+            spu_madr: B32LevelRegister::new(),
+            spu_bcr: B32LevelRegister::new(),
             spu_chcr: Chcr::new(false),
-            pio_madr: B32Register::new(),
-            pio_bcr: B32Register::new(),
+            pio_madr: B32LevelRegister::new(),
+            pio_bcr: B32LevelRegister::new(),
             pio_chcr: Chcr::new(false),
-            otc_madr: B32Register::new(),
-            otc_bcr: B32Register::new(),
+            otc_madr: B32LevelRegister::new(),
+            otc_bcr: B32LevelRegister::new(),
             otc_chcr: Chcr::new(true),
             controller_state: Mutex::new(ControllerState::new()),
         }

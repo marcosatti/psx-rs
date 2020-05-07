@@ -1,7 +1,6 @@
 pub mod channel;
 pub mod debug;
 pub mod linked_list;
-pub mod memory;
 pub mod transfer;
 
 use crate::system::{

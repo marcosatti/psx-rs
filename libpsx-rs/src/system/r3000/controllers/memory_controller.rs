@@ -1,5 +1,5 @@
 use crate::system::{
-    bus::controllers::memory::*,
+    bus::memory::*,
     r3000::{
         controllers::debug,
         types::*,

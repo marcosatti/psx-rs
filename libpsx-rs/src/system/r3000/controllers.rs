@@ -9,7 +9,7 @@ pub mod register;
 use crate::{
     backends::cdrom::CdromBackend,
     system::{
-        bus::controllers::memory::bus_read_u32,
+        bus::memory::bus_read_u32,
         cdrom::controllers::handle_tick as tick_cdrom,
         r3000::{
             constants::{

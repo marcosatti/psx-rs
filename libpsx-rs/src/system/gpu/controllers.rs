@@ -6,7 +6,6 @@ pub mod command_gp1;
 pub mod command_gp1_impl;
 pub mod data;
 pub mod debug;
-pub mod memory;
 
 use crate::{
     system::{

@@ -14,7 +14,7 @@ use crate::{
 };
 use log::warn;
 
-pub fn get_madr(state: &State, channel_id: usize) -> &B32Register {
+pub fn get_madr(state: &State, channel_id: usize) -> &B32LevelRegister {
     match channel_id {
         0 => &state.dmac.mdecin_madr,
         1 => &state.dmac.mdecout_madr,
@@ -27,7 +27,7 @@ pub fn get_madr(state: &State, channel_id: usize) -> &B32Register {
     }
 }
 
-pub fn get_bcr(state: &State, channel_id: usize) -> &B32Register {
+pub fn get_bcr(state: &State, channel_id: usize) -> &B32LevelRegister {
     match channel_id {
         0 => &state.dmac.mdecin_bcr,
         1 => &state.dmac.mdecout_bcr,
@@ -160,7 +160,7 @@ pub fn raise_irq(state: &State, channel_id: usize) {
     }
 }
 
-pub fn initialize_transfer_state(transfer_state: &mut TransferState, chcr: &Chcr, madr: &B32Register, bcr: &B32Register) {
+pub fn initialize_transfer_state(transfer_state: &mut TransferState, chcr: &Chcr, madr: &B32LevelRegister, bcr: &B32LevelRegister) {
     let bcr_calculate = |v| {
         if v == 0 {
             0x1_0000

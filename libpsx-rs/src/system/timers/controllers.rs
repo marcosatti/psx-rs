@@ -1,14 +1,16 @@
 pub mod count;
 pub mod debug;
 pub mod irq;
-pub mod memory;
 pub mod mode;
 pub mod timer;
+pub mod resource;
+pub mod register;
 
 use crate::system::{
     timers::controllers::{
         count::*,
         mode::*,
+        register::*,
     },
     types::{
         ControllerContext,
@@ -25,8 +27,10 @@ pub fn run(context: &ControllerContext, event: Event) {
 }
 
 fn run_time(state: &State, duration: Duration) {
-    for i in 0..3 {
-        let timers_state = &mut state.timers.controller_state.lock();
+    let controller_state = &mut state.timers.controller_state.lock();
+
+    for timer_id in 0..3 {
+        process_mode(state, controller_state, timer_id);
 
         handle_mode_write(state, timers_state, i);
         handle_mode_read(state, i);

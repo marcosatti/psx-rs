@@ -11,14 +11,14 @@ use std::sync::atomic::{
 };
 
 pub struct Ctrl {
-    pub register: B16Register,
+    pub register: B16LevelRegister,
     pub write_latch: AtomicBool,
 }
 
 impl Ctrl {
     pub fn new() -> Ctrl {
         Ctrl {
-            register: B16Register::new(),
+            register: B16LevelRegister::new(),
             write_latch: AtomicBool::new(false),
         }
     }
@@ -38,10 +38,10 @@ impl Ctrl {
 pub struct State {
     pub rx_fifo: Fifo<u8>,
     pub tx_fifo: Fifo<u8>,
-    pub stat: B32Register,
-    pub mode: B16Register,
+    pub stat: B32LevelRegister,
+    pub mode: B16LevelRegister,
     pub ctrl: Ctrl,
-    pub baud_reload: B16Register,
+    pub baud_reload: B16LevelRegister,
 }
 
 impl State {
@@ -49,10 +49,10 @@ impl State {
         State {
             rx_fifo: Fifo::new(16, Some(DebugState::new("PADMC RX", true, true))),
             tx_fifo: Fifo::new(16, Some(DebugState::new("PADMC TX", true, true))),
-            stat: B32Register::new(),
-            mode: B16Register::new(),
+            stat: B32LevelRegister::new(),
+            mode: B16LevelRegister::new(),
             ctrl: Ctrl::new(),
-            baud_reload: B16Register::new(),
+            baud_reload: B16LevelRegister::new(),
         }
     }
 }
