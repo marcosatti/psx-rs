@@ -89,6 +89,7 @@ impl B32EdgeRegister {
     }
 
     /// Updates the internal value without checking the latch status.
+    /// This is used for read-only bits as a part of a whole register.
     pub fn update<F>(&self, operation: F)
     where
         F: FnOnce(u32) -> u32, 

@@ -4,7 +4,6 @@ use std::time::Duration;
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqType {
-    None,
     Overflow,
     Target,
 }
@@ -18,15 +17,16 @@ pub enum ClockSource {
 }
 
 pub struct TimerState {
-    pub clock_source: ClockSource,
-    pub current_elapsed: Duration,
-    pub acknowledged_elapsed: Duration,
     pub reset_on_target: bool,
-    pub irq_raised: bool,
     pub irq_on_target: bool,
     pub irq_on_overflow: bool,
-    pub irq_toggle: bool,
     pub oneshot_mode: bool,
+    pub irq_toggle: bool,
+    pub clock_source: ClockSource,
+
+    pub current_elapsed: Duration,
+    pub acknowledged_elapsed: Duration,
+    pub irq_raised: bool,
 }
 
 impl TimerState {

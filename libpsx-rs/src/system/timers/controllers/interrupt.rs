@@ -6,77 +6,56 @@ use crate::system::{
     },
     types::State,
 };
+use crate::system::intc::types::Line;
 
-pub fn handle_irq_trigger(state: &State, timers_state: &mut ControllerState, timer_id: usize, irq_type: IrqType) {
-    let mode = get_mode(state, timer_id);
-    let timer_state = get_state(timers_state, timer_id);
+pub fn handle_irq_trigger(state: &State, controller_state: &mut ControllerState, timer_id: usize, irq_type: IrqType) {
+    let timer_state = get_state(controller_state, timer_id);
 
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.
-    let oneshot = mode.register.read_bitfield(MODE_IRQ_REPEAT) > 0;
-    if oneshot {
+    if timer_state.oneshot_mode {
         if timer_state.irq_raised {
             return;
         }
     }
 
-    match irq_type {
-        IrqType::None => {},
-        IrqType::Overflow => {
-            let overflow_trigger = mode.register.read_bitfield(MODE_IRQ_OVERFLOW) > 0;
+    let irq_condition_matches = match irq_type {
+        IrqType::Overflow => timer_state.irq_on_overflow,
+        IrqType::Target => timer_state.irq_on_target, 
+    };
 
-            if overflow_trigger {
-                handle_irq_raise(state, timer_id);
-                timer_state.irq_raised = true;
-            }
-        },
-        IrqType::Target => {
-            let target_trigger = mode.register.read_bitfield(MODE_IRQ_TARGET) > 0;
-
-            if target_trigger {
-                handle_irq_raise(state, timer_id);
-                timer_state.irq_raised = true;
-            }
-        },
+    if irq_condition_matches {
+        timer_state.irq_raised = true;
+        handle_irq_raise(state, controller_state, timer_id);
     }
 }
 
-pub fn handle_irq_raise(state: &State, timer_id: usize) {
+pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
     let mode = get_mode(state, timer_id);
+    let timer_state = get_state(controller_state, timer_id);
 
-    let mut raise_irq = false;
+    let raise_irq = if timer_state.irq_toggle {
+        let mut bit = 0;
 
-    match mode.register.read_bitfield(MODE_IRQ_PULSE) {
-        0 => {
-            // Pulse mode.
-            // TODO: Do nothing? How long is a few clock cycles? Will the BIOS see this? Probably not...
-            log::warn!("Pulse IRQ mode not implemented properly?");
-            raise_irq = true;
-        },
-        1 => {
-            // Toggle mode. IRQ's will effectively only be raised every 2nd time.
-            let new_irq_status = mode.register.read_bitfield(MODE_IRQ_STATUS) ^ 1;
-            mode.register.write_bitfield(MODE_IRQ_STATUS, new_irq_status);
+        mode.update(|value| {
+            bit = MODE_IRQ_STATUS.extract_from(value) ^ 1;
+            MODE_IRQ_STATUS.insert_into(value, bit)
+        });
 
-            if new_irq_status == 0 {
-                raise_irq = true;
-            }
-        },
-        _ => unreachable!(),
-    }
+        bit == 0
+    } else {
+        // Pulse mode.
+        // TODO: Do nothing? How long is a few clock cycles? Will the BIOS see this? Probably not...
+        log::warn!("Pulse IRQ mode not implemented properly?"); 
+        true
+    };
 
     if raise_irq {
-        use crate::system::intc::types::Line;
-
-        let irq_line = match timer_id {
+        state.intc.stat.assert_line(match timer_id {
             0 => Line::Tmr0,
             1 => Line::Tmr1,
             2 => Line::Tmr2,
             _ => unreachable!(),
-        };
-
-        let stat = &state.intc.stat;
-        stat.assert_line(irq_line);
-
+        });
         log::debug!("Raised INTC IRQ for timer {}", timer_id);
     }
 }

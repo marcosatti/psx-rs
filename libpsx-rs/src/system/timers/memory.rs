@@ -1,6 +1,6 @@
 use crate::system::{
     bus::types::*,
-    timers::controllers::resource::*,
+    timers::controllers::timer::*,
     types::State,
 };
 

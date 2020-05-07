@@ -2,7 +2,7 @@ use crate::system::{
     timers::{
         constants::*,
         controllers::{
-            irq::*,
+            interrupt::*,
             timer::*,
         },
         types::*,
@@ -11,58 +11,44 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn handle_count(state: &State, timers_state: &mut ControllerState, timer_id: usize, duration: Duration) {
+pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
-    let timer_state = get_state(timers_state, timer_id);
-
-    timer_state.current_elapsed += duration;
-    let delta_elapsed = timer_state.current_elapsed - timer_state.acknowledged_elapsed;
-    let ticks = calc_ticks(timer_state.clock_source, delta_elapsed);
-    timer_state.acknowledged_elapsed = timer_state.current_elapsed - ticks.1;
-
-    for _ in 0..ticks.0 {
-        let value = count.read_u32() + 1;
-        count.write_u32(value);
-        let irq_type = handle_count_reset(state, timer_id);
-        handle_irq_trigger(state, timers_state, timer_id, irq_type);
-    }
-}
-
-pub fn handle_count_clear(state: &State, timer_id: usize) {
-    let count = get_count(state, timer_id);
-    count.write_u32(0);
-}
-
-fn handle_count_reset(state: &State, timer_id: usize) -> IrqType {
+    let target = get_target(state, timer_id);
     let mode = get_mode(state, timer_id);
-    let count = get_count(state, timer_id);
-    let count_value = count.read_u32() & 0xFFFF;
 
-    let mut irq_type = IrqType::None;
-
-    match mode.register.read_bitfield(MODE_RESET) {
-        0 => {
-            // When counter equals 0xFFFF.
-            if count_value == (std::u16::MAX as u32) {
-                handle_count_clear(state, timer_id);
-                mode.register.write_bitfield(MODE_OVERFLOW_HIT, 1);
-                irq_type = IrqType::Overflow;
-            }
-        },
-        1 => {
-            // When counter equals target.
-            let target = get_target(state, timer_id);
-            let target_value = target.read_u32() & 0xFFFF;
-            if count_value == target_value {
-                handle_count_clear(state, timer_id);
-                mode.register.write_bitfield(MODE_TARGET_HIT, 0);
-                irq_type = IrqType::Target;
-            }
-        },
-        _ => unreachable!(),
+    let ticks = {
+        let timer_state = get_state(controller_state, timer_id);
+        timer_state.current_elapsed += duration;
+        let delta_elapsed = timer_state.current_elapsed - timer_state.acknowledged_elapsed;
+        let ticks = calc_ticks(timer_state.clock_source, delta_elapsed);
+        timer_state.acknowledged_elapsed = timer_state.current_elapsed - ticks.1;
+        ticks.0
     };
 
-    irq_type
+    let reset_on_target = get_state(controller_state, timer_id).reset_on_target;
+    let target_value = target.read_u32();
+    let mut count_value = count.read_u32();
+
+    for _ in 0..ticks {
+        count_value = (count_value + 1) & 0xFFFF;
+
+        // Check if timer has reached a reset/IRQ condition.
+        if reset_on_target {
+            if count_value == target_value {
+                count_value = 0;
+                mode.update(|value| MODE_TARGET_HIT.insert_into(value, 1));
+                handle_irq_trigger(state, controller_state, timer_id, IrqType::Target);
+            }
+        } else {
+            if count_value == 0xFFFF {
+                count_value = 0;
+                mode.update(|value| MODE_OVERFLOW_HIT.insert_into(value, 1));
+                handle_irq_trigger(state, controller_state, timer_id, IrqType::Overflow);
+            }
+        }
+    }
+
+    count.write_u32(count_value);
 }
 
 /// Given the clock source and difference in elapsed durations,

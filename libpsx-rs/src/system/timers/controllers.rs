@@ -2,7 +2,6 @@ pub mod count;
 pub mod debug;
 pub mod interrupt;
 pub mod timer;
-pub mod resource;
 pub mod register;
 
 use crate::system::{
@@ -30,8 +29,6 @@ fn run_time(state: &State, duration: Duration) {
     for timer_id in 0..3 {
         process_mode(state, controller_state, timer_id);
 
-        handle_mode_write(state, timers_state, i);
-        handle_mode_read(state, i);
-        handle_count(state, timers_state, i, duration);
+        handle_count(state, controller_state, timer_id, duration);
     }
 }

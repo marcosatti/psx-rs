@@ -66,8 +66,8 @@ pub fn trace_dmac(state: &mut State, only_enabled: bool) {
     crate::system::dmac::controllers::debug::trace_dmac(state, only_enabled);
 }
 
-pub fn trace_timers(state: &mut State) {
-    crate::system::timers::controllers::debug::trace_timers(state);
+pub fn trace_timers(_state: &mut State) {
+    //crate::system::timers::controllers::debug::trace_timers(state);
 }
 
 pub fn trace_cdrom(state: &State) {
