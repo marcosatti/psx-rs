@@ -1,7 +1,6 @@
 pub mod count;
 pub mod debug;
-pub mod irq;
-pub mod mode;
+pub mod interrupt;
 pub mod timer;
 pub mod resource;
 pub mod register;
@@ -9,7 +8,6 @@ pub mod register;
 use crate::system::{
     timers::controllers::{
         count::*,
-        mode::*,
         register::*,
     },
     types::{

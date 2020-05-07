@@ -21,7 +21,12 @@ pub struct TimerState {
     pub clock_source: ClockSource,
     pub current_elapsed: Duration,
     pub acknowledged_elapsed: Duration,
+    pub reset_on_target: bool,
     pub irq_raised: bool,
+    pub irq_on_target: bool,
+    pub irq_on_overflow: bool,
+    pub irq_toggle: bool,
+    pub oneshot_mode: bool,
 }
 
 impl TimerState {
@@ -30,7 +35,12 @@ impl TimerState {
             clock_source: ClockSource::System,
             current_elapsed: Duration::from_secs(0),
             acknowledged_elapsed: Duration::from_secs(0),
+            reset_on_target: false,
             irq_raised: false,
+            irq_on_target: false,
+            irq_on_overflow: false,
+            irq_toggle: false,
+            oneshot_mode: false,
         }
     }
 }
