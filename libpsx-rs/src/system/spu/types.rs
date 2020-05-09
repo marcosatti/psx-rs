@@ -1,284 +1,33 @@
+mod dac;
+mod transfer;
+
 use crate::types::{
-    bitfield::Bitfield,
     fifo::{
         debug::DebugState,
         Fifo,
     },
     memory::*,
-    stereo::*,
 };
 use parking_lot::Mutex;
-use std::{
-    sync::atomic::{
-        AtomicBool,
-        Ordering,
-    },
-    time::Duration,
-};
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum TransferMode {
-    Stop,
-    ManualWrite,
-    DmaWrite,
-    DmaRead,
-}
-
-#[derive(Debug)]
-pub enum AdsrMode {
-    Attack,
-    Decay,
-    Sustain,
-    Release,
-}
-
-pub struct DacState {
-    pub current_duration: Duration,
-    pub voice0_state: PlayState,
-    pub voice1_state: PlayState,
-    pub voice2_state: PlayState,
-    pub voice3_state: PlayState,
-    pub voice4_state: PlayState,
-    pub voice5_state: PlayState,
-    pub voice6_state: PlayState,
-    pub voice7_state: PlayState,
-    pub voice8_state: PlayState,
-    pub voice9_state: PlayState,
-    pub voice10_state: PlayState,
-    pub voice11_state: PlayState,
-    pub voice12_state: PlayState,
-    pub voice13_state: PlayState,
-    pub voice14_state: PlayState,
-    pub voice15_state: PlayState,
-    pub voice16_state: PlayState,
-    pub voice17_state: PlayState,
-    pub voice18_state: PlayState,
-    pub voice19_state: PlayState,
-    pub voice20_state: PlayState,
-    pub voice21_state: PlayState,
-    pub voice22_state: PlayState,
-    pub voice23_state: PlayState,
-}
-
-impl DacState {
-    pub fn new() -> DacState {
-        DacState {
-            current_duration: Duration::from_secs(0),
-            voice0_state: PlayState::new(),
-            voice1_state: PlayState::new(),
-            voice2_state: PlayState::new(),
-            voice3_state: PlayState::new(),
-            voice4_state: PlayState::new(),
-            voice5_state: PlayState::new(),
-            voice6_state: PlayState::new(),
-            voice7_state: PlayState::new(),
-            voice8_state: PlayState::new(),
-            voice9_state: PlayState::new(),
-            voice10_state: PlayState::new(),
-            voice11_state: PlayState::new(),
-            voice12_state: PlayState::new(),
-            voice13_state: PlayState::new(),
-            voice14_state: PlayState::new(),
-            voice15_state: PlayState::new(),
-            voice16_state: PlayState::new(),
-            voice17_state: PlayState::new(),
-            voice18_state: PlayState::new(),
-            voice19_state: PlayState::new(),
-            voice20_state: PlayState::new(),
-            voice21_state: PlayState::new(),
-            voice22_state: PlayState::new(),
-            voice23_state: PlayState::new(),
-        }
-    }
-}
-
-pub struct DataTransferAddress {
-    pub register: B16LevelRegister,
-    pub write_latch: AtomicBool,
-}
-
-impl DataTransferAddress {
-    pub fn new() -> DataTransferAddress {
-        DataTransferAddress {
-            register: B16LevelRegister::new(),
-            write_latch: AtomicBool::new(false),
-        }
-    }
-
-    pub fn read_u16(&self) -> u16 {
-        self.register.read_u16()
-    }
-
-    pub fn write_u16(&self, value: u16) {
-        assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
-        self.write_latch.store(true, Ordering::Release);
-        self.register.write_u16(value)
-    }
-}
-
-pub struct VoiceKey {
-    pub register: B32LevelRegister,
-    pub write_latch: Mutex<[bool; 32]>,
-}
-
-impl VoiceKey {
-    pub fn new() -> VoiceKey {
-        VoiceKey {
-            register: B32LevelRegister::new(),
-            write_latch: Mutex::new([false; 32]),
-        }
-    }
-
-    pub fn read_u16(&self, offset: u32) -> u16 {
-        self.register.read_u16(offset)
-    }
-
-    pub fn write_u16(&self, offset: u32, value: u16) {
-        let write_latch = &mut self.write_latch.lock();
-        self.register.write_u16(offset, value);
-        for i in 0..16 {
-            let write_latch_offset = ((offset * 8) + (i as u32)) as usize;
-            write_latch[write_latch_offset] = Bitfield::new(i, 1).extract_from(value) != 0;
-        }
-    }
-
-    pub fn read_u32(&self) -> u32 {
-        self.register.read_u32()
-    }
-
-    pub fn write_u32(&self, value: u32) {
-        let write_latch = &mut self.write_latch.lock();
-        self.register.write_u32(value);
-        for i in 0..32 {
-            write_latch[i] = Bitfield::new(i, 1).extract_from(value) != 0;
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct AdpcmParams {
-    pub filter: usize,
-    pub shift: usize,
-    pub loop_end: bool,
-    pub loop_repeat: bool,
-    pub loop_start: bool,
-}
-
-impl AdpcmParams {
-    pub fn new() -> AdpcmParams {
-        AdpcmParams {
-            filter: 0,
-            shift: 0,
-            loop_end: false,
-            loop_repeat: false,
-            loop_start: false,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct AdpcmState {
-    /// Sample memory for decoding
-    pub old_sample: i16,
-    pub older_sample: i16,
-    /// Decoded ADPCM header parameters
-    pub params: AdpcmParams,
-    /// Decoded raw ADPCM samples
-    pub sample_buffer: Option<[i16; 28]>,
-}
-
-impl AdpcmState {
-    pub fn new() -> AdpcmState {
-        AdpcmState {
-            old_sample: 0,
-            older_sample: 0,
-            params: AdpcmParams::new(),
-            sample_buffer: None,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct PlayState {
-    /// Voice (ADPCM) decoding address
-    pub current_address: usize,
-    /// ADPCM decoding state
-    pub adpcm_state: AdpcmState,
-    /// Voice sample/pitch counter
-    /// Explanation (docs were a bit confusing):
-    /// This is used as an interpolation counter; the SPU always plays samples at 44100 Hz,
-    /// but needs to interpolate between samples when the sample rate register is not 0x1000
-    /// (44100 Hz). The upper 12+ bits are used as the ADPCM sample index, while the lower
-    /// 0-11 bits are used as an interpolation index. Notice that when the sample rate is
-    /// 0x1000 (this is added to the pitch counter on every tick), the ADPCM index is always
-    /// incrementing by 1, and the interpolation index by 0 (ie: perfectly in sync with
-    /// samples). When the sample rate is, say, 0x800 (22050 Hz), then sample 0 is used on
-    /// tick 0 and 1, with interpolation being used on tick 1.
-    pub pitch_counter_base: usize,
-    pub pitch_counter_interp: usize,
-    /// Sample memory
-    /// These samples are used in the interpolation process described above. As I understand
-    /// it, these are the actual full ("base") samples used on each tick by the 12+ bits part
-    /// of the sample counter. This is different to the ADPCM decoding sample memory, which
-    /// is only related to the decoding process.
-    pub old_sample: i16,
-    pub older_sample: i16,
-    pub oldest_sample: i16,
-    /// PCM sample buffer
-    /// This is filled with the output of the SPU after all processing is done.
-    pub sample_buffer: Vec<Stereo>,
-    /// ADSR mode (attack, decay, sustain, release)
-    pub adsr_mode: AdsrMode,
-    /// ADSR volume
-    /// Internally, it is described as a normalized scaling factor. This is to support delay
-    /// cycles without losing accuracy / increasing emulator complexity.
-    pub adsr_current_volume: f64,
-}
-
-impl PlayState {
-    pub fn new() -> PlayState {
-        PlayState {
-            current_address: 0x1000,
-            adpcm_state: AdpcmState::new(),
-            pitch_counter_base: 0,
-            pitch_counter_interp: 0,
-            old_sample: 0,
-            older_sample: 0,
-            oldest_sample: 0,
-            sample_buffer: Vec::new(),
-            adsr_mode: AdsrMode::Attack,
-            adsr_current_volume: 0.0,
-        }
-    }
-
-    pub fn reset(&mut self, current_address: usize) {
-        self.current_address = current_address;
-        self.adpcm_state = AdpcmState::new();
-        self.pitch_counter_base = 0;
-        self.pitch_counter_interp = 0;
-        self.old_sample = 0;
-        self.older_sample = 0;
-        self.oldest_sample = 0;
-        self.sample_buffer.clear();
-        self.adsr_mode = AdsrMode::Attack;
-        self.adsr_current_volume = 0.0;
-    }
-}
+pub use dac::*;
+pub use transfer::*;
 
 pub struct ControllerState {
+    pub enabled: bool,
+    pub muted: bool,
+    pub transfer_state: TransferState,
+    pub dac_state: DacState,
     pub memory: Vec<u8>,
-    pub current_transfer_mode: TransferMode,
-    pub current_transfer_address: u32,
-    pub dac: DacState,
 }
 
 impl ControllerState {
     pub fn new() -> ControllerState {
         ControllerState {
+            enabled: false,
+            muted: false,
+            transfer_state: TransferState::new(),
+            dac_state: DacState::new(),
             memory: vec![0; 0x8_0000],
-            current_transfer_mode: TransferMode::Stop,
-            current_transfer_address: 0,
-            dac: DacState::new(),
         }
     }
 }
@@ -288,8 +37,8 @@ pub struct State {
     pub main_volume_right: B16LevelRegister,
     pub reverb_volume: B32LevelRegister,
 
-    pub voice_key_on: VoiceKey,
-    pub voice_key_off: VoiceKey,
+    pub voice_key_on: B32EdgeRegister,
+    pub voice_key_off: B32EdgeRegister,
     pub voice_channel_fm: B32LevelRegister,
     pub voice_channel_noise: B32LevelRegister,
     pub voice_channel_reverb: B32LevelRegister,
@@ -298,8 +47,9 @@ pub struct State {
     pub unknown_0: B16LevelRegister,
     pub reverb_start_address: B16LevelRegister,
     pub irq_address: B16LevelRegister,
-    pub data_transfer_address: DataTransferAddress,
-    pub control: B16LevelRegister,
+    pub control: B16EdgeRegister,
+    pub data_transfer_address: B16EdgeRegister,
+    pub data_fifo: Fifo<u16>,
     pub data_transfer_control: B16LevelRegister,
     pub stat: B16LevelRegister,
     pub cd_volume: B32LevelRegister,
@@ -307,6 +57,8 @@ pub struct State {
     pub current_volume_left: B16LevelRegister,
     pub current_volume_right: B16LevelRegister,
     pub unknown_1: B32LevelRegister,
+    
+    pub controller_state: Mutex<ControllerState>,
 
     pub dapf1: B16LevelRegister,
     pub dapf2: B16LevelRegister,
@@ -521,10 +273,6 @@ pub struct State {
     pub voice23_adsr: B32LevelRegister,
     pub voice23_cvol: B16LevelRegister,
     pub voice23_raddr: B16LevelRegister,
-
-    pub data_fifo: Fifo<u16>,
-
-    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
@@ -533,8 +281,8 @@ impl State {
             main_volume_left: B16LevelRegister::new(),
             main_volume_right: B16LevelRegister::new(),
             reverb_volume: B32LevelRegister::new(),
-            voice_key_on: VoiceKey::new(),
-            voice_key_off: VoiceKey::new(),
+            voice_key_on: B32EdgeRegister::new(),
+            voice_key_off: B32EdgeRegister::new(),
             voice_channel_fm: B32LevelRegister::new(),
             voice_channel_noise: B32LevelRegister::new(),
             voice_channel_reverb: B32LevelRegister::new(),
@@ -542,8 +290,8 @@ impl State {
             unknown_0: B16LevelRegister::new(),
             reverb_start_address: B16LevelRegister::new(),
             irq_address: B16LevelRegister::new(),
-            data_transfer_address: DataTransferAddress::new(),
-            control: B16LevelRegister::new(),
+            data_transfer_address: B16EdgeRegister::new(),
+            control: B16EdgeRegister::new(),
             data_transfer_control: B16LevelRegister::new(),
             stat: B16LevelRegister::new(),
             cd_volume: B32LevelRegister::new(),

@@ -3,7 +3,10 @@
 //! Errors are returned when there are no new values to be read, or when there is an existing value that has not been acknowledged yet.
 
 use parking_lot::Mutex;
-use super::{B32Register_};
+use super::{
+    B32Register_,
+    B16Register_,
+};
 
 struct EdgeRegister<RegisterTy> {
     memory: RegisterTy,
@@ -103,4 +106,79 @@ unsafe impl Send for B32EdgeRegister {
 }
 
 unsafe impl Sync for B32EdgeRegister {
+}
+
+pub struct B16EdgeRegister(Mutex<EdgeRegister<B16Register_>>);
+
+impl B16EdgeRegister {
+    pub fn new() -> B16EdgeRegister {
+        B16EdgeRegister(
+            Mutex::new(EdgeRegister {
+                memory: B16Register_ { v16: 0 }, 
+                latch_status: None,
+            }),
+        )
+    }
+
+    fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()> 
+    where 
+        F: FnOnce(&mut B16Register_),
+    {
+        let data = &mut self.0.lock();
+
+        if data.latch_status.is_some() {
+            return Err(());
+        }
+        
+        data.latch_status = Some(latch_kind);
+        operation(&mut data.memory);
+        Ok(())
+    }
+
+    pub fn read_u8(&self, offset: u32) -> Result<u8, ()> {
+        let mut value = 0;
+        self.try_op(LatchKind::Read, |r| unsafe { value = r.v8[offset as usize]; })?;
+        Ok(value)
+    }
+
+    pub fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
+        self.try_op( LatchKind::Write, |r| unsafe { r.v8[offset as usize] = value; })?;
+        Ok(())
+    }
+
+    pub fn read_u16(&self) -> Result<u16, ()> {
+        let mut value = 0;
+        self.try_op(LatchKind::Read, |r| unsafe { value = r.v16; })?;
+        Ok(value)
+    }
+
+    pub fn write_u16(&self, value: u16) -> Result<(), ()> {
+        self.try_op(LatchKind::Write, |r| { r.v16 = value; })?;
+        Ok(())
+    }
+
+    pub fn acknowledge<F>(&self, operation: F) 
+    where
+        F: FnOnce(u16, LatchKind) -> u16, 
+    {
+        let data = &mut self.0.lock();
+        if let Some(latch_kind) = data.latch_status {
+            data.memory.v16 = operation(unsafe { data.memory.v16 }, latch_kind);
+            data.latch_status = None;
+        }
+    }
+
+    pub fn update<F>(&self, operation: F)
+    where
+        F: FnOnce(u16) -> u16, 
+    {
+        let data = &mut self.0.lock();
+        data.memory.v16 = operation(unsafe { data.memory.v16 });
+    }
+}
+
+unsafe impl Send for B16EdgeRegister {
+}
+
+unsafe impl Sync for B16EdgeRegister {
 }

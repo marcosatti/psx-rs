@@ -51,8 +51,8 @@ pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new
 pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_BIOS_CALL_TRACING: bool = false;
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1800;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1810;
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1D88;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1DAF;
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 pub static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
@@ -180,7 +180,7 @@ pub fn track_memory_read_pending<T>(state: &ControllerState, physical_address: u
         return;
     }
 
-    if false {
+    if true {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
@@ -218,7 +218,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerState, p
         return;
     }
 
-    if false {
+    if true {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();

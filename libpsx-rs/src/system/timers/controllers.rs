@@ -27,8 +27,8 @@ fn run_time(state: &State, duration: Duration) {
     let controller_state = &mut state.timers.controller_state.lock();
 
     for timer_id in 0..3 {
-        process_mode(state, controller_state, timer_id);
+        handle_mode(state, controller_state, timer_id);
 
-        handle_count(state, controller_state, timer_id, duration);
+        handle_counter(state, controller_state, timer_id, duration);
     }
 }

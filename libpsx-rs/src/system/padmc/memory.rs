@@ -6,7 +6,7 @@ use crate::system::{
 pub fn padmc1040_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);
     Ok(state.padmc.rx_fifo.read_one().unwrap_or_else(|_| {
-        log::warn!("PADMC RX FIFO empty - returning 0xFF");
+        //log::warn!("PADMC RX FIFO empty - returning 0xFF");
         0xFF
     }))
 }

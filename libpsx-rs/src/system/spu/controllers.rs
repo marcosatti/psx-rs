@@ -1,13 +1,7 @@
-pub mod adpcm;
-pub mod adsr;
 pub mod backend_dispatch;
 pub mod dac;
-pub mod interpolation;
-pub mod interrupt;
-pub mod sound;
 pub mod transfer;
-pub mod voice;
-pub mod volume;
+pub mod register;
 
 use crate::{
     audio::AudioBackend,
@@ -16,11 +10,9 @@ use crate::{
             constants::*,
             controllers::{
                 dac::*,
-                interrupt::*,
-                sound::*,
                 transfer::*,
+                register::*,
             },
-            types::ControllerState,
         },
         types::{
             ControllerContext,
@@ -30,6 +22,7 @@ use crate::{
     },
 };
 use std::time::Duration;
+use std::cmp::max;
 
 pub fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -38,50 +31,35 @@ pub fn run(context: &ControllerContext, event: Event) {
 }
 
 fn run_time(state: &State, audio_backend: &AudioBackend, duration: Duration) {
-    {
-        let control = &state.spu.control;
+    let controller_state = &mut state.spu.controller_state.lock();
 
-        if control.read_bitfield(CONTROL_ENABLE) == 0 {
-            return;
-        }
+    if state.spu.voice_channel_fm.read_u32() > 0 {
+        unimplemented!("Pitch modulation not implemented");
     }
 
-    let spu_state = &mut state.spu.controller_state.lock();
-
-    {
-        let ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
-
-        for _ in 0..ticks {
-            tick(state, spu_state);
-        }
+    if state.spu.voice_channel_noise.read_u32() > 0 {
+        unimplemented!("Noise generation not implemented");
     }
 
-    {
-        handle_current_duration_tick(spu_state, duration);
-        while handle_current_duration_update(spu_state) {
-            generate_sound(state, spu_state, audio_backend);
+    let ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
+    let dac_ratio = max(1, (CLOCK_SPEED / SAMPLE_RATE) as i64);
+
+    for tick in 0..ticks {
+        handle_control(state, controller_state);
+
+        if !controller_state.enabled {
+            continue;
         }
-    }
-}
 
-fn tick(state: &State, spu_state: &mut ControllerState) {
-    handle_current_volume(state);
-    handle_transfer(state, spu_state);
-    handle_interrupt_check(state);
-}
+        handle_data_transfer_address(state, controller_state);
+        handle_transfer(state, controller_state);
+        handle_key_on(state, controller_state);
+        handle_key_off(state, controller_state);
 
-fn handle_current_duration_tick(state: &mut ControllerState, duration: Duration) {
-    let current_duration = &mut state.dac.current_duration;
-    *current_duration += duration;
-}
-
-fn handle_current_duration_update(state: &mut ControllerState) -> bool {
-    let current_duration = &mut state.dac.current_duration;
-
-    if *current_duration >= SAMPLE_RATE_PERIOD {
-        *current_duration -= SAMPLE_RATE_PERIOD;
-        true
-    } else {
-        false
+        if tick % dac_ratio == 0 {
+            for voice_id in 0..24 {
+                handle_dac(state, controller_state, audio_backend, voice_id);
+            }
+        }
     }
 }

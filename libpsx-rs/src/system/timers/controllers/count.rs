@@ -11,7 +11,7 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
+pub fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
     let target = get_target(state, timer_id);
     let mode = get_mode(state, timer_id);
@@ -30,7 +30,7 @@ pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer
     let mut count_value = count.read_u32();
 
     for _ in 0..ticks {
-        count_value = (count_value + 1) & 0xFFFF;
+        count_value = (count_value + 1) & (std::u16::MAX as u32);
 
         // Check if timer has reached a reset/IRQ condition.
         if reset_on_target {
@@ -40,15 +40,15 @@ pub fn handle_count(state: &State, controller_state: &mut ControllerState, timer
                 handle_irq_trigger(state, controller_state, timer_id, IrqType::Target);
             }
         } else {
-            if count_value == 0xFFFF {
+            if count_value == (std::u16::MAX as u32) {
                 count_value = 0;
                 mode.update(|value| MODE_OVERFLOW_HIT.insert_into(value, 1));
                 handle_irq_trigger(state, controller_state, timer_id, IrqType::Overflow);
             }
         }
-    }
 
-    count.write_u32(count_value);
+        count.write_u32(count_value);
+    }
 }
 
 /// Given the clock source and difference in elapsed durations,

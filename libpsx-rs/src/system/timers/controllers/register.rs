@@ -8,7 +8,7 @@ use crate::{
     types::memory::LatchKind,
 };
 
-pub fn process_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
+pub fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
     let mut write_fn = |value| {
         // Clear count register.
         get_count(state, timer_id).write_u32(0);

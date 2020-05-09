@@ -29,7 +29,7 @@ pub fn handle_irq_trigger(state: &State, controller_state: &mut ControllerState,
     }
 }
 
-pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
+fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
     let mode = get_mode(state, timer_id);
     let timer_state = get_state(controller_state, timer_id);
 
