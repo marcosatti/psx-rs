@@ -35,6 +35,7 @@ use log::debug;
 use std::{
     intrinsics::unlikely,
     time::Duration,
+    cmp::max,
 };
 
 pub fn run(context: &ControllerContext, event: Event) {
@@ -56,7 +57,7 @@ fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
         cp2_state,
     };
 
-    let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    let mut ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
 
     while ticks > 0 {
         let cycles = tick(&mut context);
@@ -103,13 +104,13 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
     debug::trace_state(context.state, context.r3000_state, context.cp0_state);
 
     let result = fn_ptr(context, inst);
+    
+    debug::trace_hazard(result);
 
     if unlikely(result.is_err()) {
         // "Pipeline" hazard, go back to previous state, instruction was not performed.
         context.r3000_state.branch_delay.back();
         context.r3000_state.pc.write_u32(pc_va);
-
-        debug::trace_hazard(result.unwrap_err());
     }
 
     cycles as i64

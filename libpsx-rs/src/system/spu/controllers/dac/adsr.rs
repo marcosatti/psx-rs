@@ -15,40 +15,39 @@ use std::cmp::{
 };
 
 pub fn handle_adsr_envelope(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
-    let play_state = get_voice_state(controller_state, voice_id);
+    let voice_state = get_voice_state(controller_state, voice_id);
 
     // Don't process anything if waiting.
-    if play_state.adsr_state.wait_cycles > 0 {
-        play_state.adsr_state.wait_cycles -= 1;
+    if voice_state.adsr_state.wait_cycles > 0 {
+        voice_state.adsr_state.wait_cycles -= 1;
         return;
     }
 
     // Apply the next waiting ADSR volume and write to register.
-    play_state.adsr_state.current_volume = play_state.adsr_state.next_volume;
-    get_cvol(state, voice_id).write_u16(play_state.adsr_state.current_volume as u16);
+    voice_state.adsr_state.current_volume = voice_state.adsr_state.next_volume;
+    get_cvol(state, voice_id).write_u16(voice_state.adsr_state.current_volume as u16);
 
     // Calculate the next ADSR volume & wait cycles.
     let adsr_value = get_adsr(state, voice_id).read_u32();
-    let params = extract_phase_params(adsr_value, play_state.adsr_state.phase);
+    let params = extract_phase_params(adsr_value, voice_state.adsr_state.phase);
     let sustain_level = extract_adsr_sustain_level(adsr_value) as isize;
-    let (delta_volume, wait_cycles) = calculate_envelope_delta(params, play_state.adsr_state.current_volume);
-    let mut next_volume = play_state.adsr_state.current_volume as isize + delta_volume as isize;
+    let (delta_volume, wait_cycles) = calculate_envelope_delta(params, voice_state.adsr_state.current_volume);
+    let mut next_volume = voice_state.adsr_state.current_volume as isize + delta_volume as isize;
 
-    match play_state.adsr_state.phase {
+    match voice_state.adsr_state.phase {
         AdsrPhase::Attack => {
             next_volume = min(next_volume, std::i16::MAX as isize);
             if next_volume == std::i16::MAX as isize {
-                play_state.adsr_state.phase = AdsrPhase::Decay;
+                voice_state.adsr_state.phase = AdsrPhase::Decay;
             }
         },
         AdsrPhase::Decay => {
             next_volume = max(next_volume, sustain_level);
             if next_volume == sustain_level {
-                play_state.adsr_state.phase = AdsrPhase::Sustain;
+                voice_state.adsr_state.phase = AdsrPhase::Sustain;
             }
         },
         AdsrPhase::Sustain => {
-            next_volume = clamp(next_volume, 0, std::i16::MAX as isize);
             // The change to release phase happens when key off is triggered.
         },
         AdsrPhase::Release => {
@@ -57,8 +56,11 @@ pub fn handle_adsr_envelope(state: &State, controller_state: &mut ControllerStat
         },
     }
 
-    play_state.adsr_state.next_volume = next_volume as i16;
-    play_state.adsr_state.wait_cycles = wait_cycles;
+    // Envelope must always stay between 0 and MAX.
+    next_volume = clamp(next_volume, 0, std::i16::MAX as isize);
+
+    voice_state.adsr_state.next_volume = next_volume as i16;
+    voice_state.adsr_state.wait_cycles = wait_cycles;
 }
 
 fn extract_adsr_sustain_level(adsr_value: u32) -> i16 {
@@ -129,7 +131,7 @@ fn calculate_envelope_delta(params: AdsrPhaseParams, current_level: i16) -> (i16
         }
     }
 
-    step = clamp(step, 0, std::i16::MAX as isize);
+    step = clamp(step, std::i16::MIN as isize, std::i16::MAX as isize);
 
     (step as i16, wait_cycles)
 }

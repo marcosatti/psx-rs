@@ -19,13 +19,11 @@ pub fn handle_control(state: &State, controller_state: &mut ControllerState) {
             _ => unreachable!("Invalid transfer mode"),
         };
         
-        controller_state.transfer_state.current_transfer_mode = transfer_mode;
+        controller_state.transfer_state.current_mode = transfer_mode;
         state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, bool_to_flag(transfer_mode != TransferMode::Stop) as u16);
 
         let header = Bitfield::new(0, 5);
         state.spu.stat.write_bitfield(header, header.extract_from(value));
-
-        log::debug!("Acknowledged CTRL write");
     };
 
     state.spu.control.acknowledge(|value, latch_kind| {
@@ -38,8 +36,7 @@ pub fn handle_control(state: &State, controller_state: &mut ControllerState) {
 
 pub fn handle_data_transfer_address(state: &State, controller_state: &mut ControllerState) {
     let mut write_fn = |value| {
-        controller_state.transfer_state.current_transfer_address = value as usize * 8;
-        log::debug!("Acknowledged DTA write");
+        controller_state.transfer_state.current_address = value as usize * 8;
     };
 
     state.spu.data_transfer_address.acknowledge(|value, latch_kind| {
@@ -66,7 +63,6 @@ pub fn handle_key_on(state: &State, controller_state: &mut ControllerState) {
                 voice_state.current_address = start_address;
                 *get_voice_state(controller_state, voice_id) = voice_state;
                 state.spu.voice_channel_status.write_bitfield(voice_bitfield, 0);
-                log::debug!("Acknowledged KEYON write");
             }
         }
     };
@@ -74,7 +70,7 @@ pub fn handle_key_on(state: &State, controller_state: &mut ControllerState) {
     state.spu.voice_key_on.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => {
-                log::warn!("Read from KeyOn occurred, but there is no handler");
+                //log::warn!("Read from KEYON occurred, but there is no handler (value 0x{:08X})", value);
                 value
             },
             LatchKind::Write => { write_fn(value); value },
@@ -92,15 +88,13 @@ pub fn handle_key_off(state: &State, controller_state: &mut ControllerState) {
             if voice_bitfield.extract_from(value) > 0 {
                 get_voice_state(controller_state, voice_id).adsr_state.phase = AdsrPhase::Release;
             }
-
-            log::debug!("Acknowledged KEYOFF write");
         }
     };
 
     state.spu.voice_key_off.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => {
-                log::warn!("Read from KeyOff occurred, but there is no handler");
+                //log::warn!("Read from KEYOFF occurred, but there is no handler (value 0x{:08X})", value);
                 value
             },
             LatchKind::Write => { write_fn(value); value },

@@ -21,8 +21,8 @@ pub fn apply_sample_volume(state: &State, controller_state: &mut ControllerState
 }
 
 fn transform_voice_adsr_volume(controller_state: &mut ControllerState, voice_id: usize, adpcm_sample: i16) -> i16 {
-    let play_state = get_voice_state(controller_state, voice_id);
-    let adsr_volume_normalized = (play_state.adsr_state.current_volume / std::i16::MAX) as f64;
+    let voice_state = get_voice_state(controller_state, voice_id);
+    let adsr_volume_normalized = voice_state.adsr_state.current_volume as f64 / std::i16::MAX as f64;
     (adpcm_sample as f64 * adsr_volume_normalized) as i16
 }
 

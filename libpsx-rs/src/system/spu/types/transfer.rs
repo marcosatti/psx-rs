@@ -7,15 +7,15 @@ pub enum TransferMode {
 }
 
 pub struct TransferState {
-    pub current_transfer_mode: TransferMode,
-    pub current_transfer_address: usize,
+    pub current_mode: TransferMode,
+    pub current_address: usize,
 }
 
 impl TransferState {
     pub fn new() -> TransferState {
         TransferState { 
-            current_transfer_mode: TransferMode::Stop,
-            current_transfer_address: 0,
+            current_mode: TransferMode::Stop,
+            current_address: 0,
         }
     }
 }

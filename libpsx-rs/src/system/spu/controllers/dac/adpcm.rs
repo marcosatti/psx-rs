@@ -9,50 +9,45 @@ use num_traits::clamp;
 
 pub fn handle_adpcm_block(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
     let decoding_address = {
-        let play_state = get_voice_state(controller_state, voice_id);
-        let mut current_address = play_state.current_address;
-        let decoded_address = play_state.adpcm_state.decoded_address;
-        
-        // TODO: must be aligned to 8-byte boundaries? Which is a bit weird, condsidering a block is 16-bytes...
-        // Start/repeat registers are anyway... am I missing something here?
-        assert_eq!(current_address % 8, 0);
-        assert_eq!(decoded_address % 8, 0);
+        let voice_state = get_voice_state(controller_state, voice_id);
+        let mut current_address = voice_state.current_address;
+        let decoded_address = voice_state.adpcm_state.decoded_address;
 
         if current_address == decoded_address {
             return;
         }
 
-        if play_state.adpcm_state.copy_repeat_address {
-            current_address = get_raddr(state, voice_id).read_u16() as usize * 8;
-            play_state.current_address = current_address;
-            play_state.adpcm_state.copy_repeat_address = false;
+        if voice_state.adpcm_state.copy_repeat_address {
+            current_address = (get_raddr(state, voice_id).read_u16() as usize * 8) & 0x7FFFF;
+            voice_state.current_address = current_address;
+            voice_state.adpcm_state.copy_repeat_address = false;
         }
 
         current_address
     };
-
+    
     let block = read_block(&controller_state.memory, decoding_address);
-    let play_state = get_voice_state(controller_state, voice_id);
+    let voice_state = get_voice_state(controller_state, voice_id);
     let params = decode_header(block.header);
-    let sample_buffer = decode_all_frames(block.samples, params, &mut play_state.adpcm_state.old_sample, &mut play_state.adpcm_state.older_sample);
-    play_state.adpcm_state.decoded_address = decoding_address;
-    play_state.adpcm_state.sample_buffer = sample_buffer;
+    let sample_buffer = decode_all_frames(block.samples, params, &mut voice_state.adpcm_state.old_sample, &mut voice_state.adpcm_state.older_sample);
+    voice_state.adpcm_state.decoded_address = decoding_address;
+    voice_state.adpcm_state.sample_buffer = sample_buffer;
 
     if params.loop_start {
         get_raddr(state, voice_id).write_u16((decoding_address / 8) as u16);
     }
 
     if params.loop_end {
-        play_state.adpcm_state.copy_repeat_address = true;
+        voice_state.adpcm_state.copy_repeat_address = true;
 
         state.spu.voice_channel_status.write_bitfield(Bitfield::new(voice_id, 1), 1);
 
         if !params.loop_repeat {
             // Set ADSR to release and mute immediately.
-            play_state.adsr_state.phase = AdsrPhase::Release;
-            play_state.adsr_state.current_volume = 0;
-            play_state.adsr_state.next_volume = 0;
-            play_state.adsr_state.wait_cycles = 0;
+            voice_state.adsr_state.phase = AdsrPhase::Release;
+            voice_state.adsr_state.current_volume = 0;
+            voice_state.adsr_state.next_volume = 0;
+            voice_state.adsr_state.wait_cycles = 0;
         }
     }
 }

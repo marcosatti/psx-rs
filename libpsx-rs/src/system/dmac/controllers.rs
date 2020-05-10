@@ -20,6 +20,7 @@ use crate::system::{
 };
 use std::{
     cmp::min,
+    cmp::max,
     sync::atomic::Ordering,
     time::Duration,
 };
@@ -44,7 +45,7 @@ fn run_time(state: &State, duration: Duration) {
 
     handle_bus_lock(state, dmac_state);
 
-    let mut ticks = (CLOCK_SPEED * duration.as_secs_f64()) as i64;
+    let mut ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
     let mut channel_id: usize = 6;
     let mut cooloff = false;
     while ticks > 0 {

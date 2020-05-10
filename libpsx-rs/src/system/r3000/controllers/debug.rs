@@ -44,8 +44,8 @@ const ENABLE_HAZARD_TRACING: bool = true;
 pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
-const ENABLE_MEMORY_TRACKING_READ: bool = true;
-const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
+const ENABLE_MEMORY_TRACKING_READ: bool = false;
+const ENABLE_MEMORY_TRACKING_WRITE: bool = false;
 pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(false);
 pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
 pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
@@ -55,9 +55,15 @@ const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1D88;
 const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1DAF;
 const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
+const HAZARD_WARNING_THRESHOLD: usize = 128;
+
 pub static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
 static DEBUG_BIOS_CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
 static DEBUG_CRITICAL_SECTION_REFCOUNT: AtomicIsize = AtomicIsize::new(0);
+
+lazy_static! {
+    static ref DEBUG_HAZARD_REPEAT_COUNT: Mutex<(u32, usize)> = Mutex::new((0, 0));
+}
 
 pub fn trace_state(state: &State, r3000_state: &ControllerState, cp0_state: &Cp0ControllerState) {
     let tick_count = DEBUG_TICK_COUNT.fetch_add(1, Ordering::AcqRel) + 1;
@@ -95,14 +101,33 @@ pub fn trace_pc(state: &ControllerState, cp0_state: &Cp0ControllerState) {
     log::trace!("[{:X}] R3000 pc = 0x{:0X}, kuc = {}, iec = {}", tick_count, pc, kuc, iec);
 }
 
-pub fn trace_hazard(hazard: Hazard) {
+pub fn trace_hazard(hazard: Result<(), Hazard>) {
     if ENABLE_HAZARD_TRACING {
         match hazard {
-            Hazard::MemoryRead(_) | Hazard::MemoryWrite(_) => {
-                log::warn!("R3000 memory hazard: {}", hazard);
+            Ok(()) => {
+                let state = &mut DEBUG_HAZARD_REPEAT_COUNT.lock();
+                state.0 = 0;
+                state.1 = 0;
             },
-            Hazard::BusLockedMemoryRead(_) | Hazard::BusLockedMemoryWrite(_) => {
-                // Bus locking is normal and expected occasionally.
+            Err(hazard) => {
+                match hazard {
+                    Hazard::MemoryRead(addr) | Hazard::MemoryWrite(addr) => {
+                        let state = &mut DEBUG_HAZARD_REPEAT_COUNT.lock();
+                        if state.0 == addr {
+                            state.1 += 1;
+                            if state.1 > HAZARD_WARNING_THRESHOLD {
+                                log::warn!("R3000 memory hazard: {}", hazard);
+                                state.1 = 0;
+                            }
+                        } else {
+                            state.0 = addr;
+                            state.1 = 0;
+                        }
+                    },
+                    Hazard::BusLockedMemoryRead(_) | Hazard::BusLockedMemoryWrite(_) => {
+                        // Bus locking is normal and expected occasionally.
+                    },
+                }
             },
         }
     }
@@ -180,7 +205,7 @@ pub fn track_memory_read_pending<T>(state: &ControllerState, physical_address: u
         return;
     }
 
-    if true {
+    if false {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
@@ -199,7 +224,7 @@ pub fn track_memory_read<T: Copy + UpperHex>(state: &State, r3000_state: &Contro
 
     let count = memory::update_state_read(physical_address);
 
-    if false {
+    if true {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = r3000_state.pc.read_u32();
@@ -218,7 +243,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerState, p
         return;
     }
 
-    if true {
+    if false {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
@@ -237,7 +262,7 @@ pub fn track_memory_write<T: Copy + UpperHex>(state: &State, r3000_state: &Contr
 
     let count = memory::update_state_write(physical_address);
 
-    if false {
+    if true {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let type_name = core::any::type_name::<T>();
         let pc = r3000_state.pc.read_u32();
