@@ -17,30 +17,36 @@ pub enum ClockSource {
 }
 
 pub struct TimerState {
+    pub current_elapsed: Duration,
+    pub acknowledged_elapsed: Duration,
+
     pub reset_on_target: bool,
     pub irq_on_target: bool,
     pub irq_on_overflow: bool,
     pub oneshot_mode: bool,
     pub irq_toggle: bool,
     pub clock_source: ClockSource,
-
-    pub current_elapsed: Duration,
-    pub acknowledged_elapsed: Duration,
+    pub clock_source_raw: u32,
     pub irq_raised: bool,
+    pub target_hit: bool,
+    pub overflow_hit: bool,
 }
 
 impl TimerState {
     pub fn new() -> TimerState {
         TimerState {
-            clock_source: ClockSource::System,
             current_elapsed: Duration::from_secs(0),
             acknowledged_elapsed: Duration::from_secs(0),
+            clock_source: ClockSource::System,
+            clock_source_raw: 0,
             reset_on_target: false,
             irq_raised: false,
             irq_on_target: false,
             irq_on_overflow: false,
             irq_toggle: false,
             oneshot_mode: false,
+            target_hit: false,
+            overflow_hit: false,
         }
     }
 }

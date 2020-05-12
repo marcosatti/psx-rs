@@ -14,7 +14,6 @@ use std::time::Duration;
 pub fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
     let target = get_target(state, timer_id);
-    let mode = get_mode(state, timer_id);
 
     let ticks = {
         let timer_state = get_state(controller_state, timer_id);
@@ -36,13 +35,13 @@ pub fn handle_counter(state: &State, controller_state: &mut ControllerState, tim
         if reset_on_target {
             if count_value == target_value {
                 count_value = 0;
-                mode.update(|value| MODE_TARGET_HIT.insert_into(value, 1));
+                get_state(controller_state, timer_id).target_hit = true;
                 handle_irq_trigger(state, controller_state, timer_id, IrqType::Target);
             }
         } else {
             if count_value == (std::u16::MAX as u32) {
                 count_value = 0;
-                mode.update(|value| MODE_OVERFLOW_HIT.insert_into(value, 1));
+                get_state(controller_state, timer_id).overflow_hit = true;
                 handle_irq_trigger(state, controller_state, timer_id, IrqType::Overflow);
             }
         }

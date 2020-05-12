@@ -1,5 +1,4 @@
 pub mod count;
-pub mod debug;
 pub mod interrupt;
 pub mod timer;
 pub mod register;

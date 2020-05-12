@@ -1,6 +1,6 @@
 use crate::system::{
     timers::{
-        constants::*,
+        controllers::register::*,
         controllers::timer::*,
         types::*,
     },
@@ -34,20 +34,14 @@ fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, timer
     let timer_state = get_state(controller_state, timer_id);
 
     let raise_irq = if timer_state.irq_toggle {
-        let mut bit = 0;
-
-        mode.update(|value| {
-            bit = MODE_IRQ_STATUS.extract_from(value) ^ 1;
-            MODE_IRQ_STATUS.insert_into(value, bit)
-        });
-
-        bit == 0
+        timer_state.irq_raised ^= true;
+        timer_state.irq_raised
     } else {
-        // Pulse mode.
-        // TODO: Do nothing? How long is a few clock cycles? Will the BIOS see this? Probably not...
-        log::warn!("Pulse IRQ mode not implemented properly?"); 
+        // Pulse mode - don't need to do anything.
         true
     };
+
+    mode.update(|_| calculate_mode_value(timer_state));
 
     if raise_irq {
         state.intc.stat.assert_line(match timer_id {
@@ -56,6 +50,5 @@ fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, timer
             2 => Line::Tmr2,
             _ => unreachable!(),
         });
-        log::debug!("Raised INTC IRQ for timer {}", timer_id);
     }
 }

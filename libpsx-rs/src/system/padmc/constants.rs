@@ -17,12 +17,12 @@ pub const _MODE_PARITY_TYPE: Bitfield = Bitfield::new(5, 1);
 pub const _MODE_CLKOUT_POLARITY: Bitfield = Bitfield::new(8, 1);
 
 pub const CTRL_TXEN: Bitfield = Bitfield::new(0, 1);
-pub const _CTRL_JOYN_OUTPUT: Bitfield = Bitfield::new(1, 1);
+pub const CTRL_JOYN_OUTPUT: Bitfield = Bitfield::new(1, 1);
 pub const _CTRL_RXEN: Bitfield = Bitfield::new(2, 1);
 pub const CTRL_ACK: Bitfield = Bitfield::new(4, 1);
 pub const CTRL_RESET: Bitfield = Bitfield::new(6, 1);
 pub const _CTRL_RXINT_MODE: Bitfield = Bitfield::new(8, 2);
 pub const _CTRL_TXINT_ENABLE: Bitfield = Bitfield::new(10, 1);
 pub const _CTRL_RXINT_ENABLE: Bitfield = Bitfield::new(11, 1);
-pub const _CTRL_ACKINT_ENABLE: Bitfield = Bitfield::new(12, 1);
-pub const _CTRL_JOY_SLOT: Bitfield = Bitfield::new(13, 1);
+pub const CTRL_ACKINT_ENABLE: Bitfield = Bitfield::new(12, 1);
+pub const CTRL_JOY_SLOT: Bitfield = Bitfield::new(13, 1);
