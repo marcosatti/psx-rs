@@ -7,10 +7,8 @@ pub mod memory_controller;
 pub mod register;
 
 use crate::{
-    backends::cdrom::CdromBackend,
     system::{
         bus::memory::bus_read_u32,
-        cdrom::controllers::handle_tick as tick_cdrom,
         r3000::{
             constants::{
                 CLOCK_SPEED,
@@ -40,15 +38,14 @@ use std::{
 
 pub fn run(context: &ControllerContext, event: Event) {
     match event {
-        Event::Time(duration) => run_time(context.state, context.cdrom_backend, duration),
+        Event::Time(duration) => run_time(context.state, duration),
     }
 }
 
-fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
+fn run_time(state: &State, duration: Duration) {
     let r3000_state = &mut state.r3000.controller_state.lock();
     let cp0_state = &mut state.r3000.cp0.controller_state.lock();
     let cp2_state = &mut state.r3000.cp2.controller_state.lock();
-    let cdrom_state = &mut state.cdrom.controller_state.lock();
 
     let mut context = R3000ControllerContext {
         state,
@@ -60,15 +57,7 @@ fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
     let mut ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
 
     while ticks > 0 {
-        let cycles = tick(&mut context);
-        for _ in 0..cycles {
-            ticks -= 1;
-
-            // Synchronous controllers - timing is way off when done asynchronously, causing problems.
-            if ticks % 128 == 0 {
-                tick_cdrom(state, cdrom_state, cdrom_backend);
-            }
-        }
+        ticks -= tick(&mut context);
     }
 }
 

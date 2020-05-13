@@ -18,13 +18,33 @@ use crate::{
             types::ControllerState,
         },
         types::State,
+        types::Event,
+        types::ControllerContext,
     },
     utilities::bool_to_flag,
 };
 use log::warn;
 use std::sync::atomic::Ordering;
+use std::cmp::max;
+use std::time::Duration;
 
-pub fn handle_tick(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
+pub fn run(context: &ControllerContext, event: Event) {
+    match event {
+        Event::Time(duration) => run_time(context.state, context.cdrom_backend, duration),
+    }
+}
+
+fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
+    let controller_state = &mut state.cdrom.controller_state.lock();
+
+    let ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as isize);
+
+    for _ in 0..ticks {
+        tick(state, controller_state, cdrom_backend);
+    }
+}
+
+fn tick(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     handle_interrupt_enable(state);
     handle_interrupt_flags(state);
     handle_request(state);

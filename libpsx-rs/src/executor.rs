@@ -8,6 +8,7 @@ use crate::{
         r3000::controllers::run as run_r3000,
         spu::controllers::run as run_spu,
         timers::controllers::run as run_timers,
+        cdrom::controllers::run as run_cdrom,
         types::{
             ControllerContext,
             Event,
@@ -42,7 +43,12 @@ pub fn run_event_broadcast_block(runtime: &ThreadPool, context: &ControllerConte
                                             || {
                                                 join(
                                                     move || run_event("intc", run_intc, context, event, benchmark_results_ref),
-                                                    move || run_event("padmc", run_padmc, context, event, benchmark_results_ref),
+                                                    || {
+                                                        join(
+                                                            move || run_event("padmc", run_padmc, context, event, benchmark_results_ref),
+                                                            move || run_event("cdrom", run_cdrom, context, event, benchmark_results_ref),
+                                                        )
+                                                    },
                                                 )
                                             },
                                         )
