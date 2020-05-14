@@ -15,3 +15,4 @@ pub const INTERRUPT_FLAGS: Bitfield = Bitfield::new(0, 5);
 
 pub const CLOCK_SPEED: f64 = 33.8688 * 1e6; // Unknown; 33.8688 MHz
 pub const VERSION: [u8; 4] = [0x94, 0x09, 0x19, 0x19];
+pub const SECTOR_DELAY_CYCLES_SINGLE_SPEED: usize = 0x6E1CD;

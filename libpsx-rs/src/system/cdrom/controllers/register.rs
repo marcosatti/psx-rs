@@ -17,12 +17,23 @@ pub fn handle_command(state: &State, controller_state: &mut ControllerState) {
     });
 }
 
-pub fn handle_request(state: &State, _controller_state: &mut ControllerState) {
+pub fn handle_request(state: &State, controller_state: &mut ControllerState) {
     state.cdrom.request.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => value,
             LatchKind::Write => {
-                unimplemented!();
+                if REQUEST_SMEN.extract_from(value) > 0 {
+                    unimplemented!("Command start interrupt");
+                }
+
+                if REQUEST_BFRD.extract_from(value) > 0 {
+                    controller_state.load_data_flag = true;
+                    log::debug!("Load data FIFO set");
+                } else {
+                    unimplemented!("Reset data FIFO");
+                }
+
+                0
             },
         }
     });
@@ -34,13 +45,12 @@ pub fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerSta
             LatchKind::Read => value,
             LatchKind::Write => {
                 if INT_FLAG_CLRPRM.extract_from(value) > 0 {
-                    unimplemented!();
+                    unimplemented!("Reset parameter FIFO");
                 }
 
                 let acknowledge_interrupt = INTERRUPT_FLAGS.extract_from(value) as usize;
-                if acknowledge_interrupt != controller_state.interrupt_index {
-                    panic!("Raised interrupt {} but acknowledgement was {}", controller_state.interrupt_index, acknowledge_interrupt);
-                }
+                controller_state.interrupt_index = INTERRUPT_FLAGS.acknowledge(controller_state.interrupt_index, acknowledge_interrupt);
+                assert_eq!(controller_state.interrupt_index, 0);
 
                 calculate_interrupt_flag_value(controller_state)
             },

@@ -2,13 +2,20 @@ use crate::system::{
     bus::types::*,
     types::State,
 };
+use crate::utilities::bool_to_flag;
 use crate::system::cdrom::constants::*;
 
 // Emulation note:
 // BIOS accesses ports at 0x1F80_1801 / 2 / 3 immediately after writing to the status register (no wait cycles or acknowledgment).
+// Not an expert... but this suggests that the register is not latched, and the FIFO status bits are directly wired to the FIFO's themselves.
+// If anyone can explain this more then let me know.
 
 pub fn status_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);
+    state.cdrom.status.write_bitfield(STATUS_PRMEMPT, bool_to_flag(state.cdrom.parameter.is_empty()) as u8);
+    state.cdrom.status.write_bitfield(STATUS_PRMWRDY, bool_to_flag(!state.cdrom.parameter.is_full()) as u8);
+    state.cdrom.status.write_bitfield(STATUS_RSLRRDY, bool_to_flag(!state.cdrom.response.is_empty()) as u8);
+    state.cdrom.status.write_bitfield(STATUS_DRQSTS, bool_to_flag(!state.cdrom.data.is_empty()) as u8);
     Ok(state.cdrom.status.read_u8())
 }
 

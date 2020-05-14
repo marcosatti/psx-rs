@@ -2,59 +2,43 @@ use crate::{
     backends::cdrom::CdromBackend,
     system::{
         cdrom::{
-            constants::*,
             controllers::command_impl,
             types::ControllerState,
         },
         types::State,
     },
 };
-use std::sync::atomic::Ordering;
 
 type LengthFn = fn(usize) -> usize;
 
 type HandlerFn = fn(&State, &mut ControllerState, &CdromBackend, usize) -> bool;
 
-pub fn handle_command(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> bool {
-    if cdrom_state.command_index.is_none() {
-        // Read a new command if available.
-        if !state.cdrom.command.write_latch.load(Ordering::Acquire) {
-            return false;
-        }
-
-        state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 1);
-        let command_value = state.cdrom.command.register.read_u8();
-
-        state.cdrom.command.write_latch.store(false, Ordering::Release);
-
-        cdrom_state.command_index = Some(command_value);
-        cdrom_state.command_iteration = 0;
+pub fn handle_command(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
+    if controller_state.command_index.is_none() {
+        return;
     }
 
-    let command_index = cdrom_state.command_index.unwrap();
-    let command_iteration = cdrom_state.command_iteration;
+    let command_index = controller_state.command_index.unwrap();
+    let command_iteration = controller_state.command_iteration;
     let handler = get_handler_fn(command_index);
 
     let parameter_count = state.cdrom.parameter.read_available();
     if parameter_count < (handler.0)(command_iteration) {
-        return false;
+        panic!("Something is probably wrong in the emulator");
     }
 
     assert!(state.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
 
-    let finished = (handler.1)(state, cdrom_state, cdrom_backend, command_iteration);
+    let finished = (handler.1)(state, controller_state, cdrom_backend, command_iteration);
 
-    if !finished {
-        cdrom_state.command_iteration += 1;
+    if finished {
+        controller_state.command_index = None;
+        controller_state.command_iteration = 0;
     } else {
-        cdrom_state.command_index = None;
+        controller_state.command_iteration += 1;
     }
 
     assert!(state.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
-
-    state.cdrom.status.write_bitfield(STATUS_BUSYSTS, 0);
-
-    true
 }
 
 fn get_handler_fn(command_index: u8) -> (LengthFn, HandlerFn) {

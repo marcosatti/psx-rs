@@ -12,6 +12,7 @@ use crate::{
         },
         types::State,
     },
+    types::bitfield::Bitfield,
 };
 
 pub fn command_01_length(_command_iteration: usize) -> usize {
@@ -20,12 +21,8 @@ pub fn command_01_length(_command_iteration: usize) -> usize {
 
 pub fn command_01_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // GetStat
-
-    let response = &state.cdrom.response;
-
     assert_eq!(command_iteration, 0);
-    let stat_value = calculate_stat_value(controller_state);
-    response.write_one(stat_value).unwrap();
+    state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
     true
 }
@@ -36,12 +33,9 @@ pub fn command_02_length(_command_iteration: usize) -> usize {
 
 pub fn command_02_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Setloc
-
-    // TODO: Assumed to be absolute addressing?
-
     assert_eq!(command_iteration, 0);
-    let parameter = &state.cdrom.parameter;
 
+    let parameter = &state.cdrom.parameter;
     let minute = parameter.read_one().unwrap();
     let second = parameter.read_one().unwrap();
     let frame = parameter.read_one().unwrap();
@@ -49,9 +43,7 @@ pub fn command_02_handler(state: &State, controller_state: &mut ControllerState,
     controller_state.msf_address_base = (minute, second, frame);
     controller_state.msf_address_offset = 0;
 
-    let stat_value = calculate_stat_value(controller_state);
-    let response = &state.cdrom.response;
-    response.write_one(stat_value).unwrap();
+    state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
     true
 }
@@ -62,17 +54,12 @@ pub fn command_06_length(_command_iteration: usize) -> usize {
 
 pub fn command_06_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // ReadN
-
     assert_eq!(command_iteration, 0);
-
-    // Set CDROM controller state to reading.
     controller_state.reading = true;
-
-    let stat_value = calculate_stat_value(controller_state);
-    let response = &state.cdrom.response;
-    response.write_one(stat_value).unwrap();
+    controller_state.sector_delay_counter = SECTOR_DELAY_CYCLES_SINGLE_SPEED;
+    controller_state.sector_buffer.clear();
+    state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
-
     true
 }
 
@@ -82,17 +69,21 @@ pub fn command_09_length(_command_iteration: usize) -> usize {
 
 pub fn command_09_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Pause
-
-    assert_eq!(command_iteration, 0);
-
-    controller_state.pausing = true;
-
-    let stat_value = calculate_stat_value(controller_state);
-    let response = &state.cdrom.response;
-    response.write_one(stat_value).unwrap();
-    handle_irq_raise(state, controller_state, 3);
-
-    true
+    match command_iteration {
+        0 => {
+            state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
+            handle_irq_raise(state, controller_state, 3);
+            controller_state.reading = false;
+            log::debug!("Paused");
+            false
+        },
+        1 => {
+            state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
+            handle_irq_raise(state, controller_state, 2);
+            true
+        },
+        _ => panic!(),
+    }
 }
 
 pub fn command_0e_length(_command_iteration: usize) -> usize {
@@ -101,15 +92,10 @@ pub fn command_0e_length(_command_iteration: usize) -> usize {
 
 pub fn command_0e_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Setmode
-
     assert_eq!(command_iteration, 0);
-    let parameter = &state.cdrom.parameter;
-
-    let _mode = parameter.read_one().unwrap();
-
-    let stat_value = calculate_stat_value(controller_state);
-    let response = &state.cdrom.response;
-    response.write_one(stat_value).unwrap();
+    let mode = state.cdrom.parameter.read_one().unwrap();
+    assert_eq!(Bitfield::new(5, 1).extract_from(mode), 0);
+    state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
     true
 }
@@ -120,25 +106,16 @@ pub fn command_15_length(_command_iteration: usize) -> usize {
 
 pub fn command_15_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // SeekL
-
     match command_iteration {
         0 => {
-            // Set CDROM controller state to seeking, but we don't actually have to do anything.
-            // Unset upon next command iteration...
             controller_state.seeking = true;
-
-            let stat_value = calculate_stat_value(controller_state);
-            let response = &state.cdrom.response;
-            response.write_one(stat_value).unwrap();
+            state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
             handle_irq_raise(state, controller_state, 3);
             false
         },
         1 => {
             controller_state.seeking = false;
-
-            let stat_value = calculate_stat_value(controller_state);
-            let response = &state.cdrom.response;
-            response.write_one(stat_value).unwrap();
+            state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
             handle_irq_raise(state, controller_state, 2);
             true
         },
@@ -152,14 +129,11 @@ pub fn command_19_length(_command_iteration: usize) -> usize {
 
 pub fn command_19_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Test
-
     assert_eq!(command_iteration, 0);
 
-    let parameter = &state.cdrom.parameter;
+    let sub_function = state.cdrom.parameter.read_one().unwrap();
+
     let response = &state.cdrom.response;
-
-    let sub_function = parameter.read_one().unwrap();
-
     match sub_function {
         0x20 => {
             for &i in VERSION.iter() {
@@ -170,7 +144,6 @@ pub fn command_19_handler(state: &State, controller_state: &mut ControllerState,
     }
 
     handle_irq_raise(state, controller_state, 3);
-
     true
 }
 
@@ -180,12 +153,9 @@ pub fn command_1a_length(_command_iteration: usize) -> usize {
 
 pub fn command_1a_handler(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // GetID
-
     match command_iteration {
         0 => {
-            let stat_value = calculate_stat_value(controller_state);
-            let response = &state.cdrom.response;
-            response.write_one(stat_value).unwrap();
+            state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
             handle_irq_raise(state, controller_state, 3);
             false
         },
@@ -197,8 +167,9 @@ pub fn command_1a_handler(state: &State, controller_state: &mut ControllerState,
                 Err(()) => false,
             };
 
+            let interrupt_index;
             if disc_loaded {
-                let mode = backend_dispatch::disc_mode(cdrom_backend).expect("GetID was called when no backend is available");
+                let mode = backend_dispatch::disc_mode(cdrom_backend).unwrap();
                 match mode {
                     2 => {
                         response.write_one(0x02).unwrap();
@@ -213,7 +184,7 @@ pub fn command_1a_handler(state: &State, controller_state: &mut ControllerState,
                     },
                     _ => unimplemented!("Disc mode {} not handled", mode),
                 }
-                handle_irq_raise(state, controller_state, 2);
+                interrupt_index = 2;
             } else {
                 response.write_one(0x08).unwrap();
                 response.write_one(0x40).unwrap();
@@ -223,9 +194,10 @@ pub fn command_1a_handler(state: &State, controller_state: &mut ControllerState,
                 response.write_one(0x00).unwrap();
                 response.write_one(0x00).unwrap();
                 response.write_one(0x00).unwrap();
-                handle_irq_raise(state, controller_state, 5);
+                interrupt_index = 5;
             }
 
+            handle_irq_raise(state, controller_state, interrupt_index);
             true
         },
         _ => panic!(),

@@ -5,14 +5,13 @@ use crate::{
 };
 use parking_lot::Mutex;
 use crate::types::fifo::{Fifo, debug::DebugState};
+use std::collections::VecDeque;
 
 pub struct ControllerState {
     pub interrupt_index: usize,
     /// Command state.
     pub command_index: Option<u8>,
     pub command_iteration: usize,
-    /// Pausing status.
-    pub pausing: bool,
     /// Seeking status.
     pub seeking: bool,
     /// Reading status.
@@ -21,6 +20,10 @@ pub struct ControllerState {
     /// Base is stored in BCD format.
     pub msf_address_base: (u8, u8, u8),
     pub msf_address_offset: usize,
+    pub sector_delay_counter: usize,
+    pub sector_buffer: VecDeque<u8>,
+    pub load_data_flag: bool,
+    pub loading_data: bool,
 }
 
 impl ControllerState {
@@ -29,11 +32,14 @@ impl ControllerState {
             interrupt_index: 0,
             command_index: None,
             command_iteration: 0,
-            pausing: false,
             seeking: false,
             reading: false,
             msf_address_base: (0, 0, 0),
             msf_address_offset: 0,
+            sector_delay_counter: 0,
+            sector_buffer: VecDeque::new(),
+            load_data_flag: false,
+            loading_data: false,
         }
     }
 }
