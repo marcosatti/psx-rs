@@ -6,6 +6,7 @@ use parking_lot::Mutex;
 use super::{
     B32Register_,
     B16Register_,
+    B8Register_,
 };
 
 struct EdgeRegister<RegisterTy> {
@@ -181,4 +182,68 @@ unsafe impl Send for B16EdgeRegister {
 }
 
 unsafe impl Sync for B16EdgeRegister {
+}
+
+pub struct B8EdgeRegister(Mutex<EdgeRegister<B8Register_>>);
+
+impl B8EdgeRegister {
+    pub fn new() -> B8EdgeRegister {
+        B8EdgeRegister(
+            Mutex::new(EdgeRegister {
+                memory: B8Register_ { v8: 0 }, 
+                latch_status: None,
+            }),
+        )
+    }
+
+    fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()> 
+    where 
+        F: FnOnce(&mut B8Register_),
+    {
+        let data = &mut self.0.lock();
+
+        if data.latch_status.is_some() {
+            return Err(());
+        }
+        
+        data.latch_status = Some(latch_kind);
+        operation(&mut data.memory);
+        Ok(())
+    }
+
+    pub fn read_u8(&self) -> Result<u8, ()> {
+        let mut value = 0;
+        self.try_op(LatchKind::Read, |r| unsafe { value = r.v8; })?;
+        Ok(value)
+    }
+
+    pub fn write_u8(&self, value: u8) -> Result<(), ()> {
+        self.try_op( LatchKind::Write, |r| { r.v8 = value; })?;
+        Ok(())
+    }
+
+    pub fn acknowledge<F>(&self, operation: F) 
+    where
+        F: FnOnce(u8, LatchKind) -> u8, 
+    {
+        let data = &mut self.0.lock();
+        if let Some(latch_kind) = data.latch_status {
+            data.memory.v8 = operation(unsafe { data.memory.v8 }, latch_kind);
+            data.latch_status = None;
+        }
+    }
+
+    pub fn update<F>(&self, operation: F)
+    where
+        F: FnOnce(u8) -> u8, 
+    {
+        let data = &mut self.0.lock();
+        data.memory.v8 = operation(unsafe { data.memory.v8 });
+    }
+}
+
+unsafe impl Send for B8EdgeRegister {
+}
+
+unsafe impl Sync for B8EdgeRegister {
 }

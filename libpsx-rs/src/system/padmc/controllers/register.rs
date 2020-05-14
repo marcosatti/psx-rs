@@ -12,7 +12,7 @@ pub fn handle_stat(state: &State) {
     state.padmc.stat.acknowledge(|_value, latch_kind| {
         match latch_kind {
             LatchKind::Read => calculate_stat_value(state),
-            _ => panic!("Whatcha doing buddy?"),
+            _ => panic!("Write to STAT register!"),
         }
     });
 }

@@ -44,7 +44,6 @@ pub fn dump_memory_spu(state: &mut State, base_dir_path: &PathBuf) {
 pub fn trace(state: &mut State) {
     trace_r3000(state);
     trace_intc(state, false);
-    trace_cdrom(state);
 }
 
 pub fn trace_r3000(state: &mut State) {
@@ -58,8 +57,4 @@ pub fn trace_r3000(state: &mut State) {
 
 pub fn trace_intc(state: &mut State, only_enabled: bool) {
     crate::system::intc::controllers::debug::trace_intc(state, only_enabled, false);
-}
-
-pub fn trace_cdrom(state: &State) {
-    crate::system::cdrom::controllers::debug::trace_cdrom(state);
 }

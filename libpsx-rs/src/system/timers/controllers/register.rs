@@ -77,7 +77,7 @@ pub fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_
     });
 }
 
-pub fn calculate_mode_value(timer_state: &mut TimerState) -> u32 {
+pub fn calculate_mode_value(timer_state: &TimerState) -> u32 {
     let mut value = 0;
     
     value = MODE_RESET.insert_into(value, bool_to_flag(timer_state.reset_on_target));
