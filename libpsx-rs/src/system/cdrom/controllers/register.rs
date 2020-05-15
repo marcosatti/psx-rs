@@ -28,9 +28,11 @@ pub fn handle_request(state: &State, controller_state: &mut ControllerState) {
 
                 if REQUEST_BFRD.extract_from(value) > 0 {
                     controller_state.load_data_flag = true;
-                    log::debug!("Load data FIFO set");
+                    //log::debug!("Load data FIFO set");
                 } else {
-                    unimplemented!("Reset data FIFO");
+                    assert_eq!(state.cdrom.data.read_available(), 0);
+                    state.cdrom.data.clear();
+                    //log::debug!("Reset data FIFO");
                 }
 
                 0
@@ -44,13 +46,14 @@ pub fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerSta
         match latch_kind {
             LatchKind::Read => value,
             LatchKind::Write => {
-                if INT_FLAG_CLRPRM.extract_from(value) > 0 {
-                    unimplemented!("Reset parameter FIFO");
-                }
-
                 let acknowledge_interrupt = INTERRUPT_FLAGS.extract_from(value) as usize;
                 controller_state.interrupt_index = INTERRUPT_FLAGS.acknowledge(controller_state.interrupt_index, acknowledge_interrupt);
-                assert_eq!(controller_state.interrupt_index, 0);
+
+                if acknowledge_interrupt > 0 {
+                    assert_eq!(controller_state.interrupt_index, 0);
+                    state.cdrom.response.clear();
+                    //log::debug!("Cleared response FIFO");
+                }
 
                 calculate_interrupt_flag_value(controller_state)
             },

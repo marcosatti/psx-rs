@@ -20,6 +20,11 @@ use std::sync::atomic::Ordering;
 pub fn handle_transfer_initialization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
     const ADDRESS: Bitfield = Bitfield::new(0, 24);
 
+    transfer_state.delay_cycles = match channel_id {
+        2 => 0x80,
+        _ => 0x0,
+    };
+
     let bcr_calculate = |v| {
         if v == 0 {
             0x1_0000
@@ -90,6 +95,11 @@ pub fn handle_transfer(state: &State, controller_state: &mut ControllerState, ch
     let transfer_state = get_transfer_state(controller_state, channel_id);
 
     if !transfer_state.started {
+        return Ok(0);
+    }
+
+    if transfer_state.delay_cycles > 0 {
+        transfer_state.delay_cycles -= 1;
         return Ok(0);
     }
 

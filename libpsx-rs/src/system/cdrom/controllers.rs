@@ -45,16 +45,6 @@ fn tick(state: &State, controller_state: &mut ControllerState, cdrom_backend: &C
     handle_request(state, controller_state);
     handle_interrupt_flag(state, controller_state);
 
-    //  check for incoming sectors (from CDROM decoder) ; only if no int (sort of)
-    //   check for incoming commands (from Main CPU) ; only if no int
-    //   do maintenance stuff on the drive mechanics ; n/a
-
-    // Main CPU has sent a command, AND, there is no INT pending
-    // (if an INT is pending, then the command won't be executed yet, but will be
-    // executed in following mainloop cycles; once when INT got acknowledged)
-    // (even if no INT is pending, the mainloop may generate INT1/INT2 before
-    // executing the command, if so, as said above, the command won't execute yet)
-
     if controller_state.interrupt_index == 0 {
         handle_read(state, controller_state, cdrom_backend);
     }

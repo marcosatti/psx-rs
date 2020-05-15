@@ -20,7 +20,7 @@ pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, i
     controller_state.interrupt_index = interrupt_index;
     state.cdrom.interrupt_flag.update(|_| calculate_interrupt_flag_value(controller_state));
 
-    log::debug!("Raised interrupt with index {}", interrupt_index);
+    //log::debug!("Raised interrupt with index {}", interrupt_index);
     state.intc.stat.assert_line(Line::Cdrom);
 }
 

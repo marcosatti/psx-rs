@@ -42,6 +42,7 @@ pub fn command_02_handler(state: &State, controller_state: &mut ControllerState,
 
     controller_state.msf_address_base = (minute, second, frame);
     controller_state.msf_address_offset = 0;
+    log::debug!("Set address to {:?}, offset {}", controller_state.msf_address_base, controller_state.msf_address_offset);
 
     state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
@@ -57,7 +58,6 @@ pub fn command_06_handler(state: &State, controller_state: &mut ControllerState,
     assert_eq!(command_iteration, 0);
     controller_state.reading = true;
     controller_state.sector_delay_counter = SECTOR_DELAY_CYCLES_SINGLE_SPEED;
-    controller_state.sector_buffer.clear();
     state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
     true
@@ -74,7 +74,7 @@ pub fn command_09_handler(state: &State, controller_state: &mut ControllerState,
             state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
             handle_irq_raise(state, controller_state, 3);
             controller_state.reading = false;
-            log::debug!("Paused");
+            //log::debug!("Paused");
             false
         },
         1 => {

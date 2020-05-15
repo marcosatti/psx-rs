@@ -74,7 +74,16 @@ pub fn cdrom1803_write_u8(state: &State, offset: u32, value: u8) -> WriteResult 
     assert_eq!(offset, 0);
     match state.cdrom.status.read_bitfield(STATUS_INDEX) {
         0 => state.cdrom.request.write_u8(value).map_err(|_| WriteErrorKind::NotReady),
-        1 => state.cdrom.interrupt_flag.write_u8(value).map_err(|_| WriteErrorKind::NotReady),
+        1 => {
+            state.cdrom.interrupt_flag.write_u8(value).map_err(|_| WriteErrorKind::NotReady)?;
+
+            if INT_FLAG_CLRPRM.extract_from(value) > 0 {
+                state.cdrom.parameter.clear();
+                //log::debug!("Cleared parameter FIFO");
+            }
+
+            Ok(())
+        },
         2..=3 => unimplemented!(),
         _ => unreachable!(),
     }

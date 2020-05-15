@@ -13,13 +13,21 @@ use crate::{
         types::State,
     },
 };
+use crate::utilities::binary_to_ascii_escaped;
 
 pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     if controller_state.sector_buffer.len() > 0 {
         if controller_state.loading_data {
             fill_data_fifo(state, controller_state);
+
+            if controller_state.sector_buffer.len() == 0 {
+                controller_state.loading_data = false;
+            }
         } else {
-            controller_state.loading_data = controller_state.load_data_flag;
+            if controller_state.load_data_flag {
+                controller_state.loading_data = true;
+                controller_state.load_data_flag = false;
+            }
         }
     } else {
         if !controller_state.reading { 
@@ -30,8 +38,12 @@ pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_
             controller_state.sector_delay_counter -= 1;
             return;
         }
+
+        if !state.cdrom.data.is_empty() {
+            log::warn!("Data FIFO was not empty before reading a sector... trying again later");
+            return;
+        }
     
-        assert!(state.cdrom.data.is_empty());
         read_sector(controller_state, cdrom_backend);
         controller_state.sector_delay_counter = SECTOR_DELAY_CYCLES_SINGLE_SPEED;
         state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
@@ -60,4 +72,9 @@ fn read_sector(controller_state: &mut ControllerState, cdrom_backend: &CdromBack
     assert_eq!(data_block.len(), 2048);
     controller_state.msf_address_offset += 1;
     controller_state.sector_buffer.extend(&data_block);
+    log::debug!("Sector {:?} + offset {} read ok", msf_address_base, msf_address_offset);
+
+    if false {
+        log::debug!("{}", &binary_to_ascii_escaped(&data_block));
+    }
 }

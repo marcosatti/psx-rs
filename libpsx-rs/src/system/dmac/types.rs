@@ -35,6 +35,7 @@ pub struct TransferState {
     pub sync_mode: SyncMode,
     pub interrupt_enabled: bool,
     pub interrupted: bool,
+    pub delay_cycles: usize,
 }
 
 impl TransferState {
@@ -46,6 +47,7 @@ impl TransferState {
             sync_mode: SyncMode::Undefined,
             interrupt_enabled: false,
             interrupted: false,
+            delay_cycles: 0,
         }
     }
 }

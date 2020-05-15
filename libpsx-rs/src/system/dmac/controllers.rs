@@ -63,7 +63,6 @@ fn run_time(state: &State, duration: Duration) {
     }
 
     if cooloff {
-        log::warn!("Check cooling off works");
         controller_state.cooloff_runs = 4;
     }
 }

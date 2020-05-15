@@ -6,13 +6,16 @@ pub fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, 
         2 => state.gpu.read.read_one(),
         3 => {
             let fifo = &state.cdrom.data;
+
             if fifo.read_available() < 4 {
                 return Err(());
             }
+
             let result1 = fifo.read_one().unwrap();
             let result2 = fifo.read_one().unwrap();
             let result3 = fifo.read_one().unwrap();
             let result4 = fifo.read_one().unwrap();
+            
             Ok(u32::from_le_bytes([result1, result2, result3, result4]))
         },
         6 => Ok(if !last_transfer {
