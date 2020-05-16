@@ -74,6 +74,7 @@ pub fn handle_chcr(state: &State, controller_state: &mut ControllerState, channe
         match latch_kind {
             LatchKind::Read => value,
             LatchKind::Write => write_fn(value),
+            LatchKind::None => unreachable!(),
         }
     });
 }
@@ -103,6 +104,7 @@ pub fn handle_dicr(state: &State, controller_state: &mut ControllerState) {
         match latch_kind {
             LatchKind::Read => value,
             LatchKind::Write => write_fn(value),
+            LatchKind::None => unreachable!(),
         }
     });
 }

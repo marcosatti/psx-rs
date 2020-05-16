@@ -13,8 +13,9 @@ use crate::{
 pub fn handle_stat(state: &State) {
     state.padmc.stat.acknowledge(|_value, latch_kind| {
         match latch_kind {
+            LatchKind::None => unreachable!(),
             LatchKind::Read => calculate_stat_value(state),
-            _ => panic!("Write to STAT register!"),
+            LatchKind::Write => panic!("Write to STAT register!"),
         }
     });
 }
@@ -42,6 +43,7 @@ pub fn handle_ctrl(state: &State, controller_state: &mut ControllerState) {
                 calculate_ctrl_value(controller_state)
             },
             LatchKind::Read => value,
+            LatchKind::None => unreachable!(),
         }
     });
 }
