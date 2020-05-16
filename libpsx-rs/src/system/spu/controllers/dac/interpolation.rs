@@ -1,4 +1,10 @@
-use crate::types::bitfield::*;
+use crate::{
+    system::spu::{
+        controllers::dac::voice::*,
+        types::*,
+    },
+    types::bitfield::Bitfield,
+};
 
 const GAUSS_TABLE: [i16; 8 * 64] = [
     -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, -0x0001, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -27,7 +33,18 @@ const GAUSS_TABLE: [i16; 8 * 64] = [
     0x5997, 0x599E, 0x59A4, 0x59A9, 0x59AD, 0x59B0, 0x59B2, 0x59B3,
 ];
 
-pub fn interpolate_sample(new: i16, old: &mut i16, older: &mut i16, oldest: &mut i16, pitch_counter_interp: usize) -> i16 {
+pub fn handle_interpolation(controller_state: &mut ControllerState, voice_id: usize, adpcm_sample_raw: i16) -> i16 {
+    let voice_state = get_voice_state(controller_state, voice_id);
+    interpolate_sample(
+        adpcm_sample_raw,
+        &mut voice_state.interpolation_state.old_sample,
+        &mut voice_state.interpolation_state.older_sample,
+        &mut voice_state.interpolation_state.oldest_sample,
+        voice_state.sample_counter_partial,
+    )
+}
+
+fn interpolate_sample(new: i16, old: &mut i16, older: &mut i16, oldest: &mut i16, pitch_counter_interp: usize) -> i16 {
     let interpolation_index = Bitfield::new(4, 8).extract_from(pitch_counter_interp);
 
     let mut sample = 0;

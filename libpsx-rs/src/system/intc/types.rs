@@ -25,14 +25,14 @@ pub enum Line {
 
 pub struct State {
     pub stat: Stat,
-    pub mask: B32Register,
+    pub mask: B32LevelRegister,
 }
 
 impl State {
     pub fn new() -> State {
         State {
             stat: Stat::new(),
-            mask: B32Register::new(),
+            mask: B32LevelRegister::new(),
         }
     }
 }

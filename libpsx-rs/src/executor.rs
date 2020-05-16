@@ -1,6 +1,7 @@
 use crate::{
     debug::benchmark::BenchmarkResults,
     system::{
+        cdrom::controllers::run as run_cdrom,
         dmac::controllers::run as run_dmac,
         gpu::controllers::run as run_gpu,
         intc::controllers::run as run_intc,
@@ -42,7 +43,12 @@ pub fn run_event_broadcast_block(runtime: &ThreadPool, context: &ControllerConte
                                             || {
                                                 join(
                                                     move || run_event("intc", run_intc, context, event, benchmark_results_ref),
-                                                    move || run_event("padmc", run_padmc, context, event, benchmark_results_ref),
+                                                    || {
+                                                        join(
+                                                            move || run_event("padmc", run_padmc, context, event, benchmark_results_ref),
+                                                            move || run_event("cdrom", run_cdrom, context, event, benchmark_results_ref),
+                                                        )
+                                                    },
                                                 )
                                             },
                                         )

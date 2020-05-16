@@ -5,43 +5,34 @@ use crate::types::{
     },
     memory::*,
 };
-use std::sync::atomic::{
-    AtomicBool,
-    Ordering,
-};
+use parking_lot::Mutex;
 
-pub struct Ctrl {
-    pub register: B16Register,
-    pub write_latch: AtomicBool,
+pub struct ControllerState {
+    pub tx_enabled: bool,
+    pub joy_select_enabled: bool,
+    pub ack_interrupt_enabled: bool,
+    pub use_joy2: bool,
 }
 
-impl Ctrl {
-    pub fn new() -> Ctrl {
-        Ctrl {
-            register: B16Register::new(),
-            write_latch: AtomicBool::new(false),
+impl ControllerState {
+    pub fn new() -> ControllerState {
+        ControllerState {
+            tx_enabled: false,
+            joy_select_enabled: false,
+            ack_interrupt_enabled: false,
+            use_joy2: false,
         }
-    }
-
-    pub fn read_u16(&self) -> u16 {
-        self.register.read_u16()
-    }
-
-    pub fn write_u16(&self, value: u16) {
-        // BIOS writes consecutively to this register without a chance to acknowledge...
-        // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
-        self.write_latch.store(true, Ordering::Release);
-        self.register.write_u16(value);
     }
 }
 
 pub struct State {
     pub rx_fifo: Fifo<u8>,
     pub tx_fifo: Fifo<u8>,
-    pub stat: B32Register,
-    pub mode: B16Register,
-    pub ctrl: Ctrl,
-    pub baud_reload: B16Register,
+    pub stat: B32EdgeRegister,
+    pub mode: B16LevelRegister,
+    pub ctrl: B16EdgeRegister,
+    pub baud_reload: B16LevelRegister,
+    pub controller_state: Mutex<ControllerState>,
 }
 
 impl State {
@@ -49,10 +40,11 @@ impl State {
         State {
             rx_fifo: Fifo::new(16, Some(DebugState::new("PADMC RX", true, true))),
             tx_fifo: Fifo::new(16, Some(DebugState::new("PADMC TX", true, true))),
-            stat: B32Register::new(),
-            mode: B16Register::new(),
-            ctrl: Ctrl::new(),
-            baud_reload: B16Register::new(),
+            stat: B32EdgeRegister::new(),
+            mode: B16LevelRegister::new(),
+            ctrl: B16EdgeRegister::new(),
+            baud_reload: B16LevelRegister::new(),
+            controller_state: Mutex::new(ControllerState::new()),
         }
     }
 }

@@ -1,26 +1,36 @@
 use crate::system::{
-    cdrom::constants::*,
+    cdrom::{
+        constants::*,
+        types::*,
+    },
     intc::types::Line,
     types::State,
 };
 
-pub fn raise_irq(state: &State, irq_line: usize) {
-    let int_enable = &state.cdrom.int_enable;
-    let int_flag = &state.cdrom.int_flag;
+pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, interrupt_index: usize) {
+    assert_eq!(controller_state.interrupt_index, 0);
+    assert!(interrupt_index < 16);
+    assert_ne!(interrupt_index, 0);
 
-    int_flag.set_interrupt(irq_line);
+    let interrupt_enable = &state.cdrom.interrupt_enable;
+    let interrupt_enable_value = interrupt_enable.read_bitfield(INTERRUPT_FLAGS) as usize;
 
-    let int_enable_value = int_enable.register.read_bitfield(INTERRUPT_FLAGS);
-    let int_flag_value = int_flag.register.read_bitfield(INTERRUPT_FLAGS);
-
-    if int_flag_value != 0 {
-        if (int_enable_value & int_flag_value) != int_flag_value {
-            panic!("IRQ pending but corresponding enable flag not set - will never trigger!");
-        }
+    if (interrupt_enable_value & interrupt_index) != interrupt_index {
+        panic!("IRQ pending but corresponding enable flags not set - will never trigger!");
     }
 
-    if (int_enable_value & int_flag_value) > 0 {
-        let stat = &state.intc.stat;
-        stat.assert_line(Line::Cdrom);
-    }
+    controller_state.interrupt_index = interrupt_index;
+    state.cdrom.interrupt_flag.update(|_| calculate_interrupt_flag_value(controller_state));
+
+    // log::debug!("Raised interrupt with index {}", interrupt_index);
+    state.intc.stat.assert_line(Line::Cdrom);
+}
+
+pub fn calculate_interrupt_flag_value(controller_state: &ControllerState) -> u8 {
+    let mut value = 0xFF;
+
+    assert!(controller_state.interrupt_index < 16);
+    value = INTERRUPT_FLAGS.insert_into(value, controller_state.interrupt_index as u8);
+
+    value
 }

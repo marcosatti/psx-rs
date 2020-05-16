@@ -24,6 +24,7 @@ lru = "*"
 fixed = "*"
 typenum = "*"
 rayon = "*"
+enum-as-inner = "*"
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }

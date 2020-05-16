@@ -92,7 +92,7 @@ pub struct State {
     pub gp0: Fifo<u32>,
     pub read: Fifo<u32>,
     pub gp1: Fifo<u32>,
-    pub stat: B32Register,
+    pub stat: B32LevelRegister,
     pub controller_state: Mutex<ControllerState>,
 }
 
@@ -103,7 +103,7 @@ impl State {
             gp0: Fifo::new(64, Some(DebugState::new("GPU GP0", false, false))),
             read: Fifo::new(64, Some(DebugState::new("GPU READ", false, false))),
             gp1: Fifo::new(64, Some(DebugState::new("GPU GP1", false, false))),
-            stat: B32Register::new(),
+            stat: B32LevelRegister::new(),
             controller_state: Mutex::new(ControllerState::new()),
         }
     }

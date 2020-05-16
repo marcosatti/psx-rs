@@ -1,25 +1,12 @@
 use crate::{
     system::{
-        spu::{
-            constants::*,
-            types::*,
-        },
+        spu::types::*,
         types::State,
     },
     types::memory::*,
 };
 
-pub fn get_transfer_mode(control: &B16Register) -> TransferMode {
-    match control.read_bitfield(CONTROL_TRANSFER_MODE) {
-        0 => TransferMode::Stop,
-        1 => TransferMode::ManualWrite,
-        2 => TransferMode::DmaWrite,
-        3 => TransferMode::DmaRead,
-        _ => unreachable!("Invalid transfer mode"),
-    }
-}
-
-pub fn get_voll(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_voll(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_voll,
         1 => &state.spu.voice1_voll,
@@ -45,11 +32,11 @@ pub fn get_voll(state: &State, voice_id: usize) -> &B16Register {
         21 => &state.spu.voice21_voll,
         22 => &state.spu.voice22_voll,
         23 => &state.spu.voice23_voll,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_volr(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_volr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_volr,
         1 => &state.spu.voice1_volr,
@@ -75,11 +62,11 @@ pub fn get_volr(state: &State, voice_id: usize) -> &B16Register {
         21 => &state.spu.voice21_volr,
         22 => &state.spu.voice22_volr,
         23 => &state.spu.voice23_volr,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_srate(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_srate(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_srate,
         1 => &state.spu.voice1_srate,
@@ -105,11 +92,11 @@ pub fn get_srate(state: &State, voice_id: usize) -> &B16Register {
         21 => &state.spu.voice21_srate,
         22 => &state.spu.voice22_srate,
         23 => &state.spu.voice23_srate,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_saddr(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_saddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_saddr,
         1 => &state.spu.voice1_saddr,
@@ -135,11 +122,11 @@ pub fn get_saddr(state: &State, voice_id: usize) -> &B16Register {
         21 => &state.spu.voice21_saddr,
         22 => &state.spu.voice22_saddr,
         23 => &state.spu.voice23_saddr,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_adsr(state: &State, voice_id: usize) -> &B32Register {
+pub fn get_adsr(state: &State, voice_id: usize) -> &B32LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_adsr,
         1 => &state.spu.voice1_adsr,
@@ -165,11 +152,11 @@ pub fn get_adsr(state: &State, voice_id: usize) -> &B32Register {
         21 => &state.spu.voice21_adsr,
         22 => &state.spu.voice22_adsr,
         23 => &state.spu.voice23_adsr,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_cvol(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_cvol(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_cvol,
         1 => &state.spu.voice1_cvol,
@@ -195,11 +182,11 @@ pub fn get_cvol(state: &State, voice_id: usize) -> &B16Register {
         21 => &state.spu.voice21_cvol,
         22 => &state.spu.voice22_cvol,
         23 => &state.spu.voice23_cvol,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_raddr(state: &State, voice_id: usize) -> &B16Register {
+pub fn get_raddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_raddr,
         1 => &state.spu.voice1_raddr,
@@ -225,36 +212,36 @@ pub fn get_raddr(state: &State, voice_id: usize) -> &B16Register {
         21 => &state.spu.voice21_raddr,
         22 => &state.spu.voice22_raddr,
         23 => &state.spu.voice23_raddr,
-        _ => unreachable!("Invalid voice id"),
+        _ => unreachable!("Invalid voice ID"),
     }
 }
 
-pub fn get_play_state(state: &mut ControllerState, voice_id: usize) -> &mut PlayState {
+pub fn get_voice_state(controller_state: &mut ControllerState, voice_id: usize) -> &mut VoiceState {
     match voice_id {
-        0 => &mut state.dac.voice0_state,
-        1 => &mut state.dac.voice1_state,
-        2 => &mut state.dac.voice2_state,
-        3 => &mut state.dac.voice3_state,
-        4 => &mut state.dac.voice4_state,
-        5 => &mut state.dac.voice5_state,
-        6 => &mut state.dac.voice6_state,
-        7 => &mut state.dac.voice7_state,
-        8 => &mut state.dac.voice8_state,
-        9 => &mut state.dac.voice9_state,
-        10 => &mut state.dac.voice10_state,
-        11 => &mut state.dac.voice11_state,
-        12 => &mut state.dac.voice12_state,
-        13 => &mut state.dac.voice13_state,
-        14 => &mut state.dac.voice14_state,
-        15 => &mut state.dac.voice15_state,
-        16 => &mut state.dac.voice16_state,
-        17 => &mut state.dac.voice17_state,
-        18 => &mut state.dac.voice18_state,
-        19 => &mut state.dac.voice19_state,
-        20 => &mut state.dac.voice20_state,
-        21 => &mut state.dac.voice21_state,
-        22 => &mut state.dac.voice22_state,
-        23 => &mut state.dac.voice23_state,
-        _ => unreachable!("Invalid voice id"),
+        0 => &mut controller_state.dac_state.voice0_state,
+        1 => &mut controller_state.dac_state.voice1_state,
+        2 => &mut controller_state.dac_state.voice2_state,
+        3 => &mut controller_state.dac_state.voice3_state,
+        4 => &mut controller_state.dac_state.voice4_state,
+        5 => &mut controller_state.dac_state.voice5_state,
+        6 => &mut controller_state.dac_state.voice6_state,
+        7 => &mut controller_state.dac_state.voice7_state,
+        8 => &mut controller_state.dac_state.voice8_state,
+        9 => &mut controller_state.dac_state.voice9_state,
+        10 => &mut controller_state.dac_state.voice10_state,
+        11 => &mut controller_state.dac_state.voice11_state,
+        12 => &mut controller_state.dac_state.voice12_state,
+        13 => &mut controller_state.dac_state.voice13_state,
+        14 => &mut controller_state.dac_state.voice14_state,
+        15 => &mut controller_state.dac_state.voice15_state,
+        16 => &mut controller_state.dac_state.voice16_state,
+        17 => &mut controller_state.dac_state.voice17_state,
+        18 => &mut controller_state.dac_state.voice18_state,
+        19 => &mut controller_state.dac_state.voice19_state,
+        20 => &mut controller_state.dac_state.voice20_state,
+        21 => &mut controller_state.dac_state.voice21_state,
+        22 => &mut controller_state.dac_state.voice22_state,
+        23 => &mut controller_state.dac_state.voice23_state,
+        _ => unreachable!("Invalid voice ID"),
     }
 }

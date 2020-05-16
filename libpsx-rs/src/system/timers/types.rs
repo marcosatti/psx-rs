@@ -1,16 +1,9 @@
 use crate::types::memory::*;
 use parking_lot::Mutex;
-use std::{
-    sync::atomic::{
-        AtomicBool,
-        Ordering,
-    },
-    time::Duration,
-};
+use std::time::Duration;
 
 #[derive(Copy, Clone, Debug)]
 pub enum IrqType {
-    None,
     Overflow,
     Target,
 }
@@ -24,19 +17,36 @@ pub enum ClockSource {
 }
 
 pub struct TimerState {
-    pub clock_source: ClockSource,
     pub current_elapsed: Duration,
     pub acknowledged_elapsed: Duration,
+
+    pub reset_on_target: bool,
+    pub irq_on_target: bool,
+    pub irq_on_overflow: bool,
+    pub oneshot_mode: bool,
+    pub irq_toggle: bool,
+    pub clock_source: ClockSource,
+    pub clock_source_raw: u32,
     pub irq_raised: bool,
+    pub target_hit: bool,
+    pub overflow_hit: bool,
 }
 
 impl TimerState {
     pub fn new() -> TimerState {
         TimerState {
-            clock_source: ClockSource::System,
             current_elapsed: Duration::from_secs(0),
             acknowledged_elapsed: Duration::from_secs(0),
+            clock_source: ClockSource::System,
+            clock_source_raw: 0,
+            reset_on_target: false,
             irq_raised: false,
+            irq_on_target: false,
+            irq_on_overflow: false,
+            irq_toggle: false,
+            oneshot_mode: false,
+            target_hit: false,
+            overflow_hit: false,
         }
     }
 }
@@ -58,17 +68,17 @@ impl ControllerState {
 }
 
 pub struct State {
-    pub timer0_count: B32Register,
-    pub timer0_mode: Mode,
-    pub timer0_target: B32Register,
+    pub timer0_count: B32LevelRegister,
+    pub timer0_mode: B32EdgeRegister,
+    pub timer0_target: B32LevelRegister,
 
-    pub timer1_count: B32Register,
-    pub timer1_mode: Mode,
-    pub timer1_target: B32Register,
+    pub timer1_count: B32LevelRegister,
+    pub timer1_mode: B32EdgeRegister,
+    pub timer1_target: B32LevelRegister,
 
-    pub timer2_count: B32Register,
-    pub timer2_mode: Mode,
-    pub timer2_target: B32Register,
+    pub timer2_count: B32LevelRegister,
+    pub timer2_mode: B32EdgeRegister,
+    pub timer2_target: B32LevelRegister,
 
     pub controller_state: Mutex<ControllerState>,
 }
@@ -76,58 +86,16 @@ pub struct State {
 impl State {
     pub fn new() -> State {
         State {
-            timer0_count: B32Register::new(),
-            timer0_mode: Mode::new(),
-            timer0_target: B32Register::new(),
-            timer1_count: B32Register::new(),
-            timer1_mode: Mode::new(),
-            timer1_target: B32Register::new(),
-            timer2_count: B32Register::new(),
-            timer2_mode: Mode::new(),
-            timer2_target: B32Register::new(),
+            timer0_count: B32LevelRegister::new(),
+            timer0_mode: B32EdgeRegister::new(),
+            timer0_target: B32LevelRegister::new(),
+            timer1_count: B32LevelRegister::new(),
+            timer1_mode: B32EdgeRegister::new(),
+            timer1_target: B32LevelRegister::new(),
+            timer2_count: B32LevelRegister::new(),
+            timer2_mode: B32EdgeRegister::new(),
+            timer2_target: B32LevelRegister::new(),
             controller_state: Mutex::new(ControllerState::new()),
         }
-    }
-}
-
-pub struct Mode {
-    pub register: B32Register,
-    pub write_latch: AtomicBool,
-    pub read_latch: AtomicBool,
-}
-
-impl Mode {
-    pub fn new() -> Mode {
-        Mode {
-            register: B32Register::new(),
-            write_latch: AtomicBool::new(false),
-            read_latch: AtomicBool::new(false),
-        }
-    }
-
-    pub fn read_u16(&self, offset: u32) -> u16 {
-        let result = self.register.read_u16(offset);
-        self.read_latch.store(true, Ordering::Release);
-        result
-    }
-
-    pub fn write_u16(&self, offset: u32, value: u16) {
-        // BIOS writes consecutively to this register without a chance to acknowledge...
-        // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
-        self.write_latch.store(true, Ordering::Release);
-        self.register.write_u16(offset, value);
-    }
-
-    pub fn read_u32(&self) -> u32 {
-        let result = self.register.read_u32();
-        self.read_latch.store(true, Ordering::Release);
-        result
-    }
-
-    pub fn write_u32(&self, value: u32) {
-        // BIOS writes consecutively to this register without a chance to acknowledge...
-        // assert!(!self.write_latch.load(Ordering::Acquire), "Write latch still on");
-        self.write_latch.store(true, Ordering::Release);
-        self.register.write_u32(value);
     }
 }

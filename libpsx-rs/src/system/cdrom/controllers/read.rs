@@ -12,66 +12,69 @@ use crate::{
         },
         types::State,
     },
+    utilities::binary_to_ascii_escaped,
 };
 
-pub fn handle_read(state: &State, cdrom_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> bool {
-    // Buffer some data first (INT1 means ready to send data?).
-    // Do we always want to send data if we have read a sector regardless of the current reading status? Seems like the
-    // BIOS expects it...
-    if cdrom_state.read_buffer.is_empty() {
-        if cdrom_state.pausing {
-            // Stop reading and raise interrupt.
-            cdrom_state.pausing = false;
-            cdrom_state.reading = false;
-            let stat_value = stat_value(cdrom_state);
-            let response = &state.cdrom.response;
-            response.write_one(stat_value).unwrap();
-            raise_irq(state, 2);
-            return true;
+pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
+    if controller_state.sector_buffer.len() > 0 {
+        if controller_state.loading_data {
+            fill_data_fifo(state, controller_state);
+
+            if controller_state.sector_buffer.len() == 0 {
+                controller_state.loading_data = false;
+            }
+        } else {
+            if controller_state.load_data_flag {
+                controller_state.loading_data = true;
+                controller_state.load_data_flag = false;
+            }
+        }
+    } else {
+        if !controller_state.reading {
+            return;
         }
 
-        if !cdrom_state.reading {
-            return false;
+        if controller_state.sector_delay_counter > 0 {
+            controller_state.sector_delay_counter -= 1;
+            return;
         }
 
-        // Make sure FIFO is empty.
         if !state.cdrom.data.is_empty() {
-            return true;
+            log::warn!("Data FIFO was not empty before reading a sector... trying again later");
+            return;
         }
 
-        let msf_address_base = cdrom_state.msf_address_base;
-        let msf_address_offset = cdrom_state.msf_address_offset;
-        let data_block = backend_dispatch::read_sector(cdrom_backend, msf_address_base, msf_address_offset).expect("Tried to read a sector when no backend is available");
-        assert_eq!(data_block.len(), 2048);
-
-        cdrom_state.msf_address_offset += 1;
-        cdrom_state.read_buffer.extend(&data_block);
-
-        // Raise the interrupt - we have read a sector ok and have some data ready.
-        let stat_value = stat_value(cdrom_state);
-        let response = &state.cdrom.response;
-        response.write_one(stat_value).unwrap();
-        raise_irq(state, 1);
+        read_sector(controller_state, cdrom_backend);
+        controller_state.sector_delay_counter = SECTOR_DELAY_CYCLES_SINGLE_SPEED;
+        state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
+        handle_irq_raise(state, controller_state, 1);
     }
+}
 
-    // Check if the CPU is ready for data and send it.
-    let request = &state.cdrom.request;
-    let load_data = request.register.read_bitfield(REQUEST_BFRD) > 0;
-    if load_data {
-        let read_buffer = &mut cdrom_state.read_buffer;
-        let data = &state.cdrom.data;
+fn fill_data_fifo(state: &State, controller_state: &mut ControllerState) {
+    loop {
+        if state.cdrom.data.is_full() {
+            break;
+        }
 
-        loop {
-            if data.is_full() {
-                break;
-            }
-
-            match read_buffer.pop_front() {
-                Some(v) => data.write_one(v).unwrap(),
-                None => break,
-            }
+        match controller_state.sector_buffer.pop_front() {
+            Some(v) => state.cdrom.data.write_one(v).unwrap(),
+            None => break,
         }
     }
+}
 
-    true
+fn read_sector(controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
+    assert_eq!(controller_state.sector_buffer.len(), 0);
+    let msf_address_base = controller_state.msf_address_base;
+    let msf_address_offset = controller_state.msf_address_offset;
+    let data_block = backend_dispatch::read_sector(cdrom_backend, msf_address_base, msf_address_offset).unwrap();
+    assert_eq!(data_block.len(), 2048);
+    controller_state.msf_address_offset += 1;
+    controller_state.sector_buffer.extend(&data_block);
+    log::debug!("Sector {:?} + offset {} read ok", msf_address_base, msf_address_offset);
+
+    if false {
+        log::debug!("{}", &binary_to_ascii_escaped(&data_block));
+    }
 }

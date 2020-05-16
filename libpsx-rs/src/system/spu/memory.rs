@@ -1,6 +1,6 @@
 use crate::system::{
     bus::types::*,
-    spu::controllers::voice::*,
+    spu::controllers::dac::voice::*,
     types::State,
 };
 
@@ -111,49 +111,49 @@ pub fn reverb_volume_write_u32(state: &State, offset: u32, value: u32) -> WriteR
 }
 
 pub fn voice_key_on_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
-    Ok(state.spu.voice_key_on.read_u16(offset / 2))
+    state.spu.voice_key_on.read_u16(offset / 2).map_err(|_| ReadErrorKind::NotReady)
 }
 
 pub fn voice_key_on_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
-    Ok(state.spu.voice_key_on.write_u16(offset / 2, value))
+    state.spu.voice_key_on.write_u16(offset / 2, value).map_err(|_| WriteErrorKind::NotReady)
 }
 
 pub fn voice_key_on_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
-    Ok(state.spu.voice_key_on.read_u32())
+    state.spu.voice_key_on.read_u32().map_err(|_| ReadErrorKind::NotReady)
 }
 
 pub fn voice_key_on_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
-    Ok(state.spu.voice_key_on.write_u32(value))
+    state.spu.voice_key_on.write_u32(value).map_err(|_| WriteErrorKind::NotReady)
 }
 
 pub fn voice_key_off_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
-    Ok(state.spu.voice_key_off.read_u16(offset / 2))
+    state.spu.voice_key_off.read_u16(offset / 2).map_err(|_| ReadErrorKind::NotReady)
 }
 
 pub fn voice_key_off_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
-    Ok(state.spu.voice_key_off.write_u16(offset / 2, value))
+    state.spu.voice_key_off.write_u16(offset / 2, value).map_err(|_| WriteErrorKind::NotReady)
 }
 
 pub fn voice_key_off_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
-    Ok(state.spu.voice_key_off.read_u32())
+    state.spu.voice_key_off.read_u32().map_err(|_| ReadErrorKind::NotReady)
 }
 
 pub fn voice_key_off_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
-    Ok(state.spu.voice_key_off.write_u32(value))
+    state.spu.voice_key_off.write_u32(value).map_err(|_| WriteErrorKind::NotReady)
 }
 
 pub fn data_transfer_address_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
     assert_eq!(offset, 0);
-    Ok(state.spu.data_transfer_address.read_u16())
+    state.spu.data_transfer_address.read_u16().map_err(|_| ReadErrorKind::NotReady)
 }
 
 pub fn data_transfer_address_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
     assert_eq!(offset, 0);
-    Ok(state.spu.data_transfer_address.write_u16(value))
+    state.spu.data_transfer_address.write_u16(value).map_err(|_| WriteErrorKind::NotReady)
 }
 
 pub fn data_fifo_read_u16(_state: &State, offset: u32) -> ReadResult<u16> {
@@ -270,12 +270,12 @@ pub fn irq_address_write_u16(state: &State, offset: u32, value: u16) -> WriteRes
 
 pub fn control_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
     assert_eq!(offset, 0);
-    Ok(state.spu.control.read_u16())
+    state.spu.control.read_u16().map_err(|_| ReadErrorKind::NotReady)
 }
 
 pub fn control_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
     assert_eq!(offset, 0);
-    Ok(state.spu.control.write_u16(value))
+    state.spu.control.write_u16(value).map_err(|_| WriteErrorKind::NotReady)
 }
 
 pub fn data_transfer_control_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
@@ -334,24 +334,24 @@ pub fn extern_volume_write_u32(state: &State, offset: u32, value: u32) -> WriteR
     Ok(state.spu.extern_volume.write_u32(value))
 }
 
-pub fn current_volume_left_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+pub fn current_volume_left_read_u16(_state: &State, offset: u32) -> ReadResult<u16> {
     assert_eq!(offset, 0);
-    Ok(state.spu.current_volume_left.read_u16())
+    unimplemented!();
 }
 
-pub fn current_volume_left_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+pub fn current_volume_left_write_u16(_state: &State, offset: u32, _value: u16) -> WriteResult {
     assert_eq!(offset, 0);
-    Ok(state.spu.current_volume_left.write_u16(value))
+    unimplemented!();
 }
 
-pub fn current_volume_right_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+pub fn current_volume_right_read_u16(_state: &State, offset: u32) -> ReadResult<u16> {
     assert_eq!(offset, 0);
-    Ok(state.spu.current_volume_right.read_u16())
+    unimplemented!();
 }
 
-pub fn current_volume_right_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+pub fn current_volume_right_write_u16(_state: &State, offset: u32, _value: u16) -> WriteResult {
     assert_eq!(offset, 0);
-    Ok(state.spu.current_volume_right.write_u16(value))
+    unimplemented!();
 }
 
 pub fn unknown_1_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
