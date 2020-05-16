@@ -1,12 +1,14 @@
 use crate::system::{
+    intc::types::Line,
     timers::{
-        controllers::register::*,
-        controllers::timer::*,
+        controllers::{
+            register::*,
+            timer::*,
+        },
         types::*,
     },
     types::State,
 };
-use crate::system::intc::types::Line;
 
 pub fn handle_irq_trigger(state: &State, controller_state: &mut ControllerState, timer_id: usize, irq_type: IrqType) {
     let timer_state = get_state(controller_state, timer_id);
@@ -20,7 +22,7 @@ pub fn handle_irq_trigger(state: &State, controller_state: &mut ControllerState,
 
     let irq_condition_matches = match irq_type {
         IrqType::Overflow => timer_state.irq_on_overflow,
-        IrqType::Target => timer_state.irq_on_target, 
+        IrqType::Target => timer_state.irq_on_target,
     };
 
     if irq_condition_matches {

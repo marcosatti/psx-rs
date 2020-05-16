@@ -1,12 +1,10 @@
-use crate::{
-    system::{
-        spu::{
-            controllers::dac::voice::*,
-            types::*,
-            constants::*,
-        },
-        types::State,
+use crate::system::{
+    spu::{
+        constants::*,
+        controllers::dac::voice::*,
+        types::*,
     },
+    types::State,
 };
 use num_traits::clamp;
 use std::cmp::{
@@ -70,52 +68,60 @@ fn extract_adsr_sustain_level(adsr_value: u32) -> i16 {
 
 fn extract_phase_params(adsr_value: u32, phase: AdsrPhase) -> AdsrPhaseParams {
     match phase {
-        AdsrPhase::Attack => AdsrPhaseParams {
-            step: ADSR_ATTACK_STEP.extract_from(adsr_value) as usize,
-            shift: ADSR_ATTACK_SHIFT.extract_from(adsr_value) as usize,
-            direction: AdsrDirection::Increase,
-            mode: if ADSR_ATTACK_MODE.extract_from(adsr_value) > 0 { 
-                AdsrMode::Exponential 
-            } else {
-                AdsrMode::Linear
-            },
+        AdsrPhase::Attack => {
+            AdsrPhaseParams {
+                step: ADSR_ATTACK_STEP.extract_from(adsr_value) as usize,
+                shift: ADSR_ATTACK_SHIFT.extract_from(adsr_value) as usize,
+                direction: AdsrDirection::Increase,
+                mode: if ADSR_ATTACK_MODE.extract_from(adsr_value) > 0 {
+                    AdsrMode::Exponential
+                } else {
+                    AdsrMode::Linear
+                },
+            }
         },
-        AdsrPhase::Decay => AdsrPhaseParams {
-            step: 0,
-            shift: ADSR_DECAY_SHIFT.extract_from(adsr_value) as usize,
-            direction: AdsrDirection::Decrease,
-            mode: AdsrMode::Exponential,
+        AdsrPhase::Decay => {
+            AdsrPhaseParams {
+                step: 0,
+                shift: ADSR_DECAY_SHIFT.extract_from(adsr_value) as usize,
+                direction: AdsrDirection::Decrease,
+                mode: AdsrMode::Exponential,
+            }
         },
-        AdsrPhase::Sustain => AdsrPhaseParams {
-            step: ADSR_SUSTAIN_STEP.extract_from(adsr_value) as usize,
-            shift: ADSR_SUSTAIN_SHIFT.extract_from(adsr_value) as usize,
-            direction: if ADSR_SUSTAIN_DIRECTION.extract_from(adsr_value) > 0 {
-                AdsrDirection::Decrease
-            } else {
-                AdsrDirection::Increase
-            },
-            mode: if ADSR_SUSTAIN_MODE.extract_from(adsr_value) > 0 { 
-                AdsrMode::Exponential 
-            } else {
-                AdsrMode::Linear
-            },
+        AdsrPhase::Sustain => {
+            AdsrPhaseParams {
+                step: ADSR_SUSTAIN_STEP.extract_from(adsr_value) as usize,
+                shift: ADSR_SUSTAIN_SHIFT.extract_from(adsr_value) as usize,
+                direction: if ADSR_SUSTAIN_DIRECTION.extract_from(adsr_value) > 0 {
+                    AdsrDirection::Decrease
+                } else {
+                    AdsrDirection::Increase
+                },
+                mode: if ADSR_SUSTAIN_MODE.extract_from(adsr_value) > 0 {
+                    AdsrMode::Exponential
+                } else {
+                    AdsrMode::Linear
+                },
+            }
         },
-        AdsrPhase::Release => AdsrPhaseParams {
-            step: 0,
-            shift: ADSR_RELEASE_SHIFT.extract_from(adsr_value) as usize,
-            direction: AdsrDirection::Decrease,
-            mode: if ADSR_RELEASE_MODE.extract_from(adsr_value) > 0 {
-                AdsrMode::Exponential
-            } else {
-                AdsrMode::Linear
-            },
+        AdsrPhase::Release => {
+            AdsrPhaseParams {
+                step: 0,
+                shift: ADSR_RELEASE_SHIFT.extract_from(adsr_value) as usize,
+                direction: AdsrDirection::Decrease,
+                mode: if ADSR_RELEASE_MODE.extract_from(adsr_value) > 0 {
+                    AdsrMode::Exponential
+                } else {
+                    AdsrMode::Linear
+                },
+            }
         },
     }
 }
 
 fn calculate_envelope_delta(params: AdsrPhaseParams, current_level: i16) -> (i16, usize) {
     let mut wait_cycles = 1 << (max(0, params.shift as isize - 11) as usize);
-    
+
     let base_step = match params.direction {
         AdsrDirection::Increase => 7 - (params.step as isize),
         AdsrDirection::Decrease => -8 + (params.step as isize),

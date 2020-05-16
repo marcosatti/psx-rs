@@ -1,11 +1,6 @@
-use crate::{
-    types::{
-        memory::*,
-    },
-};
+use crate::types::memory::*;
+use enum_as_inner::EnumAsInner;
 use parking_lot::Mutex;
-
-pub type TransferResult = Result<bool, ()>;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TransferDirection {
@@ -19,7 +14,7 @@ pub enum StepDirection {
     Backwards,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, EnumAsInner)]
 pub enum SyncMode {
     Undefined,
     Continuous(ContinuousState),
@@ -35,7 +30,6 @@ pub struct TransferState {
     pub sync_mode: SyncMode,
     pub interrupt_enabled: bool,
     pub interrupted: bool,
-    pub delay_cycles: usize,
 }
 
 impl TransferState {
@@ -47,7 +41,6 @@ impl TransferState {
             sync_mode: SyncMode::Undefined,
             interrupt_enabled: false,
             interrupted: false,
-            delay_cycles: 0,
         }
     }
 }
@@ -61,7 +54,7 @@ pub struct ContinuousState {
 
 impl ContinuousState {
     pub fn new() -> ContinuousState {
-        ContinuousState { 
+        ContinuousState {
             current_address: 0,
             target_count: 0,
             current_count: 0,
@@ -80,7 +73,7 @@ pub struct BlocksState {
 
 impl BlocksState {
     pub fn new() -> BlocksState {
-        BlocksState { 
+        BlocksState {
             current_address: 0,
             current_bsize_count: 0,
             target_bsize_count: 0,
@@ -100,7 +93,7 @@ pub struct LinkedListState {
 
 impl LinkedListState {
     pub fn new() -> LinkedListState {
-        LinkedListState { 
+        LinkedListState {
             current_header_address: 0,
             next_header_address: 0,
             target_count: 0,

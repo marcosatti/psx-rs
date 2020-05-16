@@ -13,7 +13,7 @@ pub struct TransferState {
 
 impl TransferState {
     pub fn new() -> TransferState {
-        TransferState { 
+        TransferState {
             current_mode: TransferMode::Stop,
             current_address: 0,
         }

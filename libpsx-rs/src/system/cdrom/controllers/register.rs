@@ -1,8 +1,14 @@
-use crate::system::types::State;
-use crate::system::cdrom::types::*;
-use crate::system::cdrom::constants::*;
-use crate::system::cdrom::controllers::interrupt::*;
-use crate::types::memory::*;
+use crate::{
+    system::{
+        cdrom::{
+            constants::*,
+            controllers::interrupt::*,
+            types::*,
+        },
+        types::State,
+    },
+    types::memory::*,
+};
 
 pub fn handle_command(state: &State, controller_state: &mut ControllerState) {
     state.cdrom.command.acknowledge(|value, latch_kind| {
@@ -28,11 +34,11 @@ pub fn handle_request(state: &State, controller_state: &mut ControllerState) {
 
                 if REQUEST_BFRD.extract_from(value) > 0 {
                     controller_state.load_data_flag = true;
-                    //log::debug!("Load data FIFO set");
+                // log::debug!("Load data FIFO set");
                 } else {
                     assert_eq!(state.cdrom.data.read_available(), 0);
                     state.cdrom.data.clear();
-                    //log::debug!("Reset data FIFO");
+                    // log::debug!("Reset data FIFO");
                 }
 
                 0
@@ -52,7 +58,7 @@ pub fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerSta
                 if acknowledge_interrupt > 0 {
                     assert_eq!(controller_state.interrupt_index, 0);
                     state.cdrom.response.clear();
-                    //log::debug!("Cleared response FIFO");
+                    // log::debug!("Cleared response FIFO");
                 }
 
                 calculate_interrupt_flag_value(controller_state)

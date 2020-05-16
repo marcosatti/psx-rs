@@ -8,8 +8,8 @@ use crate::types::{
     },
     memory::*,
 };
-use parking_lot::Mutex;
 pub use dac::*;
+use parking_lot::Mutex;
 pub use transfer::*;
 
 pub struct ControllerState {
@@ -57,7 +57,7 @@ pub struct State {
     pub current_volume_left: B16LevelRegister,
     pub current_volume_right: B16LevelRegister,
     pub unknown_1: B32LevelRegister,
-    
+
     pub controller_state: Mutex<ControllerState>,
 
     pub dapf1: B16LevelRegister,

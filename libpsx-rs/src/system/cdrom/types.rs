@@ -1,10 +1,11 @@
-use crate::{
-    types::{
-        memory::*,
+use crate::types::{
+    fifo::{
+        debug::DebugState,
+        Fifo,
     },
+    memory::*,
 };
 use parking_lot::Mutex;
-use crate::types::fifo::{Fifo, debug::DebugState};
 use std::collections::VecDeque;
 
 pub struct ControllerState {

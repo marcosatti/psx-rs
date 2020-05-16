@@ -1,5 +1,7 @@
-use crate::system::types::State;
-use crate::system::dmac::constants::*;
+use crate::system::{
+    dmac::constants::*,
+    types::State,
+};
 
 pub fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel_id {
@@ -15,14 +17,16 @@ pub fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, 
             let result2 = fifo.read_one().unwrap();
             let result3 = fifo.read_one().unwrap();
             let result4 = fifo.read_one().unwrap();
-            
+
             Ok(u32::from_le_bytes([result1, result2, result3, result4]))
         },
-        6 => Ok(if !last_transfer {
-            (current_address - DATA_SIZE) & 0x00FF_FFFF
-        } else {
-            0x00FF_FFFF
-        }),
+        6 => {
+            Ok(if !last_transfer {
+                (current_address - DATA_SIZE) & 0x00FF_FFFF
+            } else {
+                0x00FF_FFFF
+            })
+        },
         _ => unimplemented!("Unhandled DMAC channel pop {}", channel_id),
     }
 }

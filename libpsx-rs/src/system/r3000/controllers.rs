@@ -31,9 +31,9 @@ use crate::{
 };
 use log::debug;
 use std::{
+    cmp::max,
     intrinsics::unlikely,
     time::Duration,
-    cmp::max,
 };
 
 pub fn run(context: &ControllerContext, event: Event) {
@@ -93,7 +93,7 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
     debug::trace_state(context.state, context.r3000_state, context.cp0_state);
 
     let result = fn_ptr(context, inst);
-    
+
     debug::trace_hazard(result);
 
     if unlikely(result.is_err()) {

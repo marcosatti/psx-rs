@@ -1,28 +1,38 @@
 pub mod backend_dispatch;
-pub mod register;
-pub mod interrupt;
-pub mod command_impl;
 pub mod command;
-pub mod state;
+pub mod command_impl;
+pub mod interrupt;
 pub mod read;
+pub mod register;
+pub mod state;
 
 use crate::{
     backends::cdrom::CdromBackend,
     system::{
         cdrom::{
             constants::*,
-            controllers::register::{handle_command as handle_command_register, handle_request, handle_interrupt_flag},
+            controllers::{
+                command::*,
+                read::*,
+                register::{
+                    handle_command as handle_command_register,
+                    handle_interrupt_flag,
+                    handle_request,
+                },
+            },
             types::ControllerState,
-            controllers::command::*,
-            controllers::read::*,
         },
-        types::State,
-        types::Event,
-        types::ControllerContext,
+        types::{
+            ControllerContext,
+            Event,
+            State,
+        },
     },
 };
-use std::cmp::max;
-use std::time::Duration;
+use std::{
+    cmp::max,
+    time::Duration,
+};
 
 pub fn run(context: &ControllerContext, event: Event) {
     match event {

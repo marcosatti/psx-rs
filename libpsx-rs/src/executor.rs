@@ -1,6 +1,7 @@
 use crate::{
     debug::benchmark::BenchmarkResults,
     system::{
+        cdrom::controllers::run as run_cdrom,
         dmac::controllers::run as run_dmac,
         gpu::controllers::run as run_gpu,
         intc::controllers::run as run_intc,
@@ -8,7 +9,6 @@ use crate::{
         r3000::controllers::run as run_r3000,
         spu::controllers::run as run_spu,
         timers::controllers::run as run_timers,
-        cdrom::controllers::run as run_cdrom,
         types::{
             ControllerContext,
             Event,

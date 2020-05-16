@@ -1,13 +1,13 @@
-mod sweep;
-mod adsr;
 mod adpcm;
+mod adsr;
 mod interpolation;
+mod sweep;
 
-pub use sweep::*;
-pub use adsr::*;
-pub use adpcm::*;
-pub use interpolation::*;
 use crate::types::stereo::*;
+pub use adpcm::*;
+pub use adsr::*;
+pub use interpolation::*;
+pub use sweep::*;
 
 #[derive(Debug)]
 pub struct VoiceState {

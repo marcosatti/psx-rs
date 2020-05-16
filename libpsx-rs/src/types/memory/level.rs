@@ -1,11 +1,11 @@
 //! Level-triggered shared registers, for use in peripheral I/O memory mapped scenarios.
-//! Assumes only a single master/slave access combination (ie: CPU and peripheral). 
+//! Assumes only a single master/slave access combination (ie: CPU and peripheral).
 //! No error handling is required for level-triggered conditions, therefore read/writes always succeed.
 
 use super::{
-    B8Register_,
     B16Register_,
     B32Register_,
+    B8Register_,
 };
 use crate::types::bitfield::Bitfield;
 use std::cell::UnsafeCell;

@@ -1,10 +1,18 @@
-use crate::system::types::State;
-use crate::system::dmac::types::*;
-use crate::system::dmac::controllers::channel::*;
-use crate::system::dmac::controllers::transfer::*;
-use crate::types::memory::*;
-use crate::system::dmac::constants::*;
-use crate::utilities::bool_to_flag;
+use crate::{
+    system::{
+        dmac::{
+            constants::*,
+            controllers::{
+                channel::*,
+                transfer::*,
+            },
+            types::*,
+        },
+        types::State,
+    },
+    types::memory::*,
+    utilities::bool_to_flag,
+};
 
 pub fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) {
     let mut write_fn = |mut value| {
@@ -19,7 +27,11 @@ pub fn handle_chcr(state: &State, controller_state: &mut ControllerState, channe
         }
 
         if CHCR_STARTTRIGGER.extract_from(value) > 0 {
-            //log::warn!("Unhandled start/trigger bit set");
+            // log::warn!("Unhandled start/trigger bit set");
+        }
+
+        if CHCR_CHOPPING.extract_from(value) > 0 {
+            log::warn!("DMA chopping not implemented");
         }
 
         let transfer_state = get_transfer_state(controller_state, channel_id);

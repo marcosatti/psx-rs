@@ -1,9 +1,9 @@
 pub mod adpcm;
 pub mod adsr;
 pub mod interpolation;
+pub mod pitch;
 pub mod voice;
 pub mod volume;
-pub mod pitch;
 
 use crate::{
     backends::audio::AudioBackend,
@@ -12,12 +12,14 @@ use crate::{
             constants::*,
             controllers::{
                 backend_dispatch,
-                dac::adpcm::*,
-                dac::adsr::*,
-                dac::interpolation::*,
-                dac::voice::*,
-                dac::volume::*,
-                dac::pitch::*,
+                dac::{
+                    adpcm::*,
+                    adsr::*,
+                    interpolation::*,
+                    pitch::*,
+                    voice::*,
+                    volume::*,
+                },
             },
             types::*,
         },

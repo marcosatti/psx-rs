@@ -1,13 +1,15 @@
-use crate::{
-    system::types::State,
-    system::dmac::{
+use crate::system::{
+    dmac::{
+        constants::*,
         controllers::fifo::*,
         types::*,
-        constants::*,
     },
+    types::State,
 };
 
-pub fn handle_transfer(state: &State, blocks_state: &mut BlocksState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection) -> TransferResult {
+pub fn handle_transfer(
+    state: &State, blocks_state: &mut BlocksState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection,
+) -> Result<(bool, bool), ()> {
     match transfer_direction {
         TransferDirection::FromChannel => {
             let last_transfer = transfers_remaining(blocks_state) == 1;
@@ -25,17 +27,20 @@ pub fn handle_transfer(state: &State, blocks_state: &mut BlocksState, channel_id
         StepDirection::Backwards => blocks_state.current_address -= DATA_SIZE,
     }
 
-    increment(blocks_state);
-
+    let new_block = increment(blocks_state);
     let finished = transfers_remaining(blocks_state) == 0;
-    Ok(finished)
+
+    Ok((finished, new_block))
 }
 
-fn increment(blocks_state: &mut BlocksState) {
+fn increment(blocks_state: &mut BlocksState) -> bool {
     blocks_state.current_bsize_count += 1;
     if blocks_state.current_bsize_count == blocks_state.target_bsize_count {
         blocks_state.current_bsize_count = 0;
         blocks_state.current_bamount_count += 1;
+        true
+    } else {
+        false
     }
 }
 

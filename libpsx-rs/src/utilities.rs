@@ -22,7 +22,7 @@ pub fn checked_clamp<T: PartialOrd>(input: T, min: T, max: T) -> (T, bool) {
 
 pub fn binary_to_ascii_escaped(data: &[u8]) -> String {
     let mut binary_ascii_str = String::new();
-    
+
     for &byte in data.iter() {
         let part: Vec<u8> = std::ascii::escape_default(byte).collect();
         binary_ascii_str.push_str(std::str::from_utf8(&part).unwrap());

@@ -1,8 +1,6 @@
 use crate::{
     system::{
-        spu::{
-            types::*,
-        },
+        spu::types::*,
         types::State,
     },
     types::memory::*,

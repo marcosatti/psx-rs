@@ -1,9 +1,11 @@
 pub mod register;
 
 use crate::system::{
-    padmc::constants::*,
-    padmc::controllers::register::*,
-    padmc::types::*,
+    padmc::{
+        constants::*,
+        controllers::register::*,
+        types::*,
+    },
     types::{
         ControllerContext,
         Event,
@@ -11,9 +13,9 @@ use crate::system::{
     },
 };
 use std::{
+    cmp::max,
     time::Duration,
 };
-use std::cmp::max;
 
 pub fn run(context: &ControllerContext, event: Event) {
     match event {

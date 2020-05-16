@@ -1,7 +1,7 @@
 pub mod count;
 pub mod interrupt;
-pub mod timer;
 pub mod register;
+pub mod timer;
 
 use crate::system::{
     timers::controllers::{

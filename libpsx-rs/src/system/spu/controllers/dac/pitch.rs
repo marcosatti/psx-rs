@@ -1,8 +1,12 @@
 use crate::{
-    system::spu::types::*,
-    system::spu::controllers::dac::voice::*,
+    system::{
+        spu::{
+            controllers::dac::voice::*,
+            types::*,
+        },
+        types::State,
+    },
     types::bitfield::Bitfield,
-    system::types::State,
 };
 
 pub fn handle_pitch_counter(state: &State, controller_state: &mut ControllerState, voice_id: usize) {

@@ -1,15 +1,15 @@
 pub mod channel;
-pub mod transfer;
-pub mod register;
 pub mod interrupt;
+pub mod register;
+pub mod transfer;
 
 use crate::system::{
     dmac::{
         constants::*,
         controllers::{
             interrupt::*,
-            transfer::*,
             register::*,
+            transfer::*,
         },
     },
     types::{
@@ -48,14 +48,12 @@ fn run_time(state: &State, duration: Duration) {
         for channel_id in 0..7 {
             handle_chcr(state, controller_state, channel_id);
 
-            match handle_transfer(state, controller_state, channel_id) {
-                Ok(count) => {
-                    ticks -= max(4, count * 4) as isize;
-                },
+            match handle_transfer(state, controller_state, channel_id, &mut ticks) {
+                Ok(()) => {},
                 Err(()) => {
                     cooloff = true;
                     break 'outer;
-                }
+                },
             }
 
             handle_irq_raise(state, controller_state);

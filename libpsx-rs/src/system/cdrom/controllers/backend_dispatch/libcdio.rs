@@ -6,9 +6,7 @@ use libcdio_sys::*;
 pub(crate) fn disc_loaded(backend_params: &BackendParams) -> bool {
     let (_context_guard, _context) = backend_params.context.guard();
 
-    unsafe { 
-        !DISC.is_null() 
-    }
+    unsafe { !DISC.is_null() }
 }
 
 pub fn disc_mode(backend_params: &BackendParams) -> usize {

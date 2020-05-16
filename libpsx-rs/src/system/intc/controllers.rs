@@ -9,8 +9,10 @@ use crate::system::{
         State,
     },
 };
-use std::time::Duration;
-use std::cmp::max;
+use std::{
+    cmp::max,
+    time::Duration,
+};
 
 pub fn run(context: &ControllerContext, event: Event) {
     match event {

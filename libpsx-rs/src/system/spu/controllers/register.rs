@@ -1,16 +1,25 @@
-use crate::system::types::State;
-use crate::system::spu::types::*;
-use crate::system::spu::constants::*;
-use crate::system::spu::controllers::dac::voice::*;
-use crate::types::bitfield::Bitfield;
-use crate::{utilities::bool_to_flag, types::memory::*};
+use crate::{
+    system::{
+        spu::{
+            constants::*,
+            controllers::dac::voice::*,
+            types::*,
+        },
+        types::State,
+    },
+    types::{
+        bitfield::Bitfield,
+        memory::*,
+    },
+    utilities::bool_to_flag,
+};
 
 pub fn handle_control(state: &State, controller_state: &mut ControllerState) {
     let mut write_fn = |value| {
         controller_state.enabled = CONTROL_ENABLE.extract_from(value) > 0;
-        
+
         controller_state.muted = CONTROL_UNMUTE.extract_from(value) == 0;
-        
+
         let transfer_mode = match CONTROL_TRANSFER_MODE.extract_from(value) {
             0 => TransferMode::Stop,
             1 => TransferMode::ManualWrite,
@@ -18,7 +27,7 @@ pub fn handle_control(state: &State, controller_state: &mut ControllerState) {
             3 => TransferMode::DmaRead,
             _ => unreachable!("Invalid transfer mode"),
         };
-        
+
         controller_state.transfer_state.current_mode = transfer_mode;
         state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, bool_to_flag(transfer_mode != TransferMode::Stop) as u16);
 
@@ -29,7 +38,10 @@ pub fn handle_control(state: &State, controller_state: &mut ControllerState) {
     state.spu.control.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => value,
-            LatchKind::Write => { write_fn(value); value },
+            LatchKind::Write => {
+                write_fn(value);
+                value
+            },
         }
     });
 }
@@ -42,7 +54,10 @@ pub fn handle_data_transfer_address(state: &State, controller_state: &mut Contro
     state.spu.data_transfer_address.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => value,
-            LatchKind::Write => { write_fn(value); value },
+            LatchKind::Write => {
+                write_fn(value);
+                value
+            },
         }
     });
 }
@@ -70,10 +85,13 @@ pub fn handle_key_on(state: &State, controller_state: &mut ControllerState) {
     state.spu.voice_key_on.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => {
-                //log::warn!("Read from KEYON occurred, but there is no handler (value 0x{:08X})", value);
+                // log::warn!("Read from KEYON occurred, but there is no handler (value 0x{:08X})", value);
                 value
             },
-            LatchKind::Write => { write_fn(value); value },
+            LatchKind::Write => {
+                write_fn(value);
+                value
+            },
         }
     });
 }
@@ -94,10 +112,13 @@ pub fn handle_key_off(state: &State, controller_state: &mut ControllerState) {
     state.spu.voice_key_off.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => {
-                //log::warn!("Read from KEYOFF occurred, but there is no handler (value 0x{:08X})", value);
+                // log::warn!("Read from KEYOFF occurred, but there is no handler (value 0x{:08X})", value);
                 value
             },
-            LatchKind::Write => { write_fn(value); value },
+            LatchKind::Write => {
+                write_fn(value);
+                value
+            },
         }
     });
 }

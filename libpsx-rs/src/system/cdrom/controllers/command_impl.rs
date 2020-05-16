@@ -74,7 +74,7 @@ pub fn command_09_handler(state: &State, controller_state: &mut ControllerState,
             state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
             handle_irq_raise(state, controller_state, 3);
             controller_state.reading = false;
-            //log::debug!("Paused");
+            // log::debug!("Paused");
             false
         },
         1 => {

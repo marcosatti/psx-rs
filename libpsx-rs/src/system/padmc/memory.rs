@@ -6,7 +6,7 @@ use crate::system::{
 pub fn padmc1040_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);
     Ok(state.padmc.rx_fifo.read_one().unwrap_or_else(|_| {
-        //log::warn!("Empty RX FIFO; proper behaviour not implemented (see SIO docs); returning 0x0");
+        // log::warn!("Empty RX FIFO; proper behaviour not implemented (see SIO docs); returning 0x0");
         0x0
     }))
 }

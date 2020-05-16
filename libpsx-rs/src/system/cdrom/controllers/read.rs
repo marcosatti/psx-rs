@@ -12,8 +12,8 @@ use crate::{
         },
         types::State,
     },
+    utilities::binary_to_ascii_escaped,
 };
-use crate::utilities::binary_to_ascii_escaped;
 
 pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     if controller_state.sector_buffer.len() > 0 {
@@ -30,10 +30,10 @@ pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_
             }
         }
     } else {
-        if !controller_state.reading { 
+        if !controller_state.reading {
             return;
         }
-    
+
         if controller_state.sector_delay_counter > 0 {
             controller_state.sector_delay_counter -= 1;
             return;
@@ -43,7 +43,7 @@ pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_
             log::warn!("Data FIFO was not empty before reading a sector... trying again later");
             return;
         }
-    
+
         read_sector(controller_state, cdrom_backend);
         controller_state.sector_delay_counter = SECTOR_DELAY_CYCLES_SINGLE_SPEED;
         state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();

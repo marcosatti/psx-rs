@@ -1,7 +1,7 @@
 pub mod backend_dispatch;
 pub mod dac;
-pub mod transfer;
 pub mod register;
+pub mod transfer;
 
 use crate::{
     audio::AudioBackend,
@@ -10,8 +10,8 @@ use crate::{
             constants::*,
             controllers::{
                 dac::*,
-                transfer::*,
                 register::*,
+                transfer::*,
             },
         },
         types::{
@@ -21,8 +21,10 @@ use crate::{
         },
     },
 };
-use std::time::Duration;
-use std::cmp::max;
+use std::{
+    cmp::max,
+    time::Duration,
+};
 
 pub fn run(context: &ControllerContext, event: Event) {
     match event {

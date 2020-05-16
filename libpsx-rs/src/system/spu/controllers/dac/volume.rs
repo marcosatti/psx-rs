@@ -1,15 +1,13 @@
 use crate::{
     system::{
         spu::{
+            constants::*,
             controllers::dac::voice::*,
             types::*,
-            constants::*,
         },
         types::State,
     },
-    types::{
-        stereo::*,
-    },
+    types::stereo::*,
 };
 use num_traits::clamp;
 
@@ -30,22 +28,14 @@ fn transform_voice_volume(state: &State, voice_id: usize, adpcm_sample: i16) -> 
     let vol_left = get_voll(state, voice_id);
     let vol_right = get_volr(state, voice_id);
 
-    transform_sample(
-        vol_left.read_u16(),
-        vol_right.read_u16(),
-        Stereo::new(adpcm_sample, adpcm_sample),
-    )
+    transform_sample(vol_left.read_u16(), vol_right.read_u16(), Stereo::new(adpcm_sample, adpcm_sample))
 }
 
 fn transform_main_volume(state: &State, pcm_frame: Stereo) -> Stereo {
     let mvol_left = &state.spu.main_volume_left;
     let mvol_right = &state.spu.main_volume_right;
-    
-    transform_sample(
-        mvol_left.read_u16(),
-        mvol_right.read_u16(),
-        pcm_frame,
-    )
+
+    transform_sample(mvol_left.read_u16(), mvol_right.read_u16(), pcm_frame)
 }
 
 fn transform_sample(left_volume_value: u16, right_volume_value: u16, pcm_frame: Stereo) -> Stereo {

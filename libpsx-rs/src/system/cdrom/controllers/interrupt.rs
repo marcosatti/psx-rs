@@ -1,6 +1,8 @@
 use crate::system::{
-    cdrom::constants::*,
-    cdrom::types::*,
+    cdrom::{
+        constants::*,
+        types::*,
+    },
     intc::types::Line,
     types::State,
 };
@@ -16,11 +18,11 @@ pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, i
     if (interrupt_enable_value & interrupt_index) != interrupt_index {
         panic!("IRQ pending but corresponding enable flags not set - will never trigger!");
     }
-    
+
     controller_state.interrupt_index = interrupt_index;
     state.cdrom.interrupt_flag.update(|_| calculate_interrupt_flag_value(controller_state));
 
-    //log::debug!("Raised interrupt with index {}", interrupt_index);
+    // log::debug!("Raised interrupt with index {}", interrupt_index);
     state.intc.stat.assert_line(Line::Cdrom);
 }
 

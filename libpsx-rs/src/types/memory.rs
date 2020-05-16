@@ -1,9 +1,9 @@
 mod edge;
 mod level;
 
+use crate::types::bitfield::Bitfield;
 pub use edge::*;
 pub use level::*;
-use crate::types::bitfield::Bitfield;
 use std::cell::UnsafeCell;
 
 // TODO: const generics once available.

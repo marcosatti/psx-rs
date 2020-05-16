@@ -1,13 +1,15 @@
-use crate::{
-    system::types::State,
-    system::dmac::{
+use crate::system::{
+    dmac::{
+        constants::*,
         controllers::fifo::*,
         types::*,
-        constants::*,
     },
+    types::State,
 };
 
-pub fn handle_transfer(state: &State, continuous_state: &mut ContinuousState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection) -> TransferResult {
+pub fn handle_transfer(
+    state: &State, continuous_state: &mut ContinuousState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection,
+) -> Result<bool, ()> {
     match transfer_direction {
         TransferDirection::FromChannel => {
             let last_transfer = transfers_remaining(continuous_state) == 1;

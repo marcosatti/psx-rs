@@ -29,7 +29,7 @@ pub fn handle_command(state: &State, controller_state: &mut ControllerState, cdr
 
     assert!(state.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
 
-    //log::debug!("Executing command {:X}, iteration {}", command_index, command_iteration);
+    // log::debug!("Executing command {:X}, iteration {}", command_index, command_iteration);
     let finished = (handler.1)(state, controller_state, cdrom_backend, command_iteration);
 
     if finished {

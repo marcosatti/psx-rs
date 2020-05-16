@@ -1,14 +1,16 @@
-use crate::system::{
-    bus::types::*,
-    types::State,
+use crate::{
+    system::{
+        bus::types::*,
+        cdrom::constants::*,
+        types::State,
+    },
+    utilities::bool_to_flag,
 };
-use crate::utilities::bool_to_flag;
-use crate::system::cdrom::constants::*;
 
 // Emulation note:
-// BIOS accesses ports at 0x1F80_1801 / 2 / 3 immediately after writing to the status register (no wait cycles or acknowledgment).
-// Not an expert... but this suggests that the register is not latched, and the FIFO status bits are directly wired to the FIFO's themselves.
-// If anyone can explain this more then let me know.
+// BIOS accesses ports at 0x1F80_1801 / 2 / 3 immediately after writing to the status register (no wait cycles or
+// acknowledgment). Not an expert... but this suggests that the register is not latched, and the FIFO status bits are
+// directly wired to the FIFO's themselves. If anyone can explain this more then let me know.
 
 pub fn status_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
     assert_eq!(offset, 0);
@@ -79,7 +81,7 @@ pub fn cdrom1803_write_u8(state: &State, offset: u32, value: u8) -> WriteResult 
 
             if INT_FLAG_CLRPRM.extract_from(value) > 0 {
                 state.cdrom.parameter.clear();
-                //log::debug!("Cleared parameter FIFO");
+                // log::debug!("Cleared parameter FIFO");
             }
 
             Ok(())

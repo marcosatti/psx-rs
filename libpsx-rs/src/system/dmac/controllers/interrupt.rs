@@ -1,14 +1,14 @@
-use crate::{
-    system::{
-        dmac::{
-            types::*,
-            controllers::channel::*,
-            controllers::register::*,
+use crate::system::{
+    dmac::{
+        controllers::{
+            channel::*,
+            register::*,
         },
-        types::State,
+        types::*,
     },
+    intc::types::Line,
+    types::State,
 };
-use crate::system::intc::types::Line;
 
 pub fn handle_irq_trigger(controller_state: &mut ControllerState, channel_id: usize) {
     let transfer_state = get_transfer_state(controller_state, channel_id);

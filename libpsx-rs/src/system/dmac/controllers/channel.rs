@@ -1,13 +1,9 @@
 use crate::{
     system::{
-        dmac::{
-            types::*,
-        },
+        dmac::types::*,
         types::State,
     },
-    types::{
-        memory::*,
-    },
+    types::memory::*,
 };
 
 pub fn get_madr(state: &State, channel_id: usize) -> &B32LevelRegister {

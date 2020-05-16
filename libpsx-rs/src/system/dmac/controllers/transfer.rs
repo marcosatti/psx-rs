@@ -1,35 +1,31 @@
-pub mod continuous;
 pub mod blocks;
-pub mod linked_list;
+pub mod continuous;
 pub mod fifo;
+pub mod linked_list;
 
-use crate::system::{
-    dmac::{
-        constants::*,
-        controllers::{
-            channel::*,
-            interrupt::*,
+use crate::{
+    system::{
+        dmac::{
+            constants::*,
+            controllers::{
+                channel::*,
+                interrupt::*,
+            },
+            types::*,
         },
-        types::*,
+        types::State,
     },
-    types::State,
+    types::bitfield::Bitfield,
 };
-use crate::types::bitfield::Bitfield;
 use std::sync::atomic::Ordering;
 
 pub fn handle_transfer_initialization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
     const ADDRESS: Bitfield = Bitfield::new(0, 24);
 
-    transfer_state.delay_cycles = match channel_id {
-        2 => 0x80,
-        _ => 0x0,
-    };
-
     let bcr_calculate = |v| {
-        if v == 0 {
-            0x1_0000
-        } else {
-            v
+        match v {
+            0 => 0x1_0000,
+            _ => v,
         }
     };
 
@@ -62,7 +58,7 @@ pub fn handle_transfer_initialization(state: &State, transfer_state: &mut Transf
     }
 }
 
-pub fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {    
+pub fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
     get_chcr(state, channel_id).update(|value| CHCR_STARTBUSY.insert_into(value, 0));
 
     let madr = get_madr(state, channel_id);
@@ -87,58 +83,49 @@ pub fn handle_transfer_finalization(state: &State, transfer_state: &mut Transfer
     }
 }
 
-pub fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize) -> Result<usize, ()> {
+pub fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_remaining: &mut isize) -> Result<(), ()> {
     if state.dmac.dpcr.read_bitfield(DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id]) == 0 {
-        return Ok(0);
+        *ticks_remaining -= 1;
+        return Ok(());
     }
 
     let transfer_state = get_transfer_state(controller_state, channel_id);
 
     if !transfer_state.started {
-        return Ok(0);
-    }
-
-    if transfer_state.delay_cycles > 0 {
-        transfer_state.delay_cycles -= 1;
-        return Ok(0);
+        *ticks_remaining -= 1;
+        return Ok(());
     }
 
     state.bus_locked.store(true, Ordering::SeqCst);
 
-    let mut count = 0;
     let mut finished = false;
-    for _ in 0..16 {
-        let result = match transfer_state.sync_mode {
-            SyncMode::Continuous(ref mut cs) => {
-                let direction = transfer_state.direction;
-                let step = transfer_state.step_direction;
-                continuous::handle_transfer(state, cs, channel_id, direction, step)
-            },
-            SyncMode::Blocks(ref mut bs) => {
-                let direction = transfer_state.direction;
-                let step = transfer_state.step_direction;
-                blocks::handle_transfer(state, bs, channel_id, direction, step)
-            },
-            SyncMode::LinkedList(ref mut lls) => {
-                assert!(transfer_state.direction == TransferDirection::ToChannel, "Linked list transfers are ToChannel only");
-                linked_list::handle_transfer(state, lls, channel_id)
-            },
-            _ => panic!("Undefined sync mode"),
-        };
+    while *ticks_remaining > 0 {
+        finished = if matches!(transfer_state.sync_mode, SyncMode::Continuous(_)) {
+            let direction = transfer_state.direction;
+            let step = transfer_state.step_direction;
+            let continuous_state = transfer_state.sync_mode.as_continuous_mut().unwrap();
+            let result = continuous::handle_transfer(state, continuous_state, channel_id, direction, step);
+            process_continuous_result(channel_id, ticks_remaining, result)
+        } else if matches!(transfer_state.sync_mode, SyncMode::Blocks(_)) {
+            let direction = transfer_state.direction;
+            let step = transfer_state.step_direction;
+            let blocks_state = transfer_state.sync_mode.as_blocks_mut().unwrap();
+            let result = blocks::handle_transfer(state, blocks_state, channel_id, direction, step);
+            process_blocks_result(channel_id, ticks_remaining, result)
+        } else if matches!(transfer_state.sync_mode, SyncMode::LinkedList(_)) {
+            assert!(transfer_state.direction == TransferDirection::ToChannel, "Linked list transfers are ToChannel only");
+            let linked_list_state = transfer_state.sync_mode.as_linked_list_mut().unwrap();
+            let result = linked_list::handle_transfer(state, linked_list_state, channel_id);
+            process_linked_list_result(channel_id, ticks_remaining, result)
+        } else {
+            panic!("Invalid sync mode");
+        }
+        .map_err(|_| {
+            state.bus_locked.store(false, Ordering::Release);
+        })?;
 
-        match result {
-            Ok(false) => {
-                count += 1;
-            },
-            Ok(true) => {
-                count += 1;
-                finished = true;
-                break;
-            },
-            Err(()) => {
-                state.bus_locked.store(false, Ordering::Release);
-                return Err(());
-            },
+        if finished {
+            break;
         }
     }
 
@@ -146,9 +133,52 @@ pub fn handle_transfer(state: &State, controller_state: &mut ControllerState, ch
         handle_transfer_finalization(state, transfer_state, channel_id);
         transfer_state.started = false;
         handle_irq_trigger(controller_state, channel_id);
+        state.bus_locked.store(false, Ordering::Release);
     }
 
-    state.bus_locked.store(false, Ordering::Release);
+    Ok(())
+}
 
-    Ok(count)
+fn process_continuous_result(channel_id: usize, ticks_remaining: &mut isize, result: Result<bool, ()>) -> Result<bool, ()> {
+    let finished = result?;
+    *ticks_remaining -= calculate_raw_channel_ticks(channel_id) as isize;
+    Ok(finished)
+}
+
+fn process_blocks_result(channel_id: usize, ticks_remaining: &mut isize, result: Result<(bool, bool), ()>) -> Result<bool, ()> {
+    let (finished, block_completed) = result?;
+
+    *ticks_remaining -= calculate_raw_channel_ticks(channel_id) as isize;
+
+    if block_completed {
+        *ticks_remaining -= 16;
+    }
+
+    Ok(finished)
+}
+
+fn process_linked_list_result(channel_id: usize, ticks_remaining: &mut isize, result: Result<(bool, bool), ()>) -> Result<bool, ()> {
+    let (finished, list_completed) = result?;
+
+    *ticks_remaining -= calculate_raw_channel_ticks(channel_id) as isize;
+
+    if list_completed {
+        *ticks_remaining -= 16;
+    }
+
+    Ok(finished)
+}
+
+fn calculate_raw_channel_ticks(channel_id: usize) -> usize {
+    match channel_id {
+        0 => 1,
+        1 => 1,
+        2 => 1,
+        // TODO: CDROM is variable based on cdrom_delay register.
+        3 => 40,
+        4 => 4,
+        5 => 20,
+        6 => 1,
+        _ => unreachable!(),
+    }
 }

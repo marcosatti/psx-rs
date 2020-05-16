@@ -1,9 +1,13 @@
 use crate::{
-    system::spu::types::*,
-    system::spu::constants::*,
-    system::spu::controllers::dac::voice::*,
+    system::{
+        spu::{
+            constants::*,
+            controllers::dac::voice::*,
+            types::*,
+        },
+        types::State,
+    },
     types::bitfield::Bitfield,
-    system::types::State,
 };
 use num_traits::clamp;
 
@@ -25,7 +29,7 @@ pub fn handle_adpcm_block(state: &State, controller_state: &mut ControllerState,
 
         current_address
     };
-    
+
     let block = read_block(&controller_state.memory, decoding_address);
     let voice_state = get_voice_state(controller_state, voice_id);
     let params = decode_header(block.header);
@@ -67,8 +71,8 @@ fn read_block(memory: &Vec<u8>, address: usize) -> AdpcmBlockRaw {
     }
 
     AdpcmBlockRaw {
-        header: header,
-        samples: samples,
+        header,
+        samples,
     }
 }
 
@@ -98,10 +102,7 @@ fn decode_frame(data: u8, params: AdpcmParams, old_sample: &mut i16, older_sampl
     const POS_FILTER_CONSTANTS: [i32; 5] = [0, 60, 115, 98, 122];
     const NEG_FILTER_CONSTANTS: [i32; 5] = [0, 0, -52, -55, -60];
 
-    let mut samples = [
-        Bitfield::new(0, 4).extract_from(data) as i16, 
-        Bitfield::new(4, 4).extract_from(data) as i16
-    ];
+    let mut samples = [Bitfield::new(0, 4).extract_from(data) as i16, Bitfield::new(4, 4).extract_from(data) as i16];
 
     let pos_filter_value = POS_FILTER_CONSTANTS[params.filter];
     let neg_filter_value = NEG_FILTER_CONSTANTS[params.filter];

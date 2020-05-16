@@ -23,8 +23,11 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
         let sector_type = mirage_track_get_sector_type(track);
 
         match sector_type {
-            _MirageSectorType_MIRAGE_SECTOR_MODE2 | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM1 | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM2 => 2,
-            _ => unimplemented!("Unknown sector type encountered"),
+            _MirageSectorType_MIRAGE_SECTOR_MODE2
+            | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM1
+            | _MirageSectorType_MIRAGE_SECTOR_MODE2_FORM2
+            | _MirageSectorType_MIRAGE_SECTOR_MODE2_MIXED => 2,
+            _ => unimplemented!("Unknown sector type encountered: {}", sector_type),
         }
     }
 }
