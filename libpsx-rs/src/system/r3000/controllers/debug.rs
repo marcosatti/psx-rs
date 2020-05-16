@@ -40,7 +40,7 @@ use std::{
 
 pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_STDOUT_PUTCHAR_TRACE: bool = true;
-const ENABLE_HAZARD_TRACING: bool = true;
+const ENABLE_HAZARD_TRACING: bool = false;
 pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;

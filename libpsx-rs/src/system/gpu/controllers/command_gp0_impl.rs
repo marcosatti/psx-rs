@@ -373,7 +373,7 @@ pub fn command_e3_handler(_state: &State, gpu_state: &mut ControllerState, _vide
     // warn!("GP0(E3h) not properly implemented");
 
     if (gpu_state.drawing_area_x1 != 0) || (gpu_state.drawing_area_y1 != 0) {
-        log::debug!("Non zero drawing area x1 y1: {}, {}", gpu_state.drawing_area_x1, gpu_state.drawing_area_y1);
+        // log::debug!("Non zero drawing area x1 y1: {}, {}", gpu_state.drawing_area_x1, gpu_state.drawing_area_y1);
     }
 }
 
@@ -411,7 +411,7 @@ pub fn command_e5_handler(_state: &State, gpu_state: &mut ControllerState, _vide
     // debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset,
     // gpu_state.drawing_offset_x, y_offset, gpu_state.drawing_offset_y);
     if (x_offset != 0) || (y_offset != 0) {
-        log::debug!("Non zero drawing offset: {}, {}", gpu_state.drawing_offset_x, gpu_state.drawing_offset_y);
+        // log::debug!("Non zero drawing offset: {}, {}", gpu_state.drawing_offset_x, gpu_state.drawing_offset_y);
     }
 }
 

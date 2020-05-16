@@ -42,7 +42,7 @@ fn run_time(state: &State, duration: Duration) {
 
     let mut ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as isize);
     let mut cooloff = false;
-    'outer: while ticks > 0 {
+    while (ticks > 0) && (!cooloff) {
         handle_dicr(state, controller_state);
 
         for channel_id in 0..7 {
@@ -52,12 +52,12 @@ fn run_time(state: &State, duration: Duration) {
                 Ok(()) => {},
                 Err(()) => {
                     cooloff = true;
-                    break 'outer;
+                    break;
                 },
             }
-
-            handle_irq_raise(state, controller_state);
         }
+
+        handle_irq_raise(state, controller_state);
     }
 
     if cooloff {

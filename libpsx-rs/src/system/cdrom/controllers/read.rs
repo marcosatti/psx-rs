@@ -72,7 +72,8 @@ fn read_sector(controller_state: &mut ControllerState, cdrom_backend: &CdromBack
     assert_eq!(data_block.len(), 2048);
     controller_state.msf_address_offset += 1;
     controller_state.sector_buffer.extend(&data_block);
-    log::debug!("Sector {:?} + offset {} read ok", msf_address_base, msf_address_offset);
+
+    // log::debug!("Sector {:?} + offset {} read ok", msf_address_base, msf_address_offset);
 
     if false {
         log::debug!("{}", &binary_to_ascii_escaped(&data_block));

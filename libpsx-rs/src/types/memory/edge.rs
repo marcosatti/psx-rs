@@ -11,7 +11,10 @@ use super::{
 };
 use atomic_enum::atomic_enum;
 use parking_lot::Mutex;
-use std::sync::atomic::Ordering;
+use std::{
+    intrinsics::unlikely,
+    sync::atomic::Ordering,
+};
 
 #[atomic_enum]
 #[derive(PartialEq)]
@@ -38,7 +41,7 @@ impl B32EdgeRegister {
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
     where F: FnOnce(&mut B32Register_) {
-        if self.latch_status.load(Ordering::Acquire) != LatchKind::None {
+        if unlikely(self.latch_status.load(Ordering::Acquire) != LatchKind::None) {
             return Err(());
         }
 
@@ -100,7 +103,7 @@ impl B32EdgeRegister {
     pub fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u32, LatchKind) -> u32 {
         let latch_status = self.latch_status.load(Ordering::Acquire);
-        if latch_status != LatchKind::None {
+        if unlikely(latch_status != LatchKind::None) {
             let memory = &mut self.memory.lock();
             memory.v32 = operation(unsafe { memory.v32 }, latch_status);
             self.latch_status.store(LatchKind::None, Ordering::Release);
@@ -139,7 +142,7 @@ impl B16EdgeRegister {
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
     where F: FnOnce(&mut B16Register_) {
-        if self.latch_status.load(Ordering::Acquire) != LatchKind::None {
+        if unlikely(self.latch_status.load(Ordering::Acquire) != LatchKind::None) {
             return Err(());
         }
 
@@ -185,7 +188,7 @@ impl B16EdgeRegister {
     pub fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u16, LatchKind) -> u16 {
         let latch_status = self.latch_status.load(Ordering::Acquire);
-        if latch_status != LatchKind::None {
+        if unlikely(latch_status != LatchKind::None) {
             let memory = &mut self.memory.lock();
             memory.v16 = operation(unsafe { memory.v16 }, latch_status);
             self.latch_status.store(LatchKind::None, Ordering::Release);
@@ -222,7 +225,7 @@ impl B8EdgeRegister {
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
     where F: FnOnce(&mut B8Register_) {
-        if self.latch_status.load(Ordering::Acquire) != LatchKind::None {
+        if unlikely(self.latch_status.load(Ordering::Acquire) != LatchKind::None) {
             return Err(());
         }
 
@@ -253,7 +256,7 @@ impl B8EdgeRegister {
     pub fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u8, LatchKind) -> u8 {
         let latch_status = self.latch_status.load(Ordering::Acquire);
-        if latch_status != LatchKind::None {
+        if unlikely(latch_status != LatchKind::None) {
             let memory = &mut self.memory.lock();
             memory.v8 = operation(unsafe { memory.v8 }, latch_status);
             self.latch_status.store(LatchKind::None, Ordering::Release);
