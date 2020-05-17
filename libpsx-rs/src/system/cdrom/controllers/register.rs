@@ -13,7 +13,6 @@ use crate::{
 pub fn handle_command(state: &State, controller_state: &mut ControllerState) {
     state.cdrom.command.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 assert!(controller_state.command_index.is_none());
@@ -27,7 +26,6 @@ pub fn handle_command(state: &State, controller_state: &mut ControllerState) {
 pub fn handle_request(state: &State, controller_state: &mut ControllerState) {
     state.cdrom.request.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 if REQUEST_SMEN.extract_from(value) > 0 {
@@ -52,7 +50,6 @@ pub fn handle_request(state: &State, controller_state: &mut ControllerState) {
 pub fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerState) {
     state.cdrom.interrupt_flag.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 let acknowledge_interrupt = INTERRUPT_FLAGS.extract_from(value) as usize;

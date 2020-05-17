@@ -37,7 +37,6 @@ pub fn handle_control(state: &State, controller_state: &mut ControllerState) {
 
     state.spu.control.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 write_fn(value);
@@ -54,7 +53,6 @@ pub fn handle_data_transfer_address(state: &State, controller_state: &mut Contro
 
     state.spu.data_transfer_address.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 write_fn(value);
@@ -86,7 +84,6 @@ pub fn handle_key_on(state: &State, controller_state: &mut ControllerState) {
 
     state.spu.voice_key_on.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 write_fn(value);
@@ -111,7 +108,6 @@ pub fn handle_key_off(state: &State, controller_state: &mut ControllerState) {
 
     state.spu.voice_key_off.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => value,
             LatchKind::Write => {
                 write_fn(value);

@@ -14,7 +14,6 @@ use crate::{
 pub fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
     get_mode(state, timer_id).acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => {
                 let timer_state = get_state(controller_state, timer_id);
 

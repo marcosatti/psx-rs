@@ -9,47 +9,40 @@ use super::{
     B32Register_,
     B8Register_,
 };
-use atomic_enum::atomic_enum;
-use std::{
-    cell::UnsafeCell,
-    intrinsics::unlikely,
-    sync::atomic::Ordering,
-};
+use parking_lot::Mutex;
+use std::intrinsics::unlikely;
 
-#[atomic_enum]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LatchKind {
-    None,
     Read,
     Write,
 }
 
 pub struct B32EdgeRegister {
-    memory: UnsafeCell<B32Register_>,
-    latch_status: AtomicLatchKind,
+    memory: Mutex<(Option<LatchKind>, B32Register_)>,
 }
 
 impl B32EdgeRegister {
     pub fn new() -> B32EdgeRegister {
         B32EdgeRegister {
-            memory: UnsafeCell::new(B32Register_ {
-                v32: 0,
-            }),
-            latch_status: AtomicLatchKind::new(LatchKind::None),
+            memory: Mutex::new((
+                None, 
+                B32Register_ { v32: 0 },
+            )),
         }
     }
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
     where F: FnOnce(&mut B32Register_) {
-        if unlikely(self.latch_status.load(Ordering::Acquire) != LatchKind::None) {
+        let data = &mut self.memory.lock();
+
+        if unlikely(data.0.is_some()) {
             return Err(());
         }
 
-        unsafe {
-            operation(&mut *self.memory.get());
-        }
-
-        self.latch_status.store(latch_kind, Ordering::Release);
+        operation(&mut data.1);
+        data.0 = Some(latch_kind);
+        
         Ok(())
     }
 
@@ -101,13 +94,12 @@ impl B32EdgeRegister {
     /// If a latch event is pending, executes an atomic operation to handle it.
     pub fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u32, LatchKind) -> u32 {
-        let latch_status = self.latch_status.load(Ordering::Acquire);
-        if unlikely(latch_status != LatchKind::None) {
+        let data = &mut self.memory.lock();
+        if unlikely(data.0.is_some()) {
             unsafe {
-                let memory = &mut *self.memory.get();
-                memory.v32 = operation(memory.v32, latch_status);
+                data.1.v32 = operation(data.1.v32, data.0.unwrap());
             }
-            self.latch_status.store(LatchKind::None, Ordering::Release);
+            data.0 = None;
         }
     }
 
@@ -115,9 +107,9 @@ impl B32EdgeRegister {
     /// This is used for read-only bits as a part of a whole register.
     pub fn update<F>(&self, operation: F)
     where F: FnOnce(u32) -> u32 {
+        let data = &mut self.memory.lock();
         unsafe {
-            let memory = &mut *self.memory.get();
-            memory.v32 = operation(memory.v32);
+            data.1.v32 = operation(data.1.v32);
         }
     }
 }
@@ -129,31 +121,30 @@ unsafe impl Sync for B32EdgeRegister {
 }
 
 pub struct B16EdgeRegister {
-    memory: UnsafeCell<B16Register_>,
-    latch_status: AtomicLatchKind,
+    memory: Mutex<(Option<LatchKind>, B16Register_)>,
 }
 
 impl B16EdgeRegister {
     pub fn new() -> B16EdgeRegister {
         B16EdgeRegister {
-            memory: UnsafeCell::new(B16Register_ {
-                v16: 0,
-            }),
-            latch_status: AtomicLatchKind::new(LatchKind::None),
+            memory: Mutex::new((
+                None, 
+                B16Register_ { v16: 0 },
+            )),
         }
     }
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
     where F: FnOnce(&mut B16Register_) {
-        if unlikely(self.latch_status.load(Ordering::Acquire) != LatchKind::None) {
+        let data = &mut self.memory.lock();
+
+        if unlikely(data.0.is_some()) {
             return Err(());
         }
 
-        unsafe {
-            operation(&mut *self.memory.get());
-        }
+        operation(&mut data.1);
+        data.0 = Some(latch_kind);
 
-        self.latch_status.store(latch_kind, Ordering::Release);
         Ok(())
     }
 
@@ -189,21 +180,20 @@ impl B16EdgeRegister {
 
     pub fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u16, LatchKind) -> u16 {
-        let latch_status = self.latch_status.load(Ordering::Acquire);
-        if unlikely(latch_status != LatchKind::None) {
+        let data = &mut self.memory.lock();
+        if unlikely(data.0.is_some()) {
             unsafe {
-                let memory = &mut *self.memory.get();
-                memory.v16 = operation(memory.v16, latch_status);
+                data.1.v16 = operation(data.1.v16, data.0.unwrap());
             }
-            self.latch_status.store(LatchKind::None, Ordering::Release);
+            data.0 = None;
         }
     }
-
+    
     pub fn update<F>(&self, operation: F)
     where F: FnOnce(u16) -> u16 {
+        let data = &mut self.memory.lock();
         unsafe {
-            let memory = &mut *self.memory.get();
-            memory.v16 = operation(memory.v16);
+            data.1.v16 = operation(data.1.v16);
         }
     }
 }
@@ -215,31 +205,30 @@ unsafe impl Sync for B16EdgeRegister {
 }
 
 pub struct B8EdgeRegister {
-    memory: UnsafeCell<B8Register_>,
-    latch_status: AtomicLatchKind,
+    memory: Mutex<(Option<LatchKind>, B8Register_)>,
 }
 
 impl B8EdgeRegister {
     pub fn new() -> B8EdgeRegister {
         B8EdgeRegister {
-            memory: UnsafeCell::new(B8Register_ {
-                v8: 0,
-            }),
-            latch_status: AtomicLatchKind::new(LatchKind::None),
+            memory: Mutex::new((
+                None, 
+                B8Register_ { v8: 0 },
+            )),
         }
     }
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
     where F: FnOnce(&mut B8Register_) {
-        if unlikely(self.latch_status.load(Ordering::Acquire) != LatchKind::None) {
+        let data = &mut self.memory.lock();
+
+        if unlikely(data.0.is_some()) {
             return Err(());
         }
 
-        unsafe {
-            operation(&mut *self.memory.get());
-        }
-
-        self.latch_status.store(latch_kind, Ordering::Release);
+        operation(&mut data.1);
+        data.0 = Some(latch_kind);
+        
         Ok(())
     }
 
@@ -260,21 +249,20 @@ impl B8EdgeRegister {
 
     pub fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u8, LatchKind) -> u8 {
-        let latch_status = self.latch_status.load(Ordering::Acquire);
-        if unlikely(latch_status != LatchKind::None) {
+        let data = &mut self.memory.lock();
+        if unlikely(data.0.is_some()) {
             unsafe {
-                let memory = &mut *self.memory.get();
-                memory.v8 = operation(memory.v8, latch_status);
+                data.1.v8 = operation(data.1.v8, data.0.unwrap());
             }
-            self.latch_status.store(LatchKind::None, Ordering::Release);
+            data.0 = None;
         }
     }
-
+    
     pub fn update<F>(&self, operation: F)
     where F: FnOnce(u8) -> u8 {
+        let data = &mut self.memory.lock();
         unsafe {
-            let memory = &mut *self.memory.get();
-            memory.v8 = operation(memory.v8);
+            data.1.v8 = operation(data.1.v8);
         }
     }
 }
