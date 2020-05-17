@@ -1,6 +1,5 @@
 use crate::types::{
     fifo::{
-        debug::DebugState,
         Fifo,
     },
     memory::*,
@@ -8,27 +7,27 @@ use crate::types::{
 use parking_lot::Mutex;
 use std::collections::VecDeque;
 
-pub struct ControllerState {
-    pub interrupt_index: usize,
+pub(crate) struct ControllerState {
+    pub(crate) interrupt_index: usize,
     /// Command state.
-    pub command_index: Option<u8>,
-    pub command_iteration: usize,
+    pub(crate) command_index: Option<u8>,
+    pub(crate) command_iteration: usize,
     /// Seeking status.
-    pub seeking: bool,
+    pub(crate) seeking: bool,
     /// Reading status.
-    pub reading: bool,
+    pub(crate) reading: bool,
     /// Current MSF address.
     /// Base is stored in BCD format.
-    pub msf_address_base: (u8, u8, u8),
-    pub msf_address_offset: usize,
-    pub sector_delay_counter: usize,
-    pub sector_buffer: VecDeque<u8>,
-    pub load_data_flag: bool,
-    pub loading_data: bool,
+    pub(crate) msf_address_base: (u8, u8, u8),
+    pub(crate) msf_address_offset: usize,
+    pub(crate) sector_delay_counter: usize,
+    pub(crate) sector_buffer: VecDeque<u8>,
+    pub(crate) load_data_flag: bool,
+    pub(crate) loading_data: bool,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             interrupt_index: 0,
             command_index: None,
@@ -45,25 +44,25 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub status: B8LevelRegister,
-    pub response: Fifo<u8>,
-    pub parameter: Fifo<u8>,
-    pub data: Fifo<u8>,
-    pub command: B8EdgeRegister,
-    pub interrupt_enable: B8LevelRegister,
-    pub interrupt_flag: B8EdgeRegister,
-    pub request: B8EdgeRegister,
-    pub controller_state: Mutex<ControllerState>,
+pub(crate) struct State {
+    pub(crate) status: B8LevelRegister,
+    pub(crate) response: Fifo<u8>,
+    pub(crate) parameter: Fifo<u8>,
+    pub(crate) data: Fifo<u8>,
+    pub(crate) command: B8EdgeRegister,
+    pub(crate) interrupt_enable: B8LevelRegister,
+    pub(crate) interrupt_flag: B8EdgeRegister,
+    pub(crate) request: B8EdgeRegister,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             status: B8LevelRegister::new(),
-            response: Fifo::new(16, Some(DebugState::new("CDROM RESPONSE", true, true))),
-            parameter: Fifo::new(16, Some(DebugState::new("CDROM PARAMETER", true, true))),
-            data: Fifo::new(64, Some(DebugState::new("CDROM DATA", true, true))),
+            response: Fifo::new(16),
+            parameter: Fifo::new(16),
+            data: Fifo::new(64),
             command: B8EdgeRegister::new(),
             interrupt_enable: B8LevelRegister::new(),
             interrupt_flag: B8EdgeRegister::new(),

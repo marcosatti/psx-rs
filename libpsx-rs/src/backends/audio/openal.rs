@@ -1,4 +1,4 @@
-pub mod rendering;
+pub(crate) mod rendering;
 
 use crate::{
     backends::{
@@ -15,7 +15,7 @@ pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
 }
 
-pub fn setup(backend_params: &BackendParams) {
+pub(crate) fn setup(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -32,7 +32,7 @@ pub fn setup(backend_params: &BackendParams) {
     }
 }
 
-pub fn teardown(backend_params: &BackendParams) {
+pub(crate) fn teardown(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {

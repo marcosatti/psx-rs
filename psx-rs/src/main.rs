@@ -2,23 +2,6 @@ mod backend;
 mod config;
 
 use libpsx_rs::{
-    debug::{
-        analysis as debug_analysis,
-        DEBUG_CORE_EXIT,
-    },
-    system::{
-        gpu::controllers::debug::{
-            ENABLE_GP0_COMMAND_TRACING,
-            ENABLE_GP0_RENDER_PER_CALL,
-        },
-        r3000::controllers::debug::{
-            ENABLE_INTERRUPT_TRACING,
-            ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ,
-            ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE,
-            ENABLE_REGISTER_TRACING,
-            ENABLE_STATE_TRACING,
-        },
-    },
     Config as CoreConfig,
     Core,
 };
@@ -39,6 +22,8 @@ use std::{
     },
     time::Instant,
 };
+
+static EXIT: AtomicBool = AtomicBool::new(false);
 
 fn main() {
     // Signal handlers
@@ -133,7 +118,7 @@ fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
 
     // Do event loop
     let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-        'event_loop: while !DEBUG_CORE_EXIT.load(Ordering::Acquire) {
+        'event_loop: while !EXIT.load(Ordering::Acquire) {
             for event in event_pump.poll_iter() {
                 match event {
                     sdl2::event::Event::Quit {
@@ -160,12 +145,12 @@ fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
     }
 
     // Post mortem
-    debug_analysis(&mut core);
+    core.analyze();
 }
 
 fn setup_signal_handler() {
     let ctrl_c_handler = || {
-        DEBUG_CORE_EXIT.store(true, Ordering::Release);
+        EXIT.store(true, Ordering::Release);
     };
 
     ctrlc::set_handler(ctrl_c_handler).unwrap();
@@ -176,30 +161,25 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
 
     match keycode {
         Keycode::F1 => {
-            toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
+            //toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
         },
         Keycode::F2 => {
-            toggle_debug_option(&ENABLE_STATE_TRACING, "R3000 state tracing");
         },
         Keycode::F3 => {
-            toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ, "spin loop detection (read)");
         },
         Keycode::F4 => {
-            toggle_debug_option(&ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE, "spin loop detection (write)");
         },
         Keycode::F5 => {
-            toggle_debug_option(&ENABLE_INTERRUPT_TRACING, "interrupt tracing");
         },
         Keycode::F6 => {
-            toggle_debug_option(&ENABLE_GP0_RENDER_PER_CALL, "GPU rendering per draw call");
         },
         Keycode::F7 => {
-            toggle_debug_option(&ENABLE_GP0_COMMAND_TRACING, "GPU GP0 command tracing");
         },
         _ => {},
     }
 }
 
+#[allow(dead_code)]
 fn toggle_debug_option(flag: &'static AtomicBool, identifier: &str) {
     let old_value = flag.fetch_xor(true, Ordering::AcqRel);
     log::debug!("Toggled {} from {} to {}", identifier, old_value, !old_value);

@@ -13,7 +13,7 @@ type LengthFn = fn(usize) -> usize;
 
 type HandlerFn = fn(&State, &mut ControllerState, &CdromBackend, usize) -> bool;
 
-pub fn handle_command(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     if controller_state.command_index.is_none() {
         return;
     }

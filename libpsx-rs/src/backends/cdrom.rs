@@ -16,7 +16,7 @@ pub enum CdromBackend<'a: 'b, 'b> {
     _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
-pub fn setup(cdrom_backend: &CdromBackend) {
+pub(crate) fn setup(cdrom_backend: &CdromBackend) {
     match cdrom_backend {
         CdromBackend::None => {},
         #[cfg(libmirage)]
@@ -27,7 +27,7 @@ pub fn setup(cdrom_backend: &CdromBackend) {
     }
 }
 
-pub fn teardown(cdrom_backend: &CdromBackend) {
+pub(crate) fn teardown(cdrom_backend: &CdromBackend) {
     match cdrom_backend {
         CdromBackend::None => {},
         #[cfg(libmirage)]

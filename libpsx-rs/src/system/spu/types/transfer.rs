@@ -1,18 +1,18 @@
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub enum TransferMode {
+pub(crate) enum TransferMode {
     Stop,
     ManualWrite,
     DmaWrite,
     DmaRead,
 }
 
-pub struct TransferState {
-    pub current_mode: TransferMode,
-    pub current_address: usize,
+pub(crate) struct TransferState {
+    pub(crate) current_mode: TransferMode,
+    pub(crate) current_address: usize,
 }
 
 impl TransferState {
-    pub fn new() -> TransferState {
+    pub(crate) fn new() -> TransferState {
         TransferState {
             current_mode: TransferMode::Stop,
             current_address: 0,

@@ -5,7 +5,7 @@ const REGISTER_NAMES: [&str; 32] = [
     "sp", "fp", "ra",
 ];
 
-pub fn trace_registers(state: &ControllerState) {
+pub(crate) fn trace_registers(state: &ControllerState) {
     let mut string = String::new();
     string.push_str("Register dump:\n");
     for (index, (ref register, name)) in state.gpr.iter().zip(REGISTER_NAMES.iter()).enumerate() {

@@ -1,4 +1,4 @@
-pub mod register;
+pub(crate) mod register;
 
 use crate::system::{
     padmc::{
@@ -17,7 +17,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(duration) => run_time(context.state, duration),
     }
@@ -33,7 +33,7 @@ fn run_time(state: &State, duration: Duration) {
     }
 }
 
-pub fn tick(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn tick(state: &State, controller_state: &mut ControllerState) {
     handle_stat(state);
     handle_ctrl(state, controller_state);
 

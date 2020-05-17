@@ -15,11 +15,11 @@ use crate::{
     types::bitfield::Bitfield,
 };
 
-pub fn command_01_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_01_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_01_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_01_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // GetStat
     assert_eq!(command_iteration, 0);
     state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
@@ -27,11 +27,11 @@ pub fn command_01_handler(state: &State, controller_state: &mut ControllerState,
     true
 }
 
-pub fn command_02_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_02_length(_command_iteration: usize) -> usize {
     3
 }
 
-pub fn command_02_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_02_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Setloc
     assert_eq!(command_iteration, 0);
 
@@ -42,18 +42,18 @@ pub fn command_02_handler(state: &State, controller_state: &mut ControllerState,
 
     controller_state.msf_address_base = (minute, second, frame);
     controller_state.msf_address_offset = 0;
-    log::debug!("Set address to {:?}, offset {}", controller_state.msf_address_base, controller_state.msf_address_offset);
+    //log::debug!("Set address to {:?}, offset {}", controller_state.msf_address_base, controller_state.msf_address_offset);
 
     state.cdrom.response.write_one(calculate_stat_value(controller_state)).unwrap();
     handle_irq_raise(state, controller_state, 3);
     true
 }
 
-pub fn command_06_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_06_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_06_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_06_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // ReadN
     assert_eq!(command_iteration, 0);
     controller_state.reading = true;
@@ -63,11 +63,11 @@ pub fn command_06_handler(state: &State, controller_state: &mut ControllerState,
     true
 }
 
-pub fn command_09_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_09_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_09_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_09_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Pause
     match command_iteration {
         0 => {
@@ -86,11 +86,11 @@ pub fn command_09_handler(state: &State, controller_state: &mut ControllerState,
     }
 }
 
-pub fn command_0e_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_0e_length(_command_iteration: usize) -> usize {
     1
 }
 
-pub fn command_0e_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_0e_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Setmode
     assert_eq!(command_iteration, 0);
     let mode = state.cdrom.parameter.read_one().unwrap();
@@ -100,11 +100,11 @@ pub fn command_0e_handler(state: &State, controller_state: &mut ControllerState,
     true
 }
 
-pub fn command_15_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_15_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_15_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_15_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // SeekL
     match command_iteration {
         0 => {
@@ -123,11 +123,11 @@ pub fn command_15_handler(state: &State, controller_state: &mut ControllerState,
     }
 }
 
-pub fn command_19_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_19_length(_command_iteration: usize) -> usize {
     1
 }
 
-pub fn command_19_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_19_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // Test
     assert_eq!(command_iteration, 0);
 
@@ -147,11 +147,11 @@ pub fn command_19_handler(state: &State, controller_state: &mut ControllerState,
     true
 }
 
-pub fn command_1a_length(_command_iteration: usize) -> usize {
+pub(crate) fn command_1a_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub fn command_1a_handler(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
+pub(crate) fn command_1a_handler(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend, command_iteration: usize) -> bool {
     // GetID
     match command_iteration {
         0 => {

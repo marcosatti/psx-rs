@@ -14,7 +14,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) {
+pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) {
     let mut write_fn = |mut value| {
         if channel_id == 6 {
             let mut otc_value = 0;
@@ -74,12 +74,11 @@ pub fn handle_chcr(state: &State, controller_state: &mut ControllerState, channe
         match latch_kind {
             LatchKind::Read => value,
             LatchKind::Write => write_fn(value),
-            LatchKind::None => unreachable!(),
         }
     });
 }
 
-pub fn handle_dicr(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState) {
     let mut write_fn = |value| {
         if DICR_IRQ_FORCE.extract_from(value) > 0 {
             unimplemented!("IRQ force bit set");
@@ -104,12 +103,11 @@ pub fn handle_dicr(state: &State, controller_state: &mut ControllerState) {
         match latch_kind {
             LatchKind::Read => value,
             LatchKind::Write => write_fn(value),
-            LatchKind::None => unreachable!(),
         }
     });
 }
 
-pub fn calculate_dicr_value(controller_state: &mut ControllerState) -> u32 {
+pub(crate) fn calculate_dicr_value(controller_state: &mut ControllerState) -> u32 {
     let mut value = 0;
 
     value = DICR_IRQ_MASTER_ENABLE.insert_into(value, bool_to_flag(controller_state.master_interrupt_enabled));

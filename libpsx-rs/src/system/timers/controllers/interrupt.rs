@@ -10,7 +10,7 @@ use crate::system::{
     types::State,
 };
 
-pub fn handle_irq_trigger(state: &State, controller_state: &mut ControllerState, timer_id: usize, irq_type: IrqType) {
+pub(crate) fn handle_irq_trigger(state: &State, controller_state: &mut ControllerState, timer_id: usize, irq_type: IrqType) {
     let timer_state = get_state(controller_state, timer_id);
 
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.

@@ -13,7 +13,7 @@ use fixed::{
     FixedU32,
 };
 
-pub trait FromFixedBits {
+pub(crate) trait FromFixedBits {
     fn from_fixed_bits_u16<U: LeEqU16>(value: u16) -> Self;
     fn from_fixed_bits_i16<U: LeEqU16>(value: i16) -> Self;
     fn from_fixed_bits_u32<U: LeEqU32>(value: u32) -> Self;
@@ -38,7 +38,7 @@ impl FromFixedBits for f64 {
     }
 }
 
-pub trait ToFixedBits {
+pub(crate) trait ToFixedBits {
     fn to_fixed_bits_u16<U: LeEqU16>(self, saturate: bool) -> u16;
     fn to_fixed_bits_i16<U: LeEqU16>(self, saturate: bool) -> i16;
     fn to_fixed_bits_u32<U: LeEqU32>(self, saturate: bool) -> u32;

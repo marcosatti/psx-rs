@@ -12,7 +12,7 @@ use std::cmp::{
     min,
 };
 
-pub fn handle_adsr_envelope(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
+pub(crate) fn handle_adsr_envelope(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
     let voice_state = get_voice_state(controller_state, voice_id);
 
     // Don't process anything if waiting.

@@ -28,7 +28,7 @@ def generate_lookup_fn(table_name):
 
     print(f'use crate::system::r3000::controllers::instruction_impl{suffix}::*;')
     print('')
-    print(f'pub fn lookup{suffix}(instruction: Instruction) -> (InstructionFn, usize) {{')
+    print(f'pub(crate) fn lookup{suffix}(instruction: Instruction) -> (InstructionFn, usize) {{')
     proxy_tables = generate_match(headers, 0, 'opcode', records)
     print('}')
     print('')

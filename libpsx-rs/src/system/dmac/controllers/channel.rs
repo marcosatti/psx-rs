@@ -6,7 +6,7 @@ use crate::{
     types::memory::*,
 };
 
-pub fn get_madr(state: &State, channel_id: usize) -> &B32LevelRegister {
+pub(crate) fn get_madr(state: &State, channel_id: usize) -> &B32LevelRegister {
     match channel_id {
         0 => &state.dmac.mdecin_madr,
         1 => &state.dmac.mdecout_madr,
@@ -19,7 +19,7 @@ pub fn get_madr(state: &State, channel_id: usize) -> &B32LevelRegister {
     }
 }
 
-pub fn get_bcr(state: &State, channel_id: usize) -> &B32LevelRegister {
+pub(crate) fn get_bcr(state: &State, channel_id: usize) -> &B32LevelRegister {
     match channel_id {
         0 => &state.dmac.mdecin_bcr,
         1 => &state.dmac.mdecout_bcr,
@@ -32,7 +32,7 @@ pub fn get_bcr(state: &State, channel_id: usize) -> &B32LevelRegister {
     }
 }
 
-pub fn get_chcr(state: &State, channel_id: usize) -> &B32EdgeRegister {
+pub(crate) fn get_chcr(state: &State, channel_id: usize) -> &B32EdgeRegister {
     match channel_id {
         0 => &state.dmac.mdecin_chcr,
         1 => &state.dmac.mdecout_chcr,
@@ -45,7 +45,7 @@ pub fn get_chcr(state: &State, channel_id: usize) -> &B32EdgeRegister {
     }
 }
 
-pub fn get_transfer_state(controller_state: &mut ControllerState, channel_id: usize) -> &mut TransferState {
+pub(crate) fn get_transfer_state(controller_state: &mut ControllerState, channel_id: usize) -> &mut TransferState {
     match channel_id {
         0 => &mut controller_state.mdecin_transfer_state,
         1 => &mut controller_state.mdecout_transfer_state,

@@ -8,13 +8,13 @@ use std::{
 
 static mut INITIALIZED: bool = false;
 
-pub static mut DISC: *mut CdIo_t = std::ptr::null_mut();
+pub(crate) static mut DISC: *mut CdIo_t = std::ptr::null_mut();
 
 pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
 }
 
-pub fn setup(backend_params: &BackendParams) {
+pub(crate) fn setup(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -26,7 +26,7 @@ pub fn setup(backend_params: &BackendParams) {
     }
 }
 
-pub fn teardown(backend_params: &BackendParams) {
+pub(crate) fn teardown(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -41,7 +41,7 @@ pub fn teardown(backend_params: &BackendParams) {
     }
 }
 
-pub fn change_disc(backend_params: &BackendParams, path: &Path) {
+pub(crate) fn change_disc(backend_params: &BackendParams, path: &Path) {
     let (_context_guard, context) = backend_params.context.guard();
 
     unsafe {

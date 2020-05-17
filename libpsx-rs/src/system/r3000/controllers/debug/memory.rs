@@ -40,18 +40,18 @@ lazy_static! {
     static ref WRITES_STATE: AccessState = AccessState::new();
 }
 
-pub fn update_state_read(address: u32) -> usize {
+pub(crate) fn update_state_read(address: u32) -> usize {
     READS_STATE.update(address)
 }
 
-pub fn update_state_write(address: u32) -> usize {
+pub(crate) fn update_state_write(address: u32) -> usize {
     WRITES_STATE.update(address)
 }
 
-pub fn clear_state_read(address: u32) {
+pub(crate) fn clear_state_read(address: u32) {
     READS_STATE.clear(address);
 }
 
-pub fn clear_state_write(address: u32) {
+pub(crate) fn clear_state_write(address: u32) {
     WRITES_STATE.clear(address);
 }

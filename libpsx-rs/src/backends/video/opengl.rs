@@ -1,6 +1,6 @@
-pub mod debug;
-pub mod rendering;
-pub mod shaders;
+pub(crate) mod debug;
+pub(crate) mod rendering;
+pub(crate) mod shaders;
 
 use crate::{
     backends::context::*,
@@ -17,7 +17,7 @@ pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
 }
 
-pub fn setup(backend_params: &BackendParams) {
+pub(crate) fn setup(backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -67,7 +67,7 @@ pub fn setup(backend_params: &BackendParams) {
     }
 }
 
-pub fn teardown(backend_params: &BackendParams) {
+pub(crate) fn teardown(backend_params: &BackendParams) {
     // TODO: shader programs are not free'd.
 
     let (_context_guard, _context) = backend_params.context.guard();

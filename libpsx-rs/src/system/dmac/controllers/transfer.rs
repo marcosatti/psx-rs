@@ -1,7 +1,7 @@
-pub mod blocks;
-pub mod continuous;
-pub mod fifo;
-pub mod linked_list;
+pub(crate) mod blocks;
+pub(crate) mod continuous;
+pub(crate) mod fifo;
+pub(crate) mod linked_list;
 
 use crate::{
     system::{
@@ -19,7 +19,7 @@ use crate::{
 };
 use std::sync::atomic::Ordering;
 
-pub fn handle_transfer_initialization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
+pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
     const ADDRESS: Bitfield = Bitfield::new(0, 24);
 
     let bcr_calculate = |v| {
@@ -58,7 +58,7 @@ pub fn handle_transfer_initialization(state: &State, transfer_state: &mut Transf
     }
 }
 
-pub fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
+pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
     get_chcr(state, channel_id).update(|value| CHCR_STARTBUSY.insert_into(value, 0));
 
     let madr = get_madr(state, channel_id);
@@ -83,7 +83,7 @@ pub fn handle_transfer_finalization(state: &State, transfer_state: &mut Transfer
     }
 }
 
-pub fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_remaining: &mut isize) -> Result<(), ()> {
+pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_remaining: &mut isize) -> Result<(), ()> {
     if state.dmac.dpcr.read_bitfield(DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id]) == 0 {
         *ticks_remaining -= 1;
         return Ok(());

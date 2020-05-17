@@ -3,7 +3,7 @@ use crate::system::{
     types::State,
 };
 
-pub fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, last_transfer: bool) -> Result<u32, ()> {
+pub(crate) fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, last_transfer: bool) -> Result<u32, ()> {
     match channel_id {
         2 => state.gpu.read.read_one(),
         3 => {
@@ -31,7 +31,7 @@ pub fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, 
     }
 }
 
-pub fn push_channel_data(state: &State, channel_id: usize, value: u32) -> Result<(), ()> {
+pub(crate) fn push_channel_data(state: &State, channel_id: usize, value: u32) -> Result<(), ()> {
     match channel_id {
         2 => state.gpu.gp0.write_one(value),
         6 => panic!("Channel 6 cannot recieve data (OTC)"),

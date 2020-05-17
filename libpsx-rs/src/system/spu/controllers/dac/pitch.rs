@@ -9,7 +9,7 @@ use crate::{
     types::bitfield::Bitfield,
 };
 
-pub fn handle_pitch_counter(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
+pub(crate) fn handle_pitch_counter(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
     const PITCH_COUNTER_INTERP: Bitfield = Bitfield::new(0, 12);
     const PITCH_COUNTER_SAMPLE: Bitfield = Bitfield::new(12, 4);
 

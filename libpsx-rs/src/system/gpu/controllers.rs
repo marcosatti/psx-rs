@@ -1,11 +1,11 @@
-pub mod backend_dispatch;
-pub mod command;
-pub mod command_gp0;
-pub mod command_gp0_impl;
-pub mod command_gp1;
-pub mod command_gp1_impl;
-pub mod data;
-pub mod debug;
+pub(crate) mod backend_dispatch;
+pub(crate) mod command;
+pub(crate) mod command_gp0;
+pub(crate) mod command_gp0_impl;
+pub(crate) mod command_gp1;
+pub(crate) mod command_gp1_impl;
+pub(crate) mod data;
+pub(crate) mod debug;
 
 use crate::{
     system::{
@@ -28,7 +28,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, context.video_backend, time),
     }

@@ -12,55 +12,55 @@ use std::sync::atomic::{
 };
 
 #[derive(Copy, Clone, Debug)]
-pub enum IrqLine {
+pub(crate) enum IrqLine {
     Intc,
 }
 
-pub struct Interrupt {
+pub(crate) struct Interrupt {
     intc_pending: AtomicBool,
 }
 
 impl Interrupt {
-    pub fn new() -> Interrupt {
+    pub(crate) fn new() -> Interrupt {
         Interrupt {
             intc_pending: AtomicBool::new(false),
         }
     }
 
-    pub fn assert_line(&self, irq_line: IrqLine) {
+    pub(crate) fn assert_line(&self, irq_line: IrqLine) {
         match irq_line {
             IrqLine::Intc => self.intc_pending.store(true, Ordering::Release),
         }
     }
 
-    pub fn deassert_line(&self, irq_line: IrqLine) {
+    pub(crate) fn deassert_line(&self, irq_line: IrqLine) {
         match irq_line {
             IrqLine::Intc => self.intc_pending.store(false, Ordering::Release),
         }
     }
 
-    pub fn line_interrupted(&self, irq_line: IrqLine) -> bool {
+    pub(crate) fn line_interrupted(&self, irq_line: IrqLine) -> bool {
         match irq_line {
             IrqLine::Intc => self.intc_pending.load(Ordering::Acquire),
         }
     }
 }
 
-pub struct ControllerState {
-    pub bpc: Register,
-    pub bda: Register,
-    pub jump_dest: Register,
-    pub dcic: Register,
-    pub bdam: Register,
-    pub bpcm: Register,
-    pub status: Register,
-    pub cause: Register,
-    pub epc: Register,
-    pub prid: Register,
+pub(crate) struct ControllerState {
+    pub(crate) bpc: Register,
+    pub(crate) bda: Register,
+    pub(crate) jump_dest: Register,
+    pub(crate) dcic: Register,
+    pub(crate) bdam: Register,
+    pub(crate) bpcm: Register,
+    pub(crate) status: Register,
+    pub(crate) cause: Register,
+    pub(crate) epc: Register,
+    pub(crate) prid: Register,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             bpc: Register::new(),
             bda: Register::new(),
@@ -76,13 +76,13 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub interrupt: Interrupt,
-    pub controller_state: Mutex<ControllerState>,
+pub(crate) struct State {
+    pub(crate) interrupt: Interrupt,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             interrupt: Interrupt::new(),
             controller_state: Mutex::new(ControllerState::new()),
@@ -90,7 +90,7 @@ impl State {
     }
 }
 
-pub fn initialize(state: &mut SystemState) {
+pub(crate) fn initialize(state: &mut SystemState) {
     state.r3000.cp0.controller_state.get_mut().prid.write_u32(initialize_prid());
     state.r3000.cp0.controller_state.get_mut().status.write_bitfield(STATUS_KUC, 0);
     state.r3000.cp0.controller_state.get_mut().status.write_bitfield(STATUS_IEC, 0);

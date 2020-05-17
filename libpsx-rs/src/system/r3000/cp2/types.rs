@@ -4,47 +4,52 @@ use crate::types::mips1::{
 };
 use parking_lot::Mutex;
 
-pub enum MultiplyMatrix {
+#[allow(dead_code)]
+pub(crate) enum MultiplyMatrix {
     Rotation,
     Light,
     Color,
     Reserved,
 }
 
-pub enum MultiplyVector {
+#[allow(dead_code)]
+pub(crate) enum MultiplyVector {
     V0,
     V1,
     V2,
     IR,
 }
 
-pub enum TranslationVector {
+#[allow(dead_code)]
+pub(crate) enum TranslationVector {
     TR,
     BK,
     FC,
     None,
 }
 
-pub struct GteInstruction {
-    pub instruction: Instruction,
+pub(crate) struct GteInstruction {
+    pub(crate) instruction: Instruction,
 }
 
 impl GteInstruction {
-    pub fn new(instruction: Instruction) -> GteInstruction {
+    pub(crate) fn new(instruction: Instruction) -> GteInstruction {
         GteInstruction {
             instruction,
         }
     }
 
-    pub fn fake(&self) -> usize {
+    #[allow(dead_code)]
+    pub(crate) fn fake(&self) -> usize {
         ((self.instruction.value >> 20) & 0x1F) as usize
     }
 
-    pub fn sf(&self) -> bool {
+    pub(crate) fn sf(&self) -> bool {
         ((self.instruction.value >> 19) & 0x1) > 0
     }
 
-    pub fn mvmva_mm(&self) -> MultiplyMatrix {
+    #[allow(dead_code)]
+    pub(crate) fn mvmva_mm(&self) -> MultiplyMatrix {
         match (self.instruction.value >> 17) & 0x3 {
             0 => MultiplyMatrix::Rotation,
             1 => MultiplyMatrix::Light,
@@ -54,7 +59,8 @@ impl GteInstruction {
         }
     }
 
-    pub fn mvmva_mv(&self) -> MultiplyVector {
+    #[allow(dead_code)]
+    pub(crate) fn mvmva_mv(&self) -> MultiplyVector {
         match (self.instruction.value >> 15) & 0x3 {
             0 => MultiplyVector::V0,
             1 => MultiplyVector::V1,
@@ -64,7 +70,8 @@ impl GteInstruction {
         }
     }
 
-    pub fn mvmva_tv(&self) -> TranslationVector {
+    #[allow(dead_code)]
+    pub(crate) fn mvmva_tv(&self) -> TranslationVector {
         match (self.instruction.value >> 13) & 0x3 {
             0 => TranslationVector::TR,
             1 => TranslationVector::BK,
@@ -74,24 +81,25 @@ impl GteInstruction {
         }
     }
 
-    pub fn lm(&self) -> bool {
+    pub(crate) fn lm(&self) -> bool {
         ((self.instruction.value >> 10) & 0x1) > 0
     }
 
-    pub fn cmd(&self) -> usize {
+    #[allow(dead_code)]
+    pub(crate) fn cmd(&self) -> usize {
         (self.instruction.value & 0x1F) as usize
     }
 }
 
-pub struct ControllerState {
+pub(crate) struct ControllerState {
     /// Data registers.
-    pub gd: [Register; 32],
+    pub(crate) gd: [Register; 32],
     /// Control registers.
-    pub gc: [Register; 32],
+    pub(crate) gc: [Register; 32],
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             gd: [Register::new(); 32],
             gc: [Register::new(); 32],
@@ -99,12 +107,12 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub controller_state: Mutex<ControllerState>,
+pub(crate) struct State {
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             controller_state: Mutex::new(ControllerState::new()),
         }

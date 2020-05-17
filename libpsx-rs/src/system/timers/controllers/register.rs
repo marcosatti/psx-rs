@@ -11,10 +11,9 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
+pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
     get_mode(state, timer_id).acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::None => unreachable!(),
             LatchKind::Read => {
                 let timer_state = get_state(controller_state, timer_id);
 
@@ -86,7 +85,7 @@ pub fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_
     });
 }
 
-pub fn calculate_mode_value(timer_state: &TimerState) -> u32 {
+pub(crate) fn calculate_mode_value(timer_state: &TimerState) -> u32 {
     let mut value = 0;
 
     value = MODE_RESET.insert_into(value, bool_to_flag(timer_state.reset_on_target));

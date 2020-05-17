@@ -3,19 +3,19 @@ use enum_as_inner::EnumAsInner;
 use parking_lot::Mutex;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub enum TransferDirection {
+pub(crate) enum TransferDirection {
     FromChannel,
     ToChannel,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub enum StepDirection {
+pub(crate) enum StepDirection {
     Forwards,
     Backwards,
 }
 
 #[derive(Debug, Copy, Clone, EnumAsInner)]
-pub enum SyncMode {
+pub(crate) enum SyncMode {
     Undefined,
     Continuous(ContinuousState),
     Blocks(BlocksState),
@@ -23,17 +23,17 @@ pub enum SyncMode {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct TransferState {
-    pub started: bool,
-    pub direction: TransferDirection,
-    pub step_direction: StepDirection,
-    pub sync_mode: SyncMode,
-    pub interrupt_enabled: bool,
-    pub interrupted: bool,
+pub(crate) struct TransferState {
+    pub(crate) started: bool,
+    pub(crate) direction: TransferDirection,
+    pub(crate) step_direction: StepDirection,
+    pub(crate) sync_mode: SyncMode,
+    pub(crate) interrupt_enabled: bool,
+    pub(crate) interrupted: bool,
 }
 
 impl TransferState {
-    pub fn new() -> TransferState {
+    pub(crate) fn new() -> TransferState {
         TransferState {
             started: false,
             direction: TransferDirection::ToChannel,
@@ -46,14 +46,14 @@ impl TransferState {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct ContinuousState {
-    pub current_address: u32,
-    pub target_count: usize,
-    pub current_count: usize,
+pub(crate) struct ContinuousState {
+    pub(crate) current_address: u32,
+    pub(crate) target_count: usize,
+    pub(crate) current_count: usize,
 }
 
 impl ContinuousState {
-    pub fn new() -> ContinuousState {
+    pub(crate) fn new() -> ContinuousState {
         ContinuousState {
             current_address: 0,
             target_count: 0,
@@ -63,16 +63,16 @@ impl ContinuousState {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct BlocksState {
-    pub current_address: u32,
-    pub current_bsize_count: usize,
-    pub target_bsize_count: usize,
-    pub current_bamount_count: usize,
-    pub target_bamount_count: usize,
+pub(crate) struct BlocksState {
+    pub(crate) current_address: u32,
+    pub(crate) current_bsize_count: usize,
+    pub(crate) target_bsize_count: usize,
+    pub(crate) current_bamount_count: usize,
+    pub(crate) target_bamount_count: usize,
 }
 
 impl BlocksState {
-    pub fn new() -> BlocksState {
+    pub(crate) fn new() -> BlocksState {
         BlocksState {
             current_address: 0,
             current_bsize_count: 0,
@@ -84,15 +84,15 @@ impl BlocksState {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct LinkedListState {
-    pub current_header_address: u32,
-    pub next_header_address: u32,
-    pub target_count: usize,
-    pub current_count: usize,
+pub(crate) struct LinkedListState {
+    pub(crate) current_header_address: u32,
+    pub(crate) next_header_address: u32,
+    pub(crate) target_count: usize,
+    pub(crate) current_count: usize,
 }
 
 impl LinkedListState {
-    pub fn new() -> LinkedListState {
+    pub(crate) fn new() -> LinkedListState {
         LinkedListState {
             current_header_address: 0,
             next_header_address: 0,
@@ -102,27 +102,27 @@ impl LinkedListState {
     }
 }
 
-pub struct ControllerState {
+pub(crate) struct ControllerState {
     /// Master IRQ enable flag.
-    pub master_interrupt_enabled: bool,
-    pub master_interrupted: bool,
+    pub(crate) master_interrupt_enabled: bool,
+    pub(crate) master_interrupted: bool,
 
     /// Channel transfer states.
-    pub mdecin_transfer_state: TransferState,
-    pub mdecout_transfer_state: TransferState,
-    pub gpu_transfer_state: TransferState,
-    pub cdrom_transfer_state: TransferState,
-    pub spu_transfer_state: TransferState,
-    pub pio_transfer_state: TransferState,
-    pub otc_transfer_state: TransferState,
+    pub(crate) mdecin_transfer_state: TransferState,
+    pub(crate) mdecout_transfer_state: TransferState,
+    pub(crate) gpu_transfer_state: TransferState,
+    pub(crate) cdrom_transfer_state: TransferState,
+    pub(crate) spu_transfer_state: TransferState,
+    pub(crate) pio_transfer_state: TransferState,
+    pub(crate) otc_transfer_state: TransferState,
 
     /// Number of runs to cool off (not run).
     /// Intended for cases where the DMAC is holding the bus preventing the CPU from doing any work.
-    pub cooloff_runs: usize,
+    pub(crate) cooloff_runs: usize,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             master_interrupt_enabled: false,
             master_interrupted: false,
@@ -138,43 +138,43 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub dpcr: B32LevelRegister,
-    pub dicr: B32EdgeRegister,
+pub(crate) struct State {
+    pub(crate) dpcr: B32LevelRegister,
+    pub(crate) dicr: B32EdgeRegister,
 
-    pub mdecin_madr: B32LevelRegister,
-    pub mdecin_bcr: B32LevelRegister,
-    pub mdecin_chcr: B32EdgeRegister,
+    pub(crate) mdecin_madr: B32LevelRegister,
+    pub(crate) mdecin_bcr: B32LevelRegister,
+    pub(crate) mdecin_chcr: B32EdgeRegister,
 
-    pub mdecout_madr: B32LevelRegister,
-    pub mdecout_bcr: B32LevelRegister,
-    pub mdecout_chcr: B32EdgeRegister,
+    pub(crate) mdecout_madr: B32LevelRegister,
+    pub(crate) mdecout_bcr: B32LevelRegister,
+    pub(crate) mdecout_chcr: B32EdgeRegister,
 
-    pub gpu_madr: B32LevelRegister,
-    pub gpu_bcr: B32LevelRegister,
-    pub gpu_chcr: B32EdgeRegister,
+    pub(crate) gpu_madr: B32LevelRegister,
+    pub(crate) gpu_bcr: B32LevelRegister,
+    pub(crate) gpu_chcr: B32EdgeRegister,
 
-    pub cdrom_madr: B32LevelRegister,
-    pub cdrom_bcr: B32LevelRegister,
-    pub cdrom_chcr: B32EdgeRegister,
+    pub(crate) cdrom_madr: B32LevelRegister,
+    pub(crate) cdrom_bcr: B32LevelRegister,
+    pub(crate) cdrom_chcr: B32EdgeRegister,
 
-    pub spu_madr: B32LevelRegister,
-    pub spu_bcr: B32LevelRegister,
-    pub spu_chcr: B32EdgeRegister,
+    pub(crate) spu_madr: B32LevelRegister,
+    pub(crate) spu_bcr: B32LevelRegister,
+    pub(crate) spu_chcr: B32EdgeRegister,
 
-    pub pio_madr: B32LevelRegister,
-    pub pio_bcr: B32LevelRegister,
-    pub pio_chcr: B32EdgeRegister,
+    pub(crate) pio_madr: B32LevelRegister,
+    pub(crate) pio_bcr: B32LevelRegister,
+    pub(crate) pio_chcr: B32EdgeRegister,
 
-    pub otc_madr: B32LevelRegister,
-    pub otc_bcr: B32LevelRegister,
-    pub otc_chcr: B32EdgeRegister,
+    pub(crate) otc_madr: B32LevelRegister,
+    pub(crate) otc_bcr: B32LevelRegister,
+    pub(crate) otc_chcr: B32EdgeRegister,
 
-    pub controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             dpcr: B32LevelRegister::new(),
             dicr: B32EdgeRegister::new(),

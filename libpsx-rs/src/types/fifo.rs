@@ -1,6 +1,3 @@
-pub mod debug;
-
-use crate::types::fifo::debug::DebugState;
 use spsc_ringbuffer::SpscRingbuffer as QueueImpl;
 use std::fmt::{
     Display,
@@ -8,60 +5,45 @@ use std::fmt::{
 };
 
 /// SPSC FIFO
-pub struct Fifo<T>
-where T: Copy + Default
-{
+pub(crate) struct Fifo<T>
+where T: Copy + Default {
     fifo: QueueImpl<T>,
-    pub debug_state: Option<DebugState>,
 }
 
 impl<T> Fifo<T>
-where T: Copy + Default + Display + UpperHex
-{
-    pub fn new(size: usize, debug_state: Option<DebugState>) -> Fifo<T> {
+where T: Copy + Default + Display + UpperHex {
+    pub(crate) fn new(size: usize) -> Fifo<T> {
         Fifo {
             fifo: QueueImpl::new(size),
-            debug_state,
         }
     }
 
-    pub fn read_one(&self) -> Result<T, ()> {
-        let result = self.fifo.pop().map_err(|_| ());
-
-        if result.is_ok() {
-            debug::trace_read(self, result.unwrap());
-        }
-
-        result
+    pub(crate) fn read_one(&self) -> Result<T, ()> {
+        self.fifo.pop().map_err(|_| ())
     }
 
-    pub fn write_one(&self, data: T) -> Result<(), ()> {
-        let result = self.fifo.push(data).map_err(|_| ());
-
-        if result.is_ok() {
-            debug::trace_write(self, data);
-        }
-
-        result
+    pub(crate) fn write_one(&self, data: T) -> Result<(), ()> {
+        self.fifo.push(data).map_err(|_| ())
     }
 
-    pub fn read_available(&self) -> usize {
+    pub(crate) fn read_available(&self) -> usize {
         self.fifo.read_available()
     }
 
-    pub fn write_available(&self) -> usize {
+    #[allow(dead_code)]
+    pub(crate) fn write_available(&self) -> usize {
         self.fifo.write_available()
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.fifo.is_empty()
     }
 
-    pub fn is_full(&self) -> bool {
+    pub(crate) fn is_full(&self) -> bool {
         self.fifo.is_full()
     }
 
-    pub fn clear(&self) {
+    pub(crate) fn clear(&self) {
         self.fifo.clear();
     }
 }

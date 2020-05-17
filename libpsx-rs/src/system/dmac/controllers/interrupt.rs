@@ -10,7 +10,7 @@ use crate::system::{
     types::State,
 };
 
-pub fn handle_irq_trigger(controller_state: &mut ControllerState, channel_id: usize) {
+pub(crate) fn handle_irq_trigger(controller_state: &mut ControllerState, channel_id: usize) {
     let transfer_state = get_transfer_state(controller_state, channel_id);
 
     if transfer_state.interrupt_enabled {
@@ -18,7 +18,7 @@ pub fn handle_irq_trigger(controller_state: &mut ControllerState, channel_id: us
     }
 }
 
-pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState) {
     // TODO: Force IRQ bit not handled yet.
 
     let mut master_trigger = false;

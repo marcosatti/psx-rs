@@ -15,7 +15,7 @@ use crate::{
     utilities::binary_to_ascii_escaped,
 };
 
-pub fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
+pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
     if controller_state.sector_buffer.len() > 0 {
         if controller_state.loading_data {
             fill_data_fifo(state, controller_state);

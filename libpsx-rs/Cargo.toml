@@ -18,14 +18,12 @@ num-traits = "*"
 lazy_static = "*"
 sdl2 = "*"
 average = "*"
-capstone = "*"
 hashbrown = "*"
 lru = "*"
 fixed = "*"
 typenum = "*"
 rayon = "*"
 enum-as-inner = "*"
-atomic_enum = "*"
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }

@@ -1,6 +1,6 @@
-pub mod backend_dispatch;
-pub mod display;
-pub mod interrupt;
+pub(crate) mod backend_dispatch;
+pub(crate) mod display;
+pub(crate) mod interrupt;
 
 use crate::{
     system::{
@@ -20,7 +20,7 @@ use crate::{
 };
 use std::time::Duration;
 
-pub fn run_time(state: &State, video_backend: &VideoBackend, duration: Duration) {
+pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: Duration) {
     let crtc_state = &mut state.gpu.crtc.controller_state.lock();
 
     crtc_state.scanline_elapsed += duration;

@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-pub fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
+pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
     let fifo = &state.gpu.gp1;
 
     // Commands (GP1) are always of length 1.

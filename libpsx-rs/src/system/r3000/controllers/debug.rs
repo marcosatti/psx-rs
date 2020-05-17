@@ -1,15 +1,12 @@
-pub mod disassembler;
-pub mod memory;
-pub mod register;
+pub(crate) mod memory;
+pub(crate) mod register;
 
 use crate::{
-    debug::DEBUG_CORE_EXIT,
     system::{
         r3000::{
             constants::INSTRUCTION_SIZE,
             controllers::{
                 debug::{
-                    disassembler::*,
                     register::*,
                 },
                 memory_controller::translate_address,
@@ -38,17 +35,17 @@ use std::{
     },
 };
 
-pub static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_STATE_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_STDOUT_PUTCHAR_TRACE: bool = true;
 const ENABLE_HAZARD_TRACING: bool = false;
-pub static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_INTERRUPT_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
 const ENABLE_MEMORY_TRACKING_READ: bool = false;
 const ENABLE_MEMORY_TRACKING_WRITE: bool = false;
-pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(false);
-pub static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
-pub static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_REGISTER_TRACING: AtomicBool = AtomicBool::new(false);
 const ENABLE_BIOS_CALL_TRACING: bool = false;
 
 const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1800;
@@ -57,7 +54,7 @@ const MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD: usize = 16;
 
 const HAZARD_WARNING_THRESHOLD: usize = 128;
 
-pub static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub(crate) static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
 static DEBUG_BIOS_CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
 static DEBUG_CRITICAL_SECTION_REFCOUNT: AtomicIsize = AtomicIsize::new(0);
 
@@ -65,7 +62,7 @@ lazy_static! {
     static ref DEBUG_HAZARD_REPEAT_COUNT: Mutex<(u32, usize)> = Mutex::new((0, 0));
 }
 
-pub fn trace_state(state: &State, r3000_state: &ControllerState, cp0_state: &Cp0ControllerState) {
+pub(crate) fn trace_state(r3000_state: &ControllerState, cp0_state: &Cp0ControllerState) {
     let tick_count = DEBUG_TICK_COUNT.fetch_add(1, Ordering::AcqRel) + 1;
 
     if !ENABLE_STATE_TRACING.load(Ordering::Acquire) {
@@ -81,27 +78,13 @@ pub fn trace_state(state: &State, r3000_state: &ControllerState, cp0_state: &Cp0
         let iec = cp0_state.status.read_bitfield(STATUS_IEC) != 0;
         let branching = r3000_state.branch_delay.branching();
         log::debug!("[{:X}] iec = {}, pc = 0x{:0X}, b = {}", tick_count, iec, pc_va, branching);
-        let pc = r3000_state.pc.read_u32();
-        trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, pc - INSTRUCTION_SIZE, Some(1));
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(r3000_state);
         }
     }
-
-    if false {
-        DEBUG_CORE_EXIT.store(true, Ordering::Release);
-    }
 }
 
-pub fn trace_pc(state: &ControllerState, cp0_state: &Cp0ControllerState) {
-    let pc = state.pc.read_u32();
-    let kuc = cp0_state.status.read_bitfield(STATUS_KUC);
-    let iec = cp0_state.status.read_bitfield(STATUS_IEC);
-    let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
-    log::trace!("[{:X}] R3000 pc = 0x{:0X}, kuc = {}, iec = {}", tick_count, pc, kuc, iec);
-}
-
-pub fn trace_hazard(hazard: Result<(), Hazard>) {
+pub(crate) fn trace_hazard(hazard: Result<(), Hazard>) {
     if ENABLE_HAZARD_TRACING {
         match hazard {
             Ok(()) => {
@@ -133,7 +116,7 @@ pub fn trace_hazard(hazard: Result<(), Hazard>) {
     }
 }
 
-pub fn trace_interrupt(state: &State, r3000_state: &ControllerState) {
+pub(crate) fn trace_interrupt(state: &State, r3000_state: &ControllerState) {
     use crate::system::intc::{
         constants::{
             IRQ_BITFIELDS,
@@ -161,7 +144,7 @@ pub fn trace_interrupt(state: &State, r3000_state: &ControllerState) {
     }
 }
 
-pub fn trace_syscall(state: &ControllerState) {
+pub(crate) fn trace_syscall(state: &ControllerState) {
     if ENABLE_SYSCALL_TRACING {
         let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let pc_va = state.pc.read_u32() - INSTRUCTION_SIZE;
@@ -187,7 +170,7 @@ pub fn trace_syscall(state: &ControllerState) {
     }
 }
 
-pub fn trace_rfe(state: &ControllerState) {
+pub(crate) fn trace_rfe(state: &ControllerState) {
     if ENABLE_RFE_TRACING {
         let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
         let pc_va = state.pc.read_u32() - INSTRUCTION_SIZE;
@@ -196,7 +179,7 @@ pub fn trace_rfe(state: &ControllerState) {
     }
 }
 
-pub fn track_memory_read_pending<T>(state: &ControllerState, physical_address: u32) {
+pub(crate) fn track_memory_read_pending<T>(state: &ControllerState, physical_address: u32) {
     if !ENABLE_MEMORY_TRACKING_READ {
         return;
     }
@@ -213,7 +196,7 @@ pub fn track_memory_read_pending<T>(state: &ControllerState, physical_address: u
     }
 }
 
-pub fn track_memory_read<T: Copy + UpperHex>(state: &State, r3000_state: &ControllerState, physical_address: u32, value: T) {
+pub(crate) fn track_memory_read<T: Copy + UpperHex>(r3000_state: &ControllerState, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_READ {
         return;
     }
@@ -231,10 +214,10 @@ pub fn track_memory_read<T: Copy + UpperHex>(state: &State, r3000_state: &Contro
         log::debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
-    trace_memory_spin_loop_detection_read(state, r3000_state, physical_address, count);
+    trace_memory_spin_loop_detection_read(r3000_state, physical_address, count);
 }
 
-pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerState, physical_address: u32, value: T) {
+pub(crate) fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerState, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_WRITE {
         return;
     }
@@ -251,7 +234,7 @@ pub fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerState, p
     }
 }
 
-pub fn track_memory_write<T: Copy + UpperHex>(state: &State, r3000_state: &ControllerState, physical_address: u32, value: T) {
+pub(crate) fn track_memory_write<T: Copy + UpperHex>(r3000_state: &ControllerState, physical_address: u32, value: T) {
     if !ENABLE_MEMORY_TRACKING_WRITE {
         return;
     }
@@ -269,19 +252,18 @@ pub fn track_memory_write<T: Copy + UpperHex>(state: &State, r3000_state: &Contr
         log::debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
     }
 
-    trace_memory_spin_loop_detection_write(state, r3000_state, physical_address, count);
+    trace_memory_spin_loop_detection_write(r3000_state, physical_address, count);
 }
 
-fn trace_memory_spin_loop_detection_read(state: &State, r3000_state: &ControllerState, physical_address: u32, count: usize) {
+fn trace_memory_spin_loop_detection_read(r3000_state: &ControllerState, physical_address: u32, count: usize) {
     if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_READ.load(Ordering::Acquire) {
         return;
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
-        log::trace!("[{:X}] Memory read spin loop detected on address = 0x{:08X}", tick_count, physical_address);
         let pc = r3000_state.pc.read_u32();
-        trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, pc, Some(1));
+        log::trace!("[{:X}] Memory read spin loop detected on address = 0x{:08X} at PC = 0x{:08X}", tick_count, physical_address, pc);
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(r3000_state);
         }
@@ -289,16 +271,15 @@ fn trace_memory_spin_loop_detection_read(state: &State, r3000_state: &Controller
     }
 }
 
-fn trace_memory_spin_loop_detection_write(state: &State, r3000_state: &ControllerState, physical_address: u32, count: usize) {
+fn trace_memory_spin_loop_detection_write(r3000_state: &ControllerState, physical_address: u32, count: usize) {
     if !ENABLE_MEMORY_SPIN_LOOP_DETECTION_WRITE.load(Ordering::Acquire) {
         return;
     }
 
     if count >= MEMORY_SPIN_LOOP_DETECTION_ACCESS_THRESHOLD {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
-        log::trace!("[{:X}] Memory write spin loop detected on address = 0x{:08X}", tick_count, physical_address);
         let pc = r3000_state.pc.read_u32();
-        trace_instructions_at_pc(&state.memory.main_memory, &state.memory.bios, pc, Some(1));
+        log::trace!("[{:X}] Memory write spin loop detected on address = 0x{:08X} at PC = 0x{:08X}", tick_count, physical_address, pc);
         if ENABLE_REGISTER_TRACING.load(Ordering::Acquire) {
             trace_registers(r3000_state);
         }
@@ -306,7 +287,7 @@ fn trace_memory_spin_loop_detection_write(state: &State, r3000_state: &Controlle
     }
 }
 
-pub fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0ControllerState) {
+pub(crate) fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0ControllerState) {
     lazy_static! {
         static ref BUFFER: Mutex<String> = Mutex::new(String::new());
     }
@@ -339,7 +320,7 @@ pub fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0ControllerSt
     }
 }
 
-pub fn trace_bios_call(state: &ControllerState) {
+pub(crate) fn trace_bios_call(state: &ControllerState) {
     if !ENABLE_BIOS_CALL_TRACING {
         return;
     }

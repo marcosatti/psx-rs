@@ -11,7 +11,7 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
+pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize, duration: Duration) {
     let count = get_count(state, timer_id);
     let target = get_target(state, timer_id);
 

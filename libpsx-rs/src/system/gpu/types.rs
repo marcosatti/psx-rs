@@ -2,7 +2,6 @@ use crate::{
     system::gpu::crtc::types::Crtc,
     types::{
         fifo::{
-            debug::DebugState,
             Fifo,
         },
         memory::*,
@@ -12,7 +11,7 @@ use parking_lot::Mutex;
 use std::collections::VecDeque;
 
 #[derive(Copy, Clone, Debug)]
-pub enum TransparencyMode {
+pub(crate) enum TransparencyMode {
     Average,
     Additive,
     Difference,
@@ -20,43 +19,43 @@ pub enum TransparencyMode {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum ClutMode {
+pub(crate) enum ClutMode {
     Bits4,
     Bits8,
     Bits15,
     Reserved,
 }
 
-pub struct ControllerState {
-    pub textured_rect_x_flip: bool,
-    pub textured_rect_y_flip: bool,
-    pub display_area_start_x: usize,
-    pub display_area_start_y: usize,
-    pub horizontal_display_range_x1: usize,
-    pub horizontal_display_range_x2: usize,
-    pub vertical_display_range_y1: usize,
-    pub vertical_display_range_y2: usize,
-    pub texture_window_mask_x: usize,
-    pub texture_window_mask_y: usize,
-    pub texture_window_offset_x: isize,
-    pub texture_window_offset_y: isize,
-    pub drawing_area_x1: usize,
-    pub drawing_area_y1: usize,
-    pub drawing_area_x2: usize,
-    pub drawing_area_y2: usize,
-    pub drawing_offset_x: isize,
-    pub drawing_offset_y: isize,
-    pub texpage_base_x: isize,
-    pub texpage_base_y: isize,
-    pub clut_mode: ClutMode,
-    pub transparency_mode: TransparencyMode,
-    pub gp0_command_buffer: Vec<u32>,
-    pub gp0_command_required_length: Option<usize>,
-    pub gp0_read_buffer: VecDeque<u32>,
+pub(crate) struct ControllerState {
+    pub(crate) textured_rect_x_flip: bool,
+    pub(crate) textured_rect_y_flip: bool,
+    pub(crate) display_area_start_x: usize,
+    pub(crate) display_area_start_y: usize,
+    pub(crate) horizontal_display_range_x1: usize,
+    pub(crate) horizontal_display_range_x2: usize,
+    pub(crate) vertical_display_range_y1: usize,
+    pub(crate) vertical_display_range_y2: usize,
+    pub(crate) texture_window_mask_x: usize,
+    pub(crate) texture_window_mask_y: usize,
+    pub(crate) texture_window_offset_x: isize,
+    pub(crate) texture_window_offset_y: isize,
+    pub(crate) drawing_area_x1: usize,
+    pub(crate) drawing_area_y1: usize,
+    pub(crate) drawing_area_x2: usize,
+    pub(crate) drawing_area_y2: usize,
+    pub(crate) drawing_offset_x: isize,
+    pub(crate) drawing_offset_y: isize,
+    pub(crate) texpage_base_x: isize,
+    pub(crate) texpage_base_y: isize,
+    pub(crate) clut_mode: ClutMode,
+    pub(crate) transparency_mode: TransparencyMode,
+    pub(crate) gp0_command_buffer: Vec<u32>,
+    pub(crate) gp0_command_required_length: Option<usize>,
+    pub(crate) gp0_read_buffer: VecDeque<u32>,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             textured_rect_x_flip: false,
             textured_rect_y_flip: false,
@@ -87,22 +86,22 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub crtc: Crtc,
-    pub gp0: Fifo<u32>,
-    pub read: Fifo<u32>,
-    pub gp1: Fifo<u32>,
-    pub stat: B32LevelRegister,
-    pub controller_state: Mutex<ControllerState>,
+pub(crate) struct State {
+    pub(crate) crtc: Crtc,
+    pub(crate) gp0: Fifo<u32>,
+    pub(crate) read: Fifo<u32>,
+    pub(crate) gp1: Fifo<u32>,
+    pub(crate) stat: B32LevelRegister,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             crtc: Crtc::new(),
-            gp0: Fifo::new(64, Some(DebugState::new("GPU GP0", false, false))),
-            read: Fifo::new(64, Some(DebugState::new("GPU READ", false, false))),
-            gp1: Fifo::new(64, Some(DebugState::new("GPU GP1", false, false))),
+            gp0: Fifo::new(64),
+            read: Fifo::new(64),
+            gp1: Fifo::new(64),
             stat: B32LevelRegister::new(),
             controller_state: Mutex::new(ControllerState::new()),
         }

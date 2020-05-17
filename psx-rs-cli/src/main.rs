@@ -4,7 +4,6 @@ use libpsx_rs::{
         cdrom::CdromBackend,
         video::VideoBackend,
     },
-    debug::analysis as debug_analysis,
     Config,
     Core,
 };
@@ -91,7 +90,4 @@ fn main_inner(config: Config) {
     if result.is_err() {
         log::error!("Panic occurred, exiting");
     }
-
-    // Post mortem
-    debug_analysis(&mut core);
 }

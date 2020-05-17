@@ -14,10 +14,10 @@ use std::{
     time::Duration,
 };
 
-pub static ENABLE_GP0_COMMAND_TRACING: AtomicBool = AtomicBool::new(false);
-pub static ENABLE_GP0_RENDER_PER_CALL: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_GP0_COMMAND_TRACING: AtomicBool = AtomicBool::new(false);
+pub(crate) static ENABLE_GP0_RENDER_PER_CALL: AtomicBool = AtomicBool::new(false);
 
-pub fn trace_gp0_command(description: &str, data: &[u32]) {
+pub(crate) fn trace_gp0_command(description: &str, data: &[u32]) {
     if !ENABLE_GP0_COMMAND_TRACING.load(Ordering::Acquire) {
         return;
     }
@@ -26,7 +26,7 @@ pub fn trace_gp0_command(description: &str, data: &[u32]) {
     log::trace!("GP0 Comamnd: {}: data = [{}]", description, &data_str);
 }
 
-pub fn trace_gp0_command_render(state: &State, video_backend: &VideoBackend) {
+pub(crate) fn trace_gp0_command_render(state: &State, video_backend: &VideoBackend) {
     if !ENABLE_GP0_RENDER_PER_CALL.load(Ordering::Acquire) {
         return;
     }

@@ -7,7 +7,7 @@ use crate::system::{
     types::State,
 };
 
-pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, interrupt_index: usize) {
+pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, interrupt_index: usize) {
     assert_eq!(controller_state.interrupt_index, 0);
     assert!(interrupt_index < 16);
     assert_ne!(interrupt_index, 0);
@@ -26,7 +26,7 @@ pub fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, i
     state.intc.stat.assert_line(Line::Cdrom);
 }
 
-pub fn calculate_interrupt_flag_value(controller_state: &ControllerState) -> u8 {
+pub(crate) fn calculate_interrupt_flag_value(controller_state: &ControllerState) -> u8 {
     let mut value = 0xFF;
 
     assert!(controller_state.interrupt_index < 16);

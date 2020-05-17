@@ -14,18 +14,18 @@ const ENABLE_BENCHMARK_TRACING: bool = true;
 
 const REPORTING_PERIOD: Duration = Duration::from_secs(3);
 
-pub struct BenchmarkResults {
+pub(crate) struct BenchmarkResults {
     results: Mutex<HashMap<&'static str, Duration>>,
 }
 
 impl BenchmarkResults {
-    pub fn new() -> BenchmarkResults {
+    pub(crate) fn new() -> BenchmarkResults {
         BenchmarkResults {
             results: Mutex::new(HashMap::new()),
         }
     }
 
-    pub fn add_result(&self, controller: &'static str, duration: Duration) {
+    pub(crate) fn add_result(&self, controller: &'static str, duration: Duration) {
         self.results.lock().insert(controller, duration);
     }
 
@@ -61,7 +61,7 @@ impl State {
 
 static mut BENCHMARK_STATE: Option<State> = None;
 
-pub fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed: Duration, benchmark: BenchmarkResults) {
+pub(crate) fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed: Duration, benchmark: BenchmarkResults) {
     if !ENABLE_BENCHMARK_TRACING {
         return;
     }

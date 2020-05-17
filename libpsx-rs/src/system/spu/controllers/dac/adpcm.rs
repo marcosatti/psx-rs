@@ -11,7 +11,7 @@ use crate::{
 };
 use num_traits::clamp;
 
-pub fn handle_adpcm_block(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
+pub(crate) fn handle_adpcm_block(state: &State, controller_state: &mut ControllerState, voice_id: usize) {
     let decoding_address = {
         let voice_state = get_voice_state(controller_state, voice_id);
         let mut current_address = voice_state.current_address;

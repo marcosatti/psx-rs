@@ -8,7 +8,7 @@ pub enum VideoBackend<'a: 'b, 'b> {
     _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
-pub fn setup(video_backend: &VideoBackend) {
+pub(crate) fn setup(video_backend: &VideoBackend) {
     match video_backend {
         VideoBackend::None => {},
         #[cfg(opengl)]
@@ -17,7 +17,7 @@ pub fn setup(video_backend: &VideoBackend) {
     }
 }
 
-pub fn teardown(video_backend: &VideoBackend) {
+pub(crate) fn teardown(video_backend: &VideoBackend) {
     match video_backend {
         VideoBackend::None => {},
         #[cfg(opengl)]
