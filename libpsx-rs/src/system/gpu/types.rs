@@ -1,9 +1,7 @@
 use crate::{
     system::gpu::crtc::types::Crtc,
     types::{
-        fifo::{
-            Fifo,
-        },
+        fifo::Fifo,
         memory::*,
     },
 };

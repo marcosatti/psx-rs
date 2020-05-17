@@ -25,9 +25,7 @@ impl B32LevelRegister {
 
     #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> u8 {
-        unsafe { 
-            (*self.memory.get()).v8[offset as usize]
-        }
+        unsafe { (*self.memory.get()).v8[offset as usize] }
     }
 
     #[allow(dead_code)]
@@ -38,9 +36,7 @@ impl B32LevelRegister {
     }
 
     pub(crate) fn read_u16(&self, offset: u32) -> u16 {
-        unsafe { 
-            (*self.memory.get()).v16[offset as usize] 
-        }
+        unsafe { (*self.memory.get()).v16[offset as usize] }
     }
 
     pub(crate) fn write_u16(&self, offset: u32, value: u16) {
@@ -50,9 +46,7 @@ impl B32LevelRegister {
     }
 
     pub(crate) fn read_u32(&self) -> u32 {
-        unsafe { 
-            (*self.memory.get()).v32 
-        }
+        unsafe { (*self.memory.get()).v32 }
     }
 
     pub(crate) fn write_u32(&self, value: u32) {
@@ -91,9 +85,7 @@ impl B16LevelRegister {
 
     #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> u8 {
-        unsafe { 
-            (*self.memory.get()).v8[offset as usize] 
-        }
+        unsafe { (*self.memory.get()).v8[offset as usize] }
     }
 
     #[allow(dead_code)]
@@ -104,9 +96,7 @@ impl B16LevelRegister {
     }
 
     pub(crate) fn read_u16(&self) -> u16 {
-        unsafe { 
-            (*self.memory.get()).v16 
-        }
+        unsafe { (*self.memory.get()).v16 }
     }
 
     pub(crate) fn write_u16(&self, value: u16) {

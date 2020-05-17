@@ -1,7 +1,5 @@
 use crate::types::{
-    fifo::{
-        Fifo,
-    },
+    fifo::Fifo,
     memory::*,
 };
 use parking_lot::Mutex;

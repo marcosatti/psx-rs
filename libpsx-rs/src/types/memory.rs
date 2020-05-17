@@ -28,9 +28,7 @@ impl B8Memory {
 
     #[allow(dead_code)]
     pub(crate) fn read_raw(&self, byte_offset: u32) -> &[u8] {
-        unsafe { 
-            &(*self.memory.get())[byte_offset as usize..] 
-        }
+        unsafe { &(*self.memory.get())[byte_offset as usize..] }
     }
 
     pub(crate) fn write_raw(&self, byte_offset: u32, data: &[u8]) {
@@ -40,9 +38,7 @@ impl B8Memory {
     }
 
     pub(crate) fn read_u8(&self, byte_offset: u32) -> u8 {
-        unsafe { 
-            (*self.memory.get())[byte_offset as usize] 
-        }
+        unsafe { (*self.memory.get())[byte_offset as usize] }
     }
 
     pub(crate) fn write_u8(&self, byte_offset: u32, value: u8) {
@@ -53,9 +49,7 @@ impl B8Memory {
 
     pub(crate) fn read_u16(&self, byte_offset: u32) -> u16 {
         assert_eq!(byte_offset % 2, 0);
-        unsafe { 
-            *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16)
-        }
+        unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16) }
     }
 
     pub(crate) fn write_u16(&self, byte_offset: u32, value: u16) {

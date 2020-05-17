@@ -26,8 +26,10 @@ impl B32EdgeRegister {
     pub(crate) fn new() -> B32EdgeRegister {
         B32EdgeRegister {
             memory: Mutex::new((
-                None, 
-                B32Register_ { v32: 0 },
+                None,
+                B32Register_ {
+                    v32: 0,
+                },
             )),
         }
     }
@@ -42,7 +44,7 @@ impl B32EdgeRegister {
 
         operation(&mut data.1);
         data.0 = Some(latch_kind);
-        
+
         Ok(())
     }
 
@@ -130,8 +132,10 @@ impl B16EdgeRegister {
     pub(crate) fn new() -> B16EdgeRegister {
         B16EdgeRegister {
             memory: Mutex::new((
-                None, 
-                B16Register_ { v16: 0 },
+                None,
+                B16Register_ {
+                    v16: 0,
+                },
             )),
         }
     }
@@ -192,7 +196,7 @@ impl B16EdgeRegister {
             data.0 = None;
         }
     }
-    
+
     #[allow(dead_code)]
     pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u16) -> u16 {
@@ -217,8 +221,10 @@ impl B8EdgeRegister {
     pub(crate) fn new() -> B8EdgeRegister {
         B8EdgeRegister {
             memory: Mutex::new((
-                None, 
-                B8Register_ { v8: 0 },
+                None,
+                B8Register_ {
+                    v8: 0,
+                },
             )),
         }
     }
@@ -233,7 +239,7 @@ impl B8EdgeRegister {
 
         operation(&mut data.1);
         data.0 = Some(latch_kind);
-        
+
         Ok(())
     }
 
@@ -262,7 +268,7 @@ impl B8EdgeRegister {
             data.0 = None;
         }
     }
-    
+
     pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u8) -> u8 {
         let data = &mut self.memory.lock();

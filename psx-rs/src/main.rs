@@ -161,20 +161,14 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
 
     match keycode {
         Keycode::F1 => {
-            //toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
+            // toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
         },
-        Keycode::F2 => {
-        },
-        Keycode::F3 => {
-        },
-        Keycode::F4 => {
-        },
-        Keycode::F5 => {
-        },
-        Keycode::F6 => {
-        },
-        Keycode::F7 => {
-        },
+        Keycode::F2 => {},
+        Keycode::F3 => {},
+        Keycode::F4 => {},
+        Keycode::F5 => {},
+        Keycode::F6 => {},
+        Keycode::F7 => {},
         _ => {},
     }
 }

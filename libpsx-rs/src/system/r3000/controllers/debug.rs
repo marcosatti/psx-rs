@@ -1,27 +1,23 @@
 pub(crate) mod memory;
 pub(crate) mod register;
 
-use crate::{
-    system::{
-        r3000::{
-            constants::INSTRUCTION_SIZE,
-            controllers::{
-                debug::{
-                    register::*,
-                },
-                memory_controller::translate_address,
-            },
-            cp0::{
-                constants::*,
-                types::ControllerState as Cp0ControllerState,
-            },
-            types::{
-                ControllerState,
-                Hazard,
-            },
+use crate::system::{
+    r3000::{
+        constants::INSTRUCTION_SIZE,
+        controllers::{
+            debug::register::*,
+            memory_controller::translate_address,
         },
-        types::State,
+        cp0::{
+            constants::*,
+            types::ControllerState as Cp0ControllerState,
+        },
+        types::{
+            ControllerState,
+            Hazard,
+        },
     },
+    types::State,
 };
 use lazy_static::lazy_static;
 use parking_lot::Mutex;

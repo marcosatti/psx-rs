@@ -14,7 +14,7 @@ use std::{
 pub(crate) fn analysis(core: &mut Core) {
     let debug_path = core.config.workspace_path.join(r"debug/");
     std::fs::create_dir_all(&debug_path).unwrap();
-    
+
     dump_memory(&mut core.state, &debug_path);
 }
 

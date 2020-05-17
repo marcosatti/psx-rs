@@ -2,9 +2,7 @@ mod dac;
 mod transfer;
 
 use crate::types::{
-    fifo::{
-        Fifo,
-    },
+    fifo::Fifo,
     memory::*,
 };
 pub(crate) use dac::*;

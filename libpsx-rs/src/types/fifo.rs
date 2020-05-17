@@ -6,12 +6,14 @@ use std::fmt::{
 
 /// SPSC FIFO
 pub(crate) struct Fifo<T>
-where T: Copy + Default {
+where T: Copy + Default
+{
     fifo: QueueImpl<T>,
 }
 
 impl<T> Fifo<T>
-where T: Copy + Default + Display + UpperHex {
+where T: Copy + Default + Display + UpperHex
+{
     pub(crate) fn new(size: usize) -> Fifo<T> {
         Fifo {
             fifo: QueueImpl::new(size),

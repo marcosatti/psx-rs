@@ -60,9 +60,7 @@ impl Register {
     }
 
     pub(crate) fn read_u32(&self) -> u32 {
-        unsafe { 
-            self.memory.v32
-        }
+        unsafe { self.memory.v32 }
     }
 
     pub(crate) fn write_u32(&mut self, value: u32) {
