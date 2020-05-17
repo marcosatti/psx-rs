@@ -10,7 +10,7 @@ use crate::{
     types::bitfield::Bitfield,
 };
 
-pub fn handle_transfer(state: &State, linked_list_state: &mut LinkedListState, channel_id: usize) -> Result<(bool, bool), ()> {
+pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListState, channel_id: usize) -> Result<(bool, bool), ()> {
     let remaining = linked_list_state.target_count - linked_list_state.current_count;
 
     if remaining == 0 {

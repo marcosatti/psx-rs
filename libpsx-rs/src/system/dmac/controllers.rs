@@ -1,7 +1,7 @@
-pub mod channel;
-pub mod interrupt;
-pub mod register;
-pub mod transfer;
+pub(crate) mod channel;
+pub(crate) mod interrupt;
+pub(crate) mod register;
+pub(crate) mod transfer;
 
 use crate::system::{
     dmac::{
@@ -23,7 +23,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }

@@ -9,7 +9,7 @@ pub(crate) fn disc_loaded(backend_params: &BackendParams) -> bool {
     unsafe { !DISC.is_null() }
 }
 
-pub fn disc_mode(backend_params: &BackendParams) -> usize {
+pub(crate) fn disc_mode(backend_params: &BackendParams) -> usize {
     // TODO: mode assumed to be from the first track? Not quite sure...
     let (_context_guard, _context) = backend_params.context.guard();
 
@@ -32,7 +32,7 @@ pub fn disc_mode(backend_params: &BackendParams) -> usize {
     }
 }
 
-pub fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Vec<u8> {
+pub(crate) fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Vec<u8> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {

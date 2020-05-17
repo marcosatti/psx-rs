@@ -1,4 +1,4 @@
-pub mod constants;
-pub mod controllers;
-pub mod memory;
-pub mod types;
+pub(crate) mod constants;
+pub(crate) mod controllers;
+pub(crate) mod memory;
+pub(crate) mod types;

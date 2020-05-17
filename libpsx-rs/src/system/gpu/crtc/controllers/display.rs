@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-pub fn handle_render(state: &State, video_backend: &VideoBackend) {
+pub(crate) fn handle_render(state: &State, video_backend: &VideoBackend) {
     let stat = &state.gpu.stat;
 
     let b24_color_depth = stat.read_bitfield(STAT_DISPLAY_COLOR_DEPTH) != 0;

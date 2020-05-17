@@ -6,7 +6,7 @@ use crate::{
     types::memory::*,
 };
 
-pub fn get_voll(state: &State, voice_id: usize) -> &B16LevelRegister {
+pub(crate) fn get_voll(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_voll,
         1 => &state.spu.voice1_voll,
@@ -36,7 +36,7 @@ pub fn get_voll(state: &State, voice_id: usize) -> &B16LevelRegister {
     }
 }
 
-pub fn get_volr(state: &State, voice_id: usize) -> &B16LevelRegister {
+pub(crate) fn get_volr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_volr,
         1 => &state.spu.voice1_volr,
@@ -66,7 +66,7 @@ pub fn get_volr(state: &State, voice_id: usize) -> &B16LevelRegister {
     }
 }
 
-pub fn get_srate(state: &State, voice_id: usize) -> &B16LevelRegister {
+pub(crate) fn get_srate(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_srate,
         1 => &state.spu.voice1_srate,
@@ -96,7 +96,7 @@ pub fn get_srate(state: &State, voice_id: usize) -> &B16LevelRegister {
     }
 }
 
-pub fn get_saddr(state: &State, voice_id: usize) -> &B16LevelRegister {
+pub(crate) fn get_saddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_saddr,
         1 => &state.spu.voice1_saddr,
@@ -126,7 +126,7 @@ pub fn get_saddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     }
 }
 
-pub fn get_adsr(state: &State, voice_id: usize) -> &B32LevelRegister {
+pub(crate) fn get_adsr(state: &State, voice_id: usize) -> &B32LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_adsr,
         1 => &state.spu.voice1_adsr,
@@ -156,7 +156,7 @@ pub fn get_adsr(state: &State, voice_id: usize) -> &B32LevelRegister {
     }
 }
 
-pub fn get_cvol(state: &State, voice_id: usize) -> &B16LevelRegister {
+pub(crate) fn get_cvol(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_cvol,
         1 => &state.spu.voice1_cvol,
@@ -186,7 +186,7 @@ pub fn get_cvol(state: &State, voice_id: usize) -> &B16LevelRegister {
     }
 }
 
-pub fn get_raddr(state: &State, voice_id: usize) -> &B16LevelRegister {
+pub(crate) fn get_raddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     match voice_id {
         0 => &state.spu.voice0_raddr,
         1 => &state.spu.voice1_raddr,
@@ -216,7 +216,7 @@ pub fn get_raddr(state: &State, voice_id: usize) -> &B16LevelRegister {
     }
 }
 
-pub fn get_voice_state(controller_state: &mut ControllerState, voice_id: usize) -> &mut VoiceState {
+pub(crate) fn get_voice_state(controller_state: &mut ControllerState, voice_id: usize) -> &mut VoiceState {
     match voice_id {
         0 => &mut controller_state.dac_state.voice0_state,
         1 => &mut controller_state.dac_state.voice1_state,

@@ -21,17 +21,17 @@ use crate::{
 };
 use std::intrinsics::unlikely;
 
-pub fn update_ip_field(state: &State, cp0_state: &mut Cp0ControllerState) {
+pub(crate) fn update_ip_field(state: &State, cp0_state: &mut Cp0ControllerState) {
     let intc_pending = state.r3000.cp0.interrupt.line_interrupted(IrqLine::Intc);
     cp0_state.cause.write_bitfield(CAUSE_IP_INTC, bool_to_flag(intc_pending));
 }
 
-pub fn clear_ip_field(state: &State, cp0_state: &mut Cp0ControllerState) {
+pub(crate) fn clear_ip_field(state: &State, cp0_state: &mut Cp0ControllerState) {
     state.r3000.cp0.interrupt.deassert_line(IrqLine::Intc);
     cp0_state.cause.write_bitfield(CAUSE_IP, 0);
 }
 
-pub fn set_exception(r3000_state: &mut ControllerState, cp0_state: &mut Cp0ControllerState, exccode: usize) {
+pub(crate) fn set_exception(r3000_state: &mut ControllerState, cp0_state: &mut Cp0ControllerState, exccode: usize) {
     let pc = &mut r3000_state.pc;
     let cause = &mut cp0_state.cause;
     let status = &mut cp0_state.status;
@@ -76,7 +76,7 @@ pub fn set_exception(r3000_state: &mut ControllerState, cp0_state: &mut Cp0Contr
     pc.write_u32(vector_offset);
 }
 
-pub fn handle_interrupts(state: &State, r3000_state: &mut ControllerState, cp0_state: &mut Cp0ControllerState) {
+pub(crate) fn handle_interrupts(state: &State, r3000_state: &mut ControllerState, cp0_state: &mut Cp0ControllerState) {
     let status = &cp0_state.status;
 
     if status.read_bitfield(STATUS_IEC) == 0 {

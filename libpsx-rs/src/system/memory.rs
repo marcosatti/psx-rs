@@ -1,3 +1,3 @@
-pub mod constants;
-pub mod memory;
-pub mod types;
+pub(crate) mod constants;
+pub(crate) mod memory;
+pub(crate) mod types;

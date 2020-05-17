@@ -4,5 +4,5 @@ pub(crate) use euclid::{
 };
 
 // Units
-pub struct Normalized;
-pub struct Pixel;
+pub(crate) struct Normalized;
+pub(crate) struct Pixel;

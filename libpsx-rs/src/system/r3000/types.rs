@@ -23,7 +23,7 @@ use parking_lot::Mutex;
 use std::fmt;
 
 #[derive(Copy, Clone, PartialEq)]
-pub enum Hazard {
+pub(crate) enum Hazard {
     BusLockedMemoryRead(u32),
     BusLockedMemoryWrite(u32),
     MemoryRead(u32),
@@ -47,27 +47,27 @@ impl fmt::Debug for Hazard {
     }
 }
 
-pub struct ControllerContext<'a> {
-    pub state: &'a SystemState,
-    pub r3000_state: &'a mut ControllerState,
-    pub cp0_state: &'a mut Cp0ControllerState,
-    pub cp2_state: &'a mut Cp2ControllerState,
+pub(crate) struct ControllerContext<'a> {
+    pub(crate) state: &'a SystemState,
+    pub(crate) r3000_state: &'a mut ControllerState,
+    pub(crate) cp0_state: &'a mut Cp0ControllerState,
+    pub(crate) cp2_state: &'a mut Cp2ControllerState,
 }
 
-pub type InstResult = Result<(), Hazard>;
+pub(crate) type InstResult = Result<(), Hazard>;
 
-pub type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
+pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
 
-pub struct ControllerState {
-    pub pc: Register,
-    pub branch_delay: BranchDelaySlot,
-    pub gpr: [Register; 32],
-    pub hi: Register,
-    pub lo: Register,
+pub(crate) struct ControllerState {
+    pub(crate) pc: Register,
+    pub(crate) branch_delay: BranchDelaySlot,
+    pub(crate) gpr: [Register; 32],
+    pub(crate) hi: Register,
+    pub(crate) lo: Register,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             pc: Register::new(),
             branch_delay: BranchDelaySlot::new(),
@@ -78,14 +78,14 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub cp0: Cp0State,
-    pub cp2: Cp2State,
-    pub controller_state: Mutex<ControllerState>,
+pub(crate) struct State {
+    pub(crate) cp0: Cp0State,
+    pub(crate) cp2: Cp2State,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             cp0: Cp0State::new(),
             cp2: Cp2State::new(),
@@ -94,7 +94,7 @@ impl State {
     }
 }
 
-pub fn initialize(state: &mut SystemState) {
+pub(crate) fn initialize(state: &mut SystemState) {
     state.r3000.controller_state.get_mut().pc.write_u32(0xBFC0_0000);
     cp0_initialize(state);
 }

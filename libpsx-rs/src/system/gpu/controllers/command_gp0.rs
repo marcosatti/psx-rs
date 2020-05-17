@@ -19,7 +19,7 @@ type LengthFn = fn(&[u32]) -> Option<usize>;
 /// The handler logic for the command.
 type HandlerFn = fn(&State, &mut ControllerState, &VideoBackend, &[u32]);
 
-pub fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
+pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
     // Update the command buffer with any new incoming data.
     {
         let fifo = &state.gpu.gp0;

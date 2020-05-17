@@ -10,7 +10,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub fn handle_stat(state: &State) {
+pub(crate) fn handle_stat(state: &State) {
     state.padmc.stat.acknowledge(|_value, latch_kind| {
         match latch_kind {
             LatchKind::Read => calculate_stat_value(state),
@@ -19,7 +19,7 @@ pub fn handle_stat(state: &State) {
     });
 }
 
-pub fn handle_ctrl(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) {
     state.padmc.ctrl.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Write => {

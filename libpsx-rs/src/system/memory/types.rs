@@ -3,26 +3,26 @@ use crate::{
     types::memory::*,
 };
 
-pub struct State {
-    pub main_memory: B8Memory,
-    pub bios: B8Memory,
-    pub expansion_1_base_address: B32LevelRegister,
-    pub expansion_2_base_address: B32LevelRegister,
-    pub expansion_1_delay: B32LevelRegister,
-    pub expansion_3_delay: B32LevelRegister,
-    pub bios_rom_control: B32LevelRegister,
-    pub spu_delay: B32LevelRegister,
-    pub cdrom_delay: B32LevelRegister,
-    pub expansion_2_delay: B32LevelRegister,
-    pub common_delay_control: B32LevelRegister,
-    pub ram_size_control: B32LevelRegister,
-    pub cache_control: B8Memory,
-    pub post_display: B8LevelRegister,
-    pub pio: B8Memory,
+pub(crate) struct State {
+    pub(crate) main_memory: B8Memory,
+    pub(crate) bios: B8Memory,
+    pub(crate) expansion_1_base_address: B32LevelRegister,
+    pub(crate) expansion_2_base_address: B32LevelRegister,
+    pub(crate) expansion_1_delay: B32LevelRegister,
+    pub(crate) expansion_3_delay: B32LevelRegister,
+    pub(crate) bios_rom_control: B32LevelRegister,
+    pub(crate) spu_delay: B32LevelRegister,
+    pub(crate) cdrom_delay: B32LevelRegister,
+    pub(crate) expansion_2_delay: B32LevelRegister,
+    pub(crate) common_delay_control: B32LevelRegister,
+    pub(crate) ram_size_control: B32LevelRegister,
+    pub(crate) cache_control: B8Memory,
+    pub(crate) post_display: B8LevelRegister,
+    pub(crate) pio: B8Memory,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
             bios: B8Memory::new(BIOS_SIZE),

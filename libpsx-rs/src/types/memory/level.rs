@@ -10,12 +10,12 @@ use super::{
 use crate::types::bitfield::Bitfield;
 use std::cell::UnsafeCell;
 
-pub struct B32LevelRegister {
+pub(crate) struct B32LevelRegister {
     memory: UnsafeCell<B32Register_>,
 }
 
 impl B32LevelRegister {
-    pub fn new() -> B32LevelRegister {
+    pub(crate) fn new() -> B32LevelRegister {
         B32LevelRegister {
             memory: UnsafeCell::new(B32Register_ {
                 v32: 0,
@@ -23,41 +23,49 @@ impl B32LevelRegister {
         }
     }
 
-    pub fn read_u8(&self, offset: u32) -> u8 {
-        unsafe { (*self.memory.get()).v8[offset as usize] }
+    #[allow(dead_code)]
+    pub(crate) fn read_u8(&self, offset: u32) -> u8 {
+        unsafe { 
+            (*self.memory.get()).v8[offset as usize]
+        }
     }
 
-    pub fn write_u8(&self, offset: u32, value: u8) {
+    #[allow(dead_code)]
+    pub(crate) fn write_u8(&self, offset: u32, value: u8) {
         unsafe {
             (*self.memory.get()).v8[offset as usize] = value;
         }
     }
 
-    pub fn read_u16(&self, offset: u32) -> u16 {
-        unsafe { (*self.memory.get()).v16[offset as usize] }
+    pub(crate) fn read_u16(&self, offset: u32) -> u16 {
+        unsafe { 
+            (*self.memory.get()).v16[offset as usize] 
+        }
     }
 
-    pub fn write_u16(&self, offset: u32, value: u16) {
+    pub(crate) fn write_u16(&self, offset: u32, value: u16) {
         unsafe {
             (*self.memory.get()).v16[offset as usize] = value;
         }
     }
 
-    pub fn read_u32(&self) -> u32 {
-        unsafe { (*self.memory.get()).v32 }
+    pub(crate) fn read_u32(&self) -> u32 {
+        unsafe { 
+            (*self.memory.get()).v32 
+        }
     }
 
-    pub fn write_u32(&self, value: u32) {
+    pub(crate) fn write_u32(&self, value: u32) {
         unsafe {
             (*self.memory.get()).v32 = value;
         }
     }
 
-    pub fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
+    pub(crate) fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
         bitfield.extract_from(self.read_u32())
     }
 
-    pub fn write_bitfield(&self, bitfield: Bitfield, value: u32) {
+    pub(crate) fn write_bitfield(&self, bitfield: Bitfield, value: u32) {
         self.write_u32(bitfield.insert_into(self.read_u32(), value));
     }
 }
@@ -68,12 +76,12 @@ unsafe impl Send for B32LevelRegister {
 unsafe impl Sync for B32LevelRegister {
 }
 
-pub struct B16LevelRegister {
+pub(crate) struct B16LevelRegister {
     memory: UnsafeCell<B16Register_>,
 }
 
 impl B16LevelRegister {
-    pub fn new() -> B16LevelRegister {
+    pub(crate) fn new() -> B16LevelRegister {
         B16LevelRegister {
             memory: UnsafeCell::new(B16Register_ {
                 v16: 0,
@@ -81,31 +89,38 @@ impl B16LevelRegister {
         }
     }
 
-    pub fn read_u8(&self, offset: u32) -> u8 {
-        unsafe { (*self.memory.get()).v8[offset as usize] }
+    #[allow(dead_code)]
+    pub(crate) fn read_u8(&self, offset: u32) -> u8 {
+        unsafe { 
+            (*self.memory.get()).v8[offset as usize] 
+        }
     }
 
-    pub fn write_u8(&self, offset: u32, value: u8) {
+    #[allow(dead_code)]
+    pub(crate) fn write_u8(&self, offset: u32, value: u8) {
         unsafe {
             (*self.memory.get()).v8[offset as usize] = value;
         }
     }
 
-    pub fn read_u16(&self) -> u16 {
-        unsafe { (*self.memory.get()).v16 }
+    pub(crate) fn read_u16(&self) -> u16 {
+        unsafe { 
+            (*self.memory.get()).v16 
+        }
     }
 
-    pub fn write_u16(&self, value: u16) {
+    pub(crate) fn write_u16(&self, value: u16) {
         unsafe {
             (*self.memory.get()).v16 = value;
         }
     }
 
-    pub fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
+    #[allow(dead_code)]
+    pub(crate) fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
         bitfield.extract_from(self.read_u16())
     }
 
-    pub fn write_bitfield(&self, bitfield: Bitfield, value: u16) {
+    pub(crate) fn write_bitfield(&self, bitfield: Bitfield, value: u16) {
         self.write_u16(bitfield.insert_into(self.read_u16(), value));
     }
 }
@@ -116,12 +131,12 @@ unsafe impl Send for B16LevelRegister {
 unsafe impl Sync for B16LevelRegister {
 }
 
-pub struct B8LevelRegister {
+pub(crate) struct B8LevelRegister {
     memory: UnsafeCell<B8Register_>,
 }
 
 impl B8LevelRegister {
-    pub fn new() -> B8LevelRegister {
+    pub(crate) fn new() -> B8LevelRegister {
         B8LevelRegister {
             memory: UnsafeCell::new(B8Register_ {
                 v8: 0,
@@ -129,21 +144,21 @@ impl B8LevelRegister {
         }
     }
 
-    pub fn read_u8(&self) -> u8 {
+    pub(crate) fn read_u8(&self) -> u8 {
         unsafe { (*self.memory.get()).v8 }
     }
 
-    pub fn write_u8(&self, value: u8) {
+    pub(crate) fn write_u8(&self, value: u8) {
         unsafe {
             (*self.memory.get()).v8 = value;
         }
     }
 
-    pub fn read_bitfield(&self, bitfield: Bitfield) -> u8 {
+    pub(crate) fn read_bitfield(&self, bitfield: Bitfield) -> u8 {
         bitfield.extract_from(self.read_u8())
     }
 
-    pub fn write_bitfield(&self, bitfield: Bitfield, value: u8) {
+    pub(crate) fn write_bitfield(&self, bitfield: Bitfield, value: u8) {
         self.write_u8(bitfield.insert_into(self.read_u8(), value));
     }
 }

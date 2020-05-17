@@ -1,7 +1,7 @@
-pub mod count;
-pub mod interrupt;
-pub mod register;
-pub mod timer;
+pub(crate) mod count;
+pub(crate) mod interrupt;
+pub(crate) mod register;
+pub(crate) mod timer;
 
 use crate::system::{
     timers::controllers::{
@@ -16,7 +16,7 @@ use crate::system::{
 };
 use std::time::Duration;
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }

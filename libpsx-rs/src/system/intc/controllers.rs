@@ -1,4 +1,4 @@
-pub mod debug;
+pub(crate) mod debug;
 
 use crate::system::{
     intc::constants::CLOCK_SPEED,
@@ -14,7 +14,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }

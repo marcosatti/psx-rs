@@ -4,23 +4,23 @@ use opengl_sys::*;
 use parking_lot::Mutex;
 use std::ffi::CString;
 
-pub mod vertex {
-    pub const SOLID_POLYGON: &'static str = include_str!("./shaders/vertex/solid_polygon.glsl");
-    pub const SHADED_POLYGON: &'static str = include_str!("./shaders/vertex/shaded_polygon.glsl");
-    pub const TEXTURED_POLYGON: &'static str = include_str!("./shaders/vertex/textured_polygon.glsl");
+pub(crate) mod vertex {
+    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/vertex/solid_polygon.glsl");
+    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/vertex/shaded_polygon.glsl");
+    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/vertex/textured_polygon.glsl");
 }
 
-pub mod fragment {
-    pub const SOLID_POLYGON: &'static str = include_str!("./shaders/fragment/solid_polygon.glsl");
-    pub const SHADED_POLYGON: &'static str = include_str!("./shaders/fragment/shaded_polygon.glsl");
-    pub const TEXTURED_POLYGON: &'static str = include_str!("./shaders/fragment/textured_polygon.glsl");
+pub(crate) mod fragment {
+    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/fragment/solid_polygon.glsl");
+    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/fragment/shaded_polygon.glsl");
+    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/fragment/textured_polygon.glsl");
 }
 
 lazy_static! {
     static ref SHADERS: Mutex<HashMap<&'static str, GLuint>> = Mutex::new(HashMap::new());
 }
 
-pub fn compile_shader(code: &'static str, type_: GLenum) -> GLuint {
+pub(crate) fn compile_shader(code: &'static str, type_: GLenum) -> GLuint {
     let mut shaders = SHADERS.lock();
 
     match shaders.get(code) {
@@ -51,7 +51,7 @@ pub fn compile_shader(code: &'static str, type_: GLenum) -> GLuint {
     }
 }
 
-pub fn create_program(shaders: &[GLuint]) -> GLuint {
+pub(crate) fn create_program(shaders: &[GLuint]) -> GLuint {
     unsafe {
         let program_id = glCreateProgram();
         for &id in shaders.iter() {

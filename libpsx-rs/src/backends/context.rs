@@ -20,7 +20,7 @@ impl<'a: 'b, 'b, T> BackendContext<'a, 'b, T> {
 }
 
 impl<'a: 'b, 'b: 'c, 'c, T> BackendContext<'a, 'b, T> {
-    pub fn guard(&'c self) -> (ContextGuard<'a, 'b, 'c, T>, &'c T) {
+    pub(crate) fn guard(&'c self) -> (ContextGuard<'a, 'b, 'c, T>, &'c T) {
         let lock = self.context.lock();
         let context = (lock.0)();
         (
@@ -38,7 +38,7 @@ unsafe impl<'a: 'b, 'b, T> Send for BackendContext<'a, 'b, T> {
 unsafe impl<'a: 'b, 'b, T> Sync for BackendContext<'a, 'b, T> {
 }
 
-pub struct ContextGuard<'a: 'b, 'b: 'c, 'c, T> {
+pub(crate) struct ContextGuard<'a: 'b, 'b: 'c, 'c, T> {
     guard: MutexGuard<'c, (AcquireFn<'a, 'b, T>, ReleaseFn<'b>)>,
 }
 

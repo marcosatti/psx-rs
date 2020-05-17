@@ -6,7 +6,7 @@ use crate::system::{
     types::State,
 };
 
-pub fn handle_transfer(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState) {
     match controller_state.transfer_state.current_mode {
         TransferMode::Stop => {},
         TransferMode::ManualWrite => handle_manual_write_transfer(state, controller_state),

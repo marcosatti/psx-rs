@@ -3,37 +3,37 @@ use parking_lot::Mutex;
 use std::time::Duration;
 
 #[derive(Copy, Clone, Debug)]
-pub enum IrqType {
+pub(crate) enum IrqType {
     Overflow,
     Target,
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum ClockSource {
+pub(crate) enum ClockSource {
     System,
     Dotclock,
     Hblank,
     System8,
 }
 
-pub struct TimerState {
-    pub current_elapsed: Duration,
-    pub acknowledged_elapsed: Duration,
+pub(crate) struct TimerState {
+    pub(crate) current_elapsed: Duration,
+    pub(crate) acknowledged_elapsed: Duration,
 
-    pub reset_on_target: bool,
-    pub irq_on_target: bool,
-    pub irq_on_overflow: bool,
-    pub oneshot_mode: bool,
-    pub irq_toggle: bool,
-    pub clock_source: ClockSource,
-    pub clock_source_raw: u32,
-    pub irq_raised: bool,
-    pub target_hit: bool,
-    pub overflow_hit: bool,
+    pub(crate) reset_on_target: bool,
+    pub(crate) irq_on_target: bool,
+    pub(crate) irq_on_overflow: bool,
+    pub(crate) oneshot_mode: bool,
+    pub(crate) irq_toggle: bool,
+    pub(crate) clock_source: ClockSource,
+    pub(crate) clock_source_raw: u32,
+    pub(crate) irq_raised: bool,
+    pub(crate) target_hit: bool,
+    pub(crate) overflow_hit: bool,
 }
 
 impl TimerState {
-    pub fn new() -> TimerState {
+    pub(crate) fn new() -> TimerState {
         TimerState {
             current_elapsed: Duration::from_secs(0),
             acknowledged_elapsed: Duration::from_secs(0),
@@ -51,14 +51,14 @@ impl TimerState {
     }
 }
 
-pub struct ControllerState {
-    pub timer0_state: TimerState,
-    pub timer1_state: TimerState,
-    pub timer2_state: TimerState,
+pub(crate) struct ControllerState {
+    pub(crate) timer0_state: TimerState,
+    pub(crate) timer1_state: TimerState,
+    pub(crate) timer2_state: TimerState,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             timer0_state: TimerState::new(),
             timer1_state: TimerState::new(),
@@ -67,24 +67,24 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub timer0_count: B32LevelRegister,
-    pub timer0_mode: B32EdgeRegister,
-    pub timer0_target: B32LevelRegister,
+pub(crate) struct State {
+    pub(crate) timer0_count: B32LevelRegister,
+    pub(crate) timer0_mode: B32EdgeRegister,
+    pub(crate) timer0_target: B32LevelRegister,
 
-    pub timer1_count: B32LevelRegister,
-    pub timer1_mode: B32EdgeRegister,
-    pub timer1_target: B32LevelRegister,
+    pub(crate) timer1_count: B32LevelRegister,
+    pub(crate) timer1_mode: B32EdgeRegister,
+    pub(crate) timer1_target: B32LevelRegister,
 
-    pub timer2_count: B32LevelRegister,
-    pub timer2_mode: B32EdgeRegister,
-    pub timer2_target: B32LevelRegister,
+    pub(crate) timer2_count: B32LevelRegister,
+    pub(crate) timer2_mode: B32EdgeRegister,
+    pub(crate) timer2_target: B32LevelRegister,
 
-    pub controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             timer0_count: B32LevelRegister::new(),
             timer0_mode: B32EdgeRegister::new(),

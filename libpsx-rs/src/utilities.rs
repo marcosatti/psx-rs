@@ -1,8 +1,8 @@
-pub mod mips1;
-pub mod numeric;
-pub mod packed;
+pub(crate) mod mips1;
+pub(crate) mod numeric;
+pub(crate) mod packed;
 
-pub fn bool_to_flag(value: bool) -> u32 {
+pub(crate) fn bool_to_flag(value: bool) -> u32 {
     if value {
         1
     } else {
@@ -10,7 +10,7 @@ pub fn bool_to_flag(value: bool) -> u32 {
     }
 }
 
-pub fn checked_clamp<T: PartialOrd>(input: T, min: T, max: T) -> (T, bool) {
+pub(crate) fn checked_clamp<T: PartialOrd>(input: T, min: T, max: T) -> (T, bool) {
     if input < min {
         (min, true)
     } else if input > max {
@@ -20,7 +20,7 @@ pub fn checked_clamp<T: PartialOrd>(input: T, min: T, max: T) -> (T, bool) {
     }
 }
 
-pub fn binary_to_ascii_escaped(data: &[u8]) -> String {
+pub(crate) fn binary_to_ascii_escaped(data: &[u8]) -> String {
     let mut binary_ascii_str = String::new();
 
     for &byte in data.iter() {

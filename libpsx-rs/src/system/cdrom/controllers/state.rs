@@ -4,7 +4,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub fn calculate_stat_value(state: &ControllerState) -> u8 {
+pub(crate) fn calculate_stat_value(state: &ControllerState) -> u8 {
     const _ERROR: Bitfield = Bitfield::new(0, 0);
     const MOTOR_ON: Bitfield = Bitfield::new(1, 1);
     const _SEEK_ERROR: Bitfield = Bitfield::new(2, 1);

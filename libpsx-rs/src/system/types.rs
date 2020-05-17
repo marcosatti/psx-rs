@@ -29,37 +29,37 @@ use std::{
 };
 
 #[derive(Copy, Clone, Debug)]
-pub enum Event {
+pub(crate) enum Event {
     Time(Duration),
 }
 
-pub struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
-    pub state: &'c State,
-    pub video_backend: &'c VideoBackend<'a, 'b>,
-    pub audio_backend: &'c AudioBackend<'a, 'b>,
-    pub cdrom_backend: &'c CdromBackend<'a, 'b>,
+pub(crate) struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
+    pub(crate) state: &'c State,
+    pub(crate) video_backend: &'c VideoBackend<'a, 'b>,
+    pub(crate) audio_backend: &'c AudioBackend<'a, 'b>,
+    pub(crate) cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
-pub struct State {
-    pub r3000: R3000State,
-    pub intc: IntcState,
-    pub dmac: DmacState,
-    pub timers: TimersState,
-    pub spu: SpuState,
-    pub memory: MemoryState,
-    pub gpu: GpuState,
-    pub cdrom: CdromState,
-    pub padmc: PadmcState,
+pub(crate) struct State {
+    pub(crate) r3000: R3000State,
+    pub(crate) intc: IntcState,
+    pub(crate) dmac: DmacState,
+    pub(crate) timers: TimersState,
+    pub(crate) spu: SpuState,
+    pub(crate) memory: MemoryState,
+    pub(crate) gpu: GpuState,
+    pub(crate) cdrom: CdromState,
+    pub(crate) padmc: PadmcState,
 
     /// Bus lock status
     /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening.
     /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing
     /// the DMA controller to read/write garbage if the CPU is allowed to continue to run.
-    pub bus_locked: AtomicBool,
+    pub(crate) bus_locked: AtomicBool,
 }
 
 impl State {
-    pub fn new() -> Box<State> {
+    pub(crate) fn new() -> Box<State> {
         Box::new(State {
             r3000: R3000State::new(),
             intc: IntcState::new(),
@@ -74,11 +74,11 @@ impl State {
         })
     }
 
-    pub fn initialize(state: &mut State) {
+    pub(crate) fn initialize(state: &mut State) {
         r3000_initialize(state);
     }
 
-    pub fn load_bios(state: &mut State, path: &Path) {
+    pub(crate) fn load_bios(state: &mut State, path: &Path) {
         info!("Loading BIOS from {}", path.to_str().unwrap());
         let mut file = File::open(path).unwrap();
         let mut buffer = Vec::new();

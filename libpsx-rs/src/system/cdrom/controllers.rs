@@ -1,10 +1,10 @@
-pub mod backend_dispatch;
-pub mod command;
-pub mod command_impl;
-pub mod interrupt;
-pub mod read;
-pub mod register;
-pub mod state;
+pub(crate) mod backend_dispatch;
+pub(crate) mod command;
+pub(crate) mod command_impl;
+pub(crate) mod interrupt;
+pub(crate) mod read;
+pub(crate) mod register;
+pub(crate) mod state;
 
 use crate::{
     backends::cdrom::CdromBackend,
@@ -34,7 +34,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(duration) => run_time(context.state, context.cdrom_backend, duration),
     }

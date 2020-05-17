@@ -2,11 +2,11 @@
 #![feature(no_more_cas)]
 
 pub mod backends;
-pub mod debug;
-pub mod executor;
-pub mod system;
-pub mod types;
-pub mod utilities;
+pub(crate) mod debug;
+pub(crate) mod executor;
+pub(crate) mod system;
+pub(crate) mod types;
+pub(crate) mod utilities;
 
 use crate::{
     backends::{
@@ -28,7 +28,6 @@ use crate::{
         State,
     },
 };
-use log::info;
 use rayon::{
     ThreadPool,
     ThreadPoolBuilder,
@@ -56,14 +55,14 @@ pub struct Config<'a: 'b, 'b> {
 }
 
 pub struct Core<'a: 'b, 'b> {
-    pub state: Box<State>,
+    pub(crate) state: Box<State>,
+    pub(crate) config: Config<'a, 'b>,
     task_runtime: ThreadPool,
-    config: Config<'a, 'b>,
 }
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
     pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
-        info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
+        log::info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
 
         let mut state = State::new();
 
@@ -105,6 +104,10 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
     pub fn change_disc(&mut self, path: &Path) {
         backends::cdrom::change_disc(&self.config.cdrom_backend, path);
+    }
+
+    pub fn analyze(&mut self) {
+        debug::analysis(self);
     }
 }
 

@@ -21,7 +21,7 @@ use rayon::{
 };
 use std::time::Instant;
 
-pub fn run_event_broadcast_block(runtime: &ThreadPool, context: &ControllerContext, event: Event) -> BenchmarkResults {
+pub(crate) fn run_event_broadcast_block(runtime: &ThreadPool, context: &ControllerContext, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
     let benchmark_results_ref = &benchmark_results;
 

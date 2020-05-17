@@ -1,21 +1,20 @@
 use crate::types::{
     fifo::{
-        debug::DebugState,
         Fifo,
     },
     memory::*,
 };
 use parking_lot::Mutex;
 
-pub struct ControllerState {
-    pub tx_enabled: bool,
-    pub joy_select_enabled: bool,
-    pub ack_interrupt_enabled: bool,
-    pub use_joy2: bool,
+pub(crate) struct ControllerState {
+    pub(crate) tx_enabled: bool,
+    pub(crate) joy_select_enabled: bool,
+    pub(crate) ack_interrupt_enabled: bool,
+    pub(crate) use_joy2: bool,
 }
 
 impl ControllerState {
-    pub fn new() -> ControllerState {
+    pub(crate) fn new() -> ControllerState {
         ControllerState {
             tx_enabled: false,
             joy_select_enabled: false,
@@ -25,21 +24,21 @@ impl ControllerState {
     }
 }
 
-pub struct State {
-    pub rx_fifo: Fifo<u8>,
-    pub tx_fifo: Fifo<u8>,
-    pub stat: B32EdgeRegister,
-    pub mode: B16LevelRegister,
-    pub ctrl: B16EdgeRegister,
-    pub baud_reload: B16LevelRegister,
-    pub controller_state: Mutex<ControllerState>,
+pub(crate) struct State {
+    pub(crate) rx_fifo: Fifo<u8>,
+    pub(crate) tx_fifo: Fifo<u8>,
+    pub(crate) stat: B32EdgeRegister,
+    pub(crate) mode: B16LevelRegister,
+    pub(crate) ctrl: B16EdgeRegister,
+    pub(crate) baud_reload: B16LevelRegister,
+    pub(crate) controller_state: Mutex<ControllerState>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
-            rx_fifo: Fifo::new(16, Some(DebugState::new("PADMC RX", true, true))),
-            tx_fifo: Fifo::new(16, Some(DebugState::new("PADMC TX", true, true))),
+            rx_fifo: Fifo::new(16),
+            tx_fifo: Fifo::new(16),
             stat: B32EdgeRegister::new(),
             mode: B16LevelRegister::new(),
             ctrl: B16EdgeRegister::new(),

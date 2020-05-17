@@ -1,2 +1,2 @@
-pub mod memory;
-pub mod types;
+pub(crate) mod memory;
+pub(crate) mod types;

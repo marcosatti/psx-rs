@@ -1,9 +1,9 @@
-pub mod adpcm;
-pub mod adsr;
-pub mod interpolation;
-pub mod pitch;
-pub mod voice;
-pub mod volume;
+pub(crate) mod adpcm;
+pub(crate) mod adsr;
+pub(crate) mod interpolation;
+pub(crate) mod pitch;
+pub(crate) mod voice;
+pub(crate) mod volume;
 
 use crate::{
     backends::audio::AudioBackend,
@@ -27,7 +27,7 @@ use crate::{
     },
 };
 
-pub fn handle_dac(state: &State, controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) {
+pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) {
     handle_adpcm_block(state, controller_state, voice_id);
 
     let adpcm_sample_raw = {

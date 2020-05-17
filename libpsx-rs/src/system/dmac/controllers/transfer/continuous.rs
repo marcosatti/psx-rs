@@ -7,7 +7,7 @@ use crate::system::{
     types::State,
 };
 
-pub fn handle_transfer(
+pub(crate) fn handle_transfer(
     state: &State, continuous_state: &mut ContinuousState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection,
 ) -> Result<bool, ()> {
     match transfer_direction {

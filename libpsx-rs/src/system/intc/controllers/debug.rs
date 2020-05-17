@@ -7,7 +7,7 @@ use crate::{
 };
 use log::trace;
 
-pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
+pub(crate) fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
     let stat = state.intc.stat.value();
     let mask = state.intc.mask.read_u32();
     let mut pending_sticky = false;
@@ -29,7 +29,7 @@ pub fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
     }
 }
 
-pub fn is_pending(state: &State, bitfield: Bitfield) -> bool {
+pub(crate) fn is_pending(state: &State, bitfield: Bitfield) -> bool {
     let stat = state.intc.stat.value();
     let mask = state.intc.mask.read_u32();
     let stat_value = bitfield.extract_from(stat) != 0;

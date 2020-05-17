@@ -1,10 +1,10 @@
-pub mod debug;
-pub mod exception;
-pub mod instruction;
-pub mod instruction_impl;
-pub mod instruction_impl_cop2;
-pub mod memory_controller;
-pub mod register;
+pub(crate) mod debug;
+pub(crate) mod exception;
+pub(crate) mod instruction;
+pub(crate) mod instruction_impl;
+pub(crate) mod instruction_impl_cop2;
+pub(crate) mod memory_controller;
+pub(crate) mod register;
 
 use crate::{
     system::{
@@ -36,7 +36,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(duration) => run_time(context.state, duration),
     }
@@ -65,15 +65,6 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
     handle_interrupts(context.state, context.r3000_state, context.cp0_state);
 
     if let Some(target) = context.r3000_state.branch_delay.advance() {
-        if translate_address(target) < 0x80 {
-            debug!("PC about to jump into invalid memory! Breaking...");
-            debug::trace_pc(context.r3000_state, context.cp0_state);
-            debug::disassembler::trace_instructions_at_pc(&context.state.memory.main_memory, &context.state.memory.bios, context.r3000_state.pc.read_u32(), Some(50));
-            debug::register::trace_registers(context.r3000_state);
-            unsafe {
-                std::intrinsics::breakpoint();
-            }
-        }
         context.r3000_state.pc.write_u32(target);
     }
 
@@ -82,6 +73,7 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
 
     let pc_va = context.r3000_state.pc.read_u32();
     let pc_pa = translate_address(pc_va);
+    assert!(pc_pa >= 0x80, "Probably not valid instructions");
 
     let inst_value = bus_read_u32(context.state, pc_pa).unwrap();
     let inst = Instruction::new(inst_value);
@@ -90,7 +82,7 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
 
     let (fn_ptr, cycles) = instruction_lookup(inst);
 
-    debug::trace_state(context.state, context.r3000_state, context.cp0_state);
+    debug::trace_state(context.r3000_state, context.cp0_state);
 
     let result = fn_ptr(context, inst);
 

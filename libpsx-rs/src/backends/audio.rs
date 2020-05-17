@@ -8,7 +8,7 @@ pub enum AudioBackend<'a: 'b, 'b> {
     _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
-pub fn setup(audio_backend: &AudioBackend) {
+pub(crate) fn setup(audio_backend: &AudioBackend) {
     match audio_backend {
         AudioBackend::None => {},
         #[cfg(openal)]
@@ -17,7 +17,7 @@ pub fn setup(audio_backend: &AudioBackend) {
     }
 }
 
-pub fn teardown(audio_backend: &AudioBackend) {
+pub(crate) fn teardown(audio_backend: &AudioBackend) {
     match audio_backend {
         AudioBackend::None => {},
         #[cfg(openal)]

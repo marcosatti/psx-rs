@@ -11,7 +11,7 @@ use crate::{
 };
 use num_traits::clamp;
 
-pub fn apply_sample_volume(state: &State, controller_state: &mut ControllerState, voice_id: usize, adpcm_sample: i16) -> Stereo {
+pub(crate) fn apply_sample_volume(state: &State, controller_state: &mut ControllerState, voice_id: usize, adpcm_sample: i16) -> Stereo {
     // The incoming ADPCM sample (mono) is volume transformed 3 times, and turned into stereo.
     let adpcm_sample = transform_voice_adsr_volume(controller_state, voice_id, adpcm_sample);
     let pcm_frame = transform_voice_volume(state, voice_id, adpcm_sample);

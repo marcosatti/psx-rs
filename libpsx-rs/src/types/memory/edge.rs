@@ -13,17 +13,17 @@ use parking_lot::Mutex;
 use std::intrinsics::unlikely;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum LatchKind {
+pub(crate) enum LatchKind {
     Read,
     Write,
 }
 
-pub struct B32EdgeRegister {
+pub(crate) struct B32EdgeRegister {
     memory: Mutex<(Option<LatchKind>, B32Register_)>,
 }
 
 impl B32EdgeRegister {
-    pub fn new() -> B32EdgeRegister {
+    pub(crate) fn new() -> B32EdgeRegister {
         B32EdgeRegister {
             memory: Mutex::new((
                 None, 
@@ -46,7 +46,8 @@ impl B32EdgeRegister {
         Ok(())
     }
 
-    pub fn read_u8(&self, offset: u32) -> Result<u8, ()> {
+    #[allow(dead_code)]
+    pub(crate) fn read_u8(&self, offset: u32) -> Result<u8, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| unsafe {
             value = r.v8[offset as usize];
@@ -54,14 +55,15 @@ impl B32EdgeRegister {
         Ok(value)
     }
 
-    pub fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
+    #[allow(dead_code)]
+    pub(crate) fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| unsafe {
             r.v8[offset as usize] = value;
         })?;
         Ok(())
     }
 
-    pub fn read_u16(&self, offset: u32) -> Result<u16, ()> {
+    pub(crate) fn read_u16(&self, offset: u32) -> Result<u16, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| unsafe {
             value = r.v16[offset as usize];
@@ -69,14 +71,14 @@ impl B32EdgeRegister {
         Ok(value)
     }
 
-    pub fn write_u16(&self, offset: u32, value: u16) -> Result<(), ()> {
+    pub(crate) fn write_u16(&self, offset: u32, value: u16) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| unsafe {
             r.v16[offset as usize] = value;
         })?;
         Ok(())
     }
 
-    pub fn read_u32(&self) -> Result<u32, ()> {
+    pub(crate) fn read_u32(&self) -> Result<u32, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| unsafe {
             value = r.v32;
@@ -84,7 +86,7 @@ impl B32EdgeRegister {
         Ok(value)
     }
 
-    pub fn write_u32(&self, value: u32) -> Result<(), ()> {
+    pub(crate) fn write_u32(&self, value: u32) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
             r.v32 = value;
         })?;
@@ -92,7 +94,7 @@ impl B32EdgeRegister {
     }
 
     /// If a latch event is pending, executes an atomic operation to handle it.
-    pub fn acknowledge<F>(&self, operation: F)
+    pub(crate) fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u32, LatchKind) -> u32 {
         let data = &mut self.memory.lock();
         if unlikely(data.0.is_some()) {
@@ -105,7 +107,7 @@ impl B32EdgeRegister {
 
     /// Updates the internal value without checking the latch status.
     /// This is used for read-only bits as a part of a whole register.
-    pub fn update<F>(&self, operation: F)
+    pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u32) -> u32 {
         let data = &mut self.memory.lock();
         unsafe {
@@ -120,12 +122,12 @@ unsafe impl Send for B32EdgeRegister {
 unsafe impl Sync for B32EdgeRegister {
 }
 
-pub struct B16EdgeRegister {
+pub(crate) struct B16EdgeRegister {
     memory: Mutex<(Option<LatchKind>, B16Register_)>,
 }
 
 impl B16EdgeRegister {
-    pub fn new() -> B16EdgeRegister {
+    pub(crate) fn new() -> B16EdgeRegister {
         B16EdgeRegister {
             memory: Mutex::new((
                 None, 
@@ -148,7 +150,8 @@ impl B16EdgeRegister {
         Ok(())
     }
 
-    pub fn read_u8(&self, offset: u32) -> Result<u8, ()> {
+    #[allow(dead_code)]
+    pub(crate) fn read_u8(&self, offset: u32) -> Result<u8, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| unsafe {
             value = r.v8[offset as usize];
@@ -156,14 +159,15 @@ impl B16EdgeRegister {
         Ok(value)
     }
 
-    pub fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
+    #[allow(dead_code)]
+    pub(crate) fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| unsafe {
             r.v8[offset as usize] = value;
         })?;
         Ok(())
     }
 
-    pub fn read_u16(&self) -> Result<u16, ()> {
+    pub(crate) fn read_u16(&self) -> Result<u16, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| unsafe {
             value = r.v16;
@@ -171,14 +175,14 @@ impl B16EdgeRegister {
         Ok(value)
     }
 
-    pub fn write_u16(&self, value: u16) -> Result<(), ()> {
+    pub(crate) fn write_u16(&self, value: u16) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
             r.v16 = value;
         })?;
         Ok(())
     }
 
-    pub fn acknowledge<F>(&self, operation: F)
+    pub(crate) fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u16, LatchKind) -> u16 {
         let data = &mut self.memory.lock();
         if unlikely(data.0.is_some()) {
@@ -189,7 +193,8 @@ impl B16EdgeRegister {
         }
     }
     
-    pub fn update<F>(&self, operation: F)
+    #[allow(dead_code)]
+    pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u16) -> u16 {
         let data = &mut self.memory.lock();
         unsafe {
@@ -204,12 +209,12 @@ unsafe impl Send for B16EdgeRegister {
 unsafe impl Sync for B16EdgeRegister {
 }
 
-pub struct B8EdgeRegister {
+pub(crate) struct B8EdgeRegister {
     memory: Mutex<(Option<LatchKind>, B8Register_)>,
 }
 
 impl B8EdgeRegister {
-    pub fn new() -> B8EdgeRegister {
+    pub(crate) fn new() -> B8EdgeRegister {
         B8EdgeRegister {
             memory: Mutex::new((
                 None, 
@@ -232,7 +237,7 @@ impl B8EdgeRegister {
         Ok(())
     }
 
-    pub fn read_u8(&self) -> Result<u8, ()> {
+    pub(crate) fn read_u8(&self) -> Result<u8, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| unsafe {
             value = r.v8;
@@ -240,14 +245,14 @@ impl B8EdgeRegister {
         Ok(value)
     }
 
-    pub fn write_u8(&self, value: u8) -> Result<(), ()> {
+    pub(crate) fn write_u8(&self, value: u8) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
             r.v8 = value;
         })?;
         Ok(())
     }
 
-    pub fn acknowledge<F>(&self, operation: F)
+    pub(crate) fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u8, LatchKind) -> u8 {
         let data = &mut self.memory.lock();
         if unlikely(data.0.is_some()) {
@@ -258,7 +263,7 @@ impl B8EdgeRegister {
         }
     }
     
-    pub fn update<F>(&self, operation: F)
+    pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u8) -> u8 {
         let data = &mut self.memory.lock();
         unsafe {

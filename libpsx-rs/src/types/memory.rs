@@ -1,98 +1,80 @@
 mod edge;
 mod level;
 
-use crate::types::bitfield::Bitfield;
-pub use edge::*;
-pub use level::*;
+pub(crate) use edge::*;
+pub(crate) use level::*;
 use std::cell::UnsafeCell;
 
 // TODO: const generics once available.
 
 /// Shared memory
 /// No synchronisation is provided, it must be done through other means.
-pub struct B8Memory {
+pub(crate) struct B8Memory {
     memory: UnsafeCell<Vec<u8>>,
 }
 
 impl B8Memory {
-    pub fn new(size: usize) -> B8Memory {
+    pub(crate) fn new(size: usize) -> B8Memory {
         B8Memory {
             memory: UnsafeCell::new(vec![0; size]),
         }
     }
 
-    pub fn new_initialized(size: usize, value: u8) -> B8Memory {
+    pub(crate) fn new_initialized(size: usize, value: u8) -> B8Memory {
         B8Memory {
             memory: UnsafeCell::new(vec![value; size]),
         }
     }
 
-    pub fn read_raw(&self, byte_offset: u32) -> &[u8] {
-        unsafe { &(*self.memory.get())[byte_offset as usize..] }
+    #[allow(dead_code)]
+    pub(crate) fn read_raw(&self, byte_offset: u32) -> &[u8] {
+        unsafe { 
+            &(*self.memory.get())[byte_offset as usize..] 
+        }
     }
 
-    pub fn write_raw(&self, byte_offset: u32, data: &[u8]) {
+    pub(crate) fn write_raw(&self, byte_offset: u32, data: &[u8]) {
         unsafe {
             (*self.memory.get())[byte_offset as usize..(byte_offset as usize) + data.len()].copy_from_slice(data);
         }
     }
 
-    pub fn read_u8(&self, byte_offset: u32) -> u8 {
-        unsafe { (*self.memory.get())[byte_offset as usize] }
+    pub(crate) fn read_u8(&self, byte_offset: u32) -> u8 {
+        unsafe { 
+            (*self.memory.get())[byte_offset as usize] 
+        }
     }
 
-    pub fn write_u8(&self, byte_offset: u32, value: u8) {
+    pub(crate) fn write_u8(&self, byte_offset: u32, value: u8) {
         unsafe {
             (*self.memory.get())[byte_offset as usize] = value;
         }
     }
 
-    pub fn read_u16(&self, byte_offset: u32) -> u16 {
+    pub(crate) fn read_u16(&self, byte_offset: u32) -> u16 {
         assert_eq!(byte_offset % 2, 0);
-        unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16) }
+        unsafe { 
+            *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16)
+        }
     }
 
-    pub fn write_u16(&self, byte_offset: u32, value: u16) {
+    pub(crate) fn write_u16(&self, byte_offset: u32, value: u16) {
         assert_eq!(byte_offset % 2, 0);
         unsafe {
             *((&mut (*self.memory.get())[byte_offset as usize] as *mut u8) as *mut u16) = value;
         }
     }
 
-    pub fn read_u32(&self, byte_offset: u32) -> u32 {
+    pub(crate) fn read_u32(&self, byte_offset: u32) -> u32 {
         assert_eq!(byte_offset % 4, 0);
         unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u32) }
     }
 
-    pub fn write_u32(&self, byte_offset: u32, value: u32) {
+    pub(crate) fn write_u32(&self, byte_offset: u32, value: u32) {
         assert_eq!(byte_offset % 4, 0);
         unsafe {
             *((&mut (*self.memory.get())[byte_offset as usize] as *mut u8) as *mut u32) = value;
         }
-    }
-
-    pub fn read_bitfield_u8(&self, byte_offset: u32, bitfield: Bitfield) -> u8 {
-        bitfield.extract_from(self.read_u8(byte_offset))
-    }
-
-    pub fn write_bitfield_u8(&self, byte_offset: u32, bitfield: Bitfield, value: u8) {
-        self.write_u8(byte_offset, bitfield.insert_into(self.read_u8(byte_offset), value));
-    }
-
-    pub fn read_bitfield_u16(&self, byte_offset: u32, bitfield: Bitfield) -> u16 {
-        bitfield.extract_from(self.read_u16(byte_offset))
-    }
-
-    pub fn write_bitfield_u16(&self, byte_offset: u32, bitfield: Bitfield, value: u16) {
-        self.write_u16(byte_offset, bitfield.insert_into(self.read_u16(byte_offset), value));
-    }
-
-    pub fn read_bitfield_u32(&self, byte_offset: u32, bitfield: Bitfield) -> u32 {
-        bitfield.extract_from(self.read_u32(byte_offset))
-    }
-
-    pub fn write_bitfield_u32(&self, byte_offset: u32, bitfield: Bitfield, value: u32) {
-        self.write_u32(byte_offset, bitfield.insert_into(self.read_u32(byte_offset), value));
     }
 }
 
@@ -141,18 +123,4 @@ fn test_layout() {
     assert_eq!(m.read_u16(2), 0x3322);
 
     assert_eq!(m.read_u32(0), 0x33221100);
-}
-
-#[test]
-fn test_bitfield() {
-    let m = B8Memory::new(4);
-
-    m.write_u8(0, 0x00);
-    m.write_u8(1, 0x11);
-    m.write_u8(2, 0x22);
-    m.write_u8(3, 0x33);
-
-    let bitfield = Bitfield::new(9, 4);
-
-    assert_eq!(m.read_bitfield_u32(0, bitfield), 8);
 }

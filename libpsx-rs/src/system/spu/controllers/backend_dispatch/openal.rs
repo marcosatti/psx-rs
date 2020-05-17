@@ -7,7 +7,7 @@ use crate::{
 };
 use openal_sys::*;
 
-pub fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) {
+pub(crate) fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {

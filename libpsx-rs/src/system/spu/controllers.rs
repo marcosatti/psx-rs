@@ -1,7 +1,7 @@
-pub mod backend_dispatch;
-pub mod dac;
-pub mod register;
-pub mod transfer;
+pub(crate) mod backend_dispatch;
+pub(crate) mod dac;
+pub(crate) mod register;
+pub(crate) mod transfer;
 
 use crate::{
     audio::AudioBackend,
@@ -26,7 +26,7 @@ use std::{
     time::Duration,
 };
 
-pub fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
         Event::Time(time) => run_time(context.state, context.audio_backend, time),
     }

@@ -13,7 +13,7 @@ use crate::{
 use opengl_sys::*;
 use std::convert::TryInto;
 
-pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
+pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -71,7 +71,7 @@ pub fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D
     }
 }
 
-pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
+pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -119,7 +119,7 @@ pub fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<
     }
 }
 
-pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
+pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -178,7 +178,7 @@ pub fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D
     }
 }
 
-pub fn draw_polygon_4_textured(
+pub(crate) fn draw_polygon_4_textured(
     backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize,
     texture_data: &[Color],
 )
@@ -264,7 +264,7 @@ pub fn draw_polygon_4_textured(
     }
 }
 
-pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) {
+pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -329,7 +329,7 @@ pub fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, posit
     }
 }
 
-pub fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>) -> Vec<u16> {
+pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>) -> Vec<u16> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     let opengl_origin: Point2D<isize, Pixel> = Point2D::new(origin.x, (VRAM_HEIGHT_LINES as isize) - origin.y - size.height);

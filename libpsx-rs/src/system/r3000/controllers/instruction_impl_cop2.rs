@@ -269,7 +269,7 @@ fn normal_color(context: &mut ControllerContext, shift: bool, lm: bool, color: b
     handle_cp2_flag_error_bit(context.cp2_state);
 }
 
-pub fn lwc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lwc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
@@ -288,7 +288,7 @@ pub fn lwc2(context: &mut ControllerContext, instruction: Instruction) -> InstRe
     Ok(())
 }
 
-pub fn swc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn swc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let value = context.cp2_state.gd[instruction.rt()].read_u32();
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -303,19 +303,19 @@ pub fn swc2(context: &mut ControllerContext, instruction: Instruction) -> InstRe
     Ok(())
 }
 
-pub fn mfc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mfc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let value = context.cp2_state.gd[instruction.rd()].read_u32();
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
     Ok(())
 }
 
-pub fn cfc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn cfc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let value = context.cp2_state.gc[instruction.rd()].read_u32();
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
     Ok(())
 }
 
-pub fn mtc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mtc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let value = context.r3000_state.gpr[instruction.rt()].read_u32();
     context.cp2_state.gd[instruction.rd()].write_u32(value);
     handle_cp2_sxyp_write(context.cp2_state, instruction.rd());
@@ -323,13 +323,13 @@ pub fn mtc2(context: &mut ControllerContext, instruction: Instruction) -> InstRe
     Ok(())
 }
 
-pub fn ctc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn ctc2(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let value = context.r3000_state.gpr[instruction.rt()].read_u32();
     context.cp2_state.gc[instruction.rd()].write_u32(value);
     Ok(())
 }
 
-pub fn rtps(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn rtps(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     // Operates on V0.
     let instruction = GteInstruction::new(instruction);
     let vector_0_xy = context.cp2_state.gd[0].read_u32();
@@ -338,7 +338,7 @@ pub fn rtps(context: &mut ControllerContext, instruction: Instruction) -> InstRe
     Ok(())
 }
 
-pub fn nclip(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
+pub(crate) fn nclip(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
     handle_cp2_flag_reset(context.cp2_state);
@@ -365,27 +365,27 @@ pub fn nclip(context: &mut ControllerContext, _instruction: Instruction) -> Inst
     Ok(())
 }
 
-pub fn op(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn op(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction op not implemented");
 }
 
-pub fn dpcs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn dpcs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dpcs not implemented");
 }
 
-pub fn intpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn intpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction intpl not implemented");
 }
 
-pub fn mvmva(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mvmva(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction mvmva not implemented");
 }
 
-pub fn ncds(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn ncds(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     // Operates on V0.
     let instruction = GteInstruction::new(instruction);
     let vector_0_xy = context.cp2_state.gd[0].read_u32();
@@ -394,56 +394,56 @@ pub fn ncds(context: &mut ControllerContext, instruction: Instruction) -> InstRe
     Ok(())
 }
 
-pub fn cdp(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn cdp(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction cdp not implemented");
 }
 
-pub fn ncdt(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn ncdt(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncdt not implemented");
     Ok(())
 }
 
-pub fn nccs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn nccs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction nccs not implemented");
     Ok(())
 }
 
-pub fn cc(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn cc(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction cc not implemented");
 }
 
-pub fn ncs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn ncs(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncs not implemented");
     Ok(())
 }
 
-pub fn nct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn nct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction nct not implemented");
     Ok(())
 }
 
-pub fn sqr(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sqr(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction sqr not implemented");
 }
 
-pub fn dcpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn dcpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dcpl not implemented");
 }
 
-pub fn dpct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn dpct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction dpct not implemented");
 }
 
-pub fn avsz3(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
+pub(crate) fn avsz3(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
     handle_cp2_flag_reset(context.cp2_state);
@@ -472,7 +472,7 @@ pub fn avsz3(context: &mut ControllerContext, _instruction: Instruction) -> Inst
     Ok(())
 }
 
-pub fn avsz4(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
+pub(crate) fn avsz4(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(_instruction);
 
     handle_cp2_flag_reset(context.cp2_state);
@@ -502,7 +502,7 @@ pub fn avsz4(context: &mut ControllerContext, _instruction: Instruction) -> Inst
     Ok(())
 }
 
-pub fn rtpt(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn rtpt(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     // Operates on V0, V1, V2.
     let instruction = GteInstruction::new(instruction);
     for i in 0..3 {
@@ -514,17 +514,17 @@ pub fn rtpt(context: &mut ControllerContext, instruction: Instruction) -> InstRe
     Ok(())
 }
 
-pub fn gpf(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn gpf(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction gpf not implemented");
 }
 
-pub fn gpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn gpl(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     unimplemented!("Instruction gpl not implemented");
 }
 
-pub fn ncct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn ncct(_context: &mut ControllerContext, instruction: Instruction) -> InstResult {
     let _instruction = GteInstruction::new(instruction);
     log::debug!("Instruction ncct not implemented");
     Ok(())

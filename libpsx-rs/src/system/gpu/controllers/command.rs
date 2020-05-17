@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-pub fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
+pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
     // TODO: what's the priority of command handling?
     // Doesn't really mention what happens if there is a command waiting in GP0 queue then a command gets written to
     // GP1.

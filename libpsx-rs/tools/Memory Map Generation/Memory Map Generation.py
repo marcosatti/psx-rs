@@ -30,9 +30,9 @@ def main():
 
         src_handler = '_'.join(reversed(handler.split(' ')))
         if not writing:
-            print(f'pub fn bus_{src_handler}(state: &State, address: u32) -> ReadResult<{primitive}> {{')
+            print(f'pub(crate) fn bus_{src_handler}(state: &State, address: u32) -> ReadResult<{primitive}> {{')
         else:
-            print(f'pub fn bus_{src_handler}(state: &State, address: u32, value: {primitive}) -> WriteResult {{')
+            print(f'pub(crate) fn bus_{src_handler}(state: &State, address: u32, value: {primitive}) -> WriteResult {{')
 
         if primitive == 'u8':
             print('    assert_eq!(address % 1, 0);')

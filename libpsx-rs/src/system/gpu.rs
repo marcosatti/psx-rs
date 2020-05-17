@@ -1,5 +1,5 @@
-pub mod constants;
-pub mod controllers;
-pub mod crtc;
-pub mod memory;
-pub mod types;
+pub(crate) mod constants;
+pub(crate) mod controllers;
+pub(crate) mod crtc;
+pub(crate) mod memory;
+pub(crate) mod types;

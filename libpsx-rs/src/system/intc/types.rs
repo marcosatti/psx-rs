@@ -8,8 +8,9 @@ use std::sync::atomic::{
     Ordering,
 };
 
+#[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
-pub enum Line {
+pub(crate) enum Line {
     Vblank,
     Gpu,
     Cdrom,
@@ -23,13 +24,13 @@ pub enum Line {
     Pio,
 }
 
-pub struct State {
-    pub stat: Stat,
-    pub mask: B32LevelRegister,
+pub(crate) struct State {
+    pub(crate) stat: Stat,
+    pub(crate) mask: B32LevelRegister,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub(crate) fn new() -> State {
         State {
             stat: Stat::new(),
             mask: B32LevelRegister::new(),
@@ -37,7 +38,7 @@ impl State {
     }
 }
 
-pub struct Stat {
+pub(crate) struct Stat {
     vblank: AtomicBool,
     gpu: AtomicBool,
     cdrom: AtomicBool,
@@ -52,7 +53,7 @@ pub struct Stat {
 }
 
 impl Stat {
-    pub fn new() -> Stat {
+    pub(crate) fn new() -> Stat {
         Stat {
             vblank: AtomicBool::new(false),
             gpu: AtomicBool::new(false),
@@ -68,7 +69,7 @@ impl Stat {
         }
     }
 
-    pub fn assert_line(&self, line: Line) {
+    pub(crate) fn assert_line(&self, line: Line) {
         match line {
             Line::Vblank => self.vblank.store(true, Ordering::Release),
             Line::Gpu => self.gpu.store(true, Ordering::Release),
@@ -107,7 +108,7 @@ impl Stat {
         }
     }
 
-    pub fn value(&self) -> u32 {
+    pub(crate) fn value(&self) -> u32 {
         let mut value = 0;
         value = VBLANK.insert_into(value, bool_to_flag(self.vblank.load(Ordering::Acquire)));
         value = GPU.insert_into(value, bool_to_flag(self.gpu.load(Ordering::Acquire)));
@@ -123,21 +124,21 @@ impl Stat {
         value
     }
 
-    pub fn read_u16(&self, offset: u32) -> u16 {
+    pub(crate) fn read_u16(&self, offset: u32) -> u16 {
         assert_eq!(offset, 0);
         self.value() as u16
     }
 
-    pub fn write_u16(&self, offset: u32, value: u16) {
+    pub(crate) fn write_u16(&self, offset: u32, value: u16) {
         assert_eq!(offset, 0);
         self.acknowledge(value as u32)
     }
 
-    pub fn read_u32(&self) -> u32 {
+    pub(crate) fn read_u32(&self) -> u32 {
         self.value() as u32
     }
 
-    pub fn write_u32(&self, value: u32) {
+    pub(crate) fn write_u32(&self, value: u32) {
         self.acknowledge(value)
     }
 }
