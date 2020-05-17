@@ -6,16 +6,17 @@
 - OpenGL (mesa) [optional (see remarks)]
 - OpenAL (openal-soft) [optional]
 - libmirage [optional]
+- libcdio [optional]
 
 ## General
-Easiest way to get this working is on a Linux environment, just install the dependencies listed and it should just work. It uses pkgconf to find the dependencies.
-Windows works but is a bit tricky (manual setup)... good luck.
-
-The *-sys projects expects Python to be available through the shell ("python") and invokes the respective external build script (for example, ./external/opengl/build.py) to find the needed headers, libraries, etc. Check the external-sample folder and copy over the relevant structure required. 
+The *-sys projects expects Python to be available through the shell ("python") and invokes the respective external build script (for example, ./external/opengl/build.py) to find the needed headers, libraries, etc. The build process looks for these scripts in a hardcoded 'external/{library name}' folder.
 
 There are 2 types of build scripts that are looked for within each external library directory:
 - check.py: to enable the feature.
 - build.py: to gather build information.
+
+Easiest way to get this working is on a Linux environment, just install the dependencies listed and it should just work. 
+Check the external-sample folder and copy over the relevant structure required. The Linux example build scripts use pkgconf to find the dependencies.
 
 ## Remarks
 SDL2 strictly speaking is not required to use libpsx-rs, but the executable psx-rs does expect it to be available. You can omit this dependency if you build your own wrapper. 
