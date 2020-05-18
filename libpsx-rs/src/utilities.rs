@@ -1,6 +1,7 @@
 pub(crate) mod mips1;
 pub(crate) mod numeric;
 pub(crate) mod packed;
+pub(crate) mod primitive;
 
 pub(crate) fn bool_to_flag(value: bool) -> u32 {
     if value {

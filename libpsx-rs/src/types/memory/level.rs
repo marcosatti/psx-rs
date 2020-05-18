@@ -2,57 +2,52 @@
 //! Assumes only a single master/slave access combination (ie: CPU and peripheral).
 //! No error handling is required for level-triggered conditions, therefore read/writes always succeed.
 
-use super::{
-    B16Register_,
-    B32Register_,
-    B8Register_,
+use crate::{
+    types::bitfield::Bitfield,
+    utilities::primitive::*,
 };
-use crate::types::bitfield::Bitfield;
-use std::cell::UnsafeCell;
+use std::sync::atomic::{
+    AtomicU16,
+    AtomicU32,
+    AtomicU8,
+    Ordering,
+};
 
 pub(crate) struct B32LevelRegister {
-    memory: UnsafeCell<B32Register_>,
+    memory: AtomicU32,
 }
 
 impl B32LevelRegister {
     pub(crate) fn new() -> B32LevelRegister {
         B32LevelRegister {
-            memory: UnsafeCell::new(B32Register_ {
-                v32: 0,
-            }),
+            memory: AtomicU32::new(0),
         }
     }
 
     #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> u8 {
-        unsafe { (*self.memory.get()).v8[offset as usize] }
+        u32::extract_u8_le(self.memory.load(Ordering::Acquire), offset as usize)
     }
 
     #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) {
-        unsafe {
-            (*self.memory.get()).v8[offset as usize] = value;
-        }
+        self.memory.store(u32::insert_u8_le(self.memory.load(Ordering::Acquire), offset as usize, value), Ordering::Release);
     }
 
     pub(crate) fn read_u16(&self, offset: u32) -> u16 {
-        unsafe { (*self.memory.get()).v16[offset as usize] }
+        u32::extract_u16_le(self.memory.load(Ordering::Acquire), offset as usize)
     }
 
     pub(crate) fn write_u16(&self, offset: u32, value: u16) {
-        unsafe {
-            (*self.memory.get()).v16[offset as usize] = value;
-        }
+        self.memory.store(u32::insert_u16_le(self.memory.load(Ordering::Acquire), offset as usize, value), Ordering::Release);
     }
 
     pub(crate) fn read_u32(&self) -> u32 {
-        unsafe { (*self.memory.get()).v32 }
+        self.memory.load(Ordering::Acquire)
     }
 
     pub(crate) fn write_u32(&self, value: u32) {
-        unsafe {
-            (*self.memory.get()).v32 = value;
-        }
+        self.memory.store(value, Ordering::Release);
     }
 
     pub(crate) fn read_bitfield(&self, bitfield: Bitfield) -> u32 {
@@ -71,38 +66,32 @@ unsafe impl Sync for B32LevelRegister {
 }
 
 pub(crate) struct B16LevelRegister {
-    memory: UnsafeCell<B16Register_>,
+    memory: AtomicU16,
 }
 
 impl B16LevelRegister {
     pub(crate) fn new() -> B16LevelRegister {
         B16LevelRegister {
-            memory: UnsafeCell::new(B16Register_ {
-                v16: 0,
-            }),
+            memory: AtomicU16::new(0),
         }
     }
 
     #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> u8 {
-        unsafe { (*self.memory.get()).v8[offset as usize] }
+        u16::extract_u8_le(self.memory.load(Ordering::Acquire), offset as usize)
     }
 
     #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) {
-        unsafe {
-            (*self.memory.get()).v8[offset as usize] = value;
-        }
+        self.memory.store(u16::insert_u8_le(self.memory.load(Ordering::Acquire), offset as usize, value), Ordering::Release);
     }
 
     pub(crate) fn read_u16(&self) -> u16 {
-        unsafe { (*self.memory.get()).v16 }
+        self.memory.load(Ordering::Acquire)
     }
 
     pub(crate) fn write_u16(&self, value: u16) {
-        unsafe {
-            (*self.memory.get()).v16 = value;
-        }
+        self.memory.store(value, Ordering::Release);
     }
 
     #[allow(dead_code)]
@@ -122,26 +111,22 @@ unsafe impl Sync for B16LevelRegister {
 }
 
 pub(crate) struct B8LevelRegister {
-    memory: UnsafeCell<B8Register_>,
+    memory: AtomicU8,
 }
 
 impl B8LevelRegister {
     pub(crate) fn new() -> B8LevelRegister {
         B8LevelRegister {
-            memory: UnsafeCell::new(B8Register_ {
-                v8: 0,
-            }),
+            memory: AtomicU8::new(0),
         }
     }
 
     pub(crate) fn read_u8(&self) -> u8 {
-        unsafe { (*self.memory.get()).v8 }
+        self.memory.load(Ordering::Acquire)
     }
 
     pub(crate) fn write_u8(&self, value: u8) {
-        unsafe {
-            (*self.memory.get()).v8 = value;
-        }
+        self.memory.store(value, Ordering::Release);
     }
 
     pub(crate) fn read_bitfield(&self, bitfield: Bitfield) -> u8 {

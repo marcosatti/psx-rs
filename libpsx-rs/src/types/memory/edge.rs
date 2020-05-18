@@ -3,14 +3,14 @@
 //! This will result in data races otherwise!
 //! Errors are returned when there are no new values to be read, or when there is an existing value that has not been
 //! acknowledged yet.
+//! The read/write function are intended to be used from the master side, and acknowledge/update from the slave side.
 
-use super::{
-    B16Register_,
-    B32Register_,
-    B8Register_,
-};
+use crate::utilities::primitive::*;
 use parking_lot::Mutex;
-use std::intrinsics::unlikely;
+use std::sync::atomic::{
+    AtomicBool,
+    Ordering,
+};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub(crate) enum LatchKind {
@@ -19,31 +19,30 @@ pub(crate) enum LatchKind {
 }
 
 pub(crate) struct B32EdgeRegister {
-    memory: Mutex<(Option<LatchKind>, B32Register_)>,
+    dirty: AtomicBool,
+    memory: Mutex<(LatchKind, u32)>,
 }
 
 impl B32EdgeRegister {
     pub(crate) fn new() -> B32EdgeRegister {
         B32EdgeRegister {
-            memory: Mutex::new((
-                None,
-                B32Register_ {
-                    v32: 0,
-                },
-            )),
+            dirty: AtomicBool::new(false),
+            memory: Mutex::new((LatchKind::Read, 0)),
         }
     }
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
-    where F: FnOnce(&mut B32Register_) {
-        let data = &mut self.memory.lock();
-
-        if unlikely(data.0.is_some()) {
+    where F: FnOnce(&mut u32) {
+        if self.dirty.load(Ordering::Acquire) {
             return Err(());
         }
 
-        operation(&mut data.1);
-        data.0 = Some(latch_kind);
+        {
+            let data = &mut self.memory.lock();
+            data.0 = latch_kind;
+            operation(&mut data.1);
+        }
+        self.dirty.store(true, Ordering::Release);
 
         Ok(())
     }
@@ -51,46 +50,42 @@ impl B32EdgeRegister {
     #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> Result<u8, ()> {
         let mut value = 0;
-        self.try_op(LatchKind::Read, |r| unsafe {
-            value = r.v8[offset as usize];
-        })?;
+        self.try_op(LatchKind::Read, |r| value = u32::extract_u8_le(*r, offset as usize))?;
         Ok(value)
     }
 
     #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
-        self.try_op(LatchKind::Write, |r| unsafe {
-            r.v8[offset as usize] = value;
+        self.try_op(LatchKind::Write, |r| {
+            *r = u32::insert_u8_le(*r, offset as usize, value);
         })?;
         Ok(())
     }
 
     pub(crate) fn read_u16(&self, offset: u32) -> Result<u16, ()> {
         let mut value = 0;
-        self.try_op(LatchKind::Read, |r| unsafe {
-            value = r.v16[offset as usize];
-        })?;
+        self.try_op(LatchKind::Read, |r| value = u32::extract_u16_le(*r, offset as usize))?;
         Ok(value)
     }
 
     pub(crate) fn write_u16(&self, offset: u32, value: u16) -> Result<(), ()> {
-        self.try_op(LatchKind::Write, |r| unsafe {
-            r.v16[offset as usize] = value;
+        self.try_op(LatchKind::Write, |r| {
+            *r = u32::insert_u16_le(*r, offset as usize, value);
         })?;
         Ok(())
     }
 
     pub(crate) fn read_u32(&self) -> Result<u32, ()> {
         let mut value = 0;
-        self.try_op(LatchKind::Read, |r| unsafe {
-            value = r.v32;
+        self.try_op(LatchKind::Read, |r| {
+            value = *r;
         })?;
         Ok(value)
     }
 
     pub(crate) fn write_u32(&self, value: u32) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
-            r.v32 = value;
+            *r = value;
         })?;
         Ok(())
     }
@@ -98,12 +93,12 @@ impl B32EdgeRegister {
     /// If a latch event is pending, executes an atomic operation to handle it.
     pub(crate) fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u32, LatchKind) -> u32 {
-        let data = &mut self.memory.lock();
-        if unlikely(data.0.is_some()) {
-            unsafe {
-                data.1.v32 = operation(data.1.v32, data.0.unwrap());
+        if self.dirty.load(Ordering::Acquire) {
+            {
+                let data = &mut self.memory.lock();
+                data.1 = operation(data.1, data.0);
             }
-            data.0 = None;
+            self.dirty.store(false, Ordering::Release);
         }
     }
 
@@ -112,9 +107,7 @@ impl B32EdgeRegister {
     pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u32) -> u32 {
         let data = &mut self.memory.lock();
-        unsafe {
-            data.1.v32 = operation(data.1.v32);
-        }
+        data.1 = operation(data.1);
     }
 }
 
@@ -125,31 +118,30 @@ unsafe impl Sync for B32EdgeRegister {
 }
 
 pub(crate) struct B16EdgeRegister {
-    memory: Mutex<(Option<LatchKind>, B16Register_)>,
+    dirty: AtomicBool,
+    memory: Mutex<(LatchKind, u16)>,
 }
 
 impl B16EdgeRegister {
     pub(crate) fn new() -> B16EdgeRegister {
         B16EdgeRegister {
-            memory: Mutex::new((
-                None,
-                B16Register_ {
-                    v16: 0,
-                },
-            )),
+            dirty: AtomicBool::new(false),
+            memory: Mutex::new((LatchKind::Read, 0)),
         }
     }
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
-    where F: FnOnce(&mut B16Register_) {
-        let data = &mut self.memory.lock();
-
-        if unlikely(data.0.is_some()) {
+    where F: FnOnce(&mut u16) {
+        if self.dirty.load(Ordering::Acquire) {
             return Err(());
         }
 
-        operation(&mut data.1);
-        data.0 = Some(latch_kind);
+        {
+            let data = &mut self.memory.lock();
+            data.0 = latch_kind;
+            operation(&mut data.1);
+        }
+        self.dirty.store(true, Ordering::Release);
 
         Ok(())
     }
@@ -157,43 +149,41 @@ impl B16EdgeRegister {
     #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> Result<u8, ()> {
         let mut value = 0;
-        self.try_op(LatchKind::Read, |r| unsafe {
-            value = r.v8[offset as usize];
-        })?;
+        self.try_op(LatchKind::Read, |r| value = u16::extract_u8_le(*r, offset as usize))?;
         Ok(value)
     }
 
     #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
-        self.try_op(LatchKind::Write, |r| unsafe {
-            r.v8[offset as usize] = value;
+        self.try_op(LatchKind::Write, |r| {
+            *r = u16::insert_u8_le(*r, offset as usize, value);
         })?;
         Ok(())
     }
 
     pub(crate) fn read_u16(&self) -> Result<u16, ()> {
         let mut value = 0;
-        self.try_op(LatchKind::Read, |r| unsafe {
-            value = r.v16;
+        self.try_op(LatchKind::Read, |r| {
+            value = *r;
         })?;
         Ok(value)
     }
 
     pub(crate) fn write_u16(&self, value: u16) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
-            r.v16 = value;
+            *r = value;
         })?;
         Ok(())
     }
 
     pub(crate) fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u16, LatchKind) -> u16 {
-        let data = &mut self.memory.lock();
-        if unlikely(data.0.is_some()) {
-            unsafe {
-                data.1.v16 = operation(data.1.v16, data.0.unwrap());
+        if self.dirty.load(Ordering::Acquire) {
+            {
+                let data = &mut self.memory.lock();
+                data.1 = operation(data.1, data.0);
             }
-            data.0 = None;
+            self.dirty.store(false, Ordering::Release);
         }
     }
 
@@ -201,9 +191,7 @@ impl B16EdgeRegister {
     pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u16) -> u16 {
         let data = &mut self.memory.lock();
-        unsafe {
-            data.1.v16 = operation(data.1.v16);
-        }
+        data.1 = operation(data.1);
     }
 }
 
@@ -214,67 +202,64 @@ unsafe impl Sync for B16EdgeRegister {
 }
 
 pub(crate) struct B8EdgeRegister {
-    memory: Mutex<(Option<LatchKind>, B8Register_)>,
+    dirty: AtomicBool,
+    memory: Mutex<(LatchKind, u8)>,
 }
 
 impl B8EdgeRegister {
     pub(crate) fn new() -> B8EdgeRegister {
         B8EdgeRegister {
-            memory: Mutex::new((
-                None,
-                B8Register_ {
-                    v8: 0,
-                },
-            )),
+            dirty: AtomicBool::new(false),
+            memory: Mutex::new((LatchKind::Read, 0)),
         }
     }
 
     fn try_op<F>(&self, latch_kind: LatchKind, operation: F) -> Result<(), ()>
-    where F: FnOnce(&mut B8Register_) {
-        let data = &mut self.memory.lock();
-
-        if unlikely(data.0.is_some()) {
+    where F: FnOnce(&mut u8) {
+        if self.dirty.load(Ordering::Acquire) {
             return Err(());
         }
 
-        operation(&mut data.1);
-        data.0 = Some(latch_kind);
+        {
+            let data = &mut self.memory.lock();
+            data.0 = latch_kind;
+            operation(&mut data.1);
+        }
+        self.dirty.store(true, Ordering::Release);
 
         Ok(())
     }
 
     pub(crate) fn read_u8(&self) -> Result<u8, ()> {
         let mut value = 0;
-        self.try_op(LatchKind::Read, |r| unsafe {
-            value = r.v8;
+        self.try_op(LatchKind::Read, |r| {
+            value = *r;
         })?;
         Ok(value)
     }
 
     pub(crate) fn write_u8(&self, value: u8) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
-            r.v8 = value;
+            *r = value;
         })?;
         Ok(())
     }
 
     pub(crate) fn acknowledge<F>(&self, operation: F)
     where F: FnOnce(u8, LatchKind) -> u8 {
-        let data = &mut self.memory.lock();
-        if unlikely(data.0.is_some()) {
-            unsafe {
-                data.1.v8 = operation(data.1.v8, data.0.unwrap());
+        if self.dirty.load(Ordering::Acquire) {
+            {
+                let data = &mut self.memory.lock();
+                data.1 = operation(data.1, data.0);
             }
-            data.0 = None;
+            self.dirty.store(false, Ordering::Release);
         }
     }
 
     pub(crate) fn update<F>(&self, operation: F)
     where F: FnOnce(u8) -> u8 {
         let data = &mut self.memory.lock();
-        unsafe {
-            data.1.v8 = operation(data.1.v8);
-        }
+        data.1 = operation(data.1);
     }
 }
 
