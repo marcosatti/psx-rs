@@ -745,7 +745,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "spsc-ringbuffer"
 version = "0.1.0"
-source = "git+https://github.com/marcosatti/spsc-ringbuffer#d8fc689ce27343328655a46039378019ac5488b8"
+source = "git+https://github.com/marcosatti/spsc-ringbuffer#27d16c58cdee11f562864229d342975542c98b26"
 dependencies = [
  "atomic_enum 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
