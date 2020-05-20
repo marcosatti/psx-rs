@@ -10,15 +10,6 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_stat(state: &State) {
-    state.padmc.stat.acknowledge(|_value, latch_kind| {
-        match latch_kind {
-            LatchKind::Read => calculate_stat_value(state),
-            LatchKind::Write => panic!("Write to STAT register!"),
-        }
-    });
-}
-
 pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) {
     state.padmc.ctrl.acknowledge(|value, latch_kind| {
         match latch_kind {
@@ -44,18 +35,6 @@ pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState)
             LatchKind::Read => value,
         }
     });
-}
-
-fn calculate_stat_value(state: &State) -> u32 {
-    let mut value = 0;
-
-    value = STAT_TXRDY_1.insert_into(value, 1);
-    value = STAT_RXFIFO_READY.insert_into(value, bool_to_flag(state.padmc.rx_fifo.is_empty()));
-    value = STAT_TXRDY_2.insert_into(value, 1);
-
-    // Baudrate timer not implemented.
-
-    value
 }
 
 fn calculate_ctrl_value(controller_state: &mut ControllerState) -> u16 {

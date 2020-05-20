@@ -15,5 +15,11 @@ opt-level = 3
 [profile.dev.package."libpsx-rs"]
 opt-level = 0
 
+[profile.release.package."*"]
+opt-level = 3
+
 [profile.release.package."libpsx-rs"]
 debug = true
+
+[profile.release]
+lto = true

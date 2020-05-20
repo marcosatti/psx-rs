@@ -144,81 +144,86 @@ unsafe impl Send for B8LevelRegister {
 unsafe impl Sync for B8LevelRegister {
 }
 
-#[test]
-fn test_layout_32() {
-    let m = B32LevelRegister::new();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    m.write_u8(0, 0x00);
-    m.write_u8(1, 0x33);
-    m.write_u8(2, 0x22);
-    m.write_u8(3, 0x11);
+    #[test]
+    fn test_layout_32() {
+        let m = B32LevelRegister::new();
 
-    assert_eq!(m.read_u8(0), 0x00);
-    assert_eq!(m.read_u8(1), 0x33);
-    assert_eq!(m.read_u8(2), 0x22);
-    assert_eq!(m.read_u8(3), 0x11);
+        m.write_u8(0, 0x00);
+        m.write_u8(1, 0x33);
+        m.write_u8(2, 0x22);
+        m.write_u8(3, 0x11);
 
-    assert_eq!(m.read_u16(0), 0x3300);
-    assert_eq!(m.read_u16(1), 0x1122);
+        assert_eq!(m.read_u8(0), 0x00);
+        assert_eq!(m.read_u8(1), 0x33);
+        assert_eq!(m.read_u8(2), 0x22);
+        assert_eq!(m.read_u8(3), 0x11);
 
-    assert_eq!(m.read_u32(), 0x11223300);
-}
+        assert_eq!(m.read_u16(0), 0x3300);
+        assert_eq!(m.read_u16(1), 0x1122);
 
-#[test]
-fn test_layout_16() {
-    let m = B16LevelRegister::new();
+        assert_eq!(m.read_u32(), 0x11223300);
+    }
 
-    m.write_u8(0, 0x00);
-    m.write_u8(1, 0x33);
+    #[test]
+    fn test_layout_16() {
+        let m = B16LevelRegister::new();
 
-    assert_eq!(m.read_u8(0), 0x00);
-    assert_eq!(m.read_u8(1), 0x33);
+        m.write_u8(0, 0x00);
+        m.write_u8(1, 0x33);
 
-    assert_eq!(m.read_u16(), 0x3300);
-}
+        assert_eq!(m.read_u8(0), 0x00);
+        assert_eq!(m.read_u8(1), 0x33);
 
-#[test]
-fn test_layout_8() {
-    let m = B8LevelRegister::new();
+        assert_eq!(m.read_u16(), 0x3300);
+    }
 
-    m.write_u8(0x33);
+    #[test]
+    fn test_layout_8() {
+        let m = B8LevelRegister::new();
 
-    assert_eq!(m.read_u8(), 0x33);
-}
+        m.write_u8(0x33);
 
-#[test]
-fn test_bitfield_32() {
-    let m = B32LevelRegister::new();
+        assert_eq!(m.read_u8(), 0x33);
+    }
 
-    m.write_u8(0, 0x00);
-    m.write_u8(1, 0x33);
-    m.write_u8(2, 0x22);
-    m.write_u8(3, 0x11);
+    #[test]
+    fn test_bitfield_32() {
+        let m = B32LevelRegister::new();
 
-    let bitfield = Bitfield::new(9, 4);
+        m.write_u8(0, 0x00);
+        m.write_u8(1, 0x33);
+        m.write_u8(2, 0x22);
+        m.write_u8(3, 0x11);
 
-    assert_eq!(m.read_bitfield(bitfield), 9);
-}
+        let bitfield = Bitfield::new(9, 4);
 
-#[test]
-fn test_bitfield_16() {
-    let m = B16LevelRegister::new();
+        assert_eq!(m.read_bitfield(bitfield), 9);
+    }
 
-    m.write_u8(0, 0x00);
-    m.write_u8(1, 0x33);
+    #[test]
+    fn test_bitfield_16() {
+        let m = B16LevelRegister::new();
 
-    let bitfield = Bitfield::new(9, 4);
+        m.write_u8(0, 0x00);
+        m.write_u8(1, 0x33);
 
-    assert_eq!(m.read_bitfield(bitfield), 9);
-}
+        let bitfield = Bitfield::new(9, 4);
 
-#[test]
-fn test_bitfield_8() {
-    let m = B8LevelRegister::new();
+        assert_eq!(m.read_bitfield(bitfield), 9);
+    }
 
-    m.write_u8(0x33);
+    #[test]
+    fn test_bitfield_8() {
+        let m = B8LevelRegister::new();
 
-    let bitfield = Bitfield::new(5, 3);
+        m.write_u8(0x33);
 
-    assert_eq!(m.read_bitfield(bitfield), 1);
+        let bitfield = Bitfield::new(5, 3);
+
+        assert_eq!(m.read_bitfield(bitfield), 1);
+    }
 }

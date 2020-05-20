@@ -481,7 +481,7 @@ impl State {
             voice23_adsr: B32LevelRegister::new(),
             voice23_cvol: B16LevelRegister::new(),
             voice23_raddr: B16LevelRegister::new(),
-            data_fifo: Fifo::new(64),
+            data_fifo: Fifo::new(2048),
             controller_state: Mutex::new(ControllerState::new()),
         }
     }

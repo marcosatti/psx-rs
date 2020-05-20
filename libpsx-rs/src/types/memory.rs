@@ -99,22 +99,27 @@ union B8Register_ {
     v8: u8,
 }
 
-#[test]
-fn test_layout() {
-    let m = B8Memory::new(4);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    m.write_u8(0, 0x00);
-    m.write_u8(1, 0x11);
-    m.write_u8(2, 0x22);
-    m.write_u8(3, 0x33);
+    #[test]
+    fn test_layout() {
+        let m = B8Memory::new(4);
 
-    assert_eq!(m.read_u8(0), 0x00);
-    assert_eq!(m.read_u8(1), 0x11);
-    assert_eq!(m.read_u8(2), 0x22);
-    assert_eq!(m.read_u8(3), 0x33);
+        m.write_u8(0, 0x00);
+        m.write_u8(1, 0x11);
+        m.write_u8(2, 0x22);
+        m.write_u8(3, 0x33);
 
-    assert_eq!(m.read_u16(0), 0x1100);
-    assert_eq!(m.read_u16(2), 0x3322);
+        assert_eq!(m.read_u8(0), 0x00);
+        assert_eq!(m.read_u8(1), 0x11);
+        assert_eq!(m.read_u8(2), 0x22);
+        assert_eq!(m.read_u8(3), 0x33);
 
-    assert_eq!(m.read_u32(0), 0x33221100);
+        assert_eq!(m.read_u16(0), 0x1100);
+        assert_eq!(m.read_u16(2), 0x3322);
+
+        assert_eq!(m.read_u32(0), 0x33221100);
+    }
 }

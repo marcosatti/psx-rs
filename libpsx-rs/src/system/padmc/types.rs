@@ -25,7 +25,7 @@ impl ControllerState {
 pub(crate) struct State {
     pub(crate) rx_fifo: Fifo<u8>,
     pub(crate) tx_fifo: Fifo<u8>,
-    pub(crate) stat: B32EdgeRegister,
+    pub(crate) stat: B32LevelRegister,
     pub(crate) mode: B16LevelRegister,
     pub(crate) ctrl: B16EdgeRegister,
     pub(crate) baud_reload: B16LevelRegister,
@@ -37,7 +37,7 @@ impl State {
         State {
             rx_fifo: Fifo::new(16),
             tx_fifo: Fifo::new(16),
-            stat: B32EdgeRegister::new(),
+            stat: B32LevelRegister::new(),
             mode: B16LevelRegister::new(),
             ctrl: B16EdgeRegister::new(),
             baud_reload: B16LevelRegister::new(),

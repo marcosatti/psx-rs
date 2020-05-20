@@ -25,6 +25,7 @@ pub(crate) enum ClutMode {
 }
 
 pub(crate) struct ControllerState {
+    pub(crate) gp1_command: Option<u32>,
     pub(crate) textured_rect_x_flip: bool,
     pub(crate) textured_rect_y_flip: bool,
     pub(crate) display_area_start_x: usize,
@@ -55,6 +56,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            gp1_command: None,
             textured_rect_x_flip: false,
             textured_rect_y_flip: false,
             display_area_start_x: 0,
@@ -88,7 +90,7 @@ pub(crate) struct State {
     pub(crate) crtc: Crtc,
     pub(crate) gp0: Fifo<u32>,
     pub(crate) read: Fifo<u32>,
-    pub(crate) gp1: Fifo<u32>,
+    pub(crate) gp1: B32EdgeRegister,
     pub(crate) stat: B32LevelRegister,
     pub(crate) controller_state: Mutex<ControllerState>,
 }
@@ -97,9 +99,9 @@ impl State {
     pub(crate) fn new() -> State {
         State {
             crtc: Crtc::new(),
-            gp0: Fifo::new(64),
-            read: Fifo::new(64),
-            gp1: Fifo::new(64),
+            gp0: Fifo::new(2048),
+            read: Fifo::new(2048),
+            gp1: B32EdgeRegister::new(),
             stat: B32LevelRegister::new(),
             controller_state: Mutex::new(ControllerState::new()),
         }

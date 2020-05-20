@@ -6,12 +6,18 @@ pub(crate) mod command_gp1;
 pub(crate) mod command_gp1_impl;
 pub(crate) mod data;
 pub(crate) mod debug;
+pub(crate) mod read;
+pub(crate) mod register;
 
 use crate::{
     system::{
         gpu::{
             constants::*,
-            controllers::command::*,
+            controllers::{
+                command::*,
+                read::*,
+                register::*,
+            },
             crtc::controllers::run_time as crtc_run_time,
             types::ControllerState,
         },
@@ -37,15 +43,19 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
 fn run_time(state: &State, video_backend: &VideoBackend, duration: Duration) {
     let ticks = max(1, (CLOCK_SPEED_NTSC * duration.as_secs_f64()) as i64);
 
-    let gpu_state = &mut state.gpu.controller_state.lock();
+    let controller_state = &mut state.gpu.controller_state.lock();
 
     for _ in 0..ticks {
-        tick(state, gpu_state, video_backend);
+        tick(state, controller_state, video_backend);
     }
 
     crtc_run_time(state, video_backend, duration);
 }
 
-fn tick(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
-    handle_command(state, gpu_state, video_backend);
+fn tick(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) {
+    handle_gp1(state, controller_state);
+
+    handle_command(state, controller_state, video_backend);
+
+    handle_read(state, controller_state);
 }

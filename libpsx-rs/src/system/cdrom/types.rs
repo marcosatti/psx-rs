@@ -60,7 +60,7 @@ impl State {
             status: B8LevelRegister::new(),
             response: Fifo::new(16),
             parameter: Fifo::new(16),
-            data: Fifo::new(64),
+            data: Fifo::new(2048),
             command: B8EdgeRegister::new(),
             interrupt_enable: B8LevelRegister::new(),
             interrupt_flag: B8EdgeRegister::new(),

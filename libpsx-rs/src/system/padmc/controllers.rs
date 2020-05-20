@@ -34,7 +34,6 @@ fn run_time(state: &State, duration: Duration) {
 }
 
 pub(crate) fn tick(state: &State, controller_state: &mut ControllerState) {
-    handle_stat(state);
     handle_ctrl(state, controller_state);
 
     if controller_state.tx_enabled {

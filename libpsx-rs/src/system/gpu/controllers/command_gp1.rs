@@ -10,14 +10,10 @@ use crate::{
     },
 };
 
-pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
-    let fifo = &state.gpu.gp1;
-
-    // Commands (GP1) are always of length 1.
-
-    let command = match fifo.read_one() {
-        Ok(v) => v,
-        Err(_) => return,
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) {
+    let command = match controller_state.gp1_command {
+        Some(v) => v,
+        None => return,
     };
 
     let command_index = GP_CMD.extract_from(command) as u8;
@@ -35,5 +31,7 @@ pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, vid
         _ => unimplemented!("Unknown GP1 command: 0x{:0X}", command_index),
     };
 
-    command_fn(state, gpu_state, video_backend, command);
+    command_fn(state, controller_state, video_backend, command);
+
+    controller_state.gp1_command = None;
 }

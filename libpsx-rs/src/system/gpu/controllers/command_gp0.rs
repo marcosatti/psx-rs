@@ -19,28 +19,18 @@ type LengthFn = fn(&[u32]) -> Option<usize>;
 /// The handler logic for the command.
 type HandlerFn = fn(&State, &mut ControllerState, &VideoBackend, &[u32]);
 
-pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, video_backend: &VideoBackend) {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) {
     // Update the command buffer with any new incoming data.
-    {
-        let fifo = &state.gpu.gp0;
-        let command_buffer = &mut gpu_state.gp0_command_buffer;
-
-        loop {
-            match fifo.read_one() {
-                Ok(v) => command_buffer.push(v),
-                Err(_) => break,
-            }
-        }
-
-        // We cannot do anything yet.
-        if command_buffer.is_empty() {
-            return;
-        }
-    }
+    process_gp0_fifo(state, controller_state);
 
     // Get the associated command handler.
     let command_handler = {
-        let command_buffer = &mut gpu_state.gp0_command_buffer;
+        let command_buffer = &mut controller_state.gp0_command_buffer;
+
+        if command_buffer.is_empty() {
+            return;
+        }
+
         let command = command_buffer[0];
         let command_index = GP_CMD.extract_from(command) as u8;
         get_command_handler(command_index)
@@ -48,8 +38,8 @@ pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, vid
 
     // Try and get the required data length.
     let required_length_value = {
-        let command_buffer = &mut gpu_state.gp0_command_buffer;
-        let required_length = &mut gpu_state.gp0_command_required_length;
+        let command_buffer = &mut controller_state.gp0_command_buffer;
+        let required_length = &mut controller_state.gp0_command_required_length;
 
         if required_length.is_none() {
             match (command_handler.0)(&command_buffer) {
@@ -63,23 +53,21 @@ pub(crate) fn handle_command(state: &State, gpu_state: &mut ControllerState, vid
     };
 
     // Check if we can execute the command.
-    if gpu_state.gp0_command_buffer.len() < required_length_value {
+    if controller_state.gp0_command_buffer.len() < required_length_value {
         return;
     }
 
     // Execute it.
-    {
-        let command_buffer_slice = Box::<[u32]>::from(&gpu_state.gp0_command_buffer[0..required_length_value]);
-        (command_handler.1)(state, gpu_state, video_backend, &command_buffer_slice);
+    let command_buffer_slice = Box::<[u32]>::from(&controller_state.gp0_command_buffer[0..required_length_value]);
+    (command_handler.1)(state, controller_state, video_backend, &command_buffer_slice);
 
-        if (command_buffer_slice[0] >> 24) < 0xE0 {
-            debug::trace_gp0_command_render(state, video_backend);
-        }
+    if (command_buffer_slice[0] >> 24) < 0xE0 {
+        debug::trace_gp0_command_render(state, video_backend);
     }
 
     // Setup for the next one.
-    gpu_state.gp0_command_buffer.drain(0..required_length_value);
-    gpu_state.gp0_command_required_length = None;
+    controller_state.gp0_command_buffer.drain(0..required_length_value);
+    controller_state.gp0_command_required_length = None;
 }
 
 fn get_command_handler(command_index: u8) -> (LengthFn, HandlerFn) {
@@ -109,5 +97,17 @@ fn get_command_handler(command_index: u8) -> (LengthFn, HandlerFn) {
         0xE5 => (command_gp0_impl::command_e5_length, command_gp0_impl::command_e5_handler),
         0xE6 => (command_gp0_impl::command_e6_length, command_gp0_impl::command_e6_handler),
         _ => unimplemented!("Unknown GP0 command: 0x{:0X}", command_index),
+    }
+}
+
+fn process_gp0_fifo(state: &State, controller_state: &mut ControllerState) {
+    let fifo = &state.gpu.gp0;
+    let command_buffer = &mut controller_state.gp0_command_buffer;
+
+    loop {
+        match fifo.read_one() {
+            Ok(v) => command_buffer.push(v),
+            Err(_) => break,
+        }
     }
 }

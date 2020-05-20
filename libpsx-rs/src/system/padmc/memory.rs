@@ -1,6 +1,10 @@
-use crate::system::{
-    bus::types::*,
-    types::State,
+use crate::{
+    system::{
+        bus::types::*,
+        padmc::constants::*,
+        types::State,
+    },
+    utilities::bool_to_flag,
 };
 
 pub(crate) fn padmc1040_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
@@ -27,7 +31,13 @@ pub(crate) fn padmc1040_write_u32(_state: &State, offset: u32, _value: u32) -> W
 }
 
 pub(crate) fn stat_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
-    state.padmc.stat.read_u16(offset / 2).map_err(|_| ReadErrorKind::NotReady)
+    assert_eq!(offset, 0);
+    let mut value = state.padmc.stat.read_u16(0);
+    // TODO: implement properly.
+    value = STAT_TXRDY_1.insert_into(value, 1);
+    value = STAT_RXFIFO_READY.insert_into(value, !bool_to_flag(state.padmc.rx_fifo.is_empty()) as u16);
+    value = STAT_TXRDY_2.insert_into(value, 1);
+    Ok(value)
 }
 
 pub(crate) fn stat_write_u16(_state: &State, _offset: u32, _value: u16) -> WriteResult {
@@ -36,7 +46,12 @@ pub(crate) fn stat_write_u16(_state: &State, _offset: u32, _value: u16) -> Write
 
 pub(crate) fn stat_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
-    state.padmc.stat.read_u32().map_err(|_| ReadErrorKind::NotReady)
+    let mut value = state.padmc.stat.read_u32();
+    // TODO: implement properly.
+    value = STAT_TXRDY_1.insert_into(value, 1);
+    value = STAT_RXFIFO_READY.insert_into(value, !bool_to_flag(state.padmc.rx_fifo.is_empty()));
+    value = STAT_TXRDY_2.insert_into(value, 1);
+    Ok(value)
 }
 
 pub(crate) fn stat_write_u32(_state: &State, _offset: u32, _value: u32) -> WriteResult {
