@@ -83,3 +83,53 @@ where
 fn err_to_string(e: Box<dyn Any + Send>) -> String {
     e.downcast::<String>().map(|s| (*s).clone()).unwrap_or_else(|_| "Unknown panic".to_owned())
 }
+
+pub(crate) fn scope<'scope: 'pusher, 'pusher, S: FnOnce(&'pusher mut Pusher<'scope, F>) + 'pusher>(&'scope self, scope_fn: S) {
+    let mut pusher = Pusher::new(&self.data.send_queue);
+    scope_fn(&mut pusher);
+
+    let spawn_count = pusher.consume();
+    let mut done_counter = 0;
+    let backoff = Backoff::new();
+    while done_counter < spawn_count {
+        match self.data.recv_queue.pop() {
+            Ok(r) => {
+                r.unwrap();
+                done_counter += 1;
+            }
+            Err(_) => backoff.snooze(),
+        }
+    }
+}
+
+pub(crate) struct Pusher<'a, F> 
+where
+    F: Thunk<'a> + Send + 'a,
+{
+    counter: usize,
+    send_queue: &'a ArrayQueue<F>,
+}
+
+impl<'a, F> Pusher<'a, F>
+where
+    F: Thunk<'a> + Send + 'a,
+{
+    fn new(send_queue: &'a ArrayQueue<F>) -> Pusher<'a, F> {
+        Pusher {
+            counter: 0,
+            send_queue,
+        }
+    } 
+
+    pub(crate) fn spawn<'c, F2>(&mut self, func: F2) 
+    where
+        F2: Thunk<'c> + Send, 
+    {
+        unsafe { self.send_queue.push(std::mem::transmute(func)); }
+        self.counter += 1;
+    }
+
+    fn consume(self) -> usize {
+        self.counter
+    }
+}
