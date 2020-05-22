@@ -15,59 +15,73 @@ use crate::{
         },
     },
 };
-use rayon::{
-    join,
-    ThreadPool,
-};
 use std::time::Instant;
+use crate::utilities::threadpool::{Thunk, ThreadPool};
 
-pub(crate) fn run_event_broadcast_block(runtime: &ThreadPool, context: &ControllerContext, event: Event) -> BenchmarkResults {
+struct Task<'a: 'b, 'b: 'c, 'c: 'd, 'd> {
+    controller_name: &'static str, 
+    controller_fn: fn(&ControllerContext, Event) -> (), 
+    context: &'d ControllerContext<'a, 'b, 'c>, 
+    event: Event, 
+    benchmark_results: &'d BenchmarkResults,
+}
+
+impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Task<'a, 'b, 'c, 'd> {
+    fn new(
+        controller_name: &'static str, 
+        controller_fn: fn(&ControllerContext, Event) -> (), 
+        context: &'d ControllerContext<'a, 'b, 'c>, 
+        event: Event, 
+        benchmark_results: &'d BenchmarkResults,
+    ) -> Task<'a, 'b, 'c, 'd> {
+        Task {
+            controller_name,
+            controller_fn,
+            context,
+            event,
+            benchmark_results,
+        }
+    }
+}
+
+impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Thunk for Task<'a, 'b, 'c, 'd> {
+    fn call_once(self) {
+        let timer = Instant::now();
+        (self.controller_fn)(self.context, self.event);
+        let elapsed = timer.elapsed();
+        self.benchmark_results.add_result(self.controller_name, elapsed);
+    }
+}
+
+unsafe impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Send for Task<'a, 'b, 'c, 'd> {
+}
+
+pub(crate) struct Executor {
+    thread_pool: ThreadPool<Task<'static, 'static, 'static, 'static>>,
+}
+
+impl Executor {
+    pub(crate) fn new(pool_size: usize) -> Executor {
+        Executor {
+            thread_pool: ThreadPool::new(pool_size, 16),
+        }
+    }
+}
+
+pub(crate) fn run(executor: &Executor, context: &ControllerContext, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
     let benchmark_results_ref = &benchmark_results;
 
-    runtime.install(|| {
-        join(
-            move || run_event("r3000", run_r3000, context, event, benchmark_results_ref),
-            || {
-                join(
-                    move || run_event("gpu", run_gpu, context, event, benchmark_results_ref),
-                    || {
-                        join(
-                            move || run_event("dmac", run_dmac, context, event, benchmark_results_ref),
-                            || {
-                                join(
-                                    move || run_event("spu", run_spu, context, event, benchmark_results_ref),
-                                    || {
-                                        join(
-                                            move || run_event("timers", run_timers, context, event, benchmark_results_ref),
-                                            || {
-                                                join(
-                                                    move || run_event("intc", run_intc, context, event, benchmark_results_ref),
-                                                    || {
-                                                        join(
-                                                            move || run_event("padmc", run_padmc, context, event, benchmark_results_ref),
-                                                            move || run_event("cdrom", run_cdrom, context, event, benchmark_results_ref),
-                                                        )
-                                                    },
-                                                )
-                                            },
-                                        )
-                                    },
-                                )
-                            },
-                        )
-                    },
-                )
-            },
-        );
+    executor.thread_pool.scope(|s| {
+        s.spawn(Task::new("r3000", run_r3000, context, event, benchmark_results_ref));
+        s.spawn(Task::new("gpu", run_gpu, context, event, benchmark_results_ref));
+        s.spawn(Task::new("dmac", run_dmac, context, event, benchmark_results_ref));
+        s.spawn(Task::new("spu", run_spu, context, event, benchmark_results_ref));
+        s.spawn(Task::new("timers", run_timers, context, event, benchmark_results_ref));
+        s.spawn(Task::new("intc", run_intc, context, event, benchmark_results_ref));
+        s.spawn(Task::new("padmc", run_padmc, context, event, benchmark_results_ref));
+        s.spawn(Task::new("cdrom", run_cdrom, context, event, benchmark_results_ref));
     });
 
     benchmark_results
-}
-
-fn run_event(controller_name: &'static str, controller_fn: fn(&ControllerContext, Event) -> (), context: &ControllerContext, event: Event, benchmark_results: &BenchmarkResults) {
-    let timer = Instant::now();
-    controller_fn(context, event);
-    let elapsed = timer.elapsed();
-    benchmark_results.add_result(controller_name, elapsed);
 }

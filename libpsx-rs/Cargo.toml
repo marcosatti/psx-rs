@@ -22,7 +22,7 @@ hashbrown = "*"
 lru = "*"
 fixed = "*"
 typenum = "*"
-rayon = "*"
+crossbeam = "*"
 enum-as-inner = "*"
 
 [build-dependencies]

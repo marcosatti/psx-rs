@@ -1,5 +1,6 @@
 #![feature(core_intrinsics)]
 #![feature(no_more_cas)]
+#![feature(thread_spawn_unchecked)]
 
 pub mod backends;
 pub(crate) mod debug;
@@ -28,10 +29,7 @@ use crate::{
         State,
     },
 };
-use rayon::{
-    ThreadPool,
-    ThreadPoolBuilder,
-};
+use executor::Executor;
 use std::{
     path::{
         Path,
@@ -57,7 +55,7 @@ pub struct Config<'a: 'b, 'b> {
 pub struct Core<'a: 'b, 'b> {
     pub(crate) state: Box<State>,
     pub(crate) config: Config<'a, 'b>,
-    task_runtime: ThreadPool,
+    executor: Executor,
 }
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
@@ -71,7 +69,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         State::initialize(&mut state);
         State::load_bios(&mut state, &bios_path);
 
-        let task_runtime = ThreadPoolBuilder::new().num_threads(config.worker_threads).thread_name(|i| format!("libpsx-rs-worker-{}", i)).build().unwrap();
+        let executor = Executor::new(config.worker_threads);
 
         video::setup(&config.video_backend);
         audio::setup(&config.audio_backend);
@@ -79,8 +77,8 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         Core {
             state,
-            task_runtime,
             config,
+            executor,
         }
     }
 
@@ -96,7 +94,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         let event = Event::Time(time);
 
         let timer = Instant::now();
-        let benchmark_results = executor::run_event_broadcast_block(&mut self.task_runtime, &context, event);
+        let benchmark_results = executor::run(&self.executor, &context, event);
         let scope_duration = timer.elapsed();
 
         debug::benchmark::trace_performance(time, scope_duration, benchmark_results);
