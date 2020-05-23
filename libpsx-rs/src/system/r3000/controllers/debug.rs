@@ -183,13 +183,17 @@ pub(crate) fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0Contr
         static ref BUFFER: Mutex<String> = Mutex::new(String::new());
     }
 
-    // BIOS call 0xA0, $t1 = 0x3C.
     if !ENABLE_STDOUT_PUTCHAR_TRACE {
         return;
     }
 
     let mut pc = state.pc.read_u32();
     pc = translate_address(pc);
+
+    if (pc != 0xA0) && (pc != 0xB0) {
+        return;
+    }
+
     let t1 = state.gpr[9].read_u32();
 
     if ((pc == 0xA0) && (t1 == 0x3C)) || ((pc == 0xB0) && (t1 == 0x3D)) {
