@@ -1,34 +1,45 @@
-use crossbeam::utils::Backoff;
-use crossbeam::queue::ArrayQueue;
-use std::thread;
-use std::sync::Arc;
-use std::panic::{self, AssertUnwindSafe};
-use std::any::Any;
+use crossbeam::{
+    queue::ArrayQueue,
+    utils::Backoff,
+};
+use std::{
+    any::Any,
+    panic::{
+        catch_unwind,
+        AssertUnwindSafe,
+    },
+    sync::{
+        atomic::{
+            AtomicBool,
+            Ordering,
+        },
+        Arc,
+    },
+    thread,
+};
 
 pub(crate) trait Thunk {
     fn call_once(self);
 }
 
-pub(crate) struct ThreadPool<F> 
-where
-    F: Thunk + Send,
+pub(crate) struct ThreadPool<F>
+where F: Thunk + Send
 {
     pool: Vec<thread::JoinHandle<()>>,
     data: Arc<Data<F>>,
 }
 
-impl<F> ThreadPool<F> 
-where
-    F: Thunk + Send,
+impl<'a: 'b, 'b, F> ThreadPool<F>
+where F: Thunk + Send + 'a
 {
-    pub(crate) fn new(pool_size: usize, queue_size: usize) -> ThreadPool<F> {
+    pub(crate) fn new(pool_size: usize, queue_size: usize, thread_name_prefix: &'static str) -> ThreadPool<F> {
         let mut pool = Vec::new();
         let data = Arc::new(Data::new(queue_size));
 
         for i in 0..pool_size {
             let data = data.clone();
-            let name = format!("libpsx-rs-{}", i);
-            let handle = thread::Builder::new().name(name).spawn_unchecked(move || thread_main(data)).unwrap();
+            let name = format!("{}-{}", thread_name_prefix, i);
+            let handle = unsafe { thread::Builder::new().name(name).spawn_unchecked::<'a, _, ()>(move || thread_main(data)).unwrap() };
             pool.push(handle);
         }
 
@@ -37,95 +48,122 @@ where
             data,
         }
     }
+
+    pub(crate) fn scope<F2, F3, S>(&self, this_thread_fn: Option<F2>, scope_fn: S)
+    where
+        F2: Thunk + 'b,
+        F3: Thunk + Send + 'b,
+        S: FnOnce(&mut Scope<'_, F3>),
+    {
+        // Transmute send queue to be of type F2.
+        let send_queue = unsafe { std::mem::transmute(&self.data.send_queue) };
+
+        let mut scope = Scope::new(send_queue);
+        let scope_result = catch_unwind(AssertUnwindSafe(|| scope_fn(&mut scope)));
+        if scope_result.is_err() {
+            panic!("Panic occurred while invoking the scope closure: {}", any_to_string(scope_result.unwrap_err().as_ref()));
+        }
+
+        if this_thread_fn.is_some() {
+            this_thread_fn.unwrap().call_once();
+        }
+
+        let backoff = Backoff::new();
+        let target_count = scope.consume();
+        let mut count = 0;
+        while count < target_count {
+            match self.data.recv_queue.pop() {
+                Ok(r) => {
+                    r.unwrap();
+                    count += 1;
+                },
+                Err(_) => {
+                    backoff.spin();
+                },
+            }
+        }
+    }
 }
 
-struct Data<F> 
-where
-    F: Thunk + Send,
+impl<F> Drop for ThreadPool<F>
+where F: Thunk + Send
+{
+    fn drop(&mut self) {
+        self.data.stop.store(true, Ordering::SeqCst);
+        self.pool.drain(..).for_each(|h| h.join().unwrap());
+    }
+}
+
+struct Data<F>
+where F: Thunk + Send
 {
     send_queue: ArrayQueue<F>,
     recv_queue: ArrayQueue<Result<(), String>>,
+    stop: AtomicBool,
 }
 
 impl<F> Data<F>
-where
-    F: Thunk + Send,
+where F: Thunk + Send
 {
     fn new(queue_size: usize) -> Data<F> {
         Data {
             send_queue: ArrayQueue::new(queue_size),
             recv_queue: ArrayQueue::new(queue_size),
+            stop: AtomicBool::new(false),
         }
     }
 }
 
-fn thread_main<F>(data: Arc<Data<F>>) 
-where
-    F: Thunk + Send,
-{
+fn thread_main<F>(data: Arc<Data<F>>)
+where F: Thunk + Send {
     let mut backoff = Backoff::new();
 
-    loop {
+    while !data.stop.load(Ordering::Relaxed) {
         match data.send_queue.pop() {
-            Ok(func) => {
-                let func = AssertUnwindSafe(move || func.call_once());
-                let result = panic::catch_unwind(func).map_err(|e| err_to_string(e));
-                data.recv_queue.push(result).unwrap();
+            Ok(thunk) => {
+                let thunk = AssertUnwindSafe(move || thunk.call_once());
+                let result = catch_unwind(thunk).map_err(|e| any_to_string(e.as_ref()));
+
+                let push_result = data.recv_queue.push(result);
+                if push_result.is_err() {
+                    break;
+                }
+
                 std::mem::swap(&mut backoff, &mut Backoff::new());
             },
             Err(_) => {
-                backoff.snooze();
+                backoff.spin();
             },
         }
     }
 }
 
-fn err_to_string(e: Box<dyn Any + Send>) -> String {
-    e.downcast::<String>().map(|s| (*s).clone()).unwrap_or_else(|_| "Unknown panic".to_owned())
-}
-
-pub(crate) fn scope<'scope: 'pusher, 'pusher, S: FnOnce(&'pusher mut Pusher<'scope, F>) + 'pusher>(&'scope self, scope_fn: S) {
-    let mut pusher = Pusher::new(&self.data.send_queue);
-    scope_fn(&mut pusher);
-
-    let spawn_count = pusher.consume();
-    let mut done_counter = 0;
-    let backoff = Backoff::new();
-    while done_counter < spawn_count {
-        match self.data.recv_queue.pop() {
-            Ok(r) => {
-                r.unwrap();
-                done_counter += 1;
-            }
-            Err(_) => backoff.snooze(),
-        }
+fn any_to_string(any: &dyn Any) -> String {
+    match any.downcast_ref::<String>() {
+        Some(s) => s.clone(),
+        None => String::from("Unknown panic"),
     }
 }
 
-pub(crate) struct Pusher<'a, F> 
-where
-    F: Thunk<'a> + Send + 'a,
+pub(crate) struct Scope<'a, F>
+where F: Thunk + Send
 {
     counter: usize,
     send_queue: &'a ArrayQueue<F>,
 }
 
-impl<'a, F> Pusher<'a, F>
-where
-    F: Thunk<'a> + Send + 'a,
+impl<'a, F> Scope<'a, F>
+where F: Thunk + Send
 {
-    fn new(send_queue: &'a ArrayQueue<F>) -> Pusher<'a, F> {
-        Pusher {
+    fn new(send_queue: &'a ArrayQueue<F>) -> Scope<'a, F> {
+        Scope {
             counter: 0,
             send_queue,
         }
-    } 
+    }
 
-    pub(crate) fn spawn<'c, F2>(&mut self, func: F2) 
-    where
-        F2: Thunk<'c> + Send, 
-    {
-        unsafe { self.send_queue.push(std::mem::transmute(func)); }
+    pub(crate) fn spawn(&mut self, thunk: F) {
+        self.send_queue.push(thunk).unwrap();
         self.counter += 1;
     }
 

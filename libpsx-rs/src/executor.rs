@@ -14,26 +14,27 @@ use crate::{
             Event,
         },
     },
+    utilities::threadpool::{
+        ThreadPool,
+        Thunk,
+    },
 };
 use std::time::Instant;
-use crate::utilities::threadpool::{Thunk, ThreadPool};
 
-struct Task<'a: 'b, 'b: 'c, 'c: 'd, 'd> {
-    controller_name: &'static str, 
-    controller_fn: fn(&ControllerContext, Event) -> (), 
-    context: &'d ControllerContext<'a, 'b, 'c>, 
-    event: Event, 
-    benchmark_results: &'d BenchmarkResults,
+struct Task {
+    controller_name: &'static str,
+    controller_fn: fn(&ControllerContext, Event) -> (),
+    context: &'static ControllerContext<'static, 'static, 'static>,
+    event: Event,
+    benchmark_results: &'static BenchmarkResults,
 }
 
-impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Task<'a, 'b, 'c, 'd> {
+impl Task {
     fn new(
-        controller_name: &'static str, 
-        controller_fn: fn(&ControllerContext, Event) -> (), 
-        context: &'d ControllerContext<'a, 'b, 'c>, 
-        event: Event, 
-        benchmark_results: &'d BenchmarkResults,
-    ) -> Task<'a, 'b, 'c, 'd> {
+        controller_name: &'static str, controller_fn: fn(&ControllerContext, Event) -> (), context: &'static ControllerContext<'_, '_, '_>, event: Event,
+        benchmark_results: &'static BenchmarkResults,
+    ) -> Task
+    {
         Task {
             controller_name,
             controller_fn,
@@ -44,7 +45,7 @@ impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Task<'a, 'b, 'c, 'd> {
     }
 }
 
-impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Thunk for Task<'a, 'b, 'c, 'd> {
+impl Thunk for Task {
     fn call_once(self) {
         let timer = Instant::now();
         (self.controller_fn)(self.context, self.event);
@@ -53,27 +54,29 @@ impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Thunk for Task<'a, 'b, 'c, 'd> {
     }
 }
 
-unsafe impl<'a: 'b, 'b: 'c, 'c: 'd, 'd> Send for Task<'a, 'b, 'c, 'd> {
+unsafe impl Send for Task {
 }
 
 pub(crate) struct Executor {
-    thread_pool: ThreadPool<Task<'static, 'static, 'static, 'static>>,
+    thread_pool: ThreadPool<Task>,
 }
 
 impl Executor {
     pub(crate) fn new(pool_size: usize) -> Executor {
         Executor {
-            thread_pool: ThreadPool::new(pool_size, 16),
+            thread_pool: ThreadPool::new(pool_size, 16, "libpsx-rs"),
         }
     }
 }
 
 pub(crate) fn run(executor: &Executor, context: &ControllerContext, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
-    let benchmark_results_ref = &benchmark_results;
 
-    executor.thread_pool.scope(|s| {
-        s.spawn(Task::new("r3000", run_r3000, context, event, benchmark_results_ref));
+    // Lifetimes are too hard...
+    let context = unsafe { std::mem::transmute(context) };
+    let benchmark_results_ref = unsafe { std::mem::transmute(&benchmark_results) };
+
+    executor.thread_pool.scope::<Task, Task, _>(Some(Task::new("r3000", run_r3000, context, event, benchmark_results_ref)), |s| {
         s.spawn(Task::new("gpu", run_gpu, context, event, benchmark_results_ref));
         s.spawn(Task::new("dmac", run_dmac, context, event, benchmark_results_ref));
         s.spawn(Task::new("spu", run_spu, context, event, benchmark_results_ref));
