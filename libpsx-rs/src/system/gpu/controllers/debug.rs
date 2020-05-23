@@ -6,19 +6,15 @@ use crate::{
     video::VideoBackend,
 };
 use std::{
-    sync::atomic::{
-        AtomicBool,
-        Ordering,
-    },
     thread::sleep,
     time::Duration,
 };
 
-pub(crate) static ENABLE_GP0_COMMAND_TRACING: AtomicBool = AtomicBool::new(false);
-pub(crate) static ENABLE_GP0_RENDER_PER_CALL: AtomicBool = AtomicBool::new(false);
+const ENABLE_GP0_COMMAND_TRACING: bool = false;
+const ENABLE_GP0_RENDER_PER_CALL: bool = false;
 
 pub(crate) fn trace_gp0_command(description: &str, data: &[u32]) {
-    if !ENABLE_GP0_COMMAND_TRACING.load(Ordering::Acquire) {
+    if !ENABLE_GP0_COMMAND_TRACING {
         return;
     }
 
@@ -27,7 +23,7 @@ pub(crate) fn trace_gp0_command(description: &str, data: &[u32]) {
 }
 
 pub(crate) fn trace_gp0_command_render(state: &State, video_backend: &VideoBackend) {
-    if !ENABLE_GP0_RENDER_PER_CALL.load(Ordering::Acquire) {
+    if !ENABLE_GP0_RENDER_PER_CALL {
         return;
     }
 

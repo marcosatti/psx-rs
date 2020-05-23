@@ -118,7 +118,7 @@ fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
 
     // Do event loop
     let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-        'event_loop: while !EXIT.load(Ordering::Acquire) {
+        'event_loop: while !EXIT.load(Ordering::Relaxed) {
             for event in event_pump.poll_iter() {
                 match event {
                     sdl2::event::Event::Quit {
@@ -150,7 +150,7 @@ fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
 
 fn setup_signal_handler() {
     let ctrl_c_handler = || {
-        EXIT.store(true, Ordering::Release);
+        EXIT.store(true, Ordering::Relaxed);
     };
 
     ctrlc::set_handler(ctrl_c_handler).unwrap();
@@ -175,6 +175,6 @@ fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
 
 #[allow(dead_code)]
 fn toggle_debug_option(flag: &'static AtomicBool, identifier: &str) {
-    let old_value = flag.fetch_xor(true, Ordering::AcqRel);
+    let old_value = flag.fetch_xor(true, Ordering::Relaxed);
     log::debug!("Toggled {} from {} to {}", identifier, old_value, !old_value);
 }

@@ -103,7 +103,7 @@ pub(crate) fn trace_syscall(state: &ControllerState) {
 
 pub(crate) fn trace_rfe(state: &ControllerState) {
     if ENABLE_RFE_TRACING {
-        let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+        let debug_tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let pc_va = state.pc.read_u32() - INSTRUCTION_SIZE;
         let branch_target = state.branch_delay.target_or_null();
         log::trace!("[{:X}] rfe, pc = 0x{:08X}, branch target = 0x{:08X}", debug_tick_count, pc_va, branch_target);
@@ -120,7 +120,7 @@ pub(crate) fn track_memory_read_pending<T>(state: &ControllerState, physical_add
     }
 
     if true {
-        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
         log::debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X} start", tick_count, pc, type_name, physical_address);
@@ -137,7 +137,7 @@ pub(crate) fn track_memory_read<T: Copy + UpperHex>(r3000_state: &ControllerStat
     }
 
     if true {
-        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let type_name = core::any::type_name::<T>();
         let pc = r3000_state.pc.read_u32();
         log::debug!("[{:X}] Read PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
@@ -154,7 +154,7 @@ pub(crate) fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerS
     }
 
     if true {
-        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
         log::debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} start", tick_count, pc, type_name, physical_address, value);
@@ -171,7 +171,7 @@ pub(crate) fn track_memory_write<T: Copy + UpperHex>(r3000_state: &ControllerSta
     }
 
     if true {
-        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+        let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let type_name = core::any::type_name::<T>();
         let pc = r3000_state.pc.read_u32();
         log::debug!("[{:X}] Write PC = 0x{:08X} {} address = 0x{:08X}, value = 0x{:X} end", tick_count, pc, type_name, physical_address, value);
@@ -203,7 +203,7 @@ pub(crate) fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0Contr
         if ch != '\n' {
             buffer.push(ch);
         } else {
-            let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+            let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
             let iec = cp0_state.status.read_bitfield(STATUS_IEC) != 0;
             log::trace!("[{:X}] stdout: iec = {}, string = {}", tick_count, iec, &buffer);
             buffer.clear();
@@ -289,7 +289,7 @@ pub(crate) fn trace_bios_call(state: &ControllerState) {
 
     let ra = state.gpr[31].read_u32();
 
-    let call_count = DEBUG_BIOS_CALL_COUNT.fetch_add(1, Ordering::AcqRel) + 1;
-    let tick_count = DEBUG_TICK_COUNT.load(Ordering::Acquire);
+    let call_count = DEBUG_BIOS_CALL_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
+    let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
     log::trace!("[{:X}] BIOS call {} {}, ra = 0x{:08X}", tick_count, call_count, &string, ra);
 }
