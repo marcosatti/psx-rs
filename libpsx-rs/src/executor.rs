@@ -1,3 +1,5 @@
+//! Note: lifetimes are static to avoid propogation to Core... The threadpool is only used with a scoped context.
+
 use crate::{
     debug::benchmark::BenchmarkResults,
     system::{
@@ -14,12 +16,9 @@ use crate::{
             Event,
         },
     },
-    utilities::threadpool::{
-        ThreadPool,
-        Thunk,
-    },
 };
 use std::time::Instant;
+use scoped_threadpool::*;
 
 struct Task {
     controller_name: &'static str,
@@ -72,7 +71,6 @@ impl Executor {
 pub(crate) fn run(executor: &Executor, context: &ControllerContext, event: Event) -> BenchmarkResults {
     let benchmark_results = BenchmarkResults::new();
 
-    // Lifetimes are too hard...
     let context = unsafe { std::mem::transmute(context) };
     let benchmark_results_ref = unsafe { std::mem::transmute(&benchmark_results) };
 

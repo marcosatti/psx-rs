@@ -1,6 +1,5 @@
 #![feature(core_intrinsics)]
 #![feature(no_more_cas)]
-#![feature(thread_spawn_unchecked)]
 
 pub mod backends;
 pub(crate) mod debug;

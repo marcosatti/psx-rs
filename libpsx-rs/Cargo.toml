@@ -10,6 +10,7 @@ openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }
 libcdio-sys = { path = "../libcdio-sys" }
 spsc-ringbuffer = { git = "https://github.com/marcosatti/spsc-ringbuffer" }
+scoped-threadpool = { git = "https://github.com/marcosatti/scoped-threadpool" }
 parking_lot = "*"
 log = "*"
 ansi_term = "*"
