@@ -1,9 +1,6 @@
-use crate::{
-    system::{
-        intc::constants::*,
-        types::State,
-    },
-    types::bitfield::Bitfield,
+use crate::system::{
+    intc::constants::*,
+    types::State,
 };
 use log::trace;
 
@@ -27,12 +24,4 @@ pub(crate) fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool)
     if enable_assert {
         assert!(pending_sticky, "No pending interrupts");
     }
-}
-
-pub(crate) fn is_pending(state: &State, bitfield: Bitfield) -> bool {
-    let stat = state.intc.stat.value();
-    let mask = state.intc.mask.read_u32();
-    let stat_value = bitfield.extract_from(stat) != 0;
-    let mask_value = bitfield.extract_from(mask) != 0;
-    stat_value && mask_value
 }

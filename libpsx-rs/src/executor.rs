@@ -17,8 +17,8 @@ use crate::{
         },
     },
 };
-use std::time::Instant;
 use scoped_threadpool::*;
+use std::time::Instant;
 
 struct Task {
     controller_name: &'static str,

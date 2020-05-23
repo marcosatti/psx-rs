@@ -81,11 +81,7 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
     context.r3000_state.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
     let (fn_ptr, cycles) = instruction_lookup(inst);
-
-    debug::trace_state(context.r3000_state, context.cp0_state);
-
     let result = fn_ptr(context, inst);
-
     debug::trace_hazard(result);
 
     if unlikely(result.is_err()) {
@@ -93,6 +89,8 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
         context.r3000_state.branch_delay.back();
         context.r3000_state.pc.write_u32(pc_va);
     }
+
+    debug::update_state();
 
     cycles as i64
 }
