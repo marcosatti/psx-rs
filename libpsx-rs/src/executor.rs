@@ -74,7 +74,8 @@ pub(crate) fn run(executor: &Executor, context: &ControllerContext, event: Event
     let context = unsafe { std::mem::transmute(context) };
     let benchmark_results_ref = unsafe { std::mem::transmute(&benchmark_results) };
 
-    executor.thread_pool.scope::<Task, Task, _>(Some(Task::new("r3000", run_r3000, context, event, benchmark_results_ref)), |s| {
+    executor.thread_pool.scope(|s| {
+        s.spawn_inplace(Task::new("r3000", run_r3000, context, event, benchmark_results_ref));
         s.spawn(Task::new("gpu", run_gpu, context, event, benchmark_results_ref));
         s.spawn(Task::new("dmac", run_dmac, context, event, benchmark_results_ref));
         s.spawn(Task::new("spu", run_spu, context, event, benchmark_results_ref));

@@ -76,6 +76,17 @@ fn main() {
 
     main_inner(&mut event_pump, core_config);
 
+    if config.pause_on_exit {
+        log::info!("Pausing before exit, quit the application to exit gracefully");
+
+        loop {
+            match event_pump.wait_event() {
+                sdl2::event::Event::Quit { .. } => break,
+                _ => {},
+            }
+        }
+    }
+
     // CDROM teardown
     backend::terminate_cdrom_backend(config.cdrom_backend_kind);
 

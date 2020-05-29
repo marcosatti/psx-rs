@@ -13,10 +13,66 @@ use crate::{
 use opengl_sys::*;
 use std::convert::TryInto;
 
-pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
+const DEBUG_DRAW_OUTLINE: bool = true;
+
+pub(crate) fn draw_line_loop_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3]) {
+    draw_line_loop_4_solid(backend_params, [
+        positions[0],
+        positions[0],
+        positions[1],
+        positions[2],
+    ]);
+}
+
+pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let (_context_guard, _context) = backend_params.context.guard();
+
+    let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
+    
+    let color = Color::new(255, 0, 0, 255);
+    let (r, g, b, a) = color.normalize();
+
+    unsafe {
+        if PROGRAM_CONTEXT.is_none() {
+            let vs = shaders::compile_shader(shaders::vertex::SOLID_LINE_LOOP, GL_VERTEX_SHADER);
+            let fs = shaders::compile_shader(shaders::fragment::SOLID_LINE_LOOP, GL_FRAGMENT_SHADER);
+            let program = shaders::create_program(&[vs, fs]);
+
+            let mut vao = 0;
+            glGenVertexArrays(1, &mut vao);
+            glBindVertexArray(vao);
+            glEnableVertexAttribArray(0);
+
+            let mut vbo_position = 0;
+            glGenBuffers(1, &mut vbo_position);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
+            glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+
+            PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position], &[]));
+        }
+
+        glLineWidth(1.0);
+
+        let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
+        glUseProgram(program_context.program_id);
+
+        let in_color_cstr = b"in_color\0";
+        let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
+        glUniform4f(uniform_in_color, r, g, b, a);
+
+        glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
+
+        glBindVertexArray(program_context.vao_id);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+    }
+}
+
+pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
+    static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
@@ -27,6 +83,8 @@ pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [
     let colors_flat: [f32; 12] = [r0, g0, b0, a0, r1, g1, b1, a1, r2, g2, b2, a2];
 
     unsafe {
+        let (_context_guard, _context) = backend_params.context.guard();
+
         if PROGRAM_CONTEXT.is_none() {
             let vs = shaders::compile_shader(shaders::vertex::SHADED_POLYGON, GL_VERTEX_SHADER);
             let fs = shaders::compile_shader(shaders::fragment::SHADED_POLYGON, GL_FRAGMENT_SHADER);
@@ -50,10 +108,6 @@ pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [
             glBufferData(GL_ARRAY_BUFFER, 12 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-            if glGetError() != GL_NO_ERROR {
-                panic!("Error initializing OpenGL program: draw_polygon_3_shaded");
-            }
-
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_color], &[]));
         }
 
@@ -69,18 +123,22 @@ pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
+    
+    if DEBUG_DRAW_OUTLINE {
+        draw_line_loop_3_solid(backend_params, positions);
+    }
 }
 
 pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
-
-    let (_context_guard, _context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
     let (r, g, b, a) = color.normalize();
 
     unsafe {
+        let (_context_guard, _context) = backend_params.context.guard();
+
         if PROGRAM_CONTEXT.is_none() {
             let vs = shaders::compile_shader(shaders::vertex::SOLID_POLYGON, GL_VERTEX_SHADER);
             let fs = shaders::compile_shader(shaders::fragment::SOLID_POLYGON, GL_FRAGMENT_SHADER);
@@ -96,10 +154,6 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
             glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
             glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
-
-            if glGetError() != GL_NO_ERROR {
-                panic!("Error initializing OpenGL program: draw_polygon_4_solid");
-            }
 
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position], &[]));
         }
@@ -117,12 +171,14 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
+
+    if DEBUG_DRAW_OUTLINE {
+        draw_line_loop_4_solid(backend_params, positions);
+    }
 }
 
 pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
-
-    let (_context_guard, _context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
@@ -134,6 +190,8 @@ pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [
     let colors_flat: [f32; 16] = [r2, g2, b2, a2, r0, g0, b0, a0, r1, g1, b1, a1, r3, g3, b3, a3];
 
     unsafe {
+        let (_context_guard, _context) = backend_params.context.guard();
+
         if PROGRAM_CONTEXT.is_none() {
             let vs = shaders::compile_shader(shaders::vertex::SHADED_POLYGON, GL_VERTEX_SHADER);
             let fs = shaders::compile_shader(shaders::fragment::SHADED_POLYGON, GL_FRAGMENT_SHADER);
@@ -157,10 +215,6 @@ pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [
             glBufferData(GL_ARRAY_BUFFER, 16 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-            if glGetError() != GL_NO_ERROR {
-                panic!("Error initializing OpenGL program: draw_polygon_4_shaded");
-            }
-
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_color], &[]));
         }
 
@@ -176,6 +230,10 @@ pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
+
+    if DEBUG_DRAW_OUTLINE {
+        draw_line_loop_4_solid(backend_params, positions);
+    }
 }
 
 pub(crate) fn draw_polygon_4_textured(
@@ -185,13 +243,13 @@ pub(crate) fn draw_polygon_4_textured(
 {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
-    let (_context_guard, _context) = backend_params.context.guard();
-
     let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
     let texcoords_flat: [f32; 8] = [texcoords[2].x, texcoords[2].y, texcoords[0].x, texcoords[0].y, texcoords[1].x, texcoords[1].y, texcoords[3].x, texcoords[3].y];
 
     unsafe {
+        let (_context_guard, _context) = backend_params.context.guard();
+
         if PROGRAM_CONTEXT.is_none() {
             let vs = shaders::compile_shader(shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
             let fs = shaders::compile_shader(shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
@@ -224,10 +282,6 @@ pub(crate) fn draw_polygon_4_textured(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, texture_width as GLsizei, texture_height as GLsizei, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
-
-            if glGetError() != GL_NO_ERROR {
-                panic!("Error initializing OpenGL program: draw_polygon_4_textured");
-            }
 
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[texture]));
         }
@@ -262,18 +316,22 @@ pub(crate) fn draw_polygon_4_textured(
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
+
+    if DEBUG_DRAW_OUTLINE {
+        draw_line_loop_4_solid(backend_params, positions);
+    }
 }
 
 pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
-
-    let (_context_guard, _context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
 
     let texcoords_flat: [f32; 8] = [texcoords[2].x, texcoords[2].y, texcoords[0].x, texcoords[0].y, texcoords[1].x, texcoords[1].y, texcoords[3].x, texcoords[3].y];
 
     unsafe {
+        let (_context_guard, _context) = backend_params.context.guard();
+
         glFinish();
 
         if PROGRAM_CONTEXT.is_none() {
@@ -299,10 +357,6 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams
             glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
-            if glGetError() != GL_NO_ERROR {
-                panic!("Error initializing OpenGL program: draw_polygon_4_textured_framebuffer");
-            }
-
             PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
         }
 
@@ -326,6 +380,10 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams
 
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    }
+
+    if DEBUG_DRAW_OUTLINE {
+        draw_line_loop_4_solid(backend_params, positions);
     }
 }
 

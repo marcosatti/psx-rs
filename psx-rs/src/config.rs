@@ -14,6 +14,7 @@ struct TomlConfig {
     video_backend: String,
     worker_threads: usize,
     time_delta: u64,
+    pause_on_exit: bool,
 }
 
 pub(crate) struct Config {
@@ -22,6 +23,7 @@ pub(crate) struct Config {
     pub(crate) video_backend_kind: VideoBackendKind,
     pub(crate) worker_threads: usize,
     pub(crate) time_delta: Duration,
+    pub(crate) pause_on_exit: bool,
 }
 
 pub(crate) fn load(workspace_path: &Path) -> Config {
@@ -56,5 +58,6 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
         },
         worker_threads: { toml_config.worker_threads },
         time_delta: { Duration::from_micros(toml_config.time_delta as u64) },
+        pause_on_exit: toml_config.pause_on_exit,
     }
 }
