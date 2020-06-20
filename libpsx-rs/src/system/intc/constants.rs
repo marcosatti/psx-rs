@@ -1,6 +1,7 @@
 use crate::types::bitfield::Bitfield;
 
 pub(crate) const CLOCK_SPEED: f64 = 33.8688 * 1e6; // 33.8688 MHz
+pub(crate) const CLOCK_SPEED_PERIOD: f64 = 1.0 / CLOCK_SPEED;
 
 pub(crate) const VBLANK: Bitfield = Bitfield::new(0, 1);
 pub(crate) const GPU: Bitfield = Bitfield::new(1, 1);

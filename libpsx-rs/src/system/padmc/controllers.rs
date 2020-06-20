@@ -12,10 +12,6 @@ use crate::system::{
         State,
     },
 };
-use std::{
-    cmp::max,
-    time::Duration,
-};
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -23,13 +19,13 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
+fn run_time(state: &State, duration: f64) {
     let controller_state = &mut state.padmc.controller_state.lock();
+    controller_state.clock += duration;
 
-    let ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as isize);
-
-    for _ in 0..ticks {
+    while controller_state.clock > 0.0 {
         tick(state, controller_state);
+        controller_state.clock -= CLOCK_SPEED_PERIOD;
     }
 }
 

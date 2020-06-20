@@ -1,6 +1,7 @@
 use crate::types::bitfield::Bitfield;
 
 pub(crate) const CLOCK_SPEED: f64 = 33.8688 * 1e6; // 33.8688 MHz
+pub(crate) const CLOCK_SPEED_PERIOD: f64 = 1.0 / CLOCK_SPEED;
 
 pub(crate) const STAT_TXRDY_1: Bitfield = Bitfield::new(0, 1);
 pub(crate) const STAT_RXFIFO_READY: Bitfield = Bitfield::new(1, 1);

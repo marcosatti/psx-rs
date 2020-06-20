@@ -17,8 +17,8 @@ pub(crate) enum ClockSource {
 }
 
 pub(crate) struct TimerState {
-    pub(crate) current_elapsed: Duration,
-    pub(crate) acknowledged_elapsed: Duration,
+    pub(crate) current_elapsed: f64,
+    pub(crate) acknowledged_elapsed: f64,
 
     pub(crate) reset_on_target: bool,
     pub(crate) irq_on_target: bool,
@@ -35,8 +35,8 @@ pub(crate) struct TimerState {
 impl TimerState {
     pub(crate) fn new() -> TimerState {
         TimerState {
-            current_elapsed: Duration::from_secs(0),
-            acknowledged_elapsed: Duration::from_secs(0),
+            current_elapsed: 0.0,
+            acknowledged_elapsed: 0.0,
             clock_source: ClockSource::System,
             clock_source_raw: 0,
             reset_on_target: false,

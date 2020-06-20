@@ -14,7 +14,6 @@ use crate::system::{
         State,
     },
 };
-use std::time::Duration;
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -22,7 +21,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
+fn run_time(state: &State, duration: f64) {
     let controller_state = &mut state.timers.controller_state.lock();
 
     for timer_id in 0..3 {

@@ -29,10 +29,6 @@ use crate::{
         },
     },
 };
-use std::{
-    cmp::max,
-    time::Duration,
-};
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -40,13 +36,13 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: Duration) {
+fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) {
     let controller_state = &mut state.cdrom.controller_state.lock();
+    controller_state.clock += duration;
 
-    let ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as isize);
-
-    for _ in 0..ticks {
+    while controller_state.clock > 0.0 {
         tick(state, controller_state, cdrom_backend);
+        controller_state.clock -= CLOCK_SPEED_PERIOD;
     }
 }
 

@@ -5,6 +5,7 @@ use crate::types::{
 use parking_lot::Mutex;
 
 pub(crate) struct ControllerState {
+    pub(crate) clock: f64,
     pub(crate) tx_enabled: bool,
     pub(crate) joy_select_enabled: bool,
     pub(crate) ack_interrupt_enabled: bool,
@@ -14,6 +15,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            clock: 0.0,
             tx_enabled: false,
             joy_select_enabled: false,
             ack_interrupt_enabled: false,

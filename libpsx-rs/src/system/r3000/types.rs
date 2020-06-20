@@ -59,6 +59,7 @@ pub(crate) type InstResult = Result<(), Hazard>;
 pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
 
 pub(crate) struct ControllerState {
+    pub(crate) clock: f64,
     pub(crate) pc: Register,
     pub(crate) branch_delay: BranchDelaySlot,
     pub(crate) gpr: [Register; 32],
@@ -69,6 +70,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            clock: 0.0,
             pc: Register::new(),
             branch_delay: BranchDelaySlot::new(),
             gpr: [Register::new(); 32],

@@ -6,6 +6,9 @@ use parking_lot::Mutex;
 use std::collections::VecDeque;
 
 pub(crate) struct ControllerState {
+    // Synchronization state.
+    pub(crate) clock: f64,
+    // Interrupt state.
     pub(crate) interrupt_index: usize,
     /// Command state.
     pub(crate) command_index: Option<u8>,
@@ -27,6 +30,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            clock: 0.0,
             interrupt_index: 0,
             command_index: None,
             command_iteration: 0,

@@ -1,17 +1,13 @@
 pub(crate) mod debug;
 
 use crate::system::{
-    intc::constants::CLOCK_SPEED,
+    intc::constants::*,
     r3000::cp0::types::IrqLine,
     types::{
         ControllerContext,
         Event,
         State,
     },
-};
-use std::{
-    cmp::max,
-    time::Duration,
 };
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
@@ -20,11 +16,13 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
-    let ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
+fn run_time(state: &State, duration: f64) {
+    let controller_state = &mut state.intc.controller_state.lock();
+    controller_state.clock += duration;
 
-    for _ in 0..ticks {
+    while controller_state.clock > 0.0 {
         tick(state);
+        controller_state.clock -= CLOCK_SPEED_PERIOD;
     }
 }
 

@@ -10,6 +10,7 @@ use parking_lot::Mutex;
 pub(crate) use transfer::*;
 
 pub(crate) struct ControllerState {
+    pub(crate) clock: f64,
     pub(crate) enabled: bool,
     pub(crate) muted: bool,
     pub(crate) transfer_state: TransferState,
@@ -20,6 +21,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            clock: 0.0,
             enabled: false,
             muted: false,
             transfer_state: TransferState::new(),

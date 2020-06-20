@@ -1,16 +1,15 @@
 use parking_lot::Mutex;
-use std::time::Duration;
 
 pub(crate) struct ControllerState {
-    pub(crate) frame_elapsed: Duration,
-    pub(crate) scanline_elapsed: Duration,
+    pub(crate) frame_elapsed: f64,
+    pub(crate) scanline_elapsed: f64,
 }
 
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
-            frame_elapsed: Duration::from_secs(0),
-            scanline_elapsed: Duration::from_secs(0),
+            frame_elapsed: 0.0,
+            scanline_elapsed: 0.0,
         }
     }
 }

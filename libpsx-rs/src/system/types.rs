@@ -25,12 +25,11 @@ use std::{
     io::Read,
     path::Path,
     sync::atomic::AtomicBool,
-    time::Duration,
 };
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum Event {
-    Time(Duration),
+    Time(f64),
 }
 
 pub(crate) struct ControllerContext<'a: 'b, 'b: 'c, 'c> {

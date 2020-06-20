@@ -10,10 +10,7 @@ use crate::{
     system::{
         bus::memory::bus_read_u32,
         r3000::{
-            constants::{
-                CLOCK_SPEED,
-                INSTRUCTION_SIZE,
-            },
+            constants::*,
             controllers::{
                 exception::*,
                 instruction::lookup as instruction_lookup,
@@ -30,11 +27,7 @@ use crate::{
     types::mips1::instruction::Instruction,
 };
 use log::debug;
-use std::{
-    cmp::max,
-    intrinsics::unlikely,
-    time::Duration,
-};
+use std::intrinsics::unlikely;
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -42,7 +35,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, duration: Duration) {
+fn run_time(state: &State, duration: f64) {
     let r3000_state = &mut state.r3000.controller_state.lock();
     let cp0_state = &mut state.r3000.cp0.controller_state.lock();
     let cp2_state = &mut state.r3000.cp2.controller_state.lock();
@@ -54,10 +47,8 @@ fn run_time(state: &State, duration: Duration) {
         cp2_state,
     };
 
-    let mut ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
-
-    while ticks > 0 {
-        ticks -= tick(&mut context);
+    while r3000_state.clock > 0.0 {
+        r3000_state.clock -= CLOCK_SPEED_PERIOD * (tick(&mut context) as f64);
     }
 }
 

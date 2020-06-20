@@ -103,6 +103,8 @@ impl LinkedListState {
 }
 
 pub(crate) struct ControllerState {
+    /// Synchronization state.
+    pub(crate) clock: f64,
     /// Master IRQ enable flag.
     pub(crate) master_interrupt_enabled: bool,
     pub(crate) master_interrupted: bool,
@@ -124,6 +126,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            clock: 0.0,
             master_interrupt_enabled: false,
             master_interrupted: false,
             mdecin_transfer_state: TransferState::new(),

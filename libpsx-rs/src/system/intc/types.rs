@@ -7,6 +7,7 @@ use std::sync::atomic::{
     AtomicBool,
     Ordering,
 };
+use parking_lot::Mutex;
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
@@ -22,20 +23,6 @@ pub(crate) enum Line {
     Sio,
     Spu,
     Pio,
-}
-
-pub(crate) struct State {
-    pub(crate) stat: Stat,
-    pub(crate) mask: B32LevelRegister,
-}
-
-impl State {
-    pub(crate) fn new() -> State {
-        State {
-            stat: Stat::new(),
-            mask: B32LevelRegister::new(),
-        }
-    }
 }
 
 pub(crate) struct Stat {
@@ -140,5 +127,33 @@ impl Stat {
 
     pub(crate) fn write_u32(&self, value: u32) {
         self.acknowledge(value)
+    }
+}
+
+pub(crate) struct ControllerState {
+    pub(crate) clock: f64,
+}
+
+impl ControllerState {
+    pub(crate) fn new() -> ControllerState {
+        ControllerState {
+            clock: 0.0,
+        }
+    }
+}
+
+pub(crate) struct State {
+    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) stat: Stat,
+    pub(crate) mask: B32LevelRegister,
+}
+
+impl State {
+    pub(crate) fn new() -> State {
+        State {
+            controller_state: Mutex::new(ControllerState::new()),
+            stat: Stat::new(),
+            mask: B32LevelRegister::new(),
+        }
     }
 }

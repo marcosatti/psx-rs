@@ -25,6 +25,8 @@ pub(crate) enum ClutMode {
 }
 
 pub(crate) struct ControllerState {
+    /// Synchronization state.
+    pub(crate) clock: f64,
     pub(crate) gp1_command: Option<u32>,
     pub(crate) textured_rect_x_flip: bool,
     pub(crate) textured_rect_y_flip: bool,
@@ -56,6 +58,7 @@ pub(crate) struct ControllerState {
 impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
+            clock: 0.0,
             gp1_command: None,
             textured_rect_x_flip: false,
             textured_rect_y_flip: false,

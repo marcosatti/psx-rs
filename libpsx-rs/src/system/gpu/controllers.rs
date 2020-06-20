@@ -29,10 +29,6 @@ use crate::{
     },
     video::VideoBackend,
 };
-use std::{
-    cmp::max,
-    time::Duration,
-};
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -40,13 +36,13 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, video_backend: &VideoBackend, duration: Duration) {
-    let ticks = max(1, (CLOCK_SPEED_NTSC * duration.as_secs_f64()) as i64);
-
+fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) {
     let controller_state = &mut state.gpu.controller_state.lock();
+    controller_state.clock += duration;
 
-    for _ in 0..ticks {
+    while controller_state.clock > 0.0 {
         tick(state, controller_state, video_backend);
+        controller_state.clock -= CLOCK_SPEED_NTSC_PERIOD;
     }
 
     crtc_run_time(state, video_backend, duration);
