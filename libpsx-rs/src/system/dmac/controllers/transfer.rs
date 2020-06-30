@@ -41,7 +41,8 @@ pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut
             cs.target_count = bs_count;
         },
         SyncMode::Blocks(ref mut bs) => {
-            //log::warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before sending/receiving next block");
+            // log::warn!("Blocks transfer not properly implemented - needs to wait for DMA request hardware line before
+            // sending/receiving next block");
             bs.current_address = address;
             bs.current_bsize_count = 0;
             bs.target_bsize_count = bs_count;

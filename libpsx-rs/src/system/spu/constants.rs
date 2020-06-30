@@ -1,5 +1,4 @@
 use crate::types::bitfield::Bitfield;
-use std::time::Duration;
 
 pub(crate) const _CONTROL_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
 pub(crate) const _CONTROL_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);
@@ -47,7 +46,8 @@ pub(crate) const ADSR_SUSTAIN_DIRECTION: Bitfield = Bitfield::new(30, 1);
 pub(crate) const ADSR_SUSTAIN_MODE: Bitfield = Bitfield::new(31, 1);
 
 pub(crate) const CLOCK_SPEED: f64 = 33.8688 * 1e6; // 33.8688 MHz
+pub(crate) const CLOCK_SPEED_PERIOD: f64 = 1.0 / CLOCK_SPEED;
 pub(crate) const SAMPLE_RATE: f64 = 44100.0; // 44.1 kHz
-pub(crate) const _SAMPLE_RATE_PERIOD: Duration = Duration::from_nanos(22676); // 1 / 44100th of a second
+pub(crate) const SAMPLE_RATE_PERIOD: f64 = 1.0 / SAMPLE_RATE;
 pub(crate) const BUFFER_SIZE: usize = 2048;
 pub(crate) const VOICES_COUNT: usize = 24;

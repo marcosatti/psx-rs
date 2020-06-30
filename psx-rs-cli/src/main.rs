@@ -18,10 +18,7 @@ use std::{
         AtomicBool,
         Ordering,
     },
-    time::{
-        Duration,
-        Instant,
-    },
+    time::Instant,
 };
 
 static EXIT: AtomicBool = AtomicBool::new(false);
@@ -49,7 +46,7 @@ fn main() {
         video_backend: VideoBackend::None,
         audio_backend: AudioBackend::None,
         cdrom_backend: CdromBackend::None,
-        time_delta: Duration::from_micros(time_delta_us as u64),
+        time_delta: time_delta_us as f64 / 1e6,
         worker_threads,
     };
 

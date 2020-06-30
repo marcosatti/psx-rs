@@ -1,14 +1,13 @@
 use crate::types::bitfield::Bitfield;
-use std::time::Duration;
 
 pub(crate) const _CLOCK_SPEED: f64 = 33.8688 * 1e6;
-pub(crate) const DOTCLOCK_320_INTERVAL_NTSC: Duration = Duration::from_nanos(150); // 150.312650313 ns per dot (6.6528 MHz)
-pub(crate) const SCANLINE_INTERVAL_NTSC: Duration = Duration::from_nanos(63_600); // 63.6 us per scanline
-pub(crate) const _SCANLINE_INTERVAL_PAL: Duration = Duration::from_nanos(64_000); // 64.0 us per scanline
-pub(crate) const _HBLANK_INTERVAL_NTSC: Duration = Duration::from_nanos(10_900); // 10.9 us per hblank
-pub(crate) const _HBLANK_INTERVAL_PAL: Duration = Duration::from_nanos(12_000); // 12.0 us per hblank
-pub(crate) const SYSTEM_CLOCK_INTERVAL: Duration = Duration::from_nanos(30); // 29.525699169 ns per tick (33.8688 MHz)
-pub(crate) const SYSTEM_CLOCK_8_INTERVAL: Duration = Duration::from_nanos(236); // 236.205593348 ns per tick (33.8688/8 MHz)
+pub(crate) const DOTCLOCK_320_PERIOD_NTSC: f64 = 150.0 * 1e-9; // 150.312650313 ns per dot (6.6528 MHz)
+pub(crate) const SCANLINE_PERIOD_NTSC: f64 = 63.6 * 1e-6; // 63.6 us per scanline
+pub(crate) const _SCANLINE_PERIOD_PAL: f64 = 64.0 * 1e-6; // 64.0 us per scanline
+pub(crate) const _HBLANK_PERIOD_NTSC: f64 = 10.9 * 1e-6; // 10.9 us per hblank
+pub(crate) const _HBLANK_PERIOD_PAL: f64 = 12.0 * 1e-6; // 12.0 us per hblank
+pub(crate) const SYSTEM_CLOCK_PERIOD: f64 = 1.0 / (33.8688 * 1e6); // 29.525699169 ns per tick (33.8688 MHz)
+pub(crate) const SYSTEM_CLOCK_8_PERIOD: f64 = SYSTEM_CLOCK_PERIOD * 8.0; // 236.205593348 ns per tick (33.8688/8 MHz)
 
 pub(crate) const MODE_SYNC_EN: Bitfield = Bitfield::new(0, 1);
 pub(crate) const _MODE_SYNC_MODE: Bitfield = Bitfield::new(1, 2);

@@ -1,3 +1,7 @@
+pub(crate) mod debug {
+    pub(crate) const DEBUG_DRAW_OUTLINE: bool = true;
+}
+
 use crate::{
     backends::video::opengl::{
         rendering::*,
@@ -10,18 +14,12 @@ use crate::{
         geometry::*,
     },
 };
+use debug::DEBUG_DRAW_OUTLINE;
 use opengl_sys::*;
 use std::convert::TryInto;
 
-const DEBUG_DRAW_OUTLINE: bool = true;
-
 pub(crate) fn draw_line_loop_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3]) {
-    draw_line_loop_4_solid(backend_params, [
-        positions[0],
-        positions[0],
-        positions[1],
-        positions[2],
-    ]);
+    draw_line_loop_4_solid(backend_params, [positions[0], positions[0], positions[1], positions[2]]);
 }
 
 pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4]) {
@@ -30,7 +28,7 @@ pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: 
     let (_context_guard, _context) = backend_params.context.guard();
 
     let positions_flat: [f32; 8] = [positions[2].x, positions[2].y, positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y];
-    
+
     let color = Color::new(255, 0, 0, 255);
     let (r, g, b, a) = color.normalize();
 
@@ -123,7 +121,7 @@ pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [
         glBindVertexArray(program_context.vao_id);
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
-    
+
     if DEBUG_DRAW_OUTLINE {
         draw_line_loop_3_solid(backend_params, positions);
     }

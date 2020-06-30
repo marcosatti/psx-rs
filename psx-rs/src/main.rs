@@ -51,7 +51,7 @@ fn main() {
     gl_attr.set_context_version(3, 3);
     gl_attr.set_double_buffer(false);
     gl_attr.set_context_flags().debug().set();
-    let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().opengl().build().unwrap();
+    let mut window = video_subsystem.window("psx-rs: Running", 1024, 512).position_centered().opengl().build().unwrap();
     log::info!("SDL initialized");
 
     // Initialize video
@@ -70,18 +70,22 @@ fn main() {
         video_backend,
         audio_backend,
         cdrom_backend,
-        time_delta: config.time_delta,
+        time_delta: config.time_delta_secs,
         worker_threads: config.worker_threads,
     };
 
     main_inner(&mut event_pump, core_config);
 
     if config.pause_on_exit {
+        window.set_title("psx-rs: Stopped").unwrap();
+
         log::info!("Pausing before exit, quit the application to exit gracefully");
 
         loop {
             match event_pump.wait_event() {
-                sdl2::event::Event::Quit { .. } => break,
+                sdl2::event::Event::Quit {
+                    ..
+                } => break,
                 _ => {},
             }
         }

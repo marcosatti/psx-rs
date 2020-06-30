@@ -37,18 +37,23 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
 
 fn run_time(state: &State, duration: f64) {
     let r3000_state = &mut state.r3000.controller_state.lock();
+    r3000_state.clock += duration;
+
     let cp0_state = &mut state.r3000.cp0.controller_state.lock();
     let cp2_state = &mut state.r3000.cp2.controller_state.lock();
 
-    let mut context = R3000ControllerContext {
-        state,
-        r3000_state,
-        cp0_state,
-        cp2_state,
-    };
-
     while r3000_state.clock > 0.0 {
-        r3000_state.clock -= CLOCK_SPEED_PERIOD * (tick(&mut context) as f64);
+        let ticks = {
+            let mut context = R3000ControllerContext {
+                state,
+                r3000_state,
+                cp0_state,
+                cp2_state,
+            };
+            tick(&mut context) as f64
+        };
+
+        r3000_state.clock -= CLOCK_SPEED_PERIOD * ticks;
     }
 }
 

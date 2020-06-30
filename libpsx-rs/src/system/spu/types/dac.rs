@@ -51,6 +51,7 @@ impl VoiceState {
 }
 
 pub(crate) struct DacState {
+    pub(crate) clock: f64,
     pub(crate) voice0_state: VoiceState,
     pub(crate) voice1_state: VoiceState,
     pub(crate) voice2_state: VoiceState,
@@ -80,6 +81,7 @@ pub(crate) struct DacState {
 impl DacState {
     pub(crate) fn new() -> DacState {
         DacState {
+            clock: 0.0,
             voice0_state: VoiceState::new(),
             voice1_state: VoiceState::new(),
             voice2_state: VoiceState::new(),

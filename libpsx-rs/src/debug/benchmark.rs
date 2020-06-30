@@ -37,7 +37,7 @@ impl BenchmarkResults {
 struct State {
     last_reported: Instant,
 
-    total_host_time_elapsed: Duration,
+    total_host_time_elapsed_secs: f64,
     average_host_time_elapsed: Mean,
 
     total_guest_time_elapsed: Duration,
@@ -50,7 +50,7 @@ impl State {
     fn new() -> State {
         State {
             last_reported: Instant::now(),
-            total_host_time_elapsed: Duration::from_secs(0),
+            total_host_time_elapsed_secs: 0.0,
             average_host_time_elapsed: Mean::new(),
             total_guest_time_elapsed: Duration::from_secs(0),
             average_guest_time_elapsed: Mean::new(),
@@ -61,7 +61,7 @@ impl State {
 
 static mut BENCHMARK_STATE: Option<State> = None;
 
-pub(crate) fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed: Duration, benchmark: BenchmarkResults) {
+pub(crate) fn trace_performance(host_time_elapsed_secs: f64, guest_time_elapsed: Duration, benchmark: BenchmarkResults) {
     if !ENABLE_BENCHMARK_TRACING {
         return;
     }
@@ -73,8 +73,8 @@ pub(crate) fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed:
 
         let state = BENCHMARK_STATE.as_mut().unwrap();
 
-        state.total_host_time_elapsed += host_time_elapsed;
-        state.average_host_time_elapsed.add(host_time_elapsed.as_secs_f64());
+        state.total_host_time_elapsed_secs += host_time_elapsed_secs;
+        state.average_host_time_elapsed.add(host_time_elapsed_secs);
         state.total_guest_time_elapsed += guest_time_elapsed;
         state.average_guest_time_elapsed.add(guest_time_elapsed.as_secs_f64());
 
@@ -83,7 +83,7 @@ pub(crate) fn trace_performance(host_time_elapsed: Duration, guest_time_elapsed:
         }
 
         if state.last_reported.elapsed() > REPORTING_PERIOD {
-            let overall_time_elapsed_percent = state.total_host_time_elapsed.as_secs_f64() / state.total_guest_time_elapsed.as_secs_f64() * 100.0;
+            let overall_time_elapsed_percent = state.total_host_time_elapsed_secs / state.total_guest_time_elapsed.as_secs_f64() * 100.0;
             let average_host_time_elapsed = Duration::from_secs_f64(state.average_host_time_elapsed.estimate()).as_micros();
             let average_guest_time_elapsed = Duration::from_secs_f64(state.average_guest_time_elapsed.estimate()).as_micros();
 

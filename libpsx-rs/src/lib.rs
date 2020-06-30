@@ -1,5 +1,4 @@
 #![feature(core_intrinsics)]
-#![feature(no_more_cas)]
 
 pub mod backends;
 pub(crate) mod debug;
@@ -34,10 +33,7 @@ use std::{
         Path,
         PathBuf,
     },
-    time::{
-        Duration,
-        Instant,
-    },
+    time::Instant,
 };
 use system::types::ControllerContext;
 
@@ -47,7 +43,7 @@ pub struct Config<'a: 'b, 'b> {
     pub video_backend: VideoBackend<'a, 'b>,
     pub audio_backend: AudioBackend<'a, 'b>,
     pub cdrom_backend: CdromBackend<'a, 'b>,
-    pub time_delta: Duration,
+    pub time_delta: f64,
     pub worker_threads: usize,
 }
 
@@ -59,7 +55,7 @@ pub struct Core<'a: 'b, 'b> {
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
     pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
-        log::info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta.as_micros(), config.worker_threads);
+        log::info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta * 1e6, config.worker_threads);
 
         let mut state = State::new();
 

@@ -4,7 +4,6 @@ use std::{
     fs::File,
     io::prelude::*,
     path::Path,
-    time::Duration,
 };
 
 #[derive(Deserialize)]
@@ -22,7 +21,7 @@ pub(crate) struct Config {
     pub(crate) cdrom_backend_kind: CdromBackendKind,
     pub(crate) video_backend_kind: VideoBackendKind,
     pub(crate) worker_threads: usize,
-    pub(crate) time_delta: Duration,
+    pub(crate) time_delta_secs: f64,
     pub(crate) pause_on_exit: bool,
 }
 
@@ -57,7 +56,7 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
             }
         },
         worker_threads: { toml_config.worker_threads },
-        time_delta: { Duration::from_micros(toml_config.time_delta as u64) },
+        time_delta_secs: { toml_config.time_delta as f64 / 1e6 },
         pause_on_exit: toml_config.pause_on_exit,
     }
 }

@@ -33,6 +33,7 @@ fn run_time(state: &State, duration: f64) {
 
     // Don't run if the CPU needs to use the bus.
     if controller_state.cooloff_runs > 0 {
+        controller_state.clock = 0.0;
         controller_state.cooloff_runs -= 1;
         return;
     }

@@ -13,6 +13,7 @@ use crate::{
                 register::*,
                 transfer::*,
             },
+            types::ControllerState,
         },
         types::{
             ControllerContext,
@@ -21,10 +22,6 @@ use crate::{
         },
     },
 };
-use std::{
-    cmp::max,
-    time::Duration,
-};
 
 pub(crate) fn run(context: &ControllerContext, event: Event) {
     match event {
@@ -32,8 +29,10 @@ pub(crate) fn run(context: &ControllerContext, event: Event) {
     }
 }
 
-fn run_time(state: &State, audio_backend: &AudioBackend, duration: Duration) {
+fn run_time(state: &State, audio_backend: &AudioBackend, duration: f64) {
     let controller_state = &mut state.spu.controller_state.lock();
+    controller_state.clock += duration;
+    controller_state.dac_state.clock += duration;
 
     if state.spu.voice_channel_fm.read_u32() > 0 {
         unimplemented!("Pitch modulation not implemented");
@@ -43,25 +42,42 @@ fn run_time(state: &State, audio_backend: &AudioBackend, duration: Duration) {
         unimplemented!("Noise generation not implemented");
     }
 
-    let ticks = max(1, (CLOCK_SPEED * duration.as_secs_f64()) as i64);
-    let dac_ratio = max(1, (CLOCK_SPEED / SAMPLE_RATE) as i64);
+    loop {
+        let mut handled = false;
 
-    for tick in 0..ticks {
-        handle_control(state, controller_state);
-
-        if !controller_state.enabled {
-            continue;
+        if controller_state.clock > CLOCK_SPEED_PERIOD {
+            handle_tick(state, controller_state);
+            controller_state.clock -= CLOCK_SPEED_PERIOD;
+            handled = true;
         }
 
-        handle_data_transfer_address(state, controller_state);
-        handle_transfer(state, controller_state);
-        handle_key_on(state, controller_state);
-        handle_key_off(state, controller_state);
-
-        if tick % dac_ratio == 0 {
-            for voice_id in 0..24 {
-                handle_dac(state, controller_state, audio_backend, voice_id);
-            }
+        if controller_state.dac_state.clock > SAMPLE_RATE_PERIOD {
+            handle_dac_tick(state, audio_backend, controller_state);
+            controller_state.dac_state.clock -= SAMPLE_RATE_PERIOD;
+            handled = true;
         }
+
+        if !handled {
+            break;
+        }
+    }
+}
+
+fn handle_tick(state: &State, controller_state: &mut ControllerState) {
+    handle_control(state, controller_state);
+
+    if !controller_state.enabled {
+        return;
+    }
+
+    handle_data_transfer_address(state, controller_state);
+    handle_transfer(state, controller_state);
+    handle_key_on(state, controller_state);
+    handle_key_off(state, controller_state);
+}
+
+fn handle_dac_tick(state: &State, audio_backend: &AudioBackend, controller_state: &mut ControllerState) {
+    for voice_id in 0..24 {
+        handle_dac(state, controller_state, audio_backend, voice_id);
     }
 }

@@ -105,6 +105,7 @@ impl LinkedListState {
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
+
     /// Master IRQ enable flag.
     pub(crate) master_interrupt_enabled: bool,
     pub(crate) master_interrupted: bool,

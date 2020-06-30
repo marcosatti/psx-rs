@@ -3,11 +3,11 @@ use crate::{
     types::memory::*,
     utilities::bool_to_flag,
 };
+use parking_lot::Mutex;
 use std::sync::atomic::{
     AtomicBool,
     Ordering,
 };
-use parking_lot::Mutex;
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
