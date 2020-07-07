@@ -7,17 +7,24 @@
 
 use crate::utilities::primitive::*;
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::sync::atomic::{
     AtomicBool,
     Ordering,
 };
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum LatchKind {
     Read,
     Write,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B32EdgeRegister {
     dirty: AtomicBool,
     memory: Mutex<(LatchKind, u32)>,
@@ -117,6 +124,7 @@ unsafe impl Send for B32EdgeRegister {
 unsafe impl Sync for B32EdgeRegister {
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B16EdgeRegister {
     dirty: AtomicBool,
     memory: Mutex<(LatchKind, u16)>,
@@ -201,6 +209,7 @@ unsafe impl Send for B16EdgeRegister {
 unsafe impl Sync for B16EdgeRegister {
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B8EdgeRegister {
     dirty: AtomicBool,
     memory: Mutex<(LatchKind, u8)>,

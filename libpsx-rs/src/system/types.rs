@@ -20,6 +20,11 @@ use crate::{
     },
 };
 use log::info;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::{
     fs::File,
     io::Read,
@@ -39,6 +44,7 @@ pub(crate) struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
     pub(crate) cdrom_backend: &'c CdromBackend<'a, 'b>,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) r3000: R3000State,
     pub(crate) intc: IntcState,

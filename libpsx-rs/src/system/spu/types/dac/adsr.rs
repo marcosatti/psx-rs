@@ -1,4 +1,11 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum AdsrPhase {
     Attack,
     Decay,
@@ -28,6 +35,7 @@ pub(crate) struct AdsrPhaseParams {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct AdsrState {
     /// ADSR phase (attack, decay, sustain, release).
     pub(crate) phase: AdsrPhase,

@@ -1,4 +1,11 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum TransferMode {
     Stop,
     ManualWrite,
@@ -6,6 +13,7 @@ pub(crate) enum TransferMode {
     DmaRead,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct TransferState {
     pub(crate) current_mode: TransferMode,
     pub(crate) current_address: usize,

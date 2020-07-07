@@ -3,7 +3,13 @@ use crate::types::{
     memory::*,
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) tx_enabled: bool,
@@ -24,6 +30,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) rx_fifo: Fifo<u8>,
     pub(crate) tx_fifo: Fifo<u8>,

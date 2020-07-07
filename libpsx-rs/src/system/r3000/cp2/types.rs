@@ -3,6 +3,11 @@ use crate::types::mips1::{
     register::*,
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[allow(dead_code)]
 pub(crate) enum MultiplyMatrix {
@@ -91,6 +96,7 @@ impl GteInstruction {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     /// Data registers.
     pub(crate) gd: [Register; 32],
@@ -107,6 +113,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) controller_state: Mutex<ControllerState>,
 }

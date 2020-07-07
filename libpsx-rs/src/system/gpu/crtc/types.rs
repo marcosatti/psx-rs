@@ -1,5 +1,11 @@
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) frame_elapsed: f64,
     pub(crate) scanline_elapsed: f64,
@@ -14,6 +20,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct Crtc {
     pub(crate) controller_state: Mutex<ControllerState>,
 }

@@ -1,3 +1,9 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct AdpcmParams {
     pub(crate) filter: usize,
@@ -14,6 +20,7 @@ pub(crate) struct AdpcmBlockRaw {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct AdpcmState {
     /// Sample memory for decoding.
     pub(crate) old_sample: i16,

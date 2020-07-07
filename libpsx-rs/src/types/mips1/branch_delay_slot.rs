@@ -1,3 +1,10 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct BranchDelaySlot {
     target: Option<u32>,
     slots: u32,

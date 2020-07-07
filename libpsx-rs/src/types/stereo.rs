@@ -1,4 +1,11 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[repr(C)]
 pub(crate) struct Stereo {
     pub(crate) left: i16,

@@ -7,9 +7,15 @@ use crate::types::stereo::*;
 pub(crate) use adpcm::*;
 pub(crate) use adsr::*;
 pub(crate) use interpolation::*;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub(crate) use sweep::*;
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct VoiceState {
     /// ADPCM decoding state.
     pub(crate) adpcm_state: AdpcmState,
@@ -50,6 +56,7 @@ impl VoiceState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct DacState {
     pub(crate) clock: f64,
     pub(crate) voice0_state: VoiceState,

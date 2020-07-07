@@ -1,5 +1,10 @@
 use crate::types::memory::*;
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum IrqType {
@@ -8,6 +13,7 @@ pub(crate) enum IrqType {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum ClockSource {
     System,
     Dotclock,
@@ -15,6 +21,7 @@ pub(crate) enum ClockSource {
     System8,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct TimerState {
     pub(crate) clock: f64,
     pub(crate) reset_on_target: bool,
@@ -47,6 +54,7 @@ impl TimerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) timer0_state: TimerState,
     pub(crate) timer1_state: TimerState,
@@ -63,6 +71,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) timer0_count: B32LevelRegister,
     pub(crate) timer0_mode: B32EdgeRegister,

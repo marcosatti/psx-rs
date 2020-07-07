@@ -20,6 +20,11 @@ use crate::{
     },
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::fmt;
 
 #[derive(Copy, Clone, PartialEq)]
@@ -58,6 +63,7 @@ pub(crate) type InstResult = Result<(), Hazard>;
 
 pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) pc: Register,
@@ -80,6 +86,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) cp0: Cp0State,
     pub(crate) cp2: Cp2State,

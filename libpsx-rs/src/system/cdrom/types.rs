@@ -3,8 +3,14 @@ use crate::types::{
     memory::*,
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::collections::VecDeque;
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     // Synchronization state.
     pub(crate) clock: f64,
@@ -46,6 +52,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) status: B8LevelRegister,
     pub(crate) response: Fifo<u8>,

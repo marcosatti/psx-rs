@@ -7,8 +7,14 @@ use crate::types::{
 };
 pub(crate) use dac::*;
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub(crate) use transfer::*;
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) enabled: bool,
@@ -31,6 +37,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) main_volume_left: B16LevelRegister,
     pub(crate) main_volume_right: B16LevelRegister,

@@ -1,3 +1,8 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use spsc_ringbuffer::SpscRingbuffer as QueueImpl;
 use std::fmt::{
     Display,
@@ -5,6 +10,7 @@ use std::fmt::{
 };
 
 /// SPSC FIFO
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct Fifo<T>
 where T: Copy + Default
 {

@@ -1,4 +1,11 @@
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct InterpolationState {
     /// Interpolation sample memory.
     /// These samples are only used in the interpolation process. This is different to the ADPCM

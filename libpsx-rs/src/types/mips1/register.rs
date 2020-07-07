@@ -2,8 +2,14 @@ use crate::{
     types::bitfield::Bitfield,
     utilities::primitive::*,
 };
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct Register {
     memory: u32,
 }

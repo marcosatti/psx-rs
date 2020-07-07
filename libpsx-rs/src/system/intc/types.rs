@@ -4,6 +4,11 @@ use crate::{
     utilities::bool_to_flag,
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::sync::atomic::{
     AtomicBool,
     Ordering,
@@ -25,6 +30,7 @@ pub(crate) enum Line {
     Pio,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct Stat {
     vblank: AtomicBool,
     gpu: AtomicBool,
@@ -130,6 +136,7 @@ impl Stat {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
 }
@@ -142,6 +149,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) controller_state: Mutex<ControllerState>,
     pub(crate) stat: Stat,

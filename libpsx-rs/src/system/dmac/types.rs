@@ -1,20 +1,28 @@
 use crate::types::memory::*;
 use enum_as_inner::EnumAsInner;
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum TransferDirection {
     FromChannel,
     ToChannel,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum StepDirection {
     Forwards,
     Backwards,
 }
 
 #[derive(Debug, Copy, Clone, EnumAsInner)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum SyncMode {
     Undefined,
     Continuous(ContinuousState),
@@ -23,6 +31,7 @@ pub(crate) enum SyncMode {
 }
 
 #[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct TransferState {
     pub(crate) started: bool,
     pub(crate) direction: TransferDirection,
@@ -46,6 +55,7 @@ impl TransferState {
 }
 
 #[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ContinuousState {
     pub(crate) current_address: u32,
     pub(crate) target_count: usize,
@@ -63,6 +73,7 @@ impl ContinuousState {
 }
 
 #[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct BlocksState {
     pub(crate) current_address: u32,
     pub(crate) current_bsize_count: usize,
@@ -84,6 +95,7 @@ impl BlocksState {
 }
 
 #[derive(Debug, Copy, Clone)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct LinkedListState {
     pub(crate) current_header_address: u32,
     pub(crate) next_header_address: u32,
@@ -102,6 +114,7 @@ impl LinkedListState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
@@ -142,6 +155,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) dpcr: B32LevelRegister,
     pub(crate) dicr: B32EdgeRegister,

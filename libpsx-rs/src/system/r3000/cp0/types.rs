@@ -6,6 +6,11 @@ use crate::{
     types::mips1::register::*,
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::sync::atomic::{
     AtomicBool,
     Ordering,
@@ -16,6 +21,7 @@ pub(crate) enum IrqLine {
     Intc,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct Interrupt {
     intc_pending: AtomicBool,
 }
@@ -46,6 +52,7 @@ impl Interrupt {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     pub(crate) bpc: Register,
     pub(crate) bda: Register,
@@ -76,6 +83,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) interrupt: Interrupt,
     pub(crate) controller_state: Mutex<ControllerState>,

@@ -6,6 +6,11 @@ use crate::{
     types::bitfield::Bitfield,
     utilities::primitive::*,
 };
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::sync::atomic::{
     AtomicU16,
     AtomicU32,
@@ -13,6 +18,7 @@ use std::sync::atomic::{
     Ordering,
 };
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B32LevelRegister {
     memory: AtomicU32,
 }
@@ -65,6 +71,7 @@ unsafe impl Send for B32LevelRegister {
 unsafe impl Sync for B32LevelRegister {
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B16LevelRegister {
     memory: AtomicU16,
 }
@@ -110,6 +117,7 @@ unsafe impl Send for B16LevelRegister {
 unsafe impl Sync for B16LevelRegister {
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B8LevelRegister {
     memory: AtomicU8,
 }

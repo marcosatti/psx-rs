@@ -6,9 +6,15 @@ use crate::{
     },
 };
 use parking_lot::Mutex;
+#[cfg(feature = "serialization")]
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use std::collections::VecDeque;
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum TransparencyMode {
     Average,
     Additive,
@@ -17,6 +23,7 @@ pub(crate) enum TransparencyMode {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum ClutMode {
     Bits4,
     Bits8,
@@ -24,6 +31,7 @@ pub(crate) enum ClutMode {
     Reserved,
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
@@ -89,6 +97,7 @@ impl ControllerState {
     }
 }
 
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct State {
     pub(crate) crtc: Crtc,
     pub(crate) gp0: Fifo<u32>,

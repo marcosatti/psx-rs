@@ -9,4 +9,4 @@ chrono = "*"
 fern = "*"
 log = "*"
 ctrlc = "*"
-libpsx-rs = { path = "../libpsx-rs" }
+libpsx-rs = { path = "../libpsx-rs", default-features = false }

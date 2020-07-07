@@ -78,25 +78,33 @@ unsafe impl Send for B8Memory {
 unsafe impl Sync for B8Memory {
 }
 
-#[repr(C)]
-#[derive(Copy, Clone)]
-union B32Register_ {
-    v32: u32,
-    v16: [u16; 2],
-    v8: [u8; 4],
-}
+#[cfg(feature = "serialization")]
+mod serialization {
+    use super::*;
+    use serde::{
+        Deserialize,
+        Deserializer,
+        Serialize,
+        Serializer,
+    };
 
-#[repr(C)]
-#[derive(Copy, Clone)]
-union B16Register_ {
-    v16: u16,
-    v8: [u8; 2],
-}
+    impl Serialize for B8Memory {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer {
+            let buffer = unsafe { &*self.memory.get() };
+            <Vec<u8> as Serialize>::serialize(buffer, serializer)
+        }
+    }
 
-#[repr(C)]
-#[derive(Copy, Clone)]
-union B8Register_ {
-    v8: u8,
+    impl<'de> Deserialize<'de> for B8Memory {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer<'de> {
+            let buffer = <Vec<u8> as Deserialize>::deserialize(deserializer)?;
+            Ok(B8Memory {
+                memory: UnsafeCell::new(buffer),
+            })
+        }
+    }
 }
 
 #[cfg(test)]
