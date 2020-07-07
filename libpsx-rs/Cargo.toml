@@ -23,10 +23,11 @@ fixed = "*"
 typenum = "*"
 enum-as-inner = "*"
 serde = { version = "*", optional = true, features = ["derive"] }
+bincode = { version = "*", optional = true }
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }
 
 [features]
 default = ["serialization"]
-serialization = ["serde"]
+serialization = ["serde", "bincode"]

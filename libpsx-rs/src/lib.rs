@@ -37,6 +37,9 @@ use std::{
 };
 use system::types::ControllerContext;
 
+#[cfg(feature = "serialization")]
+const SAVE_STATE_DEFAULT_NAME: &'static str = "save_state_default.bin";
+
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
     pub bios_filename: String,
@@ -48,8 +51,8 @@ pub struct Config<'a: 'b, 'b> {
 }
 
 pub struct Core<'a: 'b, 'b> {
-    pub(crate) state: Box<State>,
-    pub(crate) config: Config<'a, 'b>,
+    state: Box<State>,
+    config: Config<'a, 'b>,
     executor: Executor,
 }
 
@@ -101,6 +104,26 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
     pub fn analyze(&mut self) {
         debug::analysis(self);
+    }
+
+    #[cfg(feature = "serialization")]
+    pub fn save_state(&self, name: Option<&str>) -> Result<(), String> {
+        let encoded: Vec<u8> = bincode::serialize(&self.state).map_err(|e| format!("Error occurred serializing machine state: {}", e).to_owned())?;
+        let name = name.unwrap_or(SAVE_STATE_DEFAULT_NAME);
+        let mut path = self.config.workspace_path.join(r"saves/");
+        std::fs::create_dir_all(&path).unwrap();
+        path = path.join(name);
+        std::fs::write(&path, encoded).map_err(|e| format!("Unable to write save state file: {}", e).to_owned())
+    }
+
+    #[cfg(feature = "serialization")]
+    pub fn load_state(&mut self, name: Option<&str>) -> Result<(), String> {
+        let name = name.unwrap_or(SAVE_STATE_DEFAULT_NAME);
+        let path = self.config.workspace_path.join(r"saves/").join(name);
+        let encoded = std::fs::read(&path).map_err(|e| format!("Unable to read save state file: {}", e).to_owned())?;
+        let mut state = bincode::deserialize(&encoded).map_err(|e| format!("Error occurred deserializing machine state: {}", e).to_owned())?;
+        std::mem::swap(self.state.as_mut(), &mut state);
+        Ok(())
     }
 }
 

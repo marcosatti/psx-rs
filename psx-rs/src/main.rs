@@ -144,7 +144,7 @@ fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
                         ..
                     } => {
                         if let Some(key) = keycode {
-                            handle_keycode(key);
+                            handle_keycode(key, &mut core);
                         }
                     },
                     _ => {},
@@ -171,15 +171,21 @@ fn setup_signal_handler() {
     ctrlc::set_handler(ctrl_c_handler).unwrap();
 }
 
-fn handle_keycode(keycode: sdl2::keyboard::Keycode) {
+fn handle_keycode(keycode: sdl2::keyboard::Keycode, core: &mut Core) {
     use sdl2::keyboard::Keycode;
 
     match keycode {
         Keycode::F1 => {
+            core.save_state(None).unwrap();
+            log::info!("Saved state ok");
+        },
+        Keycode::F2 => {
+            core.load_state(None).unwrap();
+            log::info!("Loaded state ok");
+        },
+        Keycode::F3 => {
             // toggle_debug_option(&ENABLE_REGISTER_TRACING, "R3000 register output");
         },
-        Keycode::F2 => {},
-        Keycode::F3 => {},
         Keycode::F4 => {},
         Keycode::F5 => {},
         Keycode::F6 => {},
