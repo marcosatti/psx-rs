@@ -108,6 +108,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
     #[cfg(feature = "serialization")]
     pub fn save_state(&self, name: Option<&str>) -> Result<(), String> {
+        log::warn!("GPU framebuffer serialization not implemented, use with caution");
         let encoded: Vec<u8> = bincode::serialize(&self.state).map_err(|e| format!("Error occurred serializing machine state: {}", e).to_owned())?;
         let name = name.unwrap_or(SAVE_STATE_DEFAULT_NAME);
         let mut path = self.config.workspace_path.join(r"saves/");
