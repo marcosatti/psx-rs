@@ -47,25 +47,29 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
         glUseProgram(program_context.program_id);
         glBindVertexArray(program_context.vao_id);
 
-        let mut fbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo);
-
+        // Get the off-screen FBO texture attachment, which is used to draw to the window FBO.
         let mut texture = 0;
         glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut texture);
 
+        // Save off-screen FBO to restore later.
+        let mut fbo = 0;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo);
+
+        // Bind the window FBO so it's now active.
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, opengl::rendering::WINDOW_FBO);
 
+        // Bind the off-screen texture to the uniform variable.
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture as GLuint);
-
         let tex2d_cstr = b"tex2d\0";
         let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
         glUniform1i(uniform_tex2d, 0);
 
+        // Draw the off-screen texture to the window FBO, hard synchronise after.
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
         glFinish();
 
+        // Bind the off-screen FBO again, ready for the GPU to draw into.
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo as GLuint);
     }
 }
