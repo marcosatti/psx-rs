@@ -51,8 +51,8 @@ pub struct Config<'a: 'b, 'b> {
 }
 
 pub struct Core<'a: 'b, 'b> {
-    state: Box<State>,
-    config: Config<'a, 'b>,
+    pub(crate) state: Box<State>,
+    pub(crate) config: Config<'a, 'b>,
     executor: Executor,
 }
 

@@ -1,7 +1,18 @@
 use crate::Core;
+use crate::system::types::State;
 use crate::backends::video::VideoBackend;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 const SAVE_STATE_DEFAULT_NAME: &'static str = "save_state_default.bin.zst";
+
+#[derive(Serialize, Deserialize)]
+struct SaveState {
+    state: State,
+    gpu_framebuffer: Vec<u8>,
+}
 
 pub fn save_state(core: &Core, name: Option<&str>) -> Result<(), String> {
     log::warn!("GPU framebuffer serialization incomplete, use with caution");
@@ -13,10 +24,15 @@ pub fn save_state(core: &Core, name: Option<&str>) -> Result<(), String> {
     let file = std::fs::File::create(path).map_err(|e| format!("Unable to create save state file: {}", e))?;
 
     {
+        let state = SaveState {
+            state: core.state,
+            gpu_framebuffer: serialize_gpu_framebuffer(&core.config.video_backend),
+        };
+
         let file = file.try_clone().map_err(|e| format!("Unable to create save state file: {}", e))?;
         let zstd_stream = zstd::Encoder::new(file, 0).map_err(|e| format!("Unable to make zstd stream: {}", e))?;
         let zstd_stream = zstd_stream.auto_finish();
-        bincode::serialize_into(zstd_stream, &core.state).map_err(|e| format!("Error occurred serializing machine state: {}", e))?;
+        bincode::serialize_into(zstd_stream, &state).map_err(|e| format!("Error occurred serializing machine state: {}", e))?;
     }
 
     file.sync_all().map_err(|e| format!("Error writing to save file: {}", e))
@@ -48,6 +64,7 @@ fn serialize_gpu_framebuffer(video_backend: &VideoBackend) -> Vec<u8> {
 
 #[cfg(opengl)]
 fn serialize_gpu_framebuffer_opengl(backend_params: &crate::backends::video::opengl::BackendParams) -> Vec<u8> {
+    use opengl_sys::*;
     use crate::system::gpu::constants::*;
 
     let (_context_guard, _context) = backend_params.context.guard();
