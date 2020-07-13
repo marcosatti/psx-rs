@@ -1,4 +1,5 @@
 use crate::Core;
+use crate::backends::video::VideoBackend;
 
 const SAVE_STATE_DEFAULT_NAME: &'static str = "save_state_default.bin.zst";
 
@@ -33,6 +34,29 @@ pub fn load_state(core: &mut Core, name: Option<&str>) -> Result<(), String> {
     Ok(())
 }
 
-fn serialize_gpu_framebuffer() -> Vec<u8> {
+fn serialize_gpu_framebuffer(video_backend: &VideoBackend) -> Vec<u8> {
+    match video_backend {
+        VideoBackend::None => {
+            log::warn!("Cannot serialize GPU framebuffer as there is no active backend; returning empty data");
+            Vec::new()
+        },
+        #[cfg(opengl)]
+        VideoBackend::Opengl(ref backend_params) => serialize_gpu_framebuffer_opengl(backend_params),
+        _ => unimplemented!(),
+    }
+}
 
+#[cfg(opengl)]
+fn serialize_gpu_framebuffer_opengl(backend_params: &crate::backends::video::opengl::BackendParams) -> Vec<u8> {
+    use crate::system::gpu::constants::*;
+
+    let (_context_guard, _context) = backend_params.context.guard();
+
+    unsafe {
+        glFinish();
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        let mut buffer: Vec<u8> = vec![0; VRAM_WIDTH_16B * VRAM_HEIGHT_LINES];
+        glReadPixels(0, 0, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, GL_RGBA, GL_UNSIGNED_BYTE, buffer.as_mut_ptr() as *mut std::ffi::c_void);
+        buffer
+    }
 }

@@ -29,41 +29,30 @@ pub(crate) fn setup(backend_params: &BackendParams) {
 
         // Create off-screen FBO. The CRTC controller will handle rendering to the default (window) FBO.
         let mut window_fbo = 0;
-        let mut fbo = 0;
         glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut window_fbo);
         rendering::WINDOW_FBO = window_fbo as GLuint;
-        glGenFramebuffers(1, &mut fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        let mut scene_fbo = 0;
+        glGenFramebuffers(1, &mut scene_fbo);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, scene_fbo);
 
         // Create texture for the color attachment.
         let mut color_texture = 0;
         glGenTextures(1, &mut color_texture);
         glBindTexture(GL_TEXTURE_2D, color_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
 
-        // Create texture for stencil and depth.
-        let mut depth_stencil_texture = 0;
-        glGenTextures(1, &mut depth_stencil_texture);
-        glBindTexture(GL_TEXTURE_2D, depth_stencil_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_DEPTH_STENCIL, GL_FLOAT, std::ptr::null());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
-
-        // Attach texutres to FBO.
+        // Attach images to FBO.
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_texture, 0);
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_stencil_texture, 0);
+        assert!(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+        rendering::SCENE_FBO = scene_fbo as GLuint;
 
         // Other.
         glClearColor(0.0, 0.0, 0.0, 1.0);
-        glClearDepth(0.0);
-        glClearStencil(0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         if glGetError() != GL_NO_ERROR {
             panic!("Error initializing OpenGL video backend");
@@ -85,16 +74,8 @@ pub(crate) fn teardown(backend_params: &BackendParams) {
             glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
             assert!(param == (GL_TEXTURE as GLint));
             glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
-            let texture = param as GLuint;
-            glDeleteTextures(1, &texture);
-
-            // Delete depth & stencil texture.
-            let mut param = 0;
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
-            assert!(param == (GL_TEXTURE as GLint));
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
-            let texture = param as GLuint;
-            glDeleteTextures(1, &texture);
+            let color_texture = param as GLuint;
+            glDeleteTextures(1, &color_texture);
 
             // Delete FBO.
             let mut fbo_int = 0;
