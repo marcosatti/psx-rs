@@ -97,6 +97,7 @@ impl GteInstruction {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     /// Data registers.
     pub(crate) gd: [Register; 32],
@@ -122,6 +123,14 @@ impl State {
     pub(crate) fn new() -> State {
         State {
             controller_state: Mutex::new(ControllerState::new()),
+        }
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            controller_state: Mutex::new(self.controller_state.lock().clone()),
         }
     }
 }

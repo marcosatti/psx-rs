@@ -52,7 +52,16 @@ impl Interrupt {
     }
 }
 
+impl Clone for Interrupt {
+    fn clone(&self) -> Self {
+        Interrupt {
+            intc_pending: AtomicBool::new(self.intc_pending.load(Ordering::Relaxed)),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) bpc: Register,
     pub(crate) bda: Register,
@@ -94,6 +103,15 @@ impl State {
         State {
             interrupt: Interrupt::new(),
             controller_state: Mutex::new(ControllerState::new()),
+        }
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            interrupt: self.interrupt.clone(),
+            controller_state: Mutex::new(self.controller_state.lock().clone()),
         }
     }
 }

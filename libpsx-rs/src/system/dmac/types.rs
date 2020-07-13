@@ -115,6 +115,7 @@ impl LinkedListState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
@@ -218,6 +219,37 @@ impl State {
             otc_bcr: B32LevelRegister::new(),
             otc_chcr: B32EdgeRegister::new(),
             controller_state: Mutex::new(ControllerState::new()),
+        }
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            dpcr: self.dpcr.clone(),
+            dicr: self.dicr.clone(),
+            mdecin_madr: self.mdecin_madr.clone(),
+            mdecin_bcr: self.mdecin_bcr.clone(),
+            mdecin_chcr: self.mdecin_chcr.clone(),
+            mdecout_madr: self.mdecout_madr.clone(),
+            mdecout_bcr: self.mdecout_bcr.clone(),
+            mdecout_chcr: self.mdecout_chcr.clone(),
+            gpu_madr: self.gpu_madr.clone(),
+            gpu_bcr: self.gpu_bcr.clone(),
+            gpu_chcr: self.gpu_chcr.clone(),
+            cdrom_madr: self.cdrom_madr.clone(),
+            cdrom_bcr: self.cdrom_bcr.clone(),
+            cdrom_chcr: self.cdrom_chcr.clone(),
+            spu_madr: self.spu_madr.clone(),
+            spu_bcr: self.spu_bcr.clone(),
+            spu_chcr: self.spu_chcr.clone(),
+            pio_madr: self.pio_madr.clone(),
+            pio_bcr: self.pio_bcr.clone(),
+            pio_chcr: self.pio_chcr.clone(),
+            otc_madr: self.otc_madr.clone(),
+            otc_bcr: self.otc_bcr.clone(),
+            otc_chcr: self.otc_chcr.clone(),
+            controller_state: Mutex::new(self.controller_state.lock().clone()),
         }
     }
 }

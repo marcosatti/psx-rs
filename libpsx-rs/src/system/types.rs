@@ -29,7 +29,7 @@ use std::{
     fs::File,
     io::Read,
     path::Path,
-    sync::atomic::AtomicBool,
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -89,5 +89,22 @@ impl State {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
         state.memory.bios.write_raw(0, &buffer);
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            r3000: self.r3000.clone(),
+            intc: self.intc.clone(),
+            dmac: self.dmac.clone(),
+            timers: self.timers.clone(),
+            spu: self.spu.clone(),
+            memory: self.memory.clone(),
+            gpu: self.gpu.clone(),
+            cdrom: self.cdrom.clone(),
+            padmc: self.padmc.clone(),
+            bus_locked: AtomicBool::new(self.bus_locked.load(Ordering::Relaxed)),
+        }
     }
 }

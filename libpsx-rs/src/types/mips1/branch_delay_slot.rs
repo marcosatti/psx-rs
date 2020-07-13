@@ -5,6 +5,7 @@ use serde::{
 };
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct BranchDelaySlot {
     target: Option<u32>,
     slots: u32,

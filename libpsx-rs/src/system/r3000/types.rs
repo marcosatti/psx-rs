@@ -64,6 +64,7 @@ pub(crate) type InstResult = Result<(), Hazard>;
 pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) pc: Register,
@@ -99,6 +100,16 @@ impl State {
             cp0: Cp0State::new(),
             cp2: Cp2State::new(),
             controller_state: Mutex::new(ControllerState::new()),
+        }
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            cp0: self.cp0.clone(),
+            cp2: self.cp2.clone(),
+            controller_state: Mutex::new(self.controller_state.lock().clone()),
         }
     }
 }

@@ -136,7 +136,26 @@ impl Stat {
     }
 }
 
+impl Clone for Stat {
+    fn clone(&self) -> Self {
+        Stat {
+            vblank: AtomicBool::new(self.vblank.load(Ordering::Relaxed)),
+            gpu: AtomicBool::new(self.gpu.load(Ordering::Relaxed)),
+            cdrom: AtomicBool::new(self.cdrom.load(Ordering::Relaxed)),
+            dma: AtomicBool::new(self.dma.load(Ordering::Relaxed)),
+            tmr0: AtomicBool::new(self.tmr0.load(Ordering::Relaxed)),
+            tmr1: AtomicBool::new(self.tmr1.load(Ordering::Relaxed)),
+            tmr2: AtomicBool::new(self.tmr2.load(Ordering::Relaxed)),
+            padmc: AtomicBool::new(self.padmc.load(Ordering::Relaxed)),
+            sio: AtomicBool::new(self.sio.load(Ordering::Relaxed)),
+            spu: AtomicBool::new(self.spu.load(Ordering::Relaxed)),
+            pio: AtomicBool::new(self.pio.load(Ordering::Relaxed)),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
 }
@@ -162,6 +181,16 @@ impl State {
             controller_state: Mutex::new(ControllerState::new()),
             stat: Stat::new(),
             mask: B32LevelRegister::new(),
+        }
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            controller_state: Mutex::new(self.controller_state.lock().clone()),
+            stat: self.stat.clone(),
+            mask: self.mask.clone(),
         }
     }
 }

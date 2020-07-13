@@ -124,6 +124,15 @@ unsafe impl Send for B32EdgeRegister {
 unsafe impl Sync for B32EdgeRegister {
 }
 
+impl Clone for B32EdgeRegister {
+    fn clone(&self) -> Self {
+        B32EdgeRegister {
+            dirty: AtomicBool::new(self.dirty.load(Ordering::Relaxed)),
+            memory: Mutex::new(self.memory.lock().clone()),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B16EdgeRegister {
     dirty: AtomicBool,
@@ -209,6 +218,15 @@ unsafe impl Send for B16EdgeRegister {
 unsafe impl Sync for B16EdgeRegister {
 }
 
+impl Clone for B16EdgeRegister {
+    fn clone(&self) -> Self {
+        B16EdgeRegister {
+            dirty: AtomicBool::new(self.dirty.load(Ordering::Relaxed)),
+            memory: Mutex::new(self.memory.lock().clone()),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B8EdgeRegister {
     dirty: AtomicBool,
@@ -276,4 +294,13 @@ unsafe impl Send for B8EdgeRegister {
 }
 
 unsafe impl Sync for B8EdgeRegister {
+}
+
+impl Clone for B8EdgeRegister {
+    fn clone(&self) -> Self {
+        B8EdgeRegister {
+            dirty: AtomicBool::new(self.dirty.load(Ordering::Relaxed)),
+            memory: Mutex::new(self.memory.lock().clone()),
+        }
+    }
 }

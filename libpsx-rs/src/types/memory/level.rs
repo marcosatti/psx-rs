@@ -71,6 +71,14 @@ unsafe impl Send for B32LevelRegister {
 unsafe impl Sync for B32LevelRegister {
 }
 
+impl Clone for B32LevelRegister {
+    fn clone(&self) -> Self {
+        B32LevelRegister {
+            memory: AtomicU32::new(self.memory.load(Ordering::Relaxed)),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B16LevelRegister {
     memory: AtomicU16,
@@ -117,6 +125,14 @@ unsafe impl Send for B16LevelRegister {
 unsafe impl Sync for B16LevelRegister {
 }
 
+impl Clone for B16LevelRegister {
+    fn clone(&self) -> Self {
+        B16LevelRegister {
+            memory: AtomicU16::new(self.memory.load(Ordering::Relaxed)),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct B8LevelRegister {
     memory: AtomicU8,
@@ -150,6 +166,14 @@ unsafe impl Send for B8LevelRegister {
 }
 
 unsafe impl Sync for B8LevelRegister {
+}
+
+impl Clone for B8LevelRegister {
+    fn clone(&self) -> Self {
+        B8LevelRegister {
+            memory: AtomicU8::new(self.memory.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 #[cfg(test)]

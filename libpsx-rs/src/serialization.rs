@@ -25,7 +25,7 @@ pub fn save_state(core: &Core, name: Option<&str>) -> Result<(), String> {
 
     {
         let state = SaveState {
-            state: core.state,
+            state: *core.state.clone(),
             gpu_framebuffer: serialize_gpu_framebuffer(&core.config.video_backend),
         };
 

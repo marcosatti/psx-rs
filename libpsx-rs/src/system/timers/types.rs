@@ -22,6 +22,7 @@ pub(crate) enum ClockSource {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct TimerState {
     pub(crate) clock: f64,
     pub(crate) reset_on_target: bool,
@@ -55,6 +56,7 @@ impl TimerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) timer0_state: TimerState,
     pub(crate) timer1_state: TimerState,
@@ -101,6 +103,23 @@ impl State {
             timer2_mode: B32EdgeRegister::new(),
             timer2_target: B32LevelRegister::new(),
             controller_state: Mutex::new(ControllerState::new()),
+        }
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        State {
+            timer0_count: self.timer0_count.clone(),
+            timer0_mode: self.timer0_mode.clone(),
+            timer0_target: self.timer0_target.clone(),
+            timer1_count: self.timer1_count.clone(),
+            timer1_mode: self.timer1_mode.clone(),
+            timer1_target: self.timer1_target.clone(),
+            timer2_count: self.timer2_count.clone(),
+            timer2_mode: self.timer2_mode.clone(),
+            timer2_target: self.timer2_target.clone(),
+            controller_state: Mutex::new(self.controller_state.lock().clone()),
         }
     }
 }

@@ -78,6 +78,16 @@ unsafe impl Send for B8Memory {
 unsafe impl Sync for B8Memory {
 }
 
+impl Clone for B8Memory {
+    fn clone(&self) -> Self {
+        unsafe {
+            B8Memory {
+                memory: UnsafeCell::new(*self.memory.get().clone()),
+            }
+        }
+    }
+}
+
 #[cfg(feature = "serialization")]
 mod serialization {
     use super::*;
