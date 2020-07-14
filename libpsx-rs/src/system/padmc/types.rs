@@ -1,8 +1,8 @@
 use crate::types::{
     fifo::Fifo,
     memory::*,
+    exclusive_state::ExclusiveState,
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -10,6 +10,7 @@ use serde::{
 };
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) tx_enabled: bool,
@@ -31,6 +32,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) rx_fifo: Fifo<u8>,
     pub(crate) tx_fifo: Fifo<u8>,
@@ -38,7 +40,7 @@ pub(crate) struct State {
     pub(crate) mode: B16LevelRegister,
     pub(crate) ctrl: B16EdgeRegister,
     pub(crate) baud_reload: B16LevelRegister,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -50,7 +52,7 @@ impl State {
             mode: B16LevelRegister::new(),
             ctrl: B16EdgeRegister::new(),
             baud_reload: B16LevelRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

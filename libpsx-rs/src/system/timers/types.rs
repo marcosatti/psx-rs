@@ -1,5 +1,5 @@
 use crate::types::memory::*;
-use parking_lot::Mutex;
+use crate::types::exclusive_state::ExclusiveState;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -74,6 +74,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) timer0_count: B32LevelRegister,
     pub(crate) timer0_mode: B32EdgeRegister,
@@ -87,7 +88,7 @@ pub(crate) struct State {
     pub(crate) timer2_mode: B32EdgeRegister,
     pub(crate) timer2_target: B32LevelRegister,
 
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -102,24 +103,7 @@ impl State {
             timer2_count: B32LevelRegister::new(),
             timer2_mode: B32EdgeRegister::new(),
             timer2_target: B32LevelRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
-        }
-    }
-}
-
-impl Clone for State {
-    fn clone(&self) -> Self {
-        State {
-            timer0_count: self.timer0_count.clone(),
-            timer0_mode: self.timer0_mode.clone(),
-            timer0_target: self.timer0_target.clone(),
-            timer1_count: self.timer1_count.clone(),
-            timer1_mode: self.timer1_mode.clone(),
-            timer1_target: self.timer1_target.clone(),
-            timer2_count: self.timer2_count.clone(),
-            timer2_mode: self.timer2_mode.clone(),
-            timer2_target: self.timer2_target.clone(),
-            controller_state: Mutex::new(self.controller_state.lock().clone()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

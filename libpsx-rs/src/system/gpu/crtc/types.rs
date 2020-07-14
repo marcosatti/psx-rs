@@ -1,4 +1,4 @@
-use parking_lot::Mutex;
+use crate::types::exclusive_state::ExclusiveState;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -6,6 +6,7 @@ use serde::{
 };
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) frame_elapsed: f64,
     pub(crate) scanline_elapsed: f64,
@@ -21,14 +22,15 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct Crtc {
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl Crtc {
     pub(crate) fn new() -> Crtc {
         Crtc {
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

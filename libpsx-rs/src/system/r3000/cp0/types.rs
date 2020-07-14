@@ -4,16 +4,13 @@ use crate::{
         types::State as SystemState,
     },
     types::mips1::register::*,
+    types::flag::Flag,
+    types::exclusive_state::ExclusiveState,
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
-};
-use std::sync::atomic::{
-    AtomicBool,
-    Ordering,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -22,40 +19,33 @@ pub(crate) enum IrqLine {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct Interrupt {
-    intc_pending: AtomicBool,
+    intc_pending: Flag,
 }
 
 impl Interrupt {
     pub(crate) fn new() -> Interrupt {
         Interrupt {
-            intc_pending: AtomicBool::new(false),
+            intc_pending: Flag::new(),
         }
     }
 
     pub(crate) fn assert_line(&self, irq_line: IrqLine) {
         match irq_line {
-            IrqLine::Intc => self.intc_pending.store(true, Ordering::Release),
+            IrqLine::Intc => self.intc_pending.store(true),
         }
     }
 
     pub(crate) fn deassert_line(&self, irq_line: IrqLine) {
         match irq_line {
-            IrqLine::Intc => self.intc_pending.store(false, Ordering::Release),
+            IrqLine::Intc => self.intc_pending.store(false),
         }
     }
 
     pub(crate) fn line_interrupted(&self, irq_line: IrqLine) -> bool {
         match irq_line {
-            IrqLine::Intc => self.intc_pending.load(Ordering::Acquire),
-        }
-    }
-}
-
-impl Clone for Interrupt {
-    fn clone(&self) -> Self {
-        Interrupt {
-            intc_pending: AtomicBool::new(self.intc_pending.load(Ordering::Relaxed)),
+            IrqLine::Intc => self.intc_pending.load(),
         }
     }
 }
@@ -93,25 +83,17 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) interrupt: Interrupt,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
     pub(crate) fn new() -> State {
         State {
             interrupt: Interrupt::new(),
-            controller_state: Mutex::new(ControllerState::new()),
-        }
-    }
-}
-
-impl Clone for State {
-    fn clone(&self) -> Self {
-        State {
-            interrupt: self.interrupt.clone(),
-            controller_state: Mutex::new(self.controller_state.lock().clone()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

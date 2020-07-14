@@ -18,6 +18,7 @@ use crate::{
         spu::types::State as SpuState,
         timers::types::State as TimersState,
     },
+    types::flag::Flag,
 };
 use log::info;
 #[cfg(feature = "serialization")]
@@ -29,7 +30,6 @@ use std::{
     fs::File,
     io::Read,
     path::Path,
-    sync::atomic::{AtomicBool, Ordering},
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -45,6 +45,7 @@ pub(crate) struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) r3000: R3000State,
     pub(crate) intc: IntcState,
@@ -60,7 +61,7 @@ pub(crate) struct State {
     /// Needed in order to emulate the fact that the CPU is (almost) stopped when DMA transfers are happening.
     /// The CPU sometimes doesn't use interrupts to determine when to clear the ordering table etc, causing
     /// the DMA controller to read/write garbage if the CPU is allowed to continue to run.
-    pub(crate) bus_locked: AtomicBool,
+    pub(crate) bus_locked: Flag,
 }
 
 impl State {
@@ -75,7 +76,7 @@ impl State {
             gpu: GpuState::new(),
             cdrom: CdromState::new(),
             padmc: PadmcState::new(),
-            bus_locked: AtomicBool::new(false),
+            bus_locked: Flag::new(),
         })
     }
 
@@ -89,22 +90,5 @@ impl State {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
         state.memory.bios.write_raw(0, &buffer);
-    }
-}
-
-impl Clone for State {
-    fn clone(&self) -> Self {
-        State {
-            r3000: self.r3000.clone(),
-            intc: self.intc.clone(),
-            dmac: self.dmac.clone(),
-            timers: self.timers.clone(),
-            spu: self.spu.clone(),
-            memory: self.memory.clone(),
-            gpu: self.gpu.clone(),
-            cdrom: self.cdrom.clone(),
-            padmc: self.padmc.clone(),
-            bus_locked: AtomicBool::new(self.bus_locked.load(Ordering::Relaxed)),
-        }
     }
 }

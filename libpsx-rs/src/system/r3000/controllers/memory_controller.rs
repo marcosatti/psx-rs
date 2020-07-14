@@ -6,7 +6,6 @@ use crate::system::{
     },
     types::State,
 };
-use std::sync::atomic::Ordering;
 
 pub(crate) fn translate_address(va: u32) -> u32 {
     match va {
@@ -26,7 +25,7 @@ pub(crate) fn translate_address(va: u32) -> u32 {
 
 pub(crate) fn read_u8(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u8, Hazard> {
     let result = {
-        if state.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load() {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
@@ -43,7 +42,7 @@ pub(crate) fn read_u8(state: &State, r3000_state: &ControllerState, physical_add
 
 pub(crate) fn write_u8(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u8) -> Result<(), Hazard> {
     let result = {
-        if state.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load() {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
@@ -60,7 +59,7 @@ pub(crate) fn write_u8(state: &State, r3000_state: &ControllerState, physical_ad
 
 pub(crate) fn read_u16(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u16, Hazard> {
     let result = {
-        if state.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load() {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
@@ -77,7 +76,7 @@ pub(crate) fn read_u16(state: &State, r3000_state: &ControllerState, physical_ad
 
 pub(crate) fn write_u16(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u16) -> Result<(), Hazard> {
     let result = {
-        if state.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load() {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 
@@ -94,7 +93,7 @@ pub(crate) fn write_u16(state: &State, r3000_state: &ControllerState, physical_a
 
 pub(crate) fn read_u32(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u32, Hazard> {
     let result = {
-        if state.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load() {
             return Err(Hazard::BusLockedMemoryRead(physical_address));
         }
 
@@ -111,7 +110,7 @@ pub(crate) fn read_u32(state: &State, r3000_state: &ControllerState, physical_ad
 
 pub(crate) fn write_u32(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u32) -> Result<(), Hazard> {
     let result = {
-        if state.bus_locked.load(Ordering::Acquire) {
+        if state.bus_locked.load() {
             return Err(Hazard::BusLockedMemoryWrite(physical_address));
         }
 

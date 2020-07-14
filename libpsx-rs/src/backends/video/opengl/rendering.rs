@@ -2,6 +2,7 @@ use opengl_sys::*;
 
 pub(crate) static mut WINDOW_FBO: GLuint = 0;
 pub(crate) static mut SCENE_FBO: GLuint = 0;
+pub(crate) static mut SCENE_TEXTURE: GLuint = 0;
 
 // TODO: use const generics...
 pub(crate) struct ProgramContext {

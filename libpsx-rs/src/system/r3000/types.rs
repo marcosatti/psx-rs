@@ -18,8 +18,8 @@ use crate::{
         instruction::Instruction,
         register::*,
     },
+    types::exclusive_state::ExclusiveState,
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -88,10 +88,11 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) cp0: Cp0State,
     pub(crate) cp2: Cp2State,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -99,17 +100,7 @@ impl State {
         State {
             cp0: Cp0State::new(),
             cp2: Cp2State::new(),
-            controller_state: Mutex::new(ControllerState::new()),
-        }
-    }
-}
-
-impl Clone for State {
-    fn clone(&self) -> Self {
-        State {
-            cp0: self.cp0.clone(),
-            cp2: self.cp2.clone(),
-            controller_state: Mutex::new(self.controller_state.lock().clone()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

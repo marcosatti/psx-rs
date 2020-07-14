@@ -1,6 +1,6 @@
 use crate::types::memory::*;
 use enum_as_inner::EnumAsInner;
-use parking_lot::Mutex;
+use crate::types::exclusive_state::ExclusiveState;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -157,6 +157,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) dpcr: B32LevelRegister,
     pub(crate) dicr: B32EdgeRegister,
@@ -189,7 +190,7 @@ pub(crate) struct State {
     pub(crate) otc_bcr: B32LevelRegister,
     pub(crate) otc_chcr: B32EdgeRegister,
 
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -218,38 +219,7 @@ impl State {
             otc_madr: B32LevelRegister::new(),
             otc_bcr: B32LevelRegister::new(),
             otc_chcr: B32EdgeRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
-        }
-    }
-}
-
-impl Clone for State {
-    fn clone(&self) -> Self {
-        State {
-            dpcr: self.dpcr.clone(),
-            dicr: self.dicr.clone(),
-            mdecin_madr: self.mdecin_madr.clone(),
-            mdecin_bcr: self.mdecin_bcr.clone(),
-            mdecin_chcr: self.mdecin_chcr.clone(),
-            mdecout_madr: self.mdecout_madr.clone(),
-            mdecout_bcr: self.mdecout_bcr.clone(),
-            mdecout_chcr: self.mdecout_chcr.clone(),
-            gpu_madr: self.gpu_madr.clone(),
-            gpu_bcr: self.gpu_bcr.clone(),
-            gpu_chcr: self.gpu_chcr.clone(),
-            cdrom_madr: self.cdrom_madr.clone(),
-            cdrom_bcr: self.cdrom_bcr.clone(),
-            cdrom_chcr: self.cdrom_chcr.clone(),
-            spu_madr: self.spu_madr.clone(),
-            spu_bcr: self.spu_bcr.clone(),
-            spu_chcr: self.spu_chcr.clone(),
-            pio_madr: self.pio_madr.clone(),
-            pio_bcr: self.pio_bcr.clone(),
-            pio_chcr: self.pio_chcr.clone(),
-            otc_madr: self.otc_madr.clone(),
-            otc_bcr: self.otc_bcr.clone(),
-            otc_chcr: self.otc_chcr.clone(),
-            controller_state: Mutex::new(self.controller_state.lock().clone()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

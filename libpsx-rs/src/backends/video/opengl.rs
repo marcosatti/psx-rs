@@ -27,10 +27,10 @@ pub(crate) fn setup(backend_params: &BackendParams) {
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
         glDebugMessageCallbackARB(Some(debug::debug_callback), std::ptr::null());
 
-        // Create off-screen FBO. The CRTC controller will handle rendering to the default (window) FBO.
         let mut window_fbo = 0;
         glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut window_fbo);
-        rendering::WINDOW_FBO = window_fbo as GLuint;
+
+        // Create off-screen FBO. The CRTC controller will handle rendering to the default (window) FBO.
         let mut scene_fbo = 0;
         glGenFramebuffers(1, &mut scene_fbo);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, scene_fbo);
@@ -48,7 +48,11 @@ pub(crate) fn setup(backend_params: &BackendParams) {
         // Attach images to FBO.
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_texture, 0);
         assert!(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+        // Save state.
+        rendering::WINDOW_FBO = window_fbo as GLuint;
         rendering::SCENE_FBO = scene_fbo as GLuint;
+        rendering::SCENE_TEXTURE = color_texture as GLuint;
 
         // Other.
         glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -69,19 +73,9 @@ pub(crate) fn teardown(backend_params: &BackendParams) {
 
     unsafe {
         if INITIALIZED {
-            // Delete color texture.
-            let mut param = 0;
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &mut param);
-            assert!(param == (GL_TEXTURE as GLint));
-            glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut param);
-            let color_texture = param as GLuint;
-            glDeleteTextures(1, &color_texture);
-
-            // Delete FBO.
-            let mut fbo_int = 0;
-            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo_int);
-            let fbo = fbo_int as GLuint;
-            glDeleteFramebuffers(1, &fbo);
+            // Delete framebuffer resources and reset back to default.
+            glDeleteTextures(1, &rendering::SCENE_TEXTURE);
+            glDeleteFramebuffers(1, &rendering::SCENE_FBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rendering::WINDOW_FBO);
 
             // Debug.
