@@ -1,20 +1,18 @@
 use crate::{
     system::intc::constants::*,
-    types::memory::*,
+    types::{
+        exclusive_state::ExclusiveState,
+        flag::Flag,
+        memory::*,
+    },
     utilities::bool_to_flag,
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
 };
-use std::sync::atomic::{
-    AtomicBool,
-    Ordering,
-};
 
-#[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum Line {
     Vblank,
@@ -31,50 +29,51 @@ pub(crate) enum Line {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct Stat {
-    vblank: AtomicBool,
-    gpu: AtomicBool,
-    cdrom: AtomicBool,
-    dma: AtomicBool,
-    tmr0: AtomicBool,
-    tmr1: AtomicBool,
-    tmr2: AtomicBool,
-    padmc: AtomicBool,
-    sio: AtomicBool,
-    spu: AtomicBool,
-    pio: AtomicBool,
+    vblank: Flag,
+    gpu: Flag,
+    cdrom: Flag,
+    dma: Flag,
+    tmr0: Flag,
+    tmr1: Flag,
+    tmr2: Flag,
+    padmc: Flag,
+    sio: Flag,
+    spu: Flag,
+    pio: Flag,
 }
 
 impl Stat {
     pub(crate) fn new() -> Stat {
         Stat {
-            vblank: AtomicBool::new(false),
-            gpu: AtomicBool::new(false),
-            cdrom: AtomicBool::new(false),
-            dma: AtomicBool::new(false),
-            tmr0: AtomicBool::new(false),
-            tmr1: AtomicBool::new(false),
-            tmr2: AtomicBool::new(false),
-            padmc: AtomicBool::new(false),
-            sio: AtomicBool::new(false),
-            spu: AtomicBool::new(false),
-            pio: AtomicBool::new(false),
+            vblank: Flag::new(),
+            gpu: Flag::new(),
+            cdrom: Flag::new(),
+            dma: Flag::new(),
+            tmr0: Flag::new(),
+            tmr1: Flag::new(),
+            tmr2: Flag::new(),
+            padmc: Flag::new(),
+            sio: Flag::new(),
+            spu: Flag::new(),
+            pio: Flag::new(),
         }
     }
 
     pub(crate) fn assert_line(&self, line: Line) {
         match line {
-            Line::Vblank => self.vblank.store(true, Ordering::Release),
-            Line::Gpu => self.gpu.store(true, Ordering::Release),
-            Line::Cdrom => self.cdrom.store(true, Ordering::Release),
-            Line::Dma => self.dma.store(true, Ordering::Release),
-            Line::Tmr0 => self.tmr0.store(true, Ordering::Release),
-            Line::Tmr1 => self.tmr1.store(true, Ordering::Release),
-            Line::Tmr2 => self.tmr2.store(true, Ordering::Release),
-            Line::Padmc => self.padmc.store(true, Ordering::Release),
-            Line::Sio => self.sio.store(true, Ordering::Release),
-            Line::Spu => self.spu.store(true, Ordering::Release),
-            Line::Pio => self.pio.store(true, Ordering::Release),
+            Line::Vblank => self.vblank.store(true),
+            Line::Gpu => self.gpu.store(true),
+            Line::Cdrom => self.cdrom.store(true),
+            Line::Dma => self.dma.store(true),
+            Line::Tmr0 => self.tmr0.store(true),
+            Line::Tmr1 => self.tmr1.store(true),
+            Line::Tmr2 => self.tmr2.store(true),
+            Line::Padmc => self.padmc.store(true),
+            Line::Sio => self.sio.store(true),
+            Line::Spu => self.spu.store(true),
+            Line::Pio => self.pio.store(true),
         }
     }
 
@@ -83,17 +82,17 @@ impl Stat {
             let acknowledged = ((acknowledge_mask >> i) & 1) == 0;
             if acknowledged {
                 match i {
-                    0 => self.vblank.store(false, Ordering::Release),
-                    1 => self.gpu.store(false, Ordering::Release),
-                    2 => self.cdrom.store(false, Ordering::Release),
-                    3 => self.dma.store(false, Ordering::Release),
-                    4 => self.tmr0.store(false, Ordering::Release),
-                    5 => self.tmr1.store(false, Ordering::Release),
-                    6 => self.tmr2.store(false, Ordering::Release),
-                    7 => self.padmc.store(false, Ordering::Release),
-                    8 => self.sio.store(false, Ordering::Release),
-                    9 => self.spu.store(false, Ordering::Release),
-                    10 => self.pio.store(false, Ordering::Release),
+                    0 => self.vblank.store(false),
+                    1 => self.gpu.store(false),
+                    2 => self.cdrom.store(false),
+                    3 => self.dma.store(false),
+                    4 => self.tmr0.store(false),
+                    5 => self.tmr1.store(false),
+                    6 => self.tmr2.store(false),
+                    7 => self.padmc.store(false),
+                    8 => self.sio.store(false),
+                    9 => self.spu.store(false),
+                    10 => self.pio.store(false),
                     // Ignore (always zero).
                     _ => {},
                 }
@@ -103,17 +102,17 @@ impl Stat {
 
     pub(crate) fn value(&self) -> u32 {
         let mut value = 0;
-        value = VBLANK.insert_into(value, bool_to_flag(self.vblank.load(Ordering::Acquire)));
-        value = GPU.insert_into(value, bool_to_flag(self.gpu.load(Ordering::Acquire)));
-        value = CDROM.insert_into(value, bool_to_flag(self.cdrom.load(Ordering::Acquire)));
-        value = DMA.insert_into(value, bool_to_flag(self.dma.load(Ordering::Acquire)));
-        value = TMR0.insert_into(value, bool_to_flag(self.tmr0.load(Ordering::Acquire)));
-        value = TMR1.insert_into(value, bool_to_flag(self.tmr1.load(Ordering::Acquire)));
-        value = TMR2.insert_into(value, bool_to_flag(self.tmr2.load(Ordering::Acquire)));
-        value = PADMC.insert_into(value, bool_to_flag(self.padmc.load(Ordering::Acquire)));
-        value = SIO.insert_into(value, bool_to_flag(self.sio.load(Ordering::Acquire)));
-        value = SPU.insert_into(value, bool_to_flag(self.spu.load(Ordering::Acquire)));
-        value = PIO.insert_into(value, bool_to_flag(self.pio.load(Ordering::Acquire)));
+        value = VBLANK.insert_into(value, bool_to_flag(self.vblank.load()));
+        value = GPU.insert_into(value, bool_to_flag(self.gpu.load()));
+        value = CDROM.insert_into(value, bool_to_flag(self.cdrom.load()));
+        value = DMA.insert_into(value, bool_to_flag(self.dma.load()));
+        value = TMR0.insert_into(value, bool_to_flag(self.tmr0.load()));
+        value = TMR1.insert_into(value, bool_to_flag(self.tmr1.load()));
+        value = TMR2.insert_into(value, bool_to_flag(self.tmr2.load()));
+        value = PADMC.insert_into(value, bool_to_flag(self.padmc.load()));
+        value = SIO.insert_into(value, bool_to_flag(self.sio.load()));
+        value = SPU.insert_into(value, bool_to_flag(self.spu.load()));
+        value = PIO.insert_into(value, bool_to_flag(self.pio.load()));
         value
     }
 
@@ -137,6 +136,7 @@ impl Stat {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
 }
@@ -150,8 +150,9 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
     pub(crate) stat: Stat,
     pub(crate) mask: B32LevelRegister,
 }
@@ -159,7 +160,7 @@ pub(crate) struct State {
 impl State {
     pub(crate) fn new() -> State {
         State {
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
             stat: Stat::new(),
             mask: B32LevelRegister::new(),
         }

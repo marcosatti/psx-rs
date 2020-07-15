@@ -17,7 +17,6 @@ use crate::{
     },
     types::bitfield::Bitfield,
 };
-use std::sync::atomic::Ordering;
 
 pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
     const ADDRESS: Bitfield = Bitfield::new(0, 24);
@@ -97,7 +96,7 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
         return Ok(());
     }
 
-    state.bus_locked.store(true, Ordering::SeqCst);
+    state.bus_locked.store_barrier(true);
 
     let mut finished = false;
     while *ticks_remaining > 0 {
@@ -122,7 +121,7 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
             panic!("Invalid sync mode");
         }
         .map_err(|_| {
-            state.bus_locked.store(false, Ordering::Release);
+            state.bus_locked.store(false);
         })?;
 
         if finished {
@@ -134,7 +133,7 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
         handle_transfer_finalization(state, transfer_state, channel_id);
         transfer_state.started = false;
         handle_irq_trigger(controller_state, channel_id);
-        state.bus_locked.store(false, Ordering::Release);
+        state.bus_locked.store(false);
     }
 
     Ok(())

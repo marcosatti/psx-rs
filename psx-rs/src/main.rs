@@ -8,6 +8,7 @@ use libpsx_rs::{
 use sdl2::{
     video::GLProfile,
     EventPump,
+    video::Window,
 };
 use std::{
     env::args,
@@ -51,19 +52,19 @@ fn main() {
     gl_attr.set_context_version(3, 3);
     gl_attr.set_double_buffer(false);
     gl_attr.set_context_flags().debug().set();
-    let mut window = video_subsystem.window("psx-rs: Running", 1024, 512).position_centered().opengl().build().unwrap();
+    let mut window = video_subsystem.window("psx-rs: Running", 1024, 512).position_centered().resizable().allow_highdpi().opengl().build().unwrap();
     log::info!("SDL initialized");
 
-    // Initialize video
+    // Initialize video.
     let video_backend = backend::initialize_video_backend(config.video_backend_kind, &window);
 
-    // Initialize audio
+    // Initialize audio.
     let audio_backend = backend::initialize_audio_backend(config.audio_backend_kind);
 
-    // Initialize CDROM
+    // Initialize CDROM.
     let cdrom_backend = backend::initialize_cdrom_backend(config.cdrom_backend_kind);
 
-    // Initialize psx_rs core
+    // Initialize psx-rs core.
     let core_config = CoreConfig {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".to_owned(),
@@ -74,7 +75,7 @@ fn main() {
         worker_threads: config.worker_threads,
     };
 
-    main_inner(&mut event_pump, core_config);
+    main_inner(&window, &mut event_pump, config, core_config);
 
     if config.pause_on_exit {
         window.set_title("psx-rs: Stopped").unwrap();
@@ -91,13 +92,13 @@ fn main() {
         }
     }
 
-    // CDROM teardown
+    // CDROM teardown.
     backend::terminate_cdrom_backend(config.cdrom_backend_kind);
 
-    // Audio teardown
+    // Audio teardown.
     backend::terminate_audio_backend(config.audio_backend_kind);
 
-    // Video teardown
+    // Video teardown.
     backend::terminate_video_backend(config.video_backend_kind);
 }
 
@@ -118,8 +119,8 @@ fn setup_logger(log_file_path: &Path) {
         .unwrap();
 }
 
-fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
-    let mut core = Core::new(config);
+fn main_inner(window: &Window, event_pump: &mut EventPump, config: config::Config, core_config: CoreConfig) {
+    let mut core = Core::new(core_config);
     log::info!("Core initialized");
 
     match args().nth(1) {
@@ -147,6 +148,15 @@ fn main_inner(event_pump: &mut EventPump, config: CoreConfig) {
                             handle_keycode(key, &mut core);
                         }
                     },
+                    sdl2::event::Event::Window { win_event, .. } => {
+                        if let sdl2::event::WindowEvent::Resized(_, _) = win_event {
+                            let (width, height) = window.drawable_size();
+                            let width = width as usize;
+                            let height = height as usize;
+                            log::info!("Resizing to {}x{}", width, height);
+                            backend::on_resize_window(config.video_backend_kind, window, width, height);
+                        }
+                    }
                     _ => {},
                 }
             }

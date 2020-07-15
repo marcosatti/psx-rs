@@ -1,8 +1,8 @@
 use crate::types::{
+    exclusive_state::ExclusiveState,
     fifo::Fifo,
     memory::*,
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -11,6 +11,7 @@ use serde::{
 use std::collections::VecDeque;
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     // Synchronization state.
     pub(crate) clock: f64,
@@ -53,6 +54,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) status: B8LevelRegister,
     pub(crate) response: Fifo<u8>,
@@ -62,7 +64,7 @@ pub(crate) struct State {
     pub(crate) interrupt_enable: B8LevelRegister,
     pub(crate) interrupt_flag: B8EdgeRegister,
     pub(crate) request: B8EdgeRegister,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -76,7 +78,7 @@ impl State {
             interrupt_enable: B8LevelRegister::new(),
             interrupt_flag: B8EdgeRegister::new(),
             request: B8EdgeRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

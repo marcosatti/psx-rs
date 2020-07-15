@@ -1,6 +1,13 @@
 use opengl_sys::*;
 
 pub(crate) static mut WINDOW_FBO: GLuint = 0;
+pub(crate) static mut SCENE_FBO: GLuint = 0;
+pub(crate) static mut SCENE_TEXTURE: GLuint = 0;
+/// Used as a copy of the current scene texture as a source texture when rendering.
+/// (Sampling the scene texture whilst also bound to the current FBO is undefined behaviour.)
+pub(crate) static mut SCENE_COPY_TEXTURE: GLuint = 0;
+pub(crate) static mut SCENE_TEXTURE_WIDTH: GLint = 0;
+pub(crate) static mut SCENE_TEXTURE_HEIGHT: GLint = 0;
 
 // TODO: use const generics...
 pub(crate) struct ProgramContext {

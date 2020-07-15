@@ -3,6 +3,8 @@
 pub mod backends;
 pub(crate) mod debug;
 pub(crate) mod executor;
+#[cfg(feature = "serialization")]
+pub(crate) mod serialization;
 pub(crate) mod system;
 pub(crate) mod types;
 pub(crate) mod utilities;
@@ -37,9 +39,6 @@ use std::{
 };
 use system::types::ControllerContext;
 
-#[cfg(feature = "serialization")]
-const SAVE_STATE_DEFAULT_NAME: &'static str = "save_state_default.bin.zst";
-
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,
     pub bios_filename: String,
@@ -51,8 +50,8 @@ pub struct Config<'a: 'b, 'b> {
 }
 
 pub struct Core<'a: 'b, 'b> {
-    state: Box<State>,
-    config: Config<'a, 'b>,
+    pub(crate) state: Box<State>,
+    pub(crate) config: Config<'a, 'b>,
     executor: Executor,
 }
 
@@ -108,35 +107,12 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
     #[cfg(feature = "serialization")]
     pub fn save_state(&self, name: Option<&str>) -> Result<(), String> {
-        log::warn!("GPU framebuffer serialization not implemented, use with caution");
-
-        let name = name.unwrap_or(SAVE_STATE_DEFAULT_NAME);
-        let mut path = self.config.workspace_path.join(r"saves/");
-        std::fs::create_dir_all(&path).unwrap();
-        path = path.join(name);
-        let file = std::fs::File::create(path).map_err(|e| format!("Unable to create save state file: {}", e))?;
-
-        {
-            let file = file.try_clone().map_err(|e| format!("Unable to create save state file: {}", e))?;
-            let zstd_stream = zstd::Encoder::new(file, 0).map_err(|e| format!("Unable to make zstd stream: {}", e))?;
-            let zstd_stream = zstd_stream.auto_finish();
-            bincode::serialize_into(zstd_stream, &self.state).map_err(|e| format!("Error occurred serializing machine state: {}", e))?;
-        }
-
-        file.sync_all().map_err(|e| format!("Error writing to save file: {}", e))
+        serialization::save_state(self, name)
     }
 
     #[cfg(feature = "serialization")]
     pub fn load_state(&mut self, name: Option<&str>) -> Result<(), String> {
-        let name = name.unwrap_or(SAVE_STATE_DEFAULT_NAME);
-        let path = self.config.workspace_path.join(r"saves/").join(name);
-        let file = std::fs::File::open(path).map_err(|e| format!("Unable to open save state file: {}", e))?;
-
-        let zstd_stream = zstd::Decoder::new(file).map_err(|e| format!("Unable to make zstd stream: {}", e))?;
-        let mut state = bincode::deserialize_from(zstd_stream).map_err(|e| format!("Error occurred deserializing machine state: {}", e).to_owned())?;
-        std::mem::swap(self.state.as_mut(), &mut state);
-
-        Ok(())
+        serialization::load_state(self, name)
     }
 }
 

@@ -1,5 +1,7 @@
-use crate::types::memory::*;
-use parking_lot::Mutex;
+use crate::types::{
+    exclusive_state::ExclusiveState,
+    memory::*,
+};
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -22,6 +24,7 @@ pub(crate) enum ClockSource {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct TimerState {
     pub(crate) clock: f64,
     pub(crate) reset_on_target: bool,
@@ -55,6 +58,7 @@ impl TimerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) timer0_state: TimerState,
     pub(crate) timer1_state: TimerState,
@@ -72,6 +76,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) timer0_count: B32LevelRegister,
     pub(crate) timer0_mode: B32EdgeRegister,
@@ -85,7 +90,7 @@ pub(crate) struct State {
     pub(crate) timer2_mode: B32EdgeRegister,
     pub(crate) timer2_target: B32LevelRegister,
 
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -100,7 +105,7 @@ impl State {
             timer2_count: B32LevelRegister::new(),
             timer2_mode: B32EdgeRegister::new(),
             timer2_target: B32LevelRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

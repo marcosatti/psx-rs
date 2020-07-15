@@ -1,11 +1,11 @@
 use crate::{
     system::gpu::crtc::types::Crtc,
     types::{
+        exclusive_state::ExclusiveState,
         fifo::Fifo,
         memory::*,
     },
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -32,6 +32,7 @@ pub(crate) enum ClutMode {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
@@ -98,13 +99,14 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) crtc: Crtc,
     pub(crate) gp0: Fifo<u32>,
     pub(crate) read: Fifo<u32>,
     pub(crate) gp1: B32EdgeRegister,
     pub(crate) stat: B32LevelRegister,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -115,7 +117,7 @@ impl State {
             read: Fifo::new(2048),
             gp1: B32EdgeRegister::new(),
             stat: B32LevelRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

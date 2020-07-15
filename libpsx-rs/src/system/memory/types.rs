@@ -9,6 +9,7 @@ use serde::{
 };
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) main_memory: B8Memory,
     pub(crate) bios: B8Memory,

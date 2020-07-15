@@ -1,6 +1,8 @@
-use crate::types::memory::*;
+use crate::types::{
+    exclusive_state::ExclusiveState,
+    memory::*,
+};
 use enum_as_inner::EnumAsInner;
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -115,6 +117,7 @@ impl LinkedListState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
@@ -156,6 +159,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) dpcr: B32LevelRegister,
     pub(crate) dicr: B32EdgeRegister,
@@ -188,7 +192,7 @@ pub(crate) struct State {
     pub(crate) otc_bcr: B32LevelRegister,
     pub(crate) otc_chcr: B32EdgeRegister,
 
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -217,7 +221,7 @@ impl State {
             otc_madr: B32LevelRegister::new(),
             otc_bcr: B32LevelRegister::new(),
             otc_chcr: B32EdgeRegister::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

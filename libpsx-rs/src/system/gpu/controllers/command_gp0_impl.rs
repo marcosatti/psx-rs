@@ -17,6 +17,7 @@ use crate::{
         color::Color,
         geometry::*,
     },
+    utilities::array::flip_rows,
 };
 
 pub(crate) fn command_00_length(_data: &[u32]) -> Option<usize> {
@@ -47,10 +48,10 @@ pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut Control
     let size = extract_size_normalized(data[2], default_fill_x_size_modifier, default_fill_y_size_modifier);
 
     let positions = [
-        Point2D::new(base_point.x, base_point.y),
-        Point2D::new(base_point.x + size.width, base_point.y),
         Point2D::new(base_point.x, base_point.y - size.height),
         Point2D::new(base_point.x + size.width, base_point.y - size.height),
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
     let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color);
@@ -191,13 +192,14 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = controller_state.clut_mode;
     let texpage_base = Point2D::new(controller_state.texpage_base_x, controller_state.texpage_base_y);
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
+    let texcoords = [texcoords[2], texcoords[3], texcoords[0], texcoords[1]];
     let _clut = extract_clut_base_normalized(data[2]);
 
     let positions: [Point2D<f32, Normalized>; 4] = [
-        Point2D::new(base_point.x, base_point.y),
-        Point2D::new(base_point.x + size.width, base_point.y),
         Point2D::new(base_point.x, base_point.y - size.height),
         Point2D::new(base_point.x + size.width, base_point.y - size.height),
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
     let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
@@ -241,13 +243,13 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
     let texture_height = Bitfield::new(16, 16).extract_from(data[2]) as usize;
 
     let positions: [Point2D<f32, Normalized>; 4] = [
-        Point2D::new(base_point.x, base_point.y),
-        Point2D::new(base_point.x + size.width, base_point.y),
         Point2D::new(base_point.x, base_point.y - size.height),
         Point2D::new(base_point.x + size.width, base_point.y - size.height),
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let texcoords: [Point2D<f32, Normalized>; 4] = [Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0), Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0)];
+    let texcoords: [Point2D<f32, Normalized>; 4] = [Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0), Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0)];
 
     // TODO: This is not a proper way to implement this command - the halfwords do not strictly represent pixels (16-bit
     // colors / 5-5-5-1 colors). However, the command addresses the VRAM (and incoming data) as 16-bit units through
@@ -255,17 +257,10 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
     // on... gives correct result for now. Hope this makes sense.... :/
 
     let mut texture_colors = Vec::with_capacity((data.len() - 3) * 2);
-    let color_bitfields = [Bitfield::new(0, 16), Bitfield::new(16, 16)];
     for i in 3..data.len() {
-        for field in color_bitfields.iter() {
-            let packed_16 = field.extract_from(data[i]);
-            let r = ((Bitfield::new(0, 5).extract_from(packed_16) * 255) / 31) as u8;
-            let g = ((Bitfield::new(5, 5).extract_from(packed_16) * 255) / 31) as u8;
-            let b = ((Bitfield::new(10, 5).extract_from(packed_16) * 255) / 31) as u8;
-            // let mask = if Bitfield::new(15, 1).extract_from(packed_16) != 0 { std::u8::MAX } else { 0 };
-            let mask = std::u8::MAX;
-            texture_colors.push(Color::new(r, g, b, mask));
-        }
+        let colors = Color::from_packed_5551_x2(data[i]);
+        texture_colors.push(colors[0]);
+        texture_colors.push(colors[1]);
     }
 
     let _ = backend_dispatch::draw_polygon_4_textured(video_backend, positions, texcoords, texture_width, texture_height, &texture_colors);
@@ -278,35 +273,34 @@ pub(crate) fn command_c0_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_c0_handler(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
     debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
-    let origin = extract_point(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
-    let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier);
+    let pixel_origin = extract_point(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
+    let pixel_size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier);
 
-    let count = size.width * size.height;
-
-    if count == 0 {
-        panic!("Empty size - what happens? ({:?})", size);
-    }
-
+    let count = pixel_size.width as usize * pixel_size.height as usize;
+    assert!(count != 0, format!("Empty count (area) - what happens? ({:?})", pixel_size));
     let fifo_words = (count + 1) / 2;
 
-    let mut data = backend_dispatch::read_framebuffer_5551(video_backend, origin, size).unwrap_or_else(|_| unimplemented!());
+    let mut origin = normalize_point(pixel_origin);
+    let size = normalize_size(pixel_size);
+    origin.y = origin.y - size.height;
 
-    // Data is to be packed from 2 x u16 into u32.
-    // Pad the last u16 if its an odd amount.
+    let data = backend_dispatch::read_framebuffer_5551(video_backend, origin, size).unwrap_or_else(|_| unimplemented!());
+    let mut data = flip_rows(&data, pixel_size.width as usize);
+    assert!(data.len() == count, format!("Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", count, data.len()));
+
+    // Data is to be packed from 2 x u16 into u32. Pad the last u16 if its an odd amount.
     if data.len() % 2 != 0 {
         data.push(0);
     }
 
     state.gpu.read.clear();
-
-    let read_buffer = &mut controller_state.gp0_read_buffer;
-    read_buffer.clear();
-
+    controller_state.gp0_read_buffer.clear();
+    
     for i in 0..fifo_words {
         let mut word: u32 = 0;
-        word = Bitfield::new(0, 16).insert_into(word, data[(i * 2) as usize] as u32);
-        word = Bitfield::new(16, 16).insert_into(word, data[(i * 2 + 1) as usize] as u32);
-        read_buffer.push_back(word)
+        word = Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
+        word = Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
+        controller_state.gp0_read_buffer.push_back(word)
     }
 }
 

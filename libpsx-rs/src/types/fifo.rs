@@ -3,7 +3,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use spsc_ringbuffer::SpscRingbuffer as QueueImpl;
+use spsc_ringbuffer::SpscRingbuffer;
 use std::fmt::{
     Display,
     UpperHex,
@@ -11,10 +11,11 @@ use std::fmt::{
 
 /// SPSC FIFO
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct Fifo<T>
 where T: Copy + Default
 {
-    fifo: QueueImpl<T>,
+    fifo: SpscRingbuffer<T>,
 }
 
 impl<T> Fifo<T>
@@ -22,7 +23,7 @@ where T: Copy + Default + Display + UpperHex
 {
     pub(crate) fn new(size: usize) -> Fifo<T> {
         Fifo {
-            fifo: QueueImpl::new(size),
+            fifo: SpscRingbuffer::new(size),
         }
     }
 
@@ -38,7 +39,6 @@ where T: Copy + Default + Display + UpperHex
         self.fifo.read_available()
     }
 
-    #[allow(dead_code)]
     pub(crate) fn write_available(&self) -> usize {
         self.fifo.write_available()
     }

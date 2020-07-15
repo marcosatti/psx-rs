@@ -3,17 +3,16 @@ use crate::{
         r3000::cp0::constants::*,
         types::State as SystemState,
     },
-    types::mips1::register::*,
+    types::{
+        exclusive_state::ExclusiveState,
+        flag::Flag,
+        mips1::register::*,
+    },
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
-};
-use std::sync::atomic::{
-    AtomicBool,
-    Ordering,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -22,37 +21,39 @@ pub(crate) enum IrqLine {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct Interrupt {
-    intc_pending: AtomicBool,
+    intc_pending: Flag,
 }
 
 impl Interrupt {
     pub(crate) fn new() -> Interrupt {
         Interrupt {
-            intc_pending: AtomicBool::new(false),
+            intc_pending: Flag::new(),
         }
     }
 
     pub(crate) fn assert_line(&self, irq_line: IrqLine) {
         match irq_line {
-            IrqLine::Intc => self.intc_pending.store(true, Ordering::Release),
+            IrqLine::Intc => self.intc_pending.store(true),
         }
     }
 
     pub(crate) fn deassert_line(&self, irq_line: IrqLine) {
         match irq_line {
-            IrqLine::Intc => self.intc_pending.store(false, Ordering::Release),
+            IrqLine::Intc => self.intc_pending.store(false),
         }
     }
 
     pub(crate) fn line_interrupted(&self, irq_line: IrqLine) -> bool {
         match irq_line {
-            IrqLine::Intc => self.intc_pending.load(Ordering::Acquire),
+            IrqLine::Intc => self.intc_pending.load(),
         }
     }
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) bpc: Register,
     pub(crate) bda: Register,
@@ -84,16 +85,17 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) interrupt: Interrupt,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
     pub(crate) fn new() -> State {
         State {
             interrupt: Interrupt::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

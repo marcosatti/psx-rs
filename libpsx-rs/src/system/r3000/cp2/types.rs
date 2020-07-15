@@ -1,15 +1,16 @@
-use crate::types::mips1::{
-    instruction::Instruction,
-    register::*,
+use crate::types::{
+    exclusive_state::ExclusiveState,
+    mips1::{
+        instruction::Instruction,
+        register::*,
+    },
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
 };
 
-#[allow(dead_code)]
 pub(crate) enum MultiplyMatrix {
     Rotation,
     Light,
@@ -17,7 +18,6 @@ pub(crate) enum MultiplyMatrix {
     Reserved,
 }
 
-#[allow(dead_code)]
 pub(crate) enum MultiplyVector {
     V0,
     V1,
@@ -25,7 +25,6 @@ pub(crate) enum MultiplyVector {
     IR,
 }
 
-#[allow(dead_code)]
 pub(crate) enum TranslationVector {
     TR,
     BK,
@@ -44,7 +43,6 @@ impl GteInstruction {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn fake(&self) -> usize {
         ((self.instruction.value >> 20) & 0x1F) as usize
     }
@@ -53,7 +51,6 @@ impl GteInstruction {
         ((self.instruction.value >> 19) & 0x1) > 0
     }
 
-    #[allow(dead_code)]
     pub(crate) fn mvmva_mm(&self) -> MultiplyMatrix {
         match (self.instruction.value >> 17) & 0x3 {
             0 => MultiplyMatrix::Rotation,
@@ -64,7 +61,6 @@ impl GteInstruction {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn mvmva_mv(&self) -> MultiplyVector {
         match (self.instruction.value >> 15) & 0x3 {
             0 => MultiplyVector::V0,
@@ -75,7 +71,6 @@ impl GteInstruction {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn mvmva_tv(&self) -> TranslationVector {
         match (self.instruction.value >> 13) & 0x3 {
             0 => TranslationVector::TR,
@@ -90,13 +85,13 @@ impl GteInstruction {
         ((self.instruction.value >> 10) & 0x1) > 0
     }
 
-    #[allow(dead_code)]
     pub(crate) fn cmd(&self) -> usize {
         (self.instruction.value & 0x1F) as usize
     }
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     /// Data registers.
     pub(crate) gd: [Register; 32],
@@ -114,14 +109,15 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
     pub(crate) fn new() -> State {
         State {
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

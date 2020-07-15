@@ -13,13 +13,15 @@ use crate::{
         },
         types::State as SystemState,
     },
-    types::mips1::{
-        branch_delay_slot::BranchDelaySlot,
-        instruction::Instruction,
-        register::*,
+    types::{
+        exclusive_state::ExclusiveState,
+        mips1::{
+            branch_delay_slot::BranchDelaySlot,
+            instruction::Instruction,
+            register::*,
+        },
     },
 };
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -64,6 +66,7 @@ pub(crate) type InstResult = Result<(), Hazard>;
 pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) pc: Register,
@@ -87,10 +90,11 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) cp0: Cp0State,
     pub(crate) cp2: Cp2State,
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
 impl State {
@@ -98,7 +102,7 @@ impl State {
         State {
             cp0: Cp0State::new(),
             cp2: Cp2State::new(),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }

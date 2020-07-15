@@ -14,7 +14,7 @@ use serde::{
 };
 pub(crate) use sweep::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct VoiceState {
     /// ADPCM decoding state.
@@ -57,6 +57,7 @@ impl VoiceState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct DacState {
     pub(crate) clock: f64,
     pub(crate) voice0_state: VoiceState,

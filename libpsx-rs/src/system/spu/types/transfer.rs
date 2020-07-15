@@ -14,6 +14,7 @@ pub(crate) enum TransferMode {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct TransferState {
     pub(crate) current_mode: TransferMode,
     pub(crate) current_address: usize,

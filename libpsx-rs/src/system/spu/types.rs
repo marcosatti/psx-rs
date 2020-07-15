@@ -2,11 +2,11 @@ mod dac;
 mod transfer;
 
 use crate::types::{
+    exclusive_state::ExclusiveState,
     fifo::Fifo,
     memory::*,
 };
 pub(crate) use dac::*;
-use parking_lot::Mutex;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -15,6 +15,7 @@ use serde::{
 pub(crate) use transfer::*;
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) enabled: bool,
@@ -38,6 +39,7 @@ impl ControllerState {
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub(crate) struct State {
     pub(crate) main_volume_left: B16LevelRegister,
     pub(crate) main_volume_right: B16LevelRegister,
@@ -62,7 +64,7 @@ pub(crate) struct State {
     pub(crate) extern_volume: B32LevelRegister,
     pub(crate) unknown_1: B32LevelRegister,
 
-    pub(crate) controller_state: Mutex<ControllerState>,
+    pub(crate) controller_state: ExclusiveState<ControllerState>,
 
     pub(crate) dapf1: B16LevelRegister,
     pub(crate) dapf2: B16LevelRegister,
@@ -491,7 +493,7 @@ impl State {
             voice23_cvol: B16LevelRegister::new(),
             voice23_raddr: B16LevelRegister::new(),
             data_fifo: Fifo::new(2048),
-            controller_state: Mutex::new(ControllerState::new()),
+            controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }
 }
