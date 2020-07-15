@@ -13,12 +13,14 @@ use crate::{
         },
         types::State as SystemState,
     },
-    types::mips1::{
-        branch_delay_slot::BranchDelaySlot,
-        instruction::Instruction,
-        register::*,
+    types::{
+        exclusive_state::ExclusiveState,
+        mips1::{
+            branch_delay_slot::BranchDelaySlot,
+            instruction::Instruction,
+            register::*,
+        },
     },
-    types::exclusive_state::ExclusiveState,
 };
 #[cfg(feature = "serialization")]
 use serde::{

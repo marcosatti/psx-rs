@@ -1,7 +1,7 @@
 use crate::types::{
+    exclusive_state::ExclusiveState,
     fifo::Fifo,
     memory::*,
-    exclusive_state::ExclusiveState,
 };
 #[cfg(feature = "serialization")]
 use serde::{

@@ -1,5 +1,7 @@
-use parking_lot::Mutex;
-use parking_lot::MutexGuard;
+use parking_lot::{
+    Mutex,
+    MutexGuard,
+};
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -28,8 +30,7 @@ impl<T> ExclusiveState<T> {
 }
 
 impl<T> Clone for ExclusiveState<T>
-where
-    T: Clone 
+where T: Clone
 {
     fn clone(&self) -> Self {
         ExclusiveState {

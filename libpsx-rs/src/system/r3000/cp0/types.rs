@@ -3,9 +3,11 @@ use crate::{
         r3000::cp0::constants::*,
         types::State as SystemState,
     },
-    types::mips1::register::*,
-    types::flag::Flag,
-    types::exclusive_state::ExclusiveState,
+    types::{
+        exclusive_state::ExclusiveState,
+        flag::Flag,
+        mips1::register::*,
+    },
 };
 #[cfg(feature = "serialization")]
 use serde::{

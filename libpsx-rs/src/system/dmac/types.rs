@@ -1,6 +1,8 @@
-use crate::types::memory::*;
+use crate::types::{
+    exclusive_state::ExclusiveState,
+    memory::*,
+};
 use enum_as_inner::EnumAsInner;
-use crate::types::exclusive_state::ExclusiveState;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,

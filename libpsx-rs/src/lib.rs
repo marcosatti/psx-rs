@@ -3,11 +3,11 @@
 pub mod backends;
 pub(crate) mod debug;
 pub(crate) mod executor;
+#[cfg(feature = "serialization")]
+pub(crate) mod serialization;
 pub(crate) mod system;
 pub(crate) mod types;
 pub(crate) mod utilities;
-#[cfg(feature = "serialization")]
-pub(crate) mod serialization;
 
 use crate::{
     backends::{
@@ -38,7 +38,6 @@ use std::{
     time::Instant,
 };
 use system::types::ControllerContext;
-
 
 pub struct Config<'a: 'b, 'b> {
     pub workspace_path: PathBuf,

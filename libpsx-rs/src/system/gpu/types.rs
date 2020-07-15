@@ -1,11 +1,11 @@
 use crate::{
     system::gpu::crtc::types::Crtc,
     types::{
+        exclusive_state::ExclusiveState,
         fifo::Fifo,
         memory::*,
     },
 };
-use crate::types::exclusive_state::ExclusiveState;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,

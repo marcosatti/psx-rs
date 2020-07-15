@@ -1,3 +1,4 @@
+pub(crate) mod array;
 pub(crate) mod mips1;
 pub(crate) mod numeric;
 pub(crate) mod packed;

@@ -16,6 +16,7 @@ struct TomlConfig {
     pause_on_exit: bool,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct Config {
     pub(crate) audio_backend_kind: AudioBackendKind,
     pub(crate) cdrom_backend_kind: CdromBackendKind,

@@ -1,9 +1,11 @@
 use crate::{
     system::intc::constants::*,
-    types::memory::*,
+    types::{
+        exclusive_state::ExclusiveState,
+        flag::Flag,
+        memory::*,
+    },
     utilities::bool_to_flag,
-    types::flag::Flag,
-    types::exclusive_state::ExclusiveState,
 };
 #[cfg(feature = "serialization")]
 use serde::{
@@ -11,7 +13,6 @@ use serde::{
     Serialize,
 };
 
-#[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum Line {
     Vblank,

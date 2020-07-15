@@ -1,8 +1,10 @@
-use crate::types::mips1::{
-    instruction::Instruction,
-    register::*,
+use crate::types::{
+    exclusive_state::ExclusiveState,
+    mips1::{
+        instruction::Instruction,
+        register::*,
+    },
 };
-use crate::types::exclusive_state::ExclusiveState;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,

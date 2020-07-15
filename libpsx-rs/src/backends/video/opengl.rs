@@ -34,25 +34,41 @@ pub(crate) fn setup(backend_params: &BackendParams) {
         let mut scene_fbo = 0;
         glGenFramebuffers(1, &mut scene_fbo);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, scene_fbo);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, scene_fbo);
 
         // Create texture for the color attachment.
-        let mut color_texture = 0;
-        glGenTextures(1, &mut color_texture);
-        glBindTexture(GL_TEXTURE_2D, color_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+        let mut scene_texture = 0;
+        let scene_texture_width = VRAM_WIDTH_16B as GLint;
+        let scene_texture_height = VRAM_HEIGHT_LINES as GLint;
+        glGenTextures(1, &mut scene_texture);
+        glBindTexture(GL_TEXTURE_2D, scene_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
 
         // Attach images to FBO.
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_texture, 0);
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene_texture, 0);
         assert!(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+        // Create scene copy texture.
+        let mut scene_copy_texture = 0;
+        glGenTextures(1, &mut scene_copy_texture);
+        glBindTexture(GL_TEXTURE_2D, scene_copy_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
 
         // Save state.
         rendering::WINDOW_FBO = window_fbo as GLuint;
         rendering::SCENE_FBO = scene_fbo as GLuint;
-        rendering::SCENE_TEXTURE = color_texture as GLuint;
+        rendering::SCENE_TEXTURE = scene_texture as GLuint;
+        rendering::SCENE_COPY_TEXTURE = scene_copy_texture as GLuint;
+        rendering::SCENE_TEXTURE_WIDTH = scene_texture_width;
+        rendering::SCENE_TEXTURE_HEIGHT = scene_texture_height;
 
         // Other.
         glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -77,6 +93,7 @@ pub(crate) fn teardown(backend_params: &BackendParams) {
             glDeleteTextures(1, &rendering::SCENE_TEXTURE);
             glDeleteFramebuffers(1, &rendering::SCENE_FBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rendering::WINDOW_FBO);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
             // Debug.
             glDebugMessageCallbackARB(None, std::ptr::null());

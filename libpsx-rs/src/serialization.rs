@@ -1,6 +1,8 @@
-use crate::Core;
-use crate::system::types::State;
-use crate::backends::video::VideoBackend;
+use crate::{
+    backends::video::VideoBackend,
+    system::types::State,
+    Core,
+};
 use serde::{
     Deserialize,
     Serialize,
@@ -75,34 +77,38 @@ fn write_gpu_framebuffer(video_backend: &VideoBackend, data: &[u8]) {
 
 #[cfg(opengl)]
 mod opengl {
+    use crate::backends::video::opengl::rendering::*;
+    use opengl_sys::*;
+
     pub(crate) fn read_gpu_framebuffer(backend_params: &crate::backends::video::opengl::BackendParams) -> Vec<u8> {
-        use opengl_sys::*;
-        use crate::system::gpu::constants::*;
-    
-        let (_context_guard, _context) = backend_params.context.guard();
-    
         unsafe {
-            glFinish();
-            glBindTexture(GL_TEXTURE_2D, crate::backends::video::opengl::rendering::SCENE_TEXTURE);
-            let mut buffer: Vec<u8> = vec![0; VRAM_WIDTH_16B * VRAM_HEIGHT_LINES * 4];
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.as_mut_ptr() as *mut std::ffi::c_void);
-            buffer
+            let buffer_size = SCENE_TEXTURE_WIDTH as usize * SCENE_TEXTURE_HEIGHT as usize * 4;
+            let mut buffer: Vec<u8> = vec![0; buffer_size];
+
+            {
+                let (_context_guard, _context) = backend_params.context.guard();
+
+                glFinish();
+                glBindTexture(GL_TEXTURE_2D, SCENE_TEXTURE);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.as_mut_ptr() as *mut std::ffi::c_void);
+
+                buffer
+            }
         }
     }
 
     pub(crate) fn write_gpu_framebuffer(backend_params: &crate::backends::video::opengl::BackendParams, data: &[u8]) {
-        use opengl_sys::*;
-        use crate::system::gpu::constants::*;
-    
-        let size = VRAM_WIDTH_16B * VRAM_HEIGHT_LINES * 4;
-        assert!(data.len() == size);
-
-        let (_context_guard, _context) = backend_params.context.guard();
-        
         unsafe {
-            glFinish();
-            glBindTexture(GL_TEXTURE_2D, crate::backends::video::opengl::rendering::SCENE_TEXTURE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.as_ptr() as *const std::ffi::c_void);
+            let buffer_size = SCENE_TEXTURE_WIDTH as usize * SCENE_TEXTURE_HEIGHT as usize * 4;
+            assert!(data.len() == buffer_size);
+
+            {
+                let (_context_guard, _context) = backend_params.context.guard();
+
+                glFinish();
+                glBindTexture(GL_TEXTURE_2D, crate::backends::video::opengl::rendering::SCENE_TEXTURE);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, SCENE_TEXTURE_WIDTH, SCENE_TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.as_ptr() as *const std::ffi::c_void);
+            }
         }
     }
 }

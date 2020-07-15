@@ -1,9 +1,11 @@
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
+};
+use std::sync::atomic::{
+    AtomicBool,
+    Ordering,
 };
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]

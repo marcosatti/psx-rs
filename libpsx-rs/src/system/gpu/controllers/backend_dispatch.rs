@@ -9,7 +9,6 @@ use crate::{
         color::Color,
         geometry::{
             Normalized,
-            Pixel,
             Point2D,
             Size2D,
         },
@@ -67,7 +66,7 @@ pub(crate) fn draw_polygon_4_textured(
     }
 }
 
-pub(crate) fn read_framebuffer_5551(video_backend: &VideoBackend, origin: Point2D<isize, Pixel>, size: Size2D<isize, Pixel>) -> Result<Vec<u16>, ()> {
+pub(crate) fn read_framebuffer_5551(video_backend: &VideoBackend, origin: Point2D<f32, Normalized>, size: Size2D<f32, Normalized>) -> Result<Vec<u16>, ()> {
     match video_backend {
         VideoBackend::None => Err(()),
         #[cfg(opengl)]

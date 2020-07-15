@@ -23,6 +23,13 @@ pub(crate) fn terminate_video_backend(kind: VideoBackendKind) {
     }
 }
 
+pub(crate) fn on_resize_window(kind: VideoBackendKind, window: &Window, width: usize, height: usize) {
+    match kind {
+        VideoBackendKind::None => {},
+        VideoBackendKind::Opengl => on_resize_window_opengl(window, width, height),
+    }
+}
+
 /// Opengl
 
 #[cfg(opengl)]
@@ -59,8 +66,6 @@ pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) ->
     let opengl_renderer_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_RENDERER as GLenum) as *const i8).to_string_lossy().into_owned() };
     unsafe {
         glClearColor(0.0, 0.0, 0.0, 1.0);
-    }
-    unsafe {
         glClear(GL_COLOR_BUFFER_BIT);
     }
     log::info!("Video initialized: {}, {}, {}", opengl_vendor_string, opengl_version_string, opengl_renderer_string);
@@ -80,5 +85,20 @@ pub(crate) fn terminate_video_backend_opengl() {
 pub(crate) fn terminate_video_backend_opengl() {
     unsafe {
         OPENGL_CONTEXT = None;
+    }
+}
+
+#[cfg(not(opengl))]
+pub(crate) fn on_resize_window_opengl(window: &Window, width: usize, height: usize) {
+    panic!("Not available");
+}
+
+#[cfg(opengl)]
+pub(crate) fn on_resize_window_opengl(window: &Window, width: usize, height: usize) {
+    use opengl_sys::*;
+
+    unsafe {
+        window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
+        glViewport(0, 0, width as GLint, height as GLint);
     }
 }
