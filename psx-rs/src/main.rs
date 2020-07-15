@@ -6,9 +6,11 @@ use libpsx_rs::{
     Core,
 };
 use sdl2::{
-    video::GLProfile,
+    video::{
+        GLProfile,
+        Window,
+    },
     EventPump,
-    video::Window,
 };
 use std::{
     env::args,
@@ -148,7 +150,10 @@ fn main_inner(window: &Window, event_pump: &mut EventPump, config: config::Confi
                             handle_keycode(key, &mut core);
                         }
                     },
-                    sdl2::event::Event::Window { win_event, .. } => {
+                    sdl2::event::Event::Window {
+                        win_event,
+                        ..
+                    } => {
                         if let sdl2::event::WindowEvent::Resized(_, _) = win_event {
                             let (width, height) = window.drawable_size();
                             let width = width as usize;
@@ -156,7 +161,7 @@ fn main_inner(window: &Window, event_pump: &mut EventPump, config: config::Confi
                             log::info!("Resizing to {}x{}", width, height);
                             backend::on_resize_window(config.video_backend_kind, window, width, height);
                         }
-                    }
+                    },
                     _ => {},
                 }
             }

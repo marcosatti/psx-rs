@@ -295,7 +295,7 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
 
     state.gpu.read.clear();
     controller_state.gp0_read_buffer.clear();
-    
+
     for i in 0..fifo_words {
         let mut word: u32 = 0;
         word = Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
