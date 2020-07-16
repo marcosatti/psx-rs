@@ -109,5 +109,6 @@ impl State {
 
 pub(crate) fn initialize(state: &mut SystemState) {
     state.r3000.controller_state.get_mut().pc.write_u32(0xBFC0_0000);
+    state.r3000.controller_state.get_mut().branch_delay.cancel();
     cp0_initialize(state);
 }

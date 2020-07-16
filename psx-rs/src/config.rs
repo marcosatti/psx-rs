@@ -13,7 +13,8 @@ struct TomlConfig {
     video_backend: String,
     worker_threads: usize,
     time_delta: u64,
-    pause_on_exit: bool,
+    pause_on_start: bool,
+    quit_on_exception: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -23,7 +24,8 @@ pub(crate) struct Config {
     pub(crate) video_backend_kind: VideoBackendKind,
     pub(crate) worker_threads: usize,
     pub(crate) time_delta_secs: f64,
-    pub(crate) pause_on_exit: bool,
+    pub(crate) pause_on_start: bool,
+    pub(crate) quit_on_exception: bool,
 }
 
 pub(crate) fn load(workspace_path: &Path) -> Config {
@@ -58,6 +60,7 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
         },
         worker_threads: { toml_config.worker_threads },
         time_delta_secs: { toml_config.time_delta as f64 / 1e6 },
-        pause_on_exit: toml_config.pause_on_exit,
+        pause_on_start: toml_config.pause_on_start,
+        quit_on_exception: toml_config.quit_on_exception,
     }
 }

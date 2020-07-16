@@ -17,7 +17,8 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
     debug::trace_call(stdext::function_name!());
 
     {
-        let (_context_guard, _context) = backend_params.context.guard();
+        let (_context_guard, context) = backend_params.context.guard();
+        let (width, height) = (backend_params.viewport_callback)();
 
         unsafe {
             glFinish();
@@ -59,6 +60,9 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
             // Bind the window FBO so it's now active.
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, opengl::rendering::WINDOW_FBO);
 
+            // Set the required viewport.
+            glViewport(0, 0, width as GLint, height as GLint);
+
             // Bind the off-screen texture to the uniform variable.
             // Don't need to use the copy texture here as we are using a different FBO to render to.
             glActiveTexture(GL_TEXTURE0);
@@ -73,6 +77,9 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
 
             // Bind the off-screen FBO again, ready for the GPU to draw into.
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, opengl::rendering::SCENE_FBO);
+
+            // Reset viewport for off-screen rendering.
+            glViewport(0, 0, opengl::rendering::SCENE_TEXTURE_WIDTH, opengl::rendering::SCENE_TEXTURE_HEIGHT);
         }
     }
 }

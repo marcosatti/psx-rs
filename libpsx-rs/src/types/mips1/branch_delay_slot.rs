@@ -19,6 +19,11 @@ impl BranchDelaySlot {
         }
     }
 
+    pub(crate) fn cancel(&mut self) {
+        self.target = None;
+        self.slots = 0;
+    }
+
     pub(crate) fn advance(&mut self) -> Option<u32> {
         if self.target.is_none() {
             return None;

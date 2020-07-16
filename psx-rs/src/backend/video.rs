@@ -23,13 +23,6 @@ pub(crate) fn terminate_video_backend(kind: VideoBackendKind) {
     }
 }
 
-pub(crate) fn on_resize_window(kind: VideoBackendKind, window: &Window, width: usize, height: usize) {
-    match kind {
-        VideoBackendKind::None => {},
-        VideoBackendKind::Opengl => on_resize_window_opengl(window, width, height),
-    }
-}
-
 /// Opengl
 
 #[cfg(opengl)]
@@ -50,15 +43,19 @@ pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) ->
         window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
     }
 
-    // TODO: need to consider multithreading? It's a bit unclear, but doesn't look like it - probably implementation
-    // dependant...
-    let opengl_acquire_context = move || {
+    let opengl_viewport_fn = Box::new(move || {
+        let (width, height) = window.drawable_size();
+        (width as usize, height as usize)
+    });
+
+    let opengl_acquire_context = Box::new(move || {
         unsafe {
             window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
         }
         &()
-    };
-    let opengl_release_context = || {};
+    });
+
+    let opengl_release_context = Box::new(|| {});
 
     opengl_acquire_context();
     let opengl_vendor_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned() };
@@ -72,7 +69,8 @@ pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) ->
     opengl_release_context();
 
     VideoBackend::Opengl(opengl::BackendParams {
-        context: BackendContext::new(Box::new(opengl_acquire_context), Box::new(opengl_release_context)),
+        context: BackendContext::new(opengl_acquire_context, opengl_release_context),
+        viewport_callback: opengl_viewport_fn,
     })
 }
 
@@ -85,20 +83,5 @@ pub(crate) fn terminate_video_backend_opengl() {
 pub(crate) fn terminate_video_backend_opengl() {
     unsafe {
         OPENGL_CONTEXT = None;
-    }
-}
-
-#[cfg(not(opengl))]
-pub(crate) fn on_resize_window_opengl(window: &Window, width: usize, height: usize) {
-    panic!("Not available");
-}
-
-#[cfg(opengl)]
-pub(crate) fn on_resize_window_opengl(window: &Window, width: usize, height: usize) {
-    use opengl_sys::*;
-
-    unsafe {
-        window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
-        glViewport(0, 0, width as GLint, height as GLint);
     }
 }

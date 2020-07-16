@@ -42,7 +42,7 @@ pub(crate) fn teardown(backend_params: &BackendParams) {
 }
 
 pub(crate) fn change_disc(backend_params: &BackendParams, path: &Path) {
-    let (_context_guard, context) = backend_params.context.guard();
+    let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
         if INITIALIZED {

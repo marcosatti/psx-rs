@@ -79,6 +79,10 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         }
     }
 
+    pub fn reset(&mut self) {
+        State::initialize(&mut self.state);
+    }
+
     pub fn step(&mut self) {
         let context = ControllerContext {
             state: &self.state,

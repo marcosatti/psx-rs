@@ -13,8 +13,11 @@ use opengl_sys::*;
 
 static mut INITIALIZED: bool = false;
 
+type ViewportCallbackFn<'a> = Box<dyn Fn() -> (usize, usize) + 'a>;
+
 pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
+    pub viewport_callback: ViewportCallbackFn<'a>,
 }
 
 pub(crate) fn setup(backend_params: &BackendParams) {
@@ -71,6 +74,7 @@ pub(crate) fn setup(backend_params: &BackendParams) {
         rendering::SCENE_TEXTURE_HEIGHT = scene_texture_height;
 
         // Other.
+        glViewport(0, 0, scene_texture_width, scene_texture_height);
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
