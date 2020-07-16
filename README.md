@@ -27,7 +27,8 @@ cdrom_backend = 'libcdio'    # 'libcdio' / 'libmirage' / 'none'
 video_backend = 'opengl'     # 'opengl' / 'none'
 worker_threads = 4           # Tune for your own system, it can use any number of threads.
 time_delta = 10              # Number of microseconds before a hard synchronize is required.
-quit_on_exception = false        # Pause before exiting the application (debug errors).
+quit_on_exception = false    # Quit automatically when an state exception occurs.
+pause_on_start = true        # Pause upon starting the emulator.
 ```
 
 You will need to put the BIOS (scph5501.bin) into the folder ${cwd}/workspace/bios.
