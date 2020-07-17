@@ -1,4 +1,7 @@
-use crate::backends::context::*;
+use crate::{
+    backends::context::*,
+    Config,
+};
 use libcdio_sys::*;
 use log::info;
 use std::{
@@ -14,7 +17,7 @@ pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
 }
 
-pub(crate) fn setup(backend_params: &BackendParams) {
+pub(crate) fn setup(_config: &Config, backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -26,7 +29,7 @@ pub(crate) fn setup(backend_params: &BackendParams) {
     }
 }
 
-pub(crate) fn teardown(backend_params: &BackendParams) {
+pub(crate) fn teardown(_config: &Config, backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -41,7 +44,7 @@ pub(crate) fn teardown(backend_params: &BackendParams) {
     }
 }
 
-pub(crate) fn change_disc(backend_params: &BackendParams, path: &Path) {
+pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path: &Path) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {

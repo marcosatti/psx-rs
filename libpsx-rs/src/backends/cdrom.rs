@@ -5,6 +5,7 @@ pub mod libcdio;
 #[cfg(libmirage)]
 pub mod libmirage;
 
+use crate::Config;
 use std::path::Path;
 
 pub enum CdromBackend<'a: 'b, 'b> {
@@ -16,35 +17,35 @@ pub enum CdromBackend<'a: 'b, 'b> {
     _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
-pub(crate) fn setup(cdrom_backend: &CdromBackend) {
-    match cdrom_backend {
+pub(crate) fn setup(config: &Config) {
+    match config.cdrom_backend {
         CdromBackend::None => {},
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => libmirage::setup(params),
+        CdromBackend::Libmirage(ref params) => libmirage::setup(config, params),
         #[cfg(libcdio)]
-        CdromBackend::Libcdio(ref params) => libcdio::setup(params),
+        CdromBackend::Libcdio(ref params) => libcdio::setup(config, params),
         _ => unimplemented!(),
     }
 }
 
-pub(crate) fn teardown(cdrom_backend: &CdromBackend) {
-    match cdrom_backend {
+pub(crate) fn teardown(config: &Config) {
+    match config.cdrom_backend {
         CdromBackend::None => {},
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => libmirage::teardown(params),
+        CdromBackend::Libmirage(ref params) => libmirage::teardown(config, params),
         #[cfg(libcdio)]
-        CdromBackend::Libcdio(ref params) => libcdio::teardown(params),
+        CdromBackend::Libcdio(ref params) => libcdio::teardown(config, params),
         _ => unimplemented!(),
     }
 }
 
-pub(crate) fn change_disc(cdrom_backend: &CdromBackend, path: &Path) {
-    match cdrom_backend {
+pub(crate) fn change_disc(config: &Config, path: &Path) {
+    match config.cdrom_backend {
         CdromBackend::None => panic!(),
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => libmirage::change_disc(params, path),
+        CdromBackend::Libmirage(ref params) => libmirage::change_disc(config, params, path),
         #[cfg(libcdio)]
-        CdromBackend::Libcdio(ref params) => libcdio::change_disc(params, path),
+        CdromBackend::Libcdio(ref params) => libcdio::change_disc(config, params, path),
         _ => unimplemented!(),
     }
 }

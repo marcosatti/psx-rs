@@ -29,6 +29,7 @@ worker_threads = 4           # Tune for your own system, it can use any number o
 time_delta = 10              # Number of microseconds before a hard synchronize is required.
 quit_on_exception = false    # Quit automatically when an state exception occurs.
 pause_on_start = true        # Pause upon starting the emulator.
+internal_scale_factor = 4    # Internal scaling factor for the GPU; must be an integer.
 ```
 
 You will need to put the BIOS (scph5501.bin) into the folder ${cwd}/workspace/bios.

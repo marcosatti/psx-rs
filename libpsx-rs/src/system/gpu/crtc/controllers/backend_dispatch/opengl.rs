@@ -65,7 +65,6 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
 
             // Bind the off-screen texture to the uniform variable.
             // Don't need to use the copy texture here as we are using a different FBO to render to.
-            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, opengl::rendering::SCENE_TEXTURE);
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);

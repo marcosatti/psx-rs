@@ -47,6 +47,7 @@ pub struct Config<'a: 'b, 'b> {
     pub cdrom_backend: CdromBackend<'a, 'b>,
     pub time_delta: f64,
     pub worker_threads: usize,
+    pub internal_scale_factor: usize,
 }
 
 pub struct Core<'a: 'b, 'b> {
@@ -68,9 +69,9 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         let executor = Executor::new(config.worker_threads);
 
-        video::setup(&config.video_backend);
-        audio::setup(&config.audio_backend);
-        cdrom::setup(&config.cdrom_backend);
+        video::setup(&config);
+        audio::setup(&config);
+        cdrom::setup(&config);
 
         Core {
             state,
@@ -102,7 +103,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
     }
 
     pub fn change_disc(&mut self, path: &Path) {
-        backends::cdrom::change_disc(&self.config.cdrom_backend, path);
+        backends::cdrom::change_disc(&self.config, path);
     }
 
     pub fn analyze(&mut self) {
@@ -122,8 +123,8 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
 impl<'a: 'b, 'b> Drop for Core<'a, 'b> {
     fn drop(&mut self) {
-        video::teardown(&self.config.video_backend);
-        audio::teardown(&self.config.audio_backend);
-        cdrom::teardown(&self.config.cdrom_backend);
+        video::teardown(&self.config);
+        audio::teardown(&self.config);
+        cdrom::teardown(&self.config);
     }
 }

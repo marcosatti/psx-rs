@@ -1,6 +1,8 @@
 #[cfg(openal)]
 pub mod openal;
 
+use crate::Config;
+
 pub enum AudioBackend<'a: 'b, 'b> {
     None,
     #[cfg(openal)]
@@ -8,20 +10,20 @@ pub enum AudioBackend<'a: 'b, 'b> {
     _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
 }
 
-pub(crate) fn setup(audio_backend: &AudioBackend) {
-    match audio_backend {
+pub(crate) fn setup(config: &Config) {
+    match config.audio_backend {
         AudioBackend::None => {},
         #[cfg(openal)]
-        AudioBackend::Openal(ref params) => openal::setup(params),
+        AudioBackend::Openal(ref params) => openal::setup(config, params),
         _ => unimplemented!(),
     }
 }
 
-pub(crate) fn teardown(audio_backend: &AudioBackend) {
-    match audio_backend {
+pub(crate) fn teardown(config: &Config) {
+    match config.audio_backend {
         AudioBackend::None => {},
         #[cfg(openal)]
-        AudioBackend::Openal(ref params) => openal::teardown(params),
+        AudioBackend::Openal(ref params) => openal::teardown(config, params),
         _ => unimplemented!(),
     }
 }

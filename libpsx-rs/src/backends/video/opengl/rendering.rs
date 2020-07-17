@@ -8,6 +8,7 @@ pub(crate) static mut SCENE_TEXTURE: GLuint = 0;
 pub(crate) static mut SCENE_COPY_TEXTURE: GLuint = 0;
 pub(crate) static mut SCENE_TEXTURE_WIDTH: GLint = 0;
 pub(crate) static mut SCENE_TEXTURE_HEIGHT: GLint = 0;
+pub(crate) static mut INTERNAL_SCALE_FACTOR: usize = 1;
 
 // TODO: use const generics...
 pub(crate) struct ProgramContext {

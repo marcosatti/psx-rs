@@ -39,7 +39,7 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
     } else {
         State::Running
     });
-    
+
     log::info!("{:?}", state.get());
 
     let quit_fn = || {
@@ -64,12 +64,10 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                             quit_fn();
                         },
                         Keycode::F11 => {
-                            core.save_state(None).unwrap();
-                            log::info!("Saved state ok");
+                            save_state(&mut core);
                         },
                         Keycode::F12 => {
-                            core.load_state(None).unwrap();
-                            log::info!("Loaded state ok");
+                            load_state(&mut core);
                         },
                         _ => return false,
                     }
@@ -103,12 +101,10 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                             quit_fn();
                         },
                         Keycode::F11 => {
-                            core.save_state(None).unwrap();
-                            log::info!("Saved state ok");
+                            save_state(&mut core);
                         },
                         Keycode::F12 => {
-                            core.load_state(None).unwrap();
-                            log::info!("Loaded state ok");
+                            load_state(&mut core);
                         },
                         _ => return false,
                     }
@@ -135,13 +131,12 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                             quit_fn();
                         },
                         Keycode::F11 => {
-                            log::info!("Cannot save state from exception state");
+                            log::error!("Cannot save state from exception state");
                         },
                         Keycode::F12 => {
                             log::info!("Load state not supported yet");
-                            // core.load_state(None).unwrap();
+                            // load_state(&mut core);
                             // state.set(State::Paused);
-                            // log::info!("Loaded state ok; paused");
                         },
                         _ => return false,
                     }
@@ -205,6 +200,28 @@ fn handle_disc(core: &mut Core) {
             log::info!("Changed disc to {}", disc_path.display());
         },
         None => {},
+    }
+}
+
+fn load_state(core: &mut Core) {
+    match core.load_state(None) {
+        Ok(()) => {
+            log::info!("Loaded state ok");
+        },
+        Err(s) => {
+            log::error!("{}", &s);
+        },
+    }
+}
+
+fn save_state(core: &mut Core) {
+    match core.save_state(None) {
+        Ok(()) => {
+            log::info!("Saved state ok");
+        },
+        Err(s) => {
+            log::error!("{}", &s);
+        },
     }
 }
 

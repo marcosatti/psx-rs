@@ -15,6 +15,7 @@ struct TomlConfig {
     time_delta: u64,
     pause_on_start: bool,
     quit_on_exception: bool,
+    internal_scale_factor: usize,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -26,6 +27,7 @@ pub(crate) struct Config {
     pub(crate) time_delta_secs: f64,
     pub(crate) pause_on_start: bool,
     pub(crate) quit_on_exception: bool,
+    pub(crate) internal_scale_factor: usize,
 }
 
 pub(crate) fn load(workspace_path: &Path) -> Config {
@@ -62,5 +64,6 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
         time_delta_secs: { toml_config.time_delta as f64 / 1e6 },
         pause_on_start: toml_config.pause_on_start,
         quit_on_exception: toml_config.quit_on_exception,
+        internal_scale_factor: { toml_config.internal_scale_factor.max(1) },
     }
 }

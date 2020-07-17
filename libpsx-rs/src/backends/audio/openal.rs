@@ -6,6 +6,7 @@ use crate::{
         context::*,
     },
     system::spu::constants::VOICES_COUNT,
+    Config,
 };
 use openal_sys::*;
 
@@ -15,7 +16,7 @@ pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
 }
 
-pub(crate) fn setup(backend_params: &BackendParams) {
+pub(crate) fn setup(_config: &Config, backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -32,7 +33,7 @@ pub(crate) fn setup(backend_params: &BackendParams) {
     }
 }
 
-pub(crate) fn teardown(backend_params: &BackendParams) {
+pub(crate) fn teardown(_config: &Config, backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {

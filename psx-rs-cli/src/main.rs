@@ -48,6 +48,7 @@ fn main() {
         cdrom_backend: CdromBackend::None,
         time_delta: time_delta_us as f64 / 1e6,
         worker_threads,
+        internal_scale_factor: 1,
     };
 
     main_inner(config);

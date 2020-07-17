@@ -8,6 +8,7 @@ use crate::{
         VRAM_HEIGHT_LINES,
         VRAM_WIDTH_16B,
     },
+    Config,
 };
 use opengl_sys::*;
 
@@ -20,11 +21,13 @@ pub struct BackendParams<'a: 'b, 'b> {
     pub viewport_callback: ViewportCallbackFn<'a>,
 }
 
-pub(crate) fn setup(backend_params: &BackendParams) {
+pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
         assert_eq!(INITIALIZED, false);
+
+        rendering::INTERNAL_SCALE_FACTOR = config.internal_scale_factor;
 
         // Debug.
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
@@ -38,18 +41,19 @@ pub(crate) fn setup(backend_params: &BackendParams) {
         glGenFramebuffers(1, &mut scene_fbo);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, scene_fbo);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, scene_fbo);
+        glActiveTexture(GL_TEXTURE0);
 
         // Create texture for the color attachment.
         let mut scene_texture = 0;
-        let scene_texture_width = VRAM_WIDTH_16B as GLint;
-        let scene_texture_height = VRAM_HEIGHT_LINES as GLint;
+        let scene_texture_width = (VRAM_WIDTH_16B * rendering::INTERNAL_SCALE_FACTOR) as GLint;
+        let scene_texture_height = (VRAM_HEIGHT_LINES * rendering::INTERNAL_SCALE_FACTOR) as GLint;
         glGenTextures(1, &mut scene_texture);
         glBindTexture(GL_TEXTURE_2D, scene_texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
 
         // Attach images to FBO.
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene_texture, 0);
@@ -59,11 +63,11 @@ pub(crate) fn setup(backend_params: &BackendParams) {
         let mut scene_copy_texture = 0;
         glGenTextures(1, &mut scene_copy_texture);
         glBindTexture(GL_TEXTURE_2D, scene_copy_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, VRAM_WIDTH_16B as GLint, VRAM_HEIGHT_LINES as GLint, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
 
         // Save state.
         rendering::WINDOW_FBO = window_fbo as GLuint;
@@ -86,7 +90,7 @@ pub(crate) fn setup(backend_params: &BackendParams) {
     }
 }
 
-pub(crate) fn teardown(backend_params: &BackendParams) {
+pub(crate) fn teardown(_config: &Config, backend_params: &BackendParams) {
     // TODO: shader programs are not free'd.
 
     let (_context_guard, _context) = backend_params.context.guard();
@@ -95,6 +99,7 @@ pub(crate) fn teardown(backend_params: &BackendParams) {
         if INITIALIZED {
             // Delete framebuffer resources and reset back to default.
             glDeleteTextures(1, &rendering::SCENE_TEXTURE);
+            glDeleteTextures(1, &rendering::SCENE_COPY_TEXTURE);
             glDeleteFramebuffers(1, &rendering::SCENE_FBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rendering::WINDOW_FBO);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
