@@ -8,7 +8,23 @@ use std::{
 };
 
 pub(crate) fn bin_name() -> String {
-    env::var("CI_PYTHON_BIN_NAME").unwrap_or(String::from("python"))
+    let try_exec = |bin_name: &str| Command::new(bin_name).arg("--version").spawn().is_ok();
+
+    if let Ok(bin_name) = env::var("CI_PYTHON_BIN_NAME") {
+        if try_exec(&bin_name) {
+            return bin_name;
+        }
+    }
+
+    if try_exec("python3") {
+        return "python3".to_owned();
+    }
+
+    if try_exec("python") {
+        return "python".to_owned();
+    }
+
+    panic!("Cannot determine Python 3 bin name");
 }
 
 pub fn run_script(relative_path: &Path) -> (String, String) {
