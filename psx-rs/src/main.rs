@@ -59,7 +59,7 @@ fn main() {
     // Initialize psx-rs core.
     let core_config = CoreConfig {
         workspace_path: PathBuf::from(r"./workspace/"),
-        bios_filename: "scph5501.bin".to_owned(),
+        bios_filename: "scph5501.bin".into(),
         video_backend,
         audio_backend,
         cdrom_backend,

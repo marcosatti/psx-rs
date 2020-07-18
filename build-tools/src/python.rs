@@ -23,11 +23,11 @@ pub(crate) fn bin_name() -> String {
     }
 
     if try_exec("python3") {
-        return "python3".to_owned();
+        return "python3".into();
     }
 
     if try_exec("python") {
-        return "python".to_owned();
+        return "python".into();
     }
 
     panic!("Cannot determine Python 3 bin name");

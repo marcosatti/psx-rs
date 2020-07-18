@@ -56,7 +56,7 @@ pub fn load_state(core: &mut Core, name: Option<&str>) -> Result<(), String> {
 
 fn read_gpu_framebuffer(video_backend: &VideoBackend) -> Result<Vec<u8>, String> {
     match video_backend {
-        VideoBackend::None => Err("Cannot serialize GPU framebuffer as there is no active backend".to_owned()),
+        VideoBackend::None => Err("Cannot serialize GPU framebuffer as there is no active backend".into()),
         #[cfg(opengl)]
         VideoBackend::Opengl(ref backend_params) => opengl::read_gpu_framebuffer(backend_params),
         _ => unimplemented!(),
@@ -65,7 +65,7 @@ fn read_gpu_framebuffer(video_backend: &VideoBackend) -> Result<Vec<u8>, String>
 
 fn write_gpu_framebuffer(video_backend: &VideoBackend, data: &[u8]) -> Result<(), String> {
     match video_backend {
-        VideoBackend::None => Err("Cannot deserialize GPU framebuffer as there is no active backend".to_owned()),
+        VideoBackend::None => Err("Cannot deserialize GPU framebuffer as there is no active backend".into()),
         #[cfg(opengl)]
         VideoBackend::Opengl(ref backend_params) => opengl::write_gpu_framebuffer(backend_params, data),
         _ => unimplemented!(),

@@ -81,7 +81,7 @@ pub(crate) fn trace_syscall(state: &ControllerState) {
         let pc_va = state.pc.read_u32() - INSTRUCTION_SIZE;
 
         let opcode = match state.gpr[4].read_u32() {
-            0 => "NoFunction".to_owned(),
+            0 => "NoFunction".into(),
             1 => {
                 let count = DEBUG_CRITICAL_SECTION_REFCOUNT.fetch_add(1, Ordering::Relaxed) + 1;
                 format!("EnterCriticalSection [{}]", count)
@@ -93,8 +93,8 @@ pub(crate) fn trace_syscall(state: &ControllerState) {
                 }
                 format!("ExitCriticalSection [{}]", count)
             },
-            3 => "ChangeThreadSubFunction".to_owned(),
-            _ => "DeliverEvent".to_owned(),
+            3 => "ChangeThreadSubFunction".into(),
+            _ => "DeliverEvent".into(),
         };
 
         log::trace!("[{:X}] syscall, pc = 0x{:08X}, opcode = {}", debug_tick_count, pc_va, &opcode);
@@ -227,63 +227,63 @@ pub(crate) fn trace_bios_call(state: &ControllerState) {
     let string = match pc {
         0xA0 => {
             let opcode = match t1 {
-                0x13 => "SaveState".to_owned(),
-                0x17 => "strcmp".to_owned(),
-                0x1B => "strlen".to_owned(),
-                0x25 => "toupper".to_owned(),
-                0x28 => "bzero".to_owned(),
-                0x2A => "memcpy".to_owned(),
-                0x2F => "rand".to_owned(),
-                0x33 => "malloc".to_owned(),
-                0x39 => "InitHeap".to_owned(),
-                0x3C => "std_out_putchar".to_owned(),
-                0x3F => "printf".to_owned(),
-                0x44 => "FlushCache".to_owned(),
-                0x49 => "GPU_cw".to_owned(),
-                0x56 => "CdRemove".to_owned(),
-                0x72 => "CdRemove".to_owned(),
-                0x96 => "AddCDROMDevice".to_owned(),
-                0x97 => "AddMemCardDevice".to_owned(),
-                0x99 => "AddDummyTtyDevice".to_owned(),
-                0xA3 => "DequeueCdIntr".to_owned(),
+                0x13 => "SaveState".into(),
+                0x17 => "strcmp".into(),
+                0x1B => "strlen".into(),
+                0x25 => "toupper".into(),
+                0x28 => "bzero".into(),
+                0x2A => "memcpy".into(),
+                0x2F => "rand".into(),
+                0x33 => "malloc".into(),
+                0x39 => "InitHeap".into(),
+                0x3C => "std_out_putchar".into(),
+                0x3F => "printf".into(),
+                0x44 => "FlushCache".into(),
+                0x49 => "GPU_cw".into(),
+                0x56 => "CdRemove".into(),
+                0x72 => "CdRemove".into(),
+                0x96 => "AddCDROMDevice".into(),
+                0x97 => "AddMemCardDevice".into(),
+                0x99 => "AddDummyTtyDevice".into(),
+                0xA3 => "DequeueCdIntr".into(),
                 _ => format!("{:X}", t1),
             };
             format!("0xA0({})", opcode)
         },
         0xB0 => {
             let opcode = match t1 {
-                0x00 => "alloc_kernel_memory".to_owned(),
-                0x07 => "DeliverEvent".to_owned(),
-                0x08 => "OpenEvent".to_owned(),
-                0x09 => "CloseEvent".to_owned(),
-                0x0B => "TestEvent".to_owned(),
-                0x0C => "EnableEvent".to_owned(),
-                0x12 => "InitPad".to_owned(),
-                0x13 => "StartPad".to_owned(),
-                0x17 => "ReturnFromException".to_owned(),
-                0x18 => "SetDefaultExitFromException".to_owned(),
-                0x19 => "SetCustomExitFromException".to_owned(),
-                0x3D => "std_out_putchar".to_owned(),
-                0x47 => "AddDevice".to_owned(),
-                0x5B => "ChangeClearPad".to_owned(),
+                0x00 => "alloc_kernel_memory".into(),
+                0x07 => "DeliverEvent".into(),
+                0x08 => "OpenEvent".into(),
+                0x09 => "CloseEvent".into(),
+                0x0B => "TestEvent".into(),
+                0x0C => "EnableEvent".into(),
+                0x12 => "InitPad".into(),
+                0x13 => "StartPad".into(),
+                0x17 => "ReturnFromException".into(),
+                0x18 => "SetDefaultExitFromException".into(),
+                0x19 => "SetCustomExitFromException".into(),
+                0x3D => "std_out_putchar".into(),
+                0x47 => "AddDevice".into(),
+                0x5B => "ChangeClearPad".into(),
                 _ => format!("{:X}", t1),
             };
             format!("0xB0({})", opcode)
         },
         0xC0 => {
             let opcode = match t1 {
-                0x00 => "EnqueueTimerAndVblankIrqs".to_owned(),
-                0x01 => "EnqueueSyscallHandler".to_owned(),
-                0x02 => "SysEnqIntRP".to_owned(),
-                0x03 => "SysDeqIntRP".to_owned(),
-                0x07 => "InstallExceptionHandlers".to_owned(),
-                0x08 => "SysInitMemory".to_owned(),
-                0x09 => "SysInitKernelVariables".to_owned(),
-                0x0A => "ChangeClearRCnt".to_owned(),
+                0x00 => "EnqueueTimerAndVblankIrqs".into(),
+                0x01 => "EnqueueSyscallHandler".into(),
+                0x02 => "SysEnqIntRP".into(),
+                0x03 => "SysDeqIntRP".into(),
+                0x07 => "InstallExceptionHandlers".into(),
+                0x08 => "SysInitMemory".into(),
+                0x09 => "SysInitKernelVariables".into(),
+                0x0A => "ChangeClearRCnt".into(),
                 0x0B => panic!("BIOS SystemError C0(0x0B) call detected"),
-                0x0C => "InitDefInt".to_owned(),
-                0x12 => "InstallDevices".to_owned(),
-                0x1C => "AdjustA0Table".to_owned(),
+                0x0C => "InitDefInt".into(),
+                0x12 => "InstallDevices".into(),
+                0x1C => "AdjustA0Table".into(),
                 _ => format!("{:X}", t1),
             };
             format!("0xC0({})", &opcode)

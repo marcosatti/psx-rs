@@ -41,7 +41,7 @@ fn main() {
     let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
-        bios_filename: "scph5501.bin".to_owned(),
+        bios_filename: "scph5501.bin".into(),
         video_backend: VideoBackend::None,
         audio_backend: AudioBackend::None,
         cdrom_backend: CdromBackend::None,

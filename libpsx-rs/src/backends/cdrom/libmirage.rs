@@ -73,7 +73,7 @@ pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path
                 Ok(())
             }
         } else {
-            Err("Not initialized".to_owned())
+            Err("Not initialized".into())
         }
     }
 }
