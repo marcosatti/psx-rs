@@ -8,7 +8,13 @@ use std::{
 };
 
 pub(crate) fn bin_name() -> String {
-    let try_exec = |bin_name: &str| Command::new(bin_name).arg("--version").spawn().is_ok();
+    let try_exec = |bin_name: &str| {
+        if let Ok(mut child) = Command::new(bin_name).arg("--version").spawn() {
+            child.wait().unwrap().success()
+        } else {
+            false
+        }
+    };
 
     if let Ok(bin_name) = env::var("CI_PYTHON_BIN_NAME") {
         if try_exec(&bin_name) {
