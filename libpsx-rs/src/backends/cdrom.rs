@@ -39,9 +39,9 @@ pub(crate) fn teardown(config: &Config) {
     }
 }
 
-pub(crate) fn change_disc(config: &Config, path: &Path) {
+pub(crate) fn change_disc(config: &Config, path: &Path) -> Result<(), String> {
     match config.cdrom_backend {
-        CdromBackend::None => panic!(),
+        CdromBackend::None => Err("No available backend".to_owned()),
         #[cfg(libmirage)]
         CdromBackend::Libmirage(ref params) => libmirage::change_disc(config, params, path),
         #[cfg(libcdio)]

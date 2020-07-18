@@ -28,7 +28,10 @@ use serde::{
 };
 use std::{
     fs::File,
-    io::Read,
+    io::{
+        Read,
+        Result as IoResult,
+    },
     path::Path,
 };
 
@@ -84,11 +87,19 @@ impl State {
         r3000_initialize(state);
     }
 
-    pub(crate) fn load_bios(state: &mut State, path: &Path) {
+    pub(crate) fn load_bios(state: &mut State, path: &Path) -> IoResult<()> {
         info!("Loading BIOS from {}", path.to_str().unwrap());
-        let mut file = File::open(path).unwrap();
+        let mut file = File::open(path)?;
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).unwrap();
+        file.read_to_end(&mut buffer)?;
         state.memory.bios.write_raw(0, &buffer);
+        Ok(())
+    }
+
+    pub(crate) fn from_bios(prefix: &Path, name: &str) -> IoResult<Box<State>> {
+        let mut state = State::new();
+        State::initialize(&mut state);
+        State::load_bios(&mut state, &prefix.join(r"bios/").join(name))?;
+        Ok(state)
     }
 }

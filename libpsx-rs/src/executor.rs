@@ -1,5 +1,3 @@
-//! Note: lifetimes are static to avoid propogation to Core... The threadpool is only used with a scoped context.
-
 use crate::system::{
     cdrom::controllers::run as run_cdrom,
     dmac::controllers::run as run_dmac,
@@ -14,56 +12,64 @@ use crate::system::{
         Event,
     },
 };
-use scoped_threadpool::*;
-
-struct Task {
-    controller_fn: fn(&ControllerContext, Event) -> (),
-    context: &'static ControllerContext<'static, 'static, 'static>,
-    event: Event,
-}
-
-impl Task {
-    fn new(controller_fn: fn(&ControllerContext, Event) -> (), context: &'static ControllerContext<'_, '_, '_>, event: Event) -> Task {
-        Task {
-            controller_fn,
-            context,
-            event,
-        }
-    }
-}
-
-impl Thunk for Task {
-    fn call_once(self) {
-        (self.controller_fn)(self.context, self.event);
-    }
-}
-
-unsafe impl Send for Task {
-}
+use crossbeam::channel::bounded;
+use rayon::{
+    ThreadPool,
+    ThreadPoolBuilder,
+};
+use std::panic;
 
 pub(crate) struct Executor {
-    thread_pool: ThreadPool<Task>,
+    thread_pool: ThreadPool,
 }
 
 impl Executor {
     pub(crate) fn new(pool_size: usize) -> Executor {
+        let thread_pool = ThreadPoolBuilder::new().num_threads(pool_size).thread_name(|i| format!("libpsx-rs-worker-{}", i)).build().unwrap();
+
         Executor {
-            thread_pool: ThreadPool::new(pool_size, 16, "libpsx-rs"),
+            thread_pool,
+        }
+    }
+
+    pub(crate) fn run(&self, context: &ControllerContext, event: Event) -> Result<(), Vec<String>> {
+        const CONTROLLERS_COUNT: usize = 8;
+
+        let (sender, collector) = bounded(CONTROLLERS_COUNT);
+
+        self.thread_pool.scope(|s| {
+            s.spawn(|_| sender.send(run_controller_proxy("intc", run_intc, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("padmc", run_padmc, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("cdrom", run_cdrom, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("timers", run_timers, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("spu", run_spu, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("dmac", run_dmac, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("gpu", run_gpu, context, event)).unwrap());
+            s.spawn(|_| sender.send(run_controller_proxy("r3000", run_r3000, context, event)).unwrap());
+        });
+
+        let mut results: Vec<String> = Vec::new();
+
+        for _ in 0..CONTROLLERS_COUNT {
+            let result = collector.try_recv().unwrap();
+            if result.is_err() {
+                results.push(result.unwrap_err());
+            }
+        }
+
+        if !results.is_empty() {
+            Err(results)
+        } else {
+            Ok(())
         }
     }
 }
 
-pub(crate) fn run(executor: &Executor, context: &ControllerContext, event: Event) {
-    let context = unsafe { std::mem::transmute(context) };
-
-    executor.thread_pool.scope(|s| {
-        s.spawn_inplace(Task::new(run_r3000, context, event));
-        s.spawn(Task::new(run_gpu, context, event));
-        s.spawn(Task::new(run_dmac, context, event));
-        s.spawn(Task::new(run_spu, context, event));
-        s.spawn(Task::new(run_timers, context, event));
-        s.spawn(Task::new(run_intc, context, event));
-        s.spawn(Task::new(run_padmc, context, event));
-        s.spawn(Task::new(run_cdrom, context, event));
-    });
+fn run_controller_proxy(name: &str, cont_fn: fn(&ControllerContext, Event), context: &ControllerContext, event: Event) -> Result<(), String> {
+    panic::catch_unwind(panic::AssertUnwindSafe(|| cont_fn(context, event))).map_err(|e| {
+        match e.downcast::<String>() {
+            Ok(s) => format!("{}: {}", name, *s),
+            Err(_) => format!("{}: unknown error", name),
+        }
+    })
 }

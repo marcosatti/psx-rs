@@ -44,7 +44,7 @@ pub(crate) fn teardown(_config: &Config, backend_params: &BackendParams) {
     }
 }
 
-pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path: &Path) {
+pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path: &Path) -> Result<(), String> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -62,8 +62,12 @@ pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path
             DISC = cdio_open(cstr.as_bytes_with_nul().as_ptr() as *const i8, driver_id_t_DRIVER_UNKNOWN);
 
             if DISC.is_null() {
-                panic!("Changing disc failed: NULL disc returned; check it's supported by libcdio");
+                Err("Changing disc failed: NULL disc returned; check it's supported by libcdio".to_owned())
+            } else {
+                Ok(())
             }
+        } else {
+            Err("Not initialized".to_owned())
         }
     }
 }

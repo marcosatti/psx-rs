@@ -9,7 +9,6 @@ use libpsx_rs::{
 };
 use std::{
     env::args,
-    panic,
     path::{
         Path,
         PathBuf,
@@ -76,16 +75,10 @@ fn setup_signal_handler() {
 }
 
 fn main_inner(config: Config) {
-    let mut core = Core::new(config);
+    let mut core = Core::new(config).unwrap();
     log::info!("Core initialized");
 
-    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-        while !EXIT.load(Ordering::Acquire) {
-            core.step();
-        }
-    }));
-
-    if result.is_err() {
-        log::error!("Panic occurred, exiting");
+    while !EXIT.load(Ordering::Acquire) {
+        core.step().unwrap();
     }
 }

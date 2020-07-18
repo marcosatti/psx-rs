@@ -70,7 +70,7 @@ pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) ->
 
     VideoBackend::Opengl(opengl::BackendParams {
         context: BackendContext::new(opengl_acquire_context, opengl_release_context),
-        viewport_callback: opengl_viewport_fn,
+        callbacks: opengl::Callbacks::new(opengl_viewport_fn),
     })
 }
 

@@ -16,9 +16,27 @@ static mut INITIALIZED: bool = false;
 
 type ViewportCallbackFn<'a> = Box<dyn Fn() -> (usize, usize) + 'a>;
 
+pub struct Callbacks<'a> {
+    pub(crate) viewport_callback_fn: ViewportCallbackFn<'a>,
+}
+
+impl<'a> Callbacks<'a> {
+    pub fn new(viewport_callback_fn: ViewportCallbackFn<'a>) -> Callbacks<'a> {
+        Callbacks {
+            viewport_callback_fn,
+        }
+    }
+}
+
+unsafe impl<'a> Send for Callbacks<'a> {
+}
+
+unsafe impl<'a> Sync for Callbacks<'a> {
+}
+
 pub struct BackendParams<'a: 'b, 'b> {
     pub context: BackendContext<'a, 'b, ()>,
-    pub viewport_callback: ViewportCallbackFn<'a>,
+    pub callbacks: Callbacks<'a>,
 }
 
 pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {

@@ -18,7 +18,7 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
 
     {
         let (_context_guard, context) = backend_params.context.guard();
-        let (width, height) = (backend_params.viewport_callback)();
+        let (width, height) = (backend_params.callbacks.viewport_callback_fn)();
 
         unsafe {
             glFinish();

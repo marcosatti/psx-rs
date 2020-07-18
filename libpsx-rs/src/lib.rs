@@ -30,9 +30,12 @@ use crate::{
     },
 };
 use executor::Executor;
-use std::path::{
-    Path,
-    PathBuf,
+use std::{
+    io::Result as IoResult,
+    path::{
+        Path,
+        PathBuf,
+    },
 };
 use system::types::ControllerContext;
 
@@ -54,34 +57,34 @@ pub struct Core<'a: 'b, 'b> {
 }
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
-    pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
+    pub fn new(config: Config<'a, 'b>) -> IoResult<Core<'a, 'b>> {
         log::info!("Initializing core");
 
-        let mut state = State::new();
-
-        let bios_path = config.workspace_path.join(r"bios/").join(&config.bios_filename);
-
-        State::initialize(&mut state);
-        State::load_bios(&mut state, &bios_path);
-
+        let state = State::from_bios(&config.workspace_path, &config.bios_filename)?;
         let executor = Executor::new(config.worker_threads);
 
         video::setup(&config);
         audio::setup(&config);
         cdrom::setup(&config);
 
-        Core {
+        Ok(Core {
             state,
             config,
             executor,
+        })
+    }
+
+    pub fn reset(&mut self, hard_reset: bool) -> IoResult<()> {
+        if hard_reset {
+            self.state = State::from_bios(&self.config.workspace_path, &self.config.bios_filename)?;
+        } else {
+            State::initialize(&mut self.state);
         }
+
+        Ok(())
     }
 
-    pub fn reset(&mut self) {
-        State::initialize(&mut self.state);
-    }
-
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> Result<(), Vec<String>> {
         let context = ControllerContext {
             state: &self.state,
             video_backend: &self.config.video_backend,
@@ -91,15 +94,15 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
         let event = Event::Time(self.config.time_delta);
 
-        executor::run(&self.executor, &context, event);
+        self.executor.run(&context, event)
     }
 
-    pub fn change_disc(&mut self, path: &Path) {
-        backends::cdrom::change_disc(&self.config, path);
+    pub fn change_disc(&mut self, path: &Path) -> Result<(), String> {
+        backends::cdrom::change_disc(&self.config, path)
     }
 
-    pub fn analyze(&mut self) {
-        debug::analysis(self);
+    pub fn analyze(&mut self) -> IoResult<()> {
+        debug::analysis(self)
     }
 
     #[cfg(feature = "serialization")]

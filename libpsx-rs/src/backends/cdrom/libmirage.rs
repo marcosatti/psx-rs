@@ -46,7 +46,7 @@ pub(crate) fn teardown(_config: &Config, backend_params: &BackendParams) {
     }
 }
 
-pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path: &Path) {
+pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path: &Path) -> Result<(), String> {
     let (_context_guard, context) = backend_params.context.guard();
 
     unsafe {
@@ -67,10 +67,13 @@ pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path
             if DISC.is_null() {
                 assert!(!error.is_null());
                 let error_cstr = CStr::from_ptr((*error).message).to_string_lossy();
-                panic!("Changing disc failed: {}", error_cstr.as_ref());
+                Err(format!("Changing disc failed: {}", error_cstr.as_ref()))
             } else {
                 assert!(error.is_null());
+                Ok(())
             }
+        } else {
+            Err("Not initialized".to_owned())
         }
     }
 }
