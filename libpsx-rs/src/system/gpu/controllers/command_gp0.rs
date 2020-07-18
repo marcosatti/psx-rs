@@ -104,10 +104,9 @@ fn process_gp0_fifo(state: &State, controller_state: &mut ControllerState) {
     let fifo = &state.gpu.gp0;
     let command_buffer = &mut controller_state.gp0_command_buffer;
 
-    loop {
-        match fifo.read_one() {
-            Ok(v) => command_buffer.push(v),
-            Err(_) => break,
+    if !fifo.is_empty() {
+        while let Ok(v) = fifo.read_one() {
+            command_buffer.push(v);
         }
     }
 }

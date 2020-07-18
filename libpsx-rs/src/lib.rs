@@ -35,7 +35,6 @@ use std::{
         Path,
         PathBuf,
     },
-    time::Instant,
 };
 use system::types::ControllerContext;
 
@@ -58,7 +57,7 @@ pub struct Core<'a: 'b, 'b> {
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
     pub fn new(config: Config<'a, 'b>) -> Core<'a, 'b> {
-        log::info!("Initializing libpsx-rs with {} time delta (us) and {} worker threads", config.time_delta * 1e6, config.worker_threads);
+        log::info!("Initializing core");
 
         let mut state = State::new();
 
@@ -92,14 +91,9 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
             cdrom_backend: &self.config.cdrom_backend,
         };
 
-        let time = self.config.time_delta;
-        let event = Event::Time(time);
+        let event = Event::Time(self.config.time_delta);
 
-        let timer = Instant::now();
-        let benchmark_results = executor::run(&self.executor, &context, event);
-        let scope_duration = timer.elapsed();
-
-        debug::benchmark::trace_performance(time, scope_duration, benchmark_results);
+        executor::run(&self.executor, &context, event);
     }
 
     pub fn change_disc(&mut self, path: &Path) {

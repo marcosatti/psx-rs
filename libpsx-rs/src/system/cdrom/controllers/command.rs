@@ -27,7 +27,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
         panic!("Something is probably wrong in the emulator");
     }
 
-    assert!(state.cdrom.response.read_available() == 0, "CDROM response FIFO still had bytes when a new command was run!");
+    assert!(state.cdrom.response.is_empty(), "CDROM response FIFO still had bytes when a new command was run!");
 
     // log::debug!("Executing command {:X}, iteration {}", command_index, command_iteration);
     let finished = (handler.1)(state, controller_state, cdrom_backend, command_iteration);
@@ -39,7 +39,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
         controller_state.command_iteration += 1;
     }
 
-    assert!(state.cdrom.parameter.read_available() == 0, "CDROM parameter FIFO still had bytes when a command was just run!");
+    assert!(state.cdrom.parameter.is_empty(), "CDROM parameter FIFO still had bytes when a command was just run!");
 }
 
 fn get_handler_fn(command_index: u8) -> (LengthFn, HandlerFn) {

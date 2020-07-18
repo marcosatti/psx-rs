@@ -1,5 +1,3 @@
-pub(crate) mod benchmark;
-
 use crate::{
     system::types::State,
     Core,

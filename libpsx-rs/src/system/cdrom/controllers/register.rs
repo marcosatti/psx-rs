@@ -36,7 +36,7 @@ pub(crate) fn handle_request(state: &State, controller_state: &mut ControllerSta
                     controller_state.load_data_flag = true;
                 // log::debug!("Load data FIFO set");
                 } else {
-                    assert_eq!(state.cdrom.data.read_available(), 0);
+                    assert!(state.cdrom.data.is_empty(), "Data FIFO was not empty when a clear was requested");
                     state.cdrom.data.clear();
                     // log::debug!("Reset data FIFO");
                 }

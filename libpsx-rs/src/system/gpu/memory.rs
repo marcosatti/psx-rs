@@ -26,9 +26,10 @@ pub(crate) fn gpu1814_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 
     // TODO: not properly implemented most likely...
     // value = STAT_DMA_REQUEST.insert_into(value, 1);
-    value = STAT_RECV_CMD.insert_into(value, !bool_to_flag(state.gpu.gp0.is_full()));
+    let gp0_is_full = state.gpu.gp0.is_full();
+    value = STAT_RECV_CMD.insert_into(value, !bool_to_flag(gp0_is_full));
     value = STAT_SEND_VRAM.insert_into(value, !bool_to_flag(state.gpu.read.is_empty()));
-    value = STAT_RECV_DMA.insert_into(value, !bool_to_flag(state.gpu.gp0.is_full()));
+    value = STAT_RECV_DMA.insert_into(value, !bool_to_flag(gp0_is_full));
 
     Ok(value)
 }
