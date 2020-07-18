@@ -6,17 +6,17 @@ use crate::system::{
     types::{
         ControllerContext,
         Event,
-        State,
+        State, ControllerResult,
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(state: &State, duration: f64) {
+fn run_time(state: &State, duration: f64) -> ControllerResult {
     let controller_state = &mut state.intc.controller_state.lock();
     controller_state.clock += duration;
 
@@ -24,6 +24,8 @@ fn run_time(state: &State, duration: f64) {
         tick(state);
         controller_state.clock -= CLOCK_SPEED_PERIOD;
     }
+
+    Ok(())
 }
 
 fn tick(state: &State) {

@@ -7,7 +7,7 @@ use crate::system::{
         types::*,
     },
     intc::types::Line,
-    types::State,
+    types::{ControllerResult, State},
 };
 
 pub(crate) fn handle_irq_trigger(controller_state: &mut ControllerState, channel_id: usize) {
@@ -18,7 +18,7 @@ pub(crate) fn handle_irq_trigger(controller_state: &mut ControllerState, channel
     }
 }
 
-pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     // TODO: Force IRQ bit not handled yet.
 
     let mut master_trigger = false;
@@ -39,9 +39,11 @@ pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerS
         controller_state.master_interrupted = false;
     }
 
-    state.dmac.dicr.update(|_| calculate_dicr_value(controller_state));
+    state.dmac.dicr.update(|_| Ok(calculate_dicr_value(controller_state)))?;
 
     if raise_irq {
         state.intc.stat.assert_line(Line::Dma);
     }
+
+    Ok(())
 }

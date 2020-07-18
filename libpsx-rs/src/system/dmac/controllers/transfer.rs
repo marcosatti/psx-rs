@@ -54,12 +54,11 @@ pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut
             lls.current_count = 0;
             lls.target_count = 0;
         },
-        _ => panic!("Undefined sync mode"),
     }
 }
 
-pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) {
-    get_chcr(state, channel_id).update(|value| CHCR_STARTBUSY.insert_into(value, 0));
+pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) -> ControllerResult {
+    get_chcr(state, channel_id).update(|value| Ok(CHCR_STARTBUSY.insert_into(value, 0)))?;
 
     let madr = get_madr(state, channel_id);
     let bcr = get_bcr(state, channel_id);
@@ -79,7 +78,6 @@ pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut T
             // MADR becomes end code, BCR not touched.
             madr.write_u32(0x00FF_FFFF);
         },
-        _ => panic!("Undefined sync mode"),
     }
 }
 
@@ -118,7 +116,7 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
             let result = linked_list::handle_transfer(state, linked_list_state, channel_id);
             process_linked_list_result(channel_id, ticks_remaining, result)
         } else {
-            panic!("Invalid sync mode");
+            unreachable!("Didn't match any sync mode?");
         }
         .map_err(|_| {
             state.bus_locked.store(false);

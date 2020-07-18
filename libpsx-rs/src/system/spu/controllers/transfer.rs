@@ -3,21 +3,21 @@ use crate::system::{
         constants::*,
         types::*,
     },
-    types::State,
+    types::{ControllerResult, State},
 };
 
-pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     match controller_state.transfer_state.current_mode {
-        TransferMode::Stop => {},
+        TransferMode::Stop => Ok(()),
         TransferMode::ManualWrite => handle_manual_write_transfer(state, controller_state),
-        TransferMode::DmaWrite => unimplemented!("DmaWrite transfer mode not implemented"),
-        TransferMode::DmaRead => unimplemented!("DmaRead transfer mode not implemented"),
+        TransferMode::DmaWrite => return Err(format!("DmaWrite transfer mode not implemented")),
+        TransferMode::DmaRead => return Err(format!("DmaRead transfer mode not implemented")),
     }
 }
 
-fn handle_manual_write_transfer(state: &State, controller_state: &mut ControllerState) {
+fn handle_manual_write_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     if state.spu.data_transfer_control.read_u16() != 0x4 {
-        unimplemented!("Data transfer control not set to normal mode");
+        return Err(format!("Data transfer control not set to normal mode"));
     }
 
     let fifo = &state.spu.data_fifo;
@@ -36,8 +36,8 @@ fn handle_manual_write_transfer(state: &State, controller_state: &mut Controller
         Err(_) => {
             *current_transfer_mode = TransferMode::Stop;
             state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, 0);
-            // log::debug!("Finished transfer @ 0x{:08X} (div 8 @ 0x{:08X})", *current_transfer_address,
-            // *current_transfer_address / 8);
         },
     }
+    
+    Ok(())
 }

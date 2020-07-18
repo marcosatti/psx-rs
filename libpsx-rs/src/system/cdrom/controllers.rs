@@ -25,12 +25,12 @@ use crate::{
         types::{
             ControllerContext,
             Event,
-            State,
+            State, ControllerResult,
         },
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
     match event {
         Event::Time(duration) => run_time(context.state, context.cdrom_backend, duration),
     }

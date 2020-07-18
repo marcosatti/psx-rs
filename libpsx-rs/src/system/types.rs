@@ -35,6 +35,10 @@ use std::{
     path::Path,
 };
 
+pub(crate) type ControllerHandler = fn(&ControllerContext, Event) -> ControllerResult;
+
+pub(crate) type ControllerResult = Result<(), String>;
+
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum Event {
     Time(f64),

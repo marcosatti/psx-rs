@@ -26,7 +26,6 @@ pub(crate) enum StepDirection {
 #[derive(Debug, Copy, Clone, EnumAsInner)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum SyncMode {
-    Undefined,
     Continuous(ContinuousState),
     Blocks(BlocksState),
     LinkedList(LinkedListState),
@@ -49,7 +48,7 @@ impl TransferState {
             started: false,
             direction: TransferDirection::ToChannel,
             step_direction: StepDirection::Forwards,
-            sync_mode: SyncMode::Undefined,
+            sync_mode: SyncMode::Continuous(ContinuousState::new()),
             interrupt_enabled: false,
             interrupted: false,
         }

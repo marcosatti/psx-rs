@@ -6,14 +6,14 @@ use crate::{
             controllers::command_gp1_impl,
             types::ControllerState,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
 };
 
-pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult {
     let command = match controller_state.gp1_command {
         Some(v) => v,
-        None => return,
+        None => return Ok(()),
     };
 
     let command_index = GP_CMD.extract_from(command) as u8;
@@ -28,10 +28,12 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
         0x06 => command_gp1_impl::command_06,
         0x07 => command_gp1_impl::command_07,
         0x08 => command_gp1_impl::command_08,
-        _ => unimplemented!("Unknown GP1 command: 0x{:0X}", command_index),
+        _ => return Err(format!("Unknown GP1 command: 0x{:0X}", command_index)),
     };
 
-    command_fn(state, controller_state, video_backend, command);
+    command_fn(state, controller_state, video_backend, command)?;
 
     controller_state.gp1_command = None;
+
+    Ok(())
 }

@@ -12,17 +12,17 @@ use crate::system::{
     types::{
         ControllerContext,
         Event,
-        State,
+        State, ControllerResult,
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(state: &State, duration: f64) {
+fn run_time(state: &State, duration: f64) -> ControllerResult {
     let controller_state = &mut state.timers.controller_state.lock();
 
     for timer_id in 0..3 {
@@ -31,4 +31,6 @@ fn run_time(state: &State, duration: f64) {
         handle_mode(state, controller_state, timer_id);
         handle_counter(state, controller_state, timer_id);
     }
+
+    Ok(())
 }

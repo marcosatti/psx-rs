@@ -5,13 +5,13 @@ use crate::{
             controllers::timer::*,
             types::*,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::memory::LatchKind,
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
+pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState, timer_id: usize) -> ControllerResult {
     get_mode(state, timer_id).acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => {
@@ -20,7 +20,7 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
                 timer_state.target_hit = false;
                 timer_state.overflow_hit = false;
 
-                calculate_mode_value(timer_state)
+                Ok(calculate_mode_value(timer_state))
             },
             LatchKind::Write => {
                 // Clear count register.
@@ -31,7 +31,7 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
 
                 let sync_mode = MODE_SYNC_EN.extract_from(value);
                 if sync_mode > 0 {
-                    unimplemented!("Sync via bit1-2 not implemented: {}, timer_id = {}", sync_mode, timer_id);
+                    return Err(format!("Sync via bit1-2 not implemented: {}, timer_id = {}", sync_mode, timer_id));
                 }
 
                 timer_state.reset_on_target = MODE_RESET.extract_from(value) > 0;
@@ -79,10 +79,10 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
                     timer_state.irq_raised = false;
                 }
 
-                calculate_mode_value(timer_state)
+                Ok(calculate_mode_value(timer_state))
             },
         }
-    });
+    })
 }
 
 pub(crate) fn calculate_mode_value(timer_state: &TimerState) -> u32 {

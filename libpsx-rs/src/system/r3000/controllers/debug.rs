@@ -12,7 +12,7 @@ use crate::system::{
             Hazard,
         },
     },
-    types::State,
+    types::{ControllerResult, State},
 };
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
@@ -215,9 +215,9 @@ pub(crate) fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0Contr
     }
 }
 
-pub(crate) fn trace_bios_call(state: &ControllerState) {
+pub(crate) fn trace_bios_call(state: &ControllerState) -> ControllerResult {
     if !ENABLE_BIOS_CALL_TRACING {
-        return;
+        return Ok(());
     }
 
     let mut pc = state.pc.read_u32();
@@ -280,7 +280,7 @@ pub(crate) fn trace_bios_call(state: &ControllerState) {
                 0x08 => "SysInitMemory".into(),
                 0x09 => "SysInitKernelVariables".into(),
                 0x0A => "ChangeClearRCnt".into(),
-                0x0B => panic!("BIOS SystemError C0(0x0B) call detected"),
+                0x0B => return Err("BIOS SystemError C0(0x0B) call detected".into()),
                 0x0C => "InitDefInt".into(),
                 0x12 => "InstallDevices".into(),
                 0x1C => "AdjustA0Table".into(),
@@ -288,7 +288,7 @@ pub(crate) fn trace_bios_call(state: &ControllerState) {
             };
             format!("0xC0({})", &opcode)
         },
-        _ => return,
+        _ => return Ok(()),
     };
 
     let ra = state.gpr[31].read_u32();
@@ -296,4 +296,6 @@ pub(crate) fn trace_bios_call(state: &ControllerState) {
     let call_count = DEBUG_BIOS_CALL_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
     let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
     log::trace!("[{:X}] BIOS call {} {}, ra = 0x{:08X}", tick_count, call_count, &string, ra);
+    
+    Ok(())
 }

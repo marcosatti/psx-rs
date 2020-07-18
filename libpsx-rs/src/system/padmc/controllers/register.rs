@@ -4,13 +4,13 @@ use crate::{
             constants::*,
             types::*,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::memory::LatchKind,
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     state.padmc.ctrl.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Write => {
@@ -30,11 +30,11 @@ pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState)
                     // log::debug!("RESET bit acknowledged")
                 }
 
-                calculate_ctrl_value(controller_state)
+                Ok(calculate_ctrl_value(controller_state))
             },
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
         }
-    });
+    })
 }
 
 fn calculate_ctrl_value(controller_state: &mut ControllerState) -> u16 {

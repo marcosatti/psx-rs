@@ -21,7 +21,7 @@ use crate::{
         types::{
             ControllerContext,
             Event,
-            State,
+            State, ControllerResult,
         },
     },
     types::mips1::instruction::Instruction,
@@ -29,13 +29,13 @@ use crate::{
 use log::debug;
 use std::intrinsics::unlikely;
 
-pub(crate) fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
     match event {
         Event::Time(duration) => run_time(context.state, duration),
     }
 }
 
-fn run_time(state: &State, duration: f64) {
+fn run_time(state: &State, duration: f64) -> ControllerResult {
     let r3000_state = &mut state.r3000.controller_state.lock();
     r3000_state.clock += duration;
 
@@ -50,28 +50,33 @@ fn run_time(state: &State, duration: f64) {
                 cp0_state,
                 cp2_state,
             };
-            tick(&mut context) as f64
+            tick(&mut context)? as f64
         };
 
         r3000_state.clock -= CLOCK_SPEED_PERIOD * ticks;
     }
+
+    Ok(())
 }
 
-fn tick(context: &mut R3000ControllerContext) -> i64 {
+fn tick(context: &mut R3000ControllerContext) -> Result<i64, String> {
     handle_interrupts(context.state, context.r3000_state, context.cp0_state);
 
     if let Some(target) = context.r3000_state.branch_delay.advance() {
         context.r3000_state.pc.write_u32(target);
     }
 
-    debug::trace_bios_call(context.r3000_state);
+    debug::trace_bios_call(context.r3000_state)?;
     debug::trace_stdout_putchar(context.r3000_state, context.cp0_state);
 
     let pc_va = context.r3000_state.pc.read_u32();
     let pc_pa = translate_address(pc_va);
-    assert!(pc_pa >= 0x80, "Probably not valid instructions");
 
-    let inst_value = bus_read_u32(context.state, pc_pa).unwrap();
+    if pc_pa < 0x80 { 
+        return Err(format!("PC is in invalid region (likely): pc_pa = 0x{:08X}", pc_pa));
+    }
+
+    let inst_value = bus_read_u32(context.state, pc_pa).map_err(|e| format!("Error reading instruction from memory: {:?}", e))?;
     let inst = Instruction::new(inst_value);
 
     context.r3000_state.pc.write_u32(pc_va + INSTRUCTION_SIZE);
@@ -88,5 +93,5 @@ fn tick(context: &mut R3000ControllerContext) -> i64 {
 
     debug::update_state();
 
-    cycles as i64
+    Ok(cycles as i64)
 }

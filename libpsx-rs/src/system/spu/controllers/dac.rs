@@ -23,11 +23,11 @@ use crate::{
             },
             types::*,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
 };
 
-pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) {
+pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) -> ControllerResult {
     handle_adpcm_block(state, controller_state, voice_id);
 
     let adpcm_sample_raw = {
@@ -45,18 +45,22 @@ pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, 
 
     get_voice_state(controller_state, voice_id).sample_buffer.push(pcm_frame);
 
-    handle_play_sound_buffer(controller_state, audio_backend, voice_id);
+    handle_play_sound_buffer(controller_state, audio_backend, voice_id)?;
+
+    Ok(())
 }
 
-fn handle_play_sound_buffer(controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) {
+fn handle_play_sound_buffer(controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) -> ControllerResult {
     let muted = controller_state.muted;
     let voice_state = get_voice_state(controller_state, voice_id);
 
     if voice_state.sample_buffer.len() == BUFFER_SIZE {
         if !muted {
-            let _ = backend_dispatch::play_pcm_samples(audio_backend, &voice_state.sample_buffer, voice_id);
+            let _ = backend_dispatch::play_pcm_samples(audio_backend, &voice_state.sample_buffer, voice_id)?;
         }
 
         voice_state.sample_buffer.clear();
     }
+
+    Ok(())
 }

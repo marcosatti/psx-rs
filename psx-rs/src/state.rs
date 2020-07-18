@@ -139,7 +139,7 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                                 }
                             },
                             Keycode::F11 => {
-                                log::error!("Cannot save state from an exception state");
+                                save_state(&mut core);
                             },
                             Keycode::F12 => {
                                 if load_state(&mut core) {

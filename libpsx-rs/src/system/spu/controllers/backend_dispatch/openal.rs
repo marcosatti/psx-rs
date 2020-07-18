@@ -6,8 +6,9 @@ use crate::{
     types::stereo::*,
 };
 use openal_sys::*;
+use crate::system::types::ControllerResult;
 
-pub(crate) fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) {
+pub(crate) fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) -> ControllerResult {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -25,9 +26,11 @@ pub(crate) fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo
         alSourcePlay(SOURCES[voice_id]);
 
         if alGetError() != AL_NO_ERROR as ALenum {
-            panic!("Error in OpenAL audio backend: playing source");
+            return Err("Error in OpenAL audio backend: playing source".into());
         }
 
         RENDERING_ODD_BUFFER[voice_id] = !RENDERING_ODD_BUFFER[voice_id];
     }
+
+    Ok(())
 }

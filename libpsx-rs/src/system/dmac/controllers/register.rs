@@ -8,13 +8,13 @@ use crate::{
             },
             types::*,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::memory::*,
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) {
+pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) -> ControllerResult {
     let mut write_fn = |mut value| {
         if channel_id == 6 {
             let mut otc_value = 0;
@@ -37,7 +37,10 @@ pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState,
         let transfer_state = get_transfer_state(controller_state, channel_id);
 
         if CHCR_STARTBUSY.extract_from(value) > 0 {
-            assert!(!transfer_state.started, format!("DMA transfer already started, channel_id = {}", channel_id));
+            if transfer_state.started { 
+                return Err(format!("DMA transfer already started, channel_id: {}", channel_id));
+            }
+
             transfer_state.started = true;
         } else {
             transfer_state.started = false;
@@ -67,21 +70,21 @@ pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState,
             handle_transfer_initialization(state, transfer_state, channel_id);
         }
 
-        value
+        Ok(value)
     };
 
     get_chcr(state, channel_id).acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
             LatchKind::Write => write_fn(value),
         }
-    });
+    })
 }
 
-pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     let mut write_fn = |value| {
         if DICR_IRQ_FORCE.extract_from(value) > 0 {
-            unimplemented!("IRQ force bit set");
+            return Err("IRQ force bit set".into());
         }
 
         controller_state.master_interrupt_enabled = DICR_IRQ_MASTER_ENABLE.extract_from(value) > 0;
@@ -96,15 +99,15 @@ pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState)
             }
         }
 
-        calculate_dicr_value(controller_state)
+        Ok(calculate_dicr_value(controller_state))
     };
 
     state.dmac.dicr.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
             LatchKind::Write => write_fn(value),
         }
-    });
+    })
 }
 
 pub(crate) fn calculate_dicr_value(controller_state: &mut ControllerState) -> u32 {

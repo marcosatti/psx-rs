@@ -15,11 +15,11 @@ use crate::system::{
     types::{
         ControllerContext,
         Event,
-        State,
+        State, ControllerResult,
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }

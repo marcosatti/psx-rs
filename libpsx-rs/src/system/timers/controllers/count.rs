@@ -7,10 +7,10 @@ use crate::system::{
         },
         types::*,
     },
-    types::State,
+    types::{ControllerResult, State},
 };
 
-pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize) {
+pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize) -> ControllerResult {
     let count = get_count(state, timer_id);
     let target = get_target(state, timer_id);
     let timer_state = get_state(controller_state, timer_id);
@@ -28,19 +28,21 @@ pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerSta
             if count_value == target_value {
                 count_value = 0;
                 timer_state.target_hit = true;
-                handle_irq_trigger(state, timer_state, timer_id, IrqType::Target);
+                handle_irq_trigger(state, timer_state, timer_id, IrqType::Target)?;
             }
         } else {
             if count_value == (std::u16::MAX as u32) {
                 count_value = 0;
                 timer_state.overflow_hit = true;
-                handle_irq_trigger(state, timer_state, timer_id, IrqType::Overflow);
+                handle_irq_trigger(state, timer_state, timer_id, IrqType::Overflow)?;
             }
         }
 
         count.write_u32(count_value);
         timer_state.clock -= tick_period;
     }
+
+    Ok(())
 }
 
 const fn calc_clock_source_period(clock_source: ClockSource) -> f64 {

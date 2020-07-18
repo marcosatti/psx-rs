@@ -5,7 +5,7 @@ use crate::{
             controllers::dac::voice::*,
             types::*,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::{
         bitfield::Bitfield,
@@ -14,7 +14,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     let mut write_fn = |value| {
         controller_state.enabled = CONTROL_ENABLE.extract_from(value) > 0;
 
@@ -37,32 +37,32 @@ pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerSta
 
     state.spu.control.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
             LatchKind::Write => {
                 write_fn(value);
-                value
+                Ok(value)
             },
         }
-    });
+    })
 }
 
-pub(crate) fn handle_data_transfer_address(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_data_transfer_address(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     let mut write_fn = |value| {
         controller_state.transfer_state.current_address = value as usize * 8;
     };
 
     state.spu.data_transfer_address.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
             LatchKind::Write => {
                 write_fn(value);
-                value
+                Ok(value)
             },
         }
-    });
+    })
 }
 
-pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerState)  -> ControllerResult {
     // Initializes voice state (starts ADSR envelope).
     // Copies start address to current address (internal).
     // Copies start Address to repeat address register.
@@ -84,16 +84,16 @@ pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerStat
 
     state.spu.voice_key_on.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
             LatchKind::Write => {
                 write_fn(value);
-                value
+                Ok(value)
             },
         }
-    });
+    })
 }
 
-pub(crate) fn handle_key_off(state: &State, controller_state: &mut ControllerState) {
+pub(crate) fn handle_key_off(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     // Changes voice ADSR phase to the release state.
 
     let mut write_fn = |value| {
@@ -108,11 +108,11 @@ pub(crate) fn handle_key_off(state: &State, controller_state: &mut ControllerSta
 
     state.spu.voice_key_off.acknowledge(|value, latch_kind| {
         match latch_kind {
-            LatchKind::Read => value,
+            LatchKind::Read => Ok(value),
             LatchKind::Write => {
                 write_fn(value);
-                value
+                Ok(value)
             },
         }
-    });
+    })
 }

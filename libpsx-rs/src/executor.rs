@@ -9,7 +9,7 @@ use crate::system::{
     timers::controllers::run as run_timers,
     types::{
         ControllerContext,
-        Event,
+        Event, ControllerHandler, ControllerResult,
     },
 };
 use crossbeam::channel::bounded;
@@ -17,7 +17,6 @@ use rayon::{
     ThreadPool,
     ThreadPoolBuilder,
 };
-use std::panic;
 
 pub(crate) struct Executor {
     thread_pool: ThreadPool,
@@ -65,11 +64,8 @@ impl Executor {
     }
 }
 
-fn run_controller_proxy(name: &str, cont_fn: fn(&ControllerContext, Event), context: &ControllerContext, event: Event) -> Result<(), String> {
-    panic::catch_unwind(panic::AssertUnwindSafe(|| cont_fn(context, event))).map_err(|e| {
-        match e.downcast::<String>() {
-            Ok(s) => format!("{}: {}", name, *s),
-            Err(_) => format!("{}: unknown error", name),
-        }
+fn run_controller_proxy(name: &str, handler_fn: ControllerHandler, context: &ControllerContext, event: Event) -> ControllerResult {
+    handler_fn(context, event).map_err(|what| {
+        format!("{}: {}", name, &what)
     })
 }

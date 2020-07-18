@@ -21,14 +21,17 @@ use crate::{
     utilities::array::extract_rectangle,
 };
 use opengl_sys::*;
+use crate::system::types::ControllerResult;
 
-pub(crate) fn draw_line_loop_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3]) {
+pub(crate) fn draw_line_loop_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3]) -> ControllerResult {
     debug::trace_call(stdext::function_name!());
 
-    draw_line_loop_4_solid(backend_params, [positions[0], positions[0], positions[1], positions[2]]);
+    draw_line_loop_4_solid(backend_params, [positions[0], positions[0], positions[1], positions[2]])?;
+
+    Ok(())
 }
 
-pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4]) {
+pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4]) -> ControllerResult {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
@@ -76,9 +79,11 @@ pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: 
             glDrawArrays(GL_LINE_LOOP, 0, 4);
         }
     }
+
+    Ok(())
 }
 
-pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) {
+pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) -> ControllerResult {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
@@ -136,11 +141,13 @@ pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [
     }
 
     if debug::DEBUG_DRAW_OUTLINE {
-        draw_line_loop_3_solid(backend_params, positions);
+        draw_line_loop_3_solid(backend_params, positions)?;
     }
+
+    Ok(())
 }
 
-pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) {
+pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color) -> ControllerResult {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
@@ -201,11 +208,13 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
     }
 
     if debug::DEBUG_DRAW_OUTLINE {
-        draw_line_loop_4_solid(backend_params, positions);
+        draw_line_loop_4_solid(backend_params, positions)?;
     }
+
+    Ok(())
 }
 
-pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) {
+pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) -> ControllerResult {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
@@ -277,14 +286,16 @@ pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [
     }
 
     if debug::DEBUG_DRAW_OUTLINE {
-        draw_line_loop_4_solid(backend_params, positions);
+        draw_line_loop_4_solid(backend_params, positions)?;
     }
+
+    Ok(())
 }
 
 pub(crate) fn draw_polygon_4_textured(
     backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize,
     texture_data: &[Color],
-)
+) -> ControllerResult
 {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
@@ -390,11 +401,13 @@ pub(crate) fn draw_polygon_4_textured(
     }
 
     if debug::DEBUG_DRAW_OUTLINE {
-        draw_line_loop_4_solid(backend_params, positions);
+        draw_line_loop_4_solid(backend_params, positions)?;
     }
+
+    Ok(())
 }
 
-pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) {
+pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) -> ControllerResult {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
@@ -484,11 +497,13 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams
     }
 
     if debug::DEBUG_DRAW_OUTLINE {
-        draw_line_loop_4_solid(backend_params, positions);
+        draw_line_loop_4_solid(backend_params, positions)?;
     }
+
+    Ok(())
 }
 
-pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<f32, Normalized>, size: Size2D<f32, Normalized>) -> Vec<u16> {
+pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Point2D<f32, Normalized>, size: Size2D<f32, Normalized>) -> Result<Vec<u16>, String> {
     use crate::system::gpu::constants::{
         VRAM_HEIGHT_LINES,
         VRAM_WIDTH_16B,
@@ -601,5 +616,5 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
     let pixel_size_height = ((VRAM_HEIGHT_LINES / 2) as f32 * size.height) as usize;
     let pixel_size = Size2D::new(pixel_size_width, pixel_size_height);
 
-    extract_rectangle(&buffer, pixel_origin, pixel_size)
+    Ok(extract_rectangle(&buffer, pixel_origin, pixel_size))
 }

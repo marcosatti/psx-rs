@@ -10,7 +10,7 @@ use crate::{
             },
             types::ControllerState,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::{
         bitfield::Bitfield,
@@ -24,22 +24,24 @@ pub(crate) fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_00_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
+pub(crate) fn command_00_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) -> ControllerResult {
+    Ok(())
 }
 
 pub(crate) fn command_01_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_01_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
+pub(crate) fn command_01_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) -> ControllerResult {
     // Flush cache (NOP)
+    Ok(())
 }
 
 pub(crate) fn command_02_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
@@ -54,51 +56,58 @@ pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut Control
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color);
+    let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color)?;
+
+    Ok(())
 }
 
 pub(crate) fn command_05_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_05_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
+pub(crate) fn command_05_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) -> ControllerResult {
     // NOP
+    Ok(())
 }
 
 pub(crate) fn command_06_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_06_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
+pub(crate) fn command_06_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) -> ControllerResult {
     // NOP
+    Ok(())
 }
 
 pub(crate) fn command_0c_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_0c_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) {
+pub(crate) fn command_0c_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _data: &[u32]) -> ControllerResult {
     // NOP
+    Ok(())
 }
 
 pub(crate) fn command_28_length(_data: &[u32]) -> Option<usize> {
     Some(5)
 }
 
-pub(crate) fn command_28_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_28_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
     let positions = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
 
-    let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color);
+    let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color)?;
+
+    Ok(())
 }
 
 pub(crate) fn command_2c_length(_data: &[u32]) -> Option<usize> {
     Some(9)
 }
 
-pub(crate) fn command_2c_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_2c_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Textured four-point polygon, opaque, texture-blending", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -111,14 +120,16 @@ pub(crate) fn command_2c_handler(_state: &State, _controller_state: &mut Control
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
     let _clut = extract_clut_base_normalized(data[2]);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+
+    Ok(())
 }
 
 pub(crate) fn command_2d_length(_data: &[u32]) -> Option<usize> {
     Some(9)
 }
 
-pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Textured four-point polygon, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -130,56 +141,66 @@ pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut Control
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
     let _clut = extract_clut_base_normalized(data[2]);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    
+    Ok(())
 }
 
 pub(crate) fn command_30_length(_data: &[u32]) -> Option<usize> {
     Some(6)
 }
 
-pub(crate) fn command_30_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_30_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
     let positions = extract_vertices_3_normalized([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
 
-    let _ = backend_dispatch::draw_polygon_3_shaded(video_backend, positions, colors);
+    let _ = backend_dispatch::draw_polygon_3_shaded(video_backend, positions, colors)?;
+    
+    Ok(())
 }
 
 pub(crate) fn command_38_length(_data: &[u32]) -> Option<usize> {
     Some(8)
 }
 
-pub(crate) fn command_38_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_38_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
 
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
     let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
 
-    let _ = backend_dispatch::draw_polygon_4_shaded(video_backend, positions, colors);
+    let _ = backend_dispatch::draw_polygon_4_shaded(video_backend, positions, colors)?;
+    
+    Ok(())
 }
 
 pub(crate) fn command_3c_length(_data: &[u32]) -> Option<usize> {
     Some(12)
 }
 
-pub(crate) fn command_3c_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_3c_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Shaded Textured four-point polygon, opaque, texture-blending", data);
+    
+    Ok(())
 }
 
 pub(crate) fn command_50_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub(crate) fn command_50_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_50_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Shaded line, opaque", data);
+    
+    Ok(())
 }
 
 pub(crate) fn command_65_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub(crate) fn command_65_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_65_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
     // TODO: implement this properly - need to make a shader to do this I think...
@@ -202,23 +223,29 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords);
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    
+    Ok(())
 }
 
 pub(crate) fn command_6f_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub(crate) fn command_6f_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_6f_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture", data);
+    
+    Ok(())
 }
 
 pub(crate) fn command_80_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }
 
-pub(crate) fn command_80_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_80_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Copy Rectangle (VRAM to VRAM)", data);
+    
+    Ok(())
 }
 
 pub(crate) fn command_a0_length(data: &[u32]) -> Option<usize> {
@@ -234,7 +261,7 @@ pub(crate) fn command_a0_length(data: &[u32]) -> Option<usize> {
     return Some(data_words);
 }
 
-pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
 
     let base_point = extract_point_normalized(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
@@ -263,14 +290,16 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
         texture_colors.push(colors[1]);
     }
 
-    let _ = backend_dispatch::draw_polygon_4_textured(video_backend, positions, texcoords, texture_width, texture_height, &texture_colors);
+    let _ = backend_dispatch::draw_polygon_4_textured(video_backend, positions, texcoords, texture_width, texture_height, &texture_colors)?;
+
+    Ok(())
 }
 
 pub(crate) fn command_c0_length(_data: &[u32]) -> Option<usize> {
     Some(3)
 }
 
-pub(crate) fn command_c0_handler(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_c0_handler(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
     let pixel_origin = extract_point(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
@@ -284,7 +313,7 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
     let size = normalize_size(pixel_size);
     origin.y = origin.y - size.height;
 
-    let data = backend_dispatch::read_framebuffer_5551(video_backend, origin, size).unwrap_or_else(|_| unimplemented!());
+    let data = backend_dispatch::read_framebuffer_5551(video_backend, origin, size)?.unwrap_or_else(|_| unimplemented!());
     let mut data = flip_rows(&data, pixel_size.width as usize);
     assert!(data.len() == count, format!("Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", count, data.len()));
 
@@ -302,13 +331,15 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
         word = Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
         controller_state.gp0_read_buffer.push_back(word)
     }
+
+    Ok(())
 }
 
 pub(crate) fn command_e1_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_e1_handler(state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_e1_handler(state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Draw Mode setting", data);
 
     let stat = &state.gpu.stat;
@@ -339,13 +370,15 @@ pub(crate) fn command_e1_handler(state: &State, controller_state: &mut Controlle
 
     controller_state.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
     // warn!("GP0(E1h) not properly implemented");
+    
+    Ok(())
 }
 
 pub(crate) fn command_e2_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_e2_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_e2_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Texture Window setting", data);
 
     controller_state.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
@@ -353,13 +386,15 @@ pub(crate) fn command_e2_handler(_state: &State, controller_state: &mut Controll
     controller_state.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
     controller_state.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
     // warn!("GP0(E2h) not properly implemented");
+    
+    Ok(())
 }
 
 pub(crate) fn command_e3_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_e3_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_e3_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Set Drawing Area top left", data);
 
     controller_state.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
@@ -370,13 +405,15 @@ pub(crate) fn command_e3_handler(_state: &State, controller_state: &mut Controll
         // log::debug!("Non zero drawing area x1 y1: {}, {}", controller_state.drawing_area_x1,
         // controller_state.drawing_area_y1);
     }
+    
+    Ok(())
 }
 
 pub(crate) fn command_e4_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_e4_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_e4_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
 
     controller_state.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
@@ -387,13 +424,15 @@ pub(crate) fn command_e4_handler(_state: &State, controller_state: &mut Controll
         // log::debug!("Non zero drawing area x2 y2: {}, {}", controller_state.drawing_area_x2,
         // controller_state.drawing_area_y2);
     }
+    
+    Ok(())
 }
 
 pub(crate) fn command_e5_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_e5_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_e5_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Set Drawing Offset", data);
 
     let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;
@@ -410,17 +449,21 @@ pub(crate) fn command_e5_handler(_state: &State, controller_state: &mut Controll
         // log::debug!("Non zero drawing offset: {}, {}", controller_state.drawing_offset_x,
         // controller_state.drawing_offset_y);
     }
+
+    Ok(())
 }
 
 pub(crate) fn command_e6_length(_data: &[u32]) -> Option<usize> {
     Some(1)
 }
 
-pub(crate) fn command_e6_handler(state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) {
+pub(crate) fn command_e6_handler(state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult {
     debug::trace_gp0_command("Mask Bit Setting", data);
 
     let stat = &state.gpu.stat;
     stat.write_bitfield(STAT_DRAW_MASK, Bitfield::new(0, 1).extract_from(data[0]));
     stat.write_bitfield(STAT_DRAW_PIXELS, Bitfield::new(1, 1).extract_from(data[0]));
     // warn!("GP0(E6h) not properly implemented");
+
+    Ok(())
 }

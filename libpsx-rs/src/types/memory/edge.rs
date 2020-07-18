@@ -98,23 +98,26 @@ impl B32EdgeRegister {
     }
 
     /// If a latch event is pending, executes an atomic operation to handle it.
-    pub(crate) fn acknowledge<F>(&self, operation: F)
-    where F: FnOnce(u32, LatchKind) -> u32 {
+    pub(crate) fn acknowledge<F, E>(&self, operation: F) -> Result<(), E>
+    where F: FnOnce(u32, LatchKind) -> Result<u32, E> {
         if self.dirty.load(Ordering::Acquire) {
             {
                 let data = &mut self.memory.lock();
-                data.1 = operation(data.1, data.0);
+                data.1 = operation(data.1, data.0)?;
             }
             self.dirty.store(false, Ordering::Release);
         }
+
+        Ok(())
     }
 
     /// Updates the internal value without checking the latch status.
     /// This is used for read-only bits as a part of a whole register.
-    pub(crate) fn update<F>(&self, operation: F)
-    where F: FnOnce(u32) -> u32 {
+    pub(crate) fn update<F, E>(&self, operation: F) -> Result<(), E>
+    where F: FnOnce(u32) -> Result<u32, E> {
         let data = &mut self.memory.lock();
-        data.1 = operation(data.1);
+        data.1 = operation(data.1)?;
+        Ok(())
     }
 }
 
@@ -193,22 +196,24 @@ impl B16EdgeRegister {
         Ok(())
     }
 
-    pub(crate) fn acknowledge<F>(&self, operation: F)
-    where F: FnOnce(u16, LatchKind) -> u16 {
+    pub(crate) fn acknowledge<F, E>(&self, operation: F) -> Result<(), E>
+    where F: FnOnce(u16, LatchKind) -> Result<u16, E> {
         if self.dirty.load(Ordering::Acquire) {
             {
                 let data = &mut self.memory.lock();
-                data.1 = operation(data.1, data.0);
+                data.1 = operation(data.1, data.0)?;
             }
             self.dirty.store(false, Ordering::Release);
         }
+
+        Ok(())
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn update<F>(&self, operation: F)
-    where F: FnOnce(u16) -> u16 {
+    pub(crate) fn update<F, E>(&self, operation: F) -> Result<(), E>
+    where F: FnOnce(u16) -> Result<u16, E> {
         let data = &mut self.memory.lock();
-        data.1 = operation(data.1);
+        data.1 = operation(data.1)?;
+        Ok(())
     }
 }
 
@@ -272,21 +277,24 @@ impl B8EdgeRegister {
         Ok(())
     }
 
-    pub(crate) fn acknowledge<F>(&self, operation: F)
-    where F: FnOnce(u8, LatchKind) -> u8 {
+    pub(crate) fn acknowledge<F, E>(&self, operation: F) -> Result<(), E>
+    where F: FnOnce(u8, LatchKind) -> Result<u8, E> {
         if self.dirty.load(Ordering::Acquire) {
             {
                 let data = &mut self.memory.lock();
-                data.1 = operation(data.1, data.0);
+                data.1 = operation(data.1, data.0)?;
             }
             self.dirty.store(false, Ordering::Release);
         }
+
+        Ok(())
     }
 
-    pub(crate) fn update<F>(&self, operation: F)
-    where F: FnOnce(u8) -> u8 {
+    pub(crate) fn update<F, E>(&self, operation: F) -> Result<(), E>
+    where F: FnOnce(u8) -> Result<u8, E> {
         let data = &mut self.memory.lock();
-        data.1 = operation(data.1);
+        data.1 = operation(data.1)?;
+        Ok(())
     }
 }
 
