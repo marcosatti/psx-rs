@@ -1,19 +1,17 @@
 //! Note: lifetimes are static to avoid propogation to Core... The threadpool is only used with a scoped context.
 
-use crate::{
-    system::{
-        cdrom::controllers::run as run_cdrom,
-        dmac::controllers::run as run_dmac,
-        gpu::controllers::run as run_gpu,
-        intc::controllers::run as run_intc,
-        padmc::controllers::run as run_padmc,
-        r3000::controllers::run as run_r3000,
-        spu::controllers::run as run_spu,
-        timers::controllers::run as run_timers,
-        types::{
-            ControllerContext,
-            Event,
-        },
+use crate::system::{
+    cdrom::controllers::run as run_cdrom,
+    dmac::controllers::run as run_dmac,
+    gpu::controllers::run as run_gpu,
+    intc::controllers::run as run_intc,
+    padmc::controllers::run as run_padmc,
+    r3000::controllers::run as run_r3000,
+    spu::controllers::run as run_spu,
+    timers::controllers::run as run_timers,
+    types::{
+        ControllerContext,
+        Event,
     },
 };
 use scoped_threadpool::*;

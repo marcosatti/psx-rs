@@ -42,8 +42,7 @@ impl<T> Fifo<T> {
 }
 
 impl<T> Clone for Fifo<T>
-where 
-    T: Clone 
+where T: Clone
 {
     fn clone(&self) -> Self {
         let capacity = self.fifo.capacity();
@@ -78,17 +77,14 @@ mod serialization {
         buffer: Vec<T>,
     }
 
-    impl<T> Serialize for Fifo<T> 
-    where 
-        T: Serialize,
+    impl<T> Serialize for Fifo<T>
+    where T: Serialize
     {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where 
-            S: Serializer,
-        {
+        where S: Serializer {
             let capacity = self.fifo.capacity();
             let mut buffer = Vec::with_capacity(self.fifo.len());
-            
+
             while let Ok(item) = self.fifo.pop() {
                 buffer.push(item);
             }
@@ -102,14 +98,11 @@ mod serialization {
         }
     }
 
-    impl<'de, T> Deserialize<'de> for Fifo<T>    
-    where 
-        T: Deserialize<'de>, 
+    impl<'de, T> Deserialize<'de> for Fifo<T>
+    where T: Deserialize<'de>
     {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where 
-            D: Deserializer<'de> 
-        {
+        where D: Deserializer<'de> {
             let mut state = <State<T> as Deserialize>::deserialize(deserializer)?;
 
             let fifo = Fifo::new(state.capacity);
@@ -117,8 +110,8 @@ mod serialization {
             for item in state.buffer.drain(..) {
                 fifo.write_one(item).unwrap();
             }
-            
+
             Ok(fifo)
         }
-    } 
+    }
 }
