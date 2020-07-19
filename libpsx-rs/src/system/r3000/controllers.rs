@@ -20,8 +20,9 @@ use crate::{
         },
         types::{
             ControllerContext,
+            ControllerResult,
             Event,
-            State, ControllerResult,
+            State,
         },
     },
     types::mips1::instruction::Instruction,
@@ -72,7 +73,7 @@ fn tick(context: &mut R3000ControllerContext) -> Result<i64, String> {
     let pc_va = context.r3000_state.pc.read_u32();
     let pc_pa = translate_address(pc_va);
 
-    if pc_pa < 0x80 { 
+    if pc_pa < 0x80 {
         return Err(format!("PC is in invalid region (likely): pc_pa = 0x{:08X}", pc_pa));
     }
 

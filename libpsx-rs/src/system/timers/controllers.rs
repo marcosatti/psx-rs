@@ -11,8 +11,9 @@ use crate::system::{
     },
     types::{
         ControllerContext,
+        ControllerResult,
         Event,
-        State, ControllerResult,
+        State,
     },
 };
 
@@ -28,8 +29,8 @@ fn run_time(state: &State, duration: f64) -> ControllerResult {
     for timer_id in 0..3 {
         get_state(controller_state, timer_id).clock += duration;
 
-        handle_mode(state, controller_state, timer_id);
-        handle_counter(state, controller_state, timer_id);
+        handle_mode(state, controller_state, timer_id)?;
+        handle_counter(state, controller_state, timer_id)?;
     }
 
     Ok(())

@@ -7,7 +7,10 @@ use crate::system::{
         },
         types::*,
     },
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn handle_irq_trigger(state: &State, timer_state: &mut TimerState, timer_id: usize, irq_type: IrqType) -> ControllerResult {
@@ -42,14 +45,14 @@ fn handle_irq_raise(state: &State, timer_state: &mut TimerState, timer_id: usize
         true
     };
 
-    mode.update(|_| Ok(calculate_mode_value(timer_state)))?;
+    mode.update(|_| calculate_mode_value(timer_state))?;
 
     if raise_irq {
         state.intc.stat.assert_line(match timer_id {
             0 => Line::Tmr0,
             1 => Line::Tmr1,
             2 => Line::Tmr2,
-            _ => unreachable!(),
+            _ => unreachable!("Invalid timer ID"),
         });
     }
 

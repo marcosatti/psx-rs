@@ -7,7 +7,10 @@ use crate::system::{
         },
         types::*,
     },
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize) -> ControllerResult {

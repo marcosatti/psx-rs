@@ -17,8 +17,9 @@ use crate::{
         },
         types::{
             ControllerContext,
+            ControllerResult,
             Event,
-            State, ControllerResult,
+            State,
         },
     },
 };
@@ -84,6 +85,6 @@ fn handle_dac_tick(state: &State, audio_backend: &AudioBackend, controller_state
     for voice_id in 0..24 {
         handle_dac(state, controller_state, audio_backend, voice_id)?;
     }
-    
+
     Ok(())
 }

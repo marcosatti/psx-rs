@@ -1,6 +1,9 @@
 use crate::system::{
     gpu::types::*,
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
@@ -13,7 +16,7 @@ pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState)
         }
 
         match read_buffer.pop_front() {
-            Some(v) => read.write_one(v).map_err(|_| "Error writing to GPUREAD FIFO".into())?,
+            Some(v) => read.write_one(v).map_err(|_| "Error writing to GPUREAD FIFO".to_owned())?,
             None => break,
         }
     }

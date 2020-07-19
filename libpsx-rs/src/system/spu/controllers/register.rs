@@ -5,7 +5,10 @@ use crate::{
             controllers::dac::voice::*,
             types::*,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::{
         bitfield::Bitfield,
@@ -62,7 +65,7 @@ pub(crate) fn handle_data_transfer_address(state: &State, controller_state: &mut
     })
 }
 
-pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerState)  -> ControllerResult {
+pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
     // Initializes voice state (starts ADSR envelope).
     // Copies start address to current address (internal).
     // Copies start Address to repeat address register.

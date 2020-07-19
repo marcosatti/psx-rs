@@ -24,8 +24,9 @@ use crate::{
         },
         types::{
             ControllerContext,
+            ControllerResult,
             Event,
-            State, ControllerResult,
+            State,
         },
     },
 };
@@ -36,26 +37,30 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) {
+fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) -> ControllerResult {
     let controller_state = &mut state.cdrom.controller_state.lock();
     controller_state.clock += duration;
 
     while controller_state.clock > 0.0 {
-        tick(state, controller_state, cdrom_backend);
+        tick(state, controller_state, cdrom_backend)?;
         controller_state.clock -= CLOCK_SPEED_PERIOD;
     }
+
+    Ok(())
 }
 
-fn tick(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) {
-    handle_command_register(state, controller_state);
-    handle_request(state, controller_state);
-    handle_interrupt_flag(state, controller_state);
+fn tick(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult {
+    handle_command_register(state, controller_state)?;
+    handle_request(state, controller_state)?;
+    handle_interrupt_flag(state, controller_state)?;
 
     if controller_state.interrupt_index == 0 {
-        handle_read(state, controller_state, cdrom_backend);
+        handle_read(state, controller_state, cdrom_backend)?;
     }
 
     if controller_state.interrupt_index == 0 {
-        handle_command(state, controller_state, cdrom_backend);
+        handle_command(state, controller_state, cdrom_backend)?;
     }
+
+    Ok(())
 }

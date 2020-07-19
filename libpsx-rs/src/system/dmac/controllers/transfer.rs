@@ -13,7 +13,10 @@ use crate::{
             },
             types::*,
         },
-        types::State,
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::bitfield::Bitfield,
 };
@@ -58,7 +61,7 @@ pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut
 }
 
 pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) -> ControllerResult {
-    get_chcr(state, channel_id).update(|value| Ok(CHCR_STARTBUSY.insert_into(value, 0)))?;
+    get_chcr(state, channel_id).update::<_, String>(|value| Ok(CHCR_STARTBUSY.insert_into(value, 0)))?;
 
     let madr = get_madr(state, channel_id);
     let bcr = get_bcr(state, channel_id);
@@ -79,92 +82,69 @@ pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut T
             madr.write_u32(0x00FF_FFFF);
         },
     }
+
+    Ok(())
 }
 
-pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_remaining: &mut isize) -> Result<(), ()> {
+pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_available: usize) -> Result<(usize, bool), String> {
     if state.dmac.dpcr.read_bitfield(DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id]) == 0 {
-        *ticks_remaining -= 1;
-        return Ok(());
+        return Ok((1, false));
     }
 
     let transfer_state = get_transfer_state(controller_state, channel_id);
 
     if !transfer_state.started {
-        *ticks_remaining -= 1;
-        return Ok(());
+        return Ok((1, false));
     }
 
     state.bus_locked.store_barrier(true);
 
-    let mut finished = false;
-    while *ticks_remaining > 0 {
-        finished = if matches!(transfer_state.sync_mode, SyncMode::Continuous(_)) {
-            let direction = transfer_state.direction;
-            let step = transfer_state.step_direction;
-            let continuous_state = transfer_state.sync_mode.as_continuous_mut().unwrap();
-            let result = continuous::handle_transfer(state, continuous_state, channel_id, direction, step);
-            process_continuous_result(channel_id, ticks_remaining, result)
-        } else if matches!(transfer_state.sync_mode, SyncMode::Blocks(_)) {
-            let direction = transfer_state.direction;
-            let step = transfer_state.step_direction;
-            let blocks_state = transfer_state.sync_mode.as_blocks_mut().unwrap();
-            let result = blocks::handle_transfer(state, blocks_state, channel_id, direction, step);
-            process_blocks_result(channel_id, ticks_remaining, result)
-        } else if matches!(transfer_state.sync_mode, SyncMode::LinkedList(_)) {
-            assert!(transfer_state.direction == TransferDirection::ToChannel, "Linked list transfers are ToChannel only");
-            let linked_list_state = transfer_state.sync_mode.as_linked_list_mut().unwrap();
-            let result = linked_list::handle_transfer(state, linked_list_state, channel_id);
-            process_linked_list_result(channel_id, ticks_remaining, result)
-        } else {
-            unreachable!("Didn't match any sync mode?");
+    let mut ticks_consumed = 0;
+    while ticks_consumed < ticks_available {
+        let direction = transfer_state.direction;
+        let step = transfer_state.step_direction;
+
+        let (cooloff_required, finished, block_completed) = match transfer_state.sync_mode {
+            SyncMode::Continuous(ref mut continuous_state) => {
+                let (cooloff_required, finished) = continuous::handle_transfer(state, continuous_state, channel_id, direction, step)?;
+                (cooloff_required, finished, false)
+            },
+            SyncMode::Blocks(ref mut blocks_state) => blocks::handle_transfer(state, blocks_state, channel_id, direction, step)?,
+            SyncMode::LinkedList(ref mut linked_list_state) => {
+                if direction != TransferDirection::ToChannel {
+                    return Err("Linked list transfers are ToChannel only".into());
+                }
+
+                linked_list::handle_transfer(state, linked_list_state, channel_id)?
+            },
+        };
+
+        ticks_consumed += calculate_channel_ticks(channel_id, block_completed);
+
+        if cooloff_required {
+            state.bus_locked.store_barrier(false);
+            return Ok((ticks_consumed, true));
         }
-        .map_err(|_| {
-            state.bus_locked.store(false);
-        })?;
 
         if finished {
-            break;
+            handle_transfer_finalization(state, transfer_state, channel_id)?;
+            transfer_state.started = false;
+            handle_irq_trigger(transfer_state);
+            state.bus_locked.store_barrier(false);
         }
     }
 
-    if finished {
-        handle_transfer_finalization(state, transfer_state, channel_id);
-        transfer_state.started = false;
-        handle_irq_trigger(controller_state, channel_id);
-        state.bus_locked.store(false);
-    }
-
-    Ok(())
+    Ok((ticks_consumed, false))
 }
 
-fn process_continuous_result(channel_id: usize, ticks_remaining: &mut isize, result: Result<bool, ()>) -> Result<bool, ()> {
-    let finished = result?;
-    *ticks_remaining -= calculate_raw_channel_ticks(channel_id) as isize;
-    Ok(finished)
-}
-
-fn process_blocks_result(channel_id: usize, ticks_remaining: &mut isize, result: Result<(bool, bool), ()>) -> Result<bool, ()> {
-    let (finished, block_completed) = result?;
-
-    *ticks_remaining -= calculate_raw_channel_ticks(channel_id) as isize;
+fn calculate_channel_ticks(channel_id: usize, block_completed: bool) -> usize {
+    let mut ticks = calculate_raw_channel_ticks(channel_id);
 
     if block_completed {
-        *ticks_remaining -= 16;
+        ticks += 16;
     }
 
-    Ok(finished)
-}
-
-fn process_linked_list_result(channel_id: usize, ticks_remaining: &mut isize, result: Result<(bool, bool), ()>) -> Result<bool, ()> {
-    let (finished, list_completed) = result?;
-
-    *ticks_remaining -= calculate_raw_channel_ticks(channel_id) as isize;
-
-    if list_completed {
-        *ticks_remaining -= 16;
-    }
-
-    Ok(finished)
+    ticks
 }
 
 fn calculate_raw_channel_ticks(channel_id: usize) -> usize {
@@ -177,6 +157,6 @@ fn calculate_raw_channel_ticks(channel_id: usize) -> usize {
         4 => 4,
         5 => 20,
         6 => 1,
-        _ => unreachable!(),
+        _ => unreachable!("Invalid DMAC channel"),
     }
 }

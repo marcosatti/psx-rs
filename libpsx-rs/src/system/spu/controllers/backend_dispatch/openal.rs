@@ -3,10 +3,10 @@ use crate::{
         rendering::*,
         *,
     },
+    system::types::ControllerResult,
     types::stereo::*,
 };
 use openal_sys::*;
-use crate::system::types::ControllerResult;
 
 pub(crate) fn play_pcm_samples(backend_params: &BackendParams, samples: &[Stereo], voice_id: usize) -> ControllerResult {
     let (_context_guard, _context) = backend_params.context.guard();

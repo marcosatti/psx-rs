@@ -1,7 +1,10 @@
 use crate::{
     system::{
         gpu::types::*,
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::memory::*,
 };

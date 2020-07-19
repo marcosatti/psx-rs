@@ -6,20 +6,23 @@ use crate::{
             controllers::command_gp0_impl,
             types::ControllerState,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::bitfield::Bitfield,
 };
 
 pub(crate) fn command_00(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, _command: u32) -> ControllerResult {
-    command_01(state, controller_state, video_backend, 0);
-    command_02(state, controller_state, video_backend, 0);
-    command_03(state, controller_state, video_backend, 1);
-    command_04(state, controller_state, video_backend, 0);
-    command_05(state, controller_state, video_backend, 0);
-    command_06(state, controller_state, video_backend, 0);
-    command_07(state, controller_state, video_backend, 0);
-    command_08(state, controller_state, video_backend, 0);
+    command_01(state, controller_state, video_backend, 0)?;
+    command_02(state, controller_state, video_backend, 0)?;
+    command_03(state, controller_state, video_backend, 1)?;
+    command_04(state, controller_state, video_backend, 0)?;
+    command_05(state, controller_state, video_backend, 0)?;
+    command_06(state, controller_state, video_backend, 0)?;
+    command_07(state, controller_state, video_backend, 0)?;
+    command_08(state, controller_state, video_backend, 0)?;
     command_gp0_impl::command_e1_handler(state, controller_state, video_backend, &[0])?;
     command_gp0_impl::command_e2_handler(state, controller_state, video_backend, &[0])?;
     command_gp0_impl::command_e3_handler(state, controller_state, video_backend, &[0])?;

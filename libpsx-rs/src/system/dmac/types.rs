@@ -2,7 +2,6 @@ use crate::types::{
     exclusive_state::ExclusiveState,
     memory::*,
 };
-use enum_as_inner::EnumAsInner;
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -23,7 +22,7 @@ pub(crate) enum StepDirection {
     Backwards,
 }
 
-#[derive(Debug, Copy, Clone, EnumAsInner)]
+#[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) enum SyncMode {
     Continuous(ContinuousState),

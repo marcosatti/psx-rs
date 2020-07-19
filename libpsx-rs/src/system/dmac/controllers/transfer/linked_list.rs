@@ -10,12 +10,12 @@ use crate::{
     types::bitfield::Bitfield,
 };
 
-pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListState, channel_id: usize) -> Result<(bool, bool), ()> {
+pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListState, channel_id: usize) -> Result<(bool, bool, bool), String> {
     let remaining = linked_list_state.target_count - linked_list_state.current_count;
 
     if remaining == 0 {
         if linked_list_state.next_header_address == 0xFF_FFFF {
-            return Ok((true, true));
+            return Ok((false, true, true));
         }
 
         let header_value = state.memory.main_memory.read_u32(linked_list_state.next_header_address);
@@ -23,7 +23,7 @@ pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListS
 
         if address == 0 {
             log::warn!("Linked list transfer: null pointer encountered on channel {}, ending transfer prematurely", channel_id);
-            return Ok((true, true));
+            return Ok((false, true, true));
         }
 
         linked_list_state.current_header_address = linked_list_state.next_header_address;
@@ -31,17 +31,19 @@ pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListS
         linked_list_state.current_count = 0;
         linked_list_state.target_count = count;
 
-        Ok((false, true))
+        Ok((false, false, true))
     } else {
         let address_offset = (linked_list_state.current_count as u32) * DATA_SIZE;
         let address = (linked_list_state.current_header_address + DATA_SIZE) + address_offset;
 
         let value = state.memory.main_memory.read_u32(address as u32);
-        push_channel_data(state, channel_id, value)?;
+        if let None = push_channel_data(state, channel_id, value)? {
+            return Ok((true, false, false));
+        }
 
         linked_list_state.current_count += 1;
 
-        Ok((false, false))
+        Ok((false, false, false))
     }
 }
 

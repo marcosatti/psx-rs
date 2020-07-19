@@ -23,8 +23,9 @@ use crate::{
         },
         types::{
             ControllerContext,
+            ControllerResult,
             Event,
-            State, ControllerResult,
+            State,
         },
     },
     video::VideoBackend,
@@ -41,7 +42,7 @@ fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> Contr
     controller_state.clock += duration;
 
     while controller_state.clock > 0.0 {
-        tick(state, controller_state, video_backend);
+        tick(state, controller_state, video_backend)?;
         controller_state.clock -= CLOCK_SPEED_NTSC_PERIOD;
     }
 

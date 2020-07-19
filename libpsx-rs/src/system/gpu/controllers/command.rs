@@ -8,7 +8,10 @@ use crate::{
             },
             types::ControllerState,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
 };
 
@@ -18,6 +21,6 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
     // GP1.
     handle_command_gp1(state, controller_state, video_backend)?;
     handle_command_gp0(state, controller_state, video_backend)?;
-    
+
     Ok(())
 }

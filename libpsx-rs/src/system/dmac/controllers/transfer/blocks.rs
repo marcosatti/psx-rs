@@ -9,16 +9,21 @@ use crate::system::{
 
 pub(crate) fn handle_transfer(
     state: &State, blocks_state: &mut BlocksState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection,
-) -> Result<(bool, bool), ()> {
+) -> Result<(bool, bool, bool), String> {
     match transfer_direction {
         TransferDirection::FromChannel => {
             let last_transfer = transfers_remaining(blocks_state) == 1;
-            let value = pop_channel_data(state, channel_id, blocks_state.current_address, last_transfer)?;
+            let value = match pop_channel_data(state, channel_id, blocks_state.current_address, last_transfer)? {
+                Some(v) => v,
+                None => return Ok((true, false, false)),
+            };
             state.memory.main_memory.write_u32(blocks_state.current_address, value);
         },
         TransferDirection::ToChannel => {
             let value = state.memory.main_memory.read_u32(blocks_state.current_address);
-            push_channel_data(state, channel_id, value)?;
+            if let None = push_channel_data(state, channel_id, value)? {
+                return Ok((true, false, false));
+            }
         },
     }
 
@@ -30,7 +35,7 @@ pub(crate) fn handle_transfer(
     let new_block = increment(blocks_state);
     let finished = transfers_remaining(blocks_state) == 0;
 
-    Ok((finished, new_block))
+    Ok((false, finished, new_block))
 }
 
 fn increment(blocks_state: &mut BlocksState) -> bool {

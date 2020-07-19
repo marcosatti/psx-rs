@@ -23,7 +23,10 @@ use crate::{
             },
             types::*,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
 };
 

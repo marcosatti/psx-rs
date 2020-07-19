@@ -3,7 +3,10 @@ use crate::system::{
         constants::*,
         types::*,
     },
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
@@ -38,6 +41,6 @@ fn handle_manual_write_transfer(state: &State, controller_state: &mut Controller
             state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, 0);
         },
     }
-    
+
     Ok(())
 }

@@ -4,7 +4,10 @@ use crate::{
             constants::*,
             types::*,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::memory::LatchKind,
     utilities::bool_to_flag,

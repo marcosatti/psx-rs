@@ -8,8 +8,9 @@ use crate::system::{
     },
     types::{
         ControllerContext,
+        ControllerResult,
         Event,
-        State, ControllerResult,
+        State,
     },
 };
 
@@ -36,7 +37,7 @@ pub(crate) fn tick(state: &State, controller_state: &mut ControllerState) -> Con
 
     if controller_state.tx_enabled {
         if let Ok(_) = state.padmc.tx_fifo.read_one() {
-            state.padmc.rx_fifo.write_one(0xFF).map_err(|_| "Error pushing to RX FIFO".into())?;
+            state.padmc.rx_fifo.write_one(0xFF).map_err(|_| "Error pushing to RX FIFO".to_owned())?;
         }
     }
 

@@ -5,7 +5,10 @@ use crate::{
             controllers::timer::*,
             types::*,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::memory::LatchKind,
     utilities::bool_to_flag,
@@ -20,7 +23,7 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
                 timer_state.target_hit = false;
                 timer_state.overflow_hit = false;
 
-                Ok(calculate_mode_value(timer_state))
+                calculate_mode_value(timer_state)
             },
             LatchKind::Write => {
                 // Clear count register.
@@ -79,13 +82,13 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
                     timer_state.irq_raised = false;
                 }
 
-                Ok(calculate_mode_value(timer_state))
+                calculate_mode_value(timer_state)
             },
         }
     })
 }
 
-pub(crate) fn calculate_mode_value(timer_state: &TimerState) -> u32 {
+pub(crate) fn calculate_mode_value(timer_state: &TimerState) -> Result<u32, String> {
     let mut value = 0;
 
     value = MODE_RESET.insert_into(value, bool_to_flag(timer_state.reset_on_target));
@@ -98,5 +101,5 @@ pub(crate) fn calculate_mode_value(timer_state: &TimerState) -> u32 {
     value = MODE_TARGET_HIT.insert_into(value, bool_to_flag(timer_state.target_hit));
     value = MODE_OVERFLOW_HIT.insert_into(value, bool_to_flag(timer_state.overflow_hit));
 
-    value
+    Ok(value)
 }

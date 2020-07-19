@@ -12,7 +12,10 @@ use crate::system::{
             Hazard,
         },
     },
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
@@ -296,6 +299,6 @@ pub(crate) fn trace_bios_call(state: &ControllerState) -> ControllerResult {
     let call_count = DEBUG_BIOS_CALL_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
     let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
     log::trace!("[{:X}] BIOS call {} {}, ra = 0x{:08X}", tick_count, call_count, &string, ra);
-    
+
     Ok(())
 }

@@ -14,6 +14,7 @@ use crate::{
         rendering::*,
         *,
     },
+    system::types::ControllerResult,
     types::{
         color::*,
         geometry::*,
@@ -21,7 +22,6 @@ use crate::{
     utilities::array::extract_rectangle,
 };
 use opengl_sys::*;
-use crate::system::types::ControllerResult;
 
 pub(crate) fn draw_line_loop_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3]) -> ControllerResult {
     debug::trace_call(stdext::function_name!());
@@ -407,7 +407,9 @@ pub(crate) fn draw_polygon_4_textured(
     Ok(())
 }
 
-pub(crate) fn draw_polygon_4_textured_framebuffer(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4]) -> ControllerResult {
+pub(crate) fn draw_polygon_4_textured_framebuffer(
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
+) -> ControllerResult {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());

@@ -19,7 +19,6 @@ lazy_static = "*"
 hashbrown = "*"
 fixed = "*"
 typenum = "*"
-enum-as-inner = "*"
 stdext = "*"
 serde = { version = "*", optional = true, features = ["derive"] }
 bincode = { version = "*", optional = true }

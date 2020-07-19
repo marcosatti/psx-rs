@@ -7,35 +7,35 @@ mod libmirage;
 
 use crate::backends::cdrom::CdromBackend;
 
-pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> Result<bool, ()> {
+pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> Result<Result<bool, ()>, String> {
     match cdrom_backend {
-        CdromBackend::None => Err(()),
+        CdromBackend::None => Ok(Err(())),
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => Ok(libmirage::disc_loaded(params)),
+        CdromBackend::Libmirage(ref params) => Ok(Ok(libmirage::disc_loaded(params)?)),
         #[cfg(libcdio)]
-        CdromBackend::Libcdio(ref params) => Ok(libcdio::disc_loaded(params)),
+        CdromBackend::Libcdio(ref params) => Ok(Ok(libcdio::disc_loaded(params)?)),
         _ => unimplemented!(),
     }
 }
 
-pub(crate) fn disc_mode(cdrom_backend: &CdromBackend) -> Result<usize, ()> {
+pub(crate) fn disc_mode(cdrom_backend: &CdromBackend) -> Result<Result<usize, ()>, String> {
     match cdrom_backend {
-        CdromBackend::None => Err(()),
+        CdromBackend::None => Ok(Err(())),
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => Ok(libmirage::disc_mode(params)),
+        CdromBackend::Libmirage(ref params) => Ok(Ok(libmirage::disc_mode(params)?)),
         #[cfg(libcdio)]
-        CdromBackend::Libcdio(ref params) => Ok(libcdio::disc_mode(params)),
+        CdromBackend::Libcdio(ref params) => Ok(Ok(libcdio::disc_mode(params)?)),
         _ => unimplemented!(),
     }
 }
 
-pub(crate) fn read_sector(cdrom_backend: &CdromBackend, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Result<Vec<u8>, ()> {
+pub(crate) fn read_sector(cdrom_backend: &CdromBackend, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Result<Result<Vec<u8>, ()>, String> {
     match cdrom_backend {
-        CdromBackend::None => Err(()),
+        CdromBackend::None => Ok(Err(())),
         #[cfg(libmirage)]
-        CdromBackend::Libmirage(ref params) => Ok(libmirage::read_sector(params, msf_address_base, msf_address_offset)),
+        CdromBackend::Libmirage(ref params) => Ok(Ok(libmirage::read_sector(params, msf_address_base, msf_address_offset)?)),
         #[cfg(libcdio)]
-        CdromBackend::Libcdio(ref params) => Ok(libcdio::read_sector(params, msf_address_base, msf_address_offset)),
+        CdromBackend::Libcdio(ref params) => Ok(Ok(libcdio::read_sector(params, msf_address_base, msf_address_offset)?)),
         _ => unimplemented!(),
     }
 }

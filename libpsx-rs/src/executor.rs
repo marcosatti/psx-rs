@@ -9,7 +9,9 @@ use crate::system::{
     timers::controllers::run as run_timers,
     types::{
         ControllerContext,
-        Event, ControllerHandler, ControllerResult,
+        ControllerHandler,
+        ControllerResult,
+        Event,
     },
 };
 use crossbeam::channel::bounded;
@@ -65,7 +67,5 @@ impl Executor {
 }
 
 fn run_controller_proxy(name: &str, handler_fn: ControllerHandler, context: &ControllerContext, event: Event) -> ControllerResult {
-    handler_fn(context, event).map_err(|what| {
-        format!("{}: {}", name, &what)
-    })
+    handler_fn(context, event).map_err(|what| format!("{}: {}", name, &what))
 }

@@ -6,7 +6,10 @@ use crate::{
             controllers::command_gp1_impl,
             types::ControllerState,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
 };
 

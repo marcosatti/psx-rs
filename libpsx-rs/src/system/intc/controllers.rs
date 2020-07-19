@@ -5,8 +5,9 @@ use crate::system::{
     r3000::cp0::types::IrqLine,
     types::{
         ControllerContext,
+        ControllerResult,
         Event,
-        State, ControllerResult,
+        State,
     },
 };
 

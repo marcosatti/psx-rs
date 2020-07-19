@@ -14,8 +14,9 @@ use crate::system::{
     },
     types::{
         ControllerContext,
+        ControllerResult,
         Event,
-        State, ControllerResult,
+        State,
     },
 };
 
@@ -25,7 +26,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-fn run_time(state: &State, duration: f64) {
+fn run_time(state: &State, duration: f64) -> ControllerResult {
     // TODO: Properly obey priorities of channels.
 
     let controller_state = &mut state.dmac.controller_state.lock();
@@ -35,35 +36,26 @@ fn run_time(state: &State, duration: f64) {
     if controller_state.cooloff_runs > 0 {
         controller_state.clock = 0.0;
         controller_state.cooloff_runs -= 1;
-        return;
+        return Ok(());
     }
 
-    let mut cooloff = false;
-    while (controller_state.clock > 0.0) && (!cooloff) {
-        handle_dicr(state, controller_state);
+    let mut channel_id = 0;
+    while controller_state.clock > 0.0 {
+        handle_dicr(state, controller_state)?;
+        handle_chcr(state, controller_state, channel_id)?;
 
-        for channel_id in 0..7 {
-            handle_chcr(state, controller_state, channel_id);
+        let ticks_available = (controller_state.clock / CLOCK_SPEED_PERIOD) as usize;
+        let (ticks_used, cooloff) = handle_transfer(state, controller_state, channel_id, ticks_available)?;
+        controller_state.clock -= (ticks_used as f64) * CLOCK_SPEED_PERIOD;
 
-            let ticks = (controller_state.clock / CLOCK_SPEED_PERIOD) as isize;
-            let mut ticks_remaining = ticks;
+        handle_irq_raise(state, controller_state)?;
+        channel_id = (channel_id + 1) % CHANNEL_COUNT;
 
-            match handle_transfer(state, controller_state, channel_id, &mut ticks_remaining) {
-                Ok(()) => {},
-                Err(()) => cooloff = true,
-            }
-
-            controller_state.clock -= ((ticks - ticks_remaining) as f64) * CLOCK_SPEED_PERIOD;
-
-            if cooloff {
-                break;
-            }
+        if cooloff {
+            controller_state.cooloff_runs = 4;
+            break;
         }
-
-        handle_irq_raise(state, controller_state);
     }
 
-    if cooloff {
-        controller_state.cooloff_runs = 4;
-    }
+    Ok(())
 }
