@@ -68,8 +68,8 @@ pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState,
                     0 => SyncMode::Continuous(ContinuousState::new()),
                     1 => SyncMode::Blocks(BlocksState::new()),
                     2 => SyncMode::LinkedList(LinkedListState::new()),
-                    3 => panic!("Reserved sync mode"),
-                    _ => unreachable!("Invalid sync mode"),
+                    3 => return Err(format!("Reserved sync mode for channel {}", channel_id)),
+                    _ => return Err("Invalid sync mode".into()),
                 };
 
                 if transfer_state.started {

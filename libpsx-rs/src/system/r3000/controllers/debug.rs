@@ -33,12 +33,12 @@ const ENABLE_HAZARD_TRACING: bool = false;
 const ENABLE_INTERRUPT_TRACING: bool = false;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
-const ENABLE_MEMORY_TRACKING_READ: bool = false;
-const ENABLE_MEMORY_TRACKING_WRITE: bool = false;
+const ENABLE_MEMORY_TRACKING_READ: bool = true;
+const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
 const ENABLE_BIOS_CALL_TRACING: bool = false;
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1040;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_104F;
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1810;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1817;
 
 static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
 static DEBUG_BIOS_CALL_COUNT: AtomicUsize = AtomicUsize::new(0);

@@ -98,10 +98,21 @@ pub(crate) fn command_07(_state: &State, controller_state: &mut ControllerState,
 
 pub(crate) fn command_08(state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, command: u32) -> ControllerResult {
     let stat = &state.gpu.stat;
+
+    let video_mode = Bitfield::new(3, 1).extract_from(command);
+    if video_mode == 1 {
+        return Err(format!("PAL mode unsupported: 0x{:08X}", command));
+    }
+
+    let display_color_depth = Bitfield::new(4, 1).extract_from(command);
+    if display_color_depth == 1 {
+        return Err(format!("24-bit color depth unsupported: 0x{:08X}", command))
+    }
+
     stat.write_bitfield(STAT_HORIZONTAL_RES_1, Bitfield::new(0, 2).extract_from(command));
     stat.write_bitfield(STAT_VERTICAL_RES, Bitfield::new(2, 1).extract_from(command));
-    stat.write_bitfield(STAT_VIDEO_MODE, Bitfield::new(3, 1).extract_from(command));
-    stat.write_bitfield(STAT_DISPLAY_COLOR_DEPTH, Bitfield::new(4, 1).extract_from(command));
+    stat.write_bitfield(STAT_VIDEO_MODE, video_mode);
+    stat.write_bitfield(STAT_DISPLAY_COLOR_DEPTH, display_color_depth);
     stat.write_bitfield(STAT_INTERLACE_VERTICAL, Bitfield::new(5, 1).extract_from(command));
     stat.write_bitfield(STAT_HORIZONTAL_RES_2, Bitfield::new(6, 1).extract_from(command));
     stat.write_bitfield(STAT_REVERSE, Bitfield::new(7, 1).extract_from(command));

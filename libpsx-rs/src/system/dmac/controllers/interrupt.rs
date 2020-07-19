@@ -5,6 +5,7 @@ use crate::system::{
             register::*,
         },
         types::*,
+        constants::*,
     },
     intc::types::Line,
     types::{
@@ -24,7 +25,7 @@ pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerS
 
     let mut master_trigger = false;
     if controller_state.master_interrupt_enabled {
-        for channel_id in 0..7 {
+        for channel_id in 0..CHANNEL_COUNT {
             let transfer_state = get_transfer_state(controller_state, channel_id);
             master_trigger |= transfer_state.interrupt_enabled && transfer_state.interrupted;
         }

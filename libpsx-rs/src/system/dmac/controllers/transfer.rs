@@ -121,6 +121,11 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
 
         ticks_consumed += calculate_channel_ticks(channel_id, block_completed);
 
+        if block_completed && !finished {
+            state.bus_locked.store_barrier(false);
+            return Ok((ticks_consumed, true));
+        }
+
         if cooloff_required {
             state.bus_locked.store_barrier(false);
             return Ok((ticks_consumed, true));
@@ -130,10 +135,10 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
             handle_transfer_finalization(state, transfer_state, channel_id)?;
             transfer_state.started = false;
             handle_irq_trigger(transfer_state);
-            state.bus_locked.store_barrier(false);
         }
     }
 
+    state.bus_locked.store_barrier(false);
     Ok((ticks_consumed, false))
 }
 

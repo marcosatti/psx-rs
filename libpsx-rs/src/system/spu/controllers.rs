@@ -82,7 +82,7 @@ fn handle_tick(state: &State, controller_state: &mut ControllerState) -> Control
 }
 
 fn handle_dac_tick(state: &State, audio_backend: &AudioBackend, controller_state: &mut ControllerState) -> ControllerResult {
-    for voice_id in 0..24 {
+    for voice_id in 0..VOICES_COUNT {
         handle_dac(state, controller_state, audio_backend, voice_id)?;
     }
 
