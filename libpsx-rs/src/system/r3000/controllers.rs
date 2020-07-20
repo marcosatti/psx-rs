@@ -30,13 +30,13 @@ use crate::{
 use log::debug;
 use std::intrinsics::unlikely;
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(duration) => run_time(context.state, duration),
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult {
+fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
     let r3000_state = &mut state.r3000.controller_state.lock();
     r3000_state.clock += duration;
 
@@ -60,7 +60,7 @@ fn run_time(state: &State, duration: f64) -> ControllerResult {
     Ok(())
 }
 
-fn tick(context: &mut R3000ControllerContext) -> Result<i64, String> {
+fn tick(context: &mut R3000ControllerContext) -> ControllerResult<usize> {
     handle_interrupts(context.state, context.r3000_state, context.cp0_state);
 
     if let Some(target) = context.r3000_state.branch_delay.advance() {
@@ -94,5 +94,5 @@ fn tick(context: &mut R3000ControllerContext) -> Result<i64, String> {
 
     debug::update_state();
 
-    Ok(cycles as i64)
+    Ok(cycles)
 }

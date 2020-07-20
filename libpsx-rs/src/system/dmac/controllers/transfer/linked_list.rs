@@ -5,12 +5,12 @@ use crate::{
             controllers::fifo::*,
             types::*,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::bitfield::Bitfield,
 };
 
-pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListState, channel_id: usize) -> Result<(bool, bool, bool), String> {
+pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListState, channel_id: usize) -> ControllerResult<(bool, bool, bool)> {
     let remaining = linked_list_state.target_count - linked_list_state.current_count;
 
     if remaining == 0 {
@@ -19,11 +19,12 @@ pub(crate) fn handle_transfer(state: &State, linked_list_state: &mut LinkedListS
         }
 
         let header_value = state.memory.main_memory.read_u32(linked_list_state.next_header_address);
-        let (address, count) = process_header(header_value);
+        let (mut address, count) = process_header(header_value);
 
-        if address == 0 {
-            log::warn!("Linked list transfer: null pointer encountered on channel {}, ending transfer prematurely", channel_id);
-            return Ok((false, true, true));
+        if address == 0x0 {
+            log::debug!("Linked list transfer: null pointer encountered on channel {}, ending transfer prematurely", channel_id);
+            log::debug!("    List header at 0x{:08X}, count = {}", linked_list_state.next_header_address, count);
+            address = 0xFF_FFFF;
         }
 
         linked_list_state.current_header_address = linked_list_state.next_header_address;

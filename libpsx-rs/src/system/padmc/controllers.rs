@@ -14,13 +14,13 @@ use crate::system::{
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(duration) => run_time(context.state, duration),
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult {
+fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
     let controller_state = &mut state.padmc.controller_state.lock();
     controller_state.clock += duration;
 
@@ -32,7 +32,7 @@ fn run_time(state: &State, duration: f64) -> ControllerResult {
     Ok(())
 }
 
-pub(crate) fn tick(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn tick(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     handle_ctrl(state, controller_state)?;
 
     if controller_state.tx_enabled {

@@ -9,7 +9,7 @@ use crate::{
     types::memory::*,
 };
 
-pub(crate) fn handle_gp1(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_gp1(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.gpu.gp1.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => unreachable!(),

@@ -13,7 +13,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.padmc.ctrl.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Write => {

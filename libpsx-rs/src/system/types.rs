@@ -35,9 +35,9 @@ use std::{
     path::Path,
 };
 
-pub(crate) type ControllerHandler = fn(&ControllerContext, Event) -> ControllerResult;
+pub(crate) type ControllerHandler = fn(&ControllerContext, Event) -> ControllerResult<()>;
 
-pub(crate) type ControllerResult = Result<(), String>;
+pub(crate) type ControllerResult<T> = Result<T, String>;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum Event {
@@ -100,7 +100,7 @@ impl State {
         Ok(())
     }
 
-    pub(crate) fn from_bios(prefix: &Path, name: &str) -> IoResult<Box<State>> {
+    pub(crate) fn with_bios(prefix: &Path, name: &str) -> IoResult<Box<State>> {
         let mut state = State::new();
         State::initialize(&mut state);
         State::load_bios(&mut state, &prefix.join(r"bios/").join(name))?;

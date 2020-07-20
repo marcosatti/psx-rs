@@ -6,7 +6,7 @@ use crate::system::{
     },
 };
 
-pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     let read_buffer = &mut controller_state.gp0_read_buffer;
     let read = &state.gpu.read;
 

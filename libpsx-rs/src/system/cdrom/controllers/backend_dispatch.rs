@@ -6,8 +6,9 @@ mod libcdio;
 mod libmirage;
 
 use crate::backends::cdrom::CdromBackend;
+use crate::system::types::ControllerResult;
 
-pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> Result<Result<bool, ()>, String> {
+pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> ControllerResult<Result<bool, ()>> {
     match cdrom_backend {
         CdromBackend::None => Ok(Err(())),
         #[cfg(libmirage)]
@@ -18,7 +19,7 @@ pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> Result<Result<bool, (
     }
 }
 
-pub(crate) fn disc_mode(cdrom_backend: &CdromBackend) -> Result<Result<usize, ()>, String> {
+pub(crate) fn disc_mode(cdrom_backend: &CdromBackend) -> ControllerResult<Result<usize, ()>> {
     match cdrom_backend {
         CdromBackend::None => Ok(Err(())),
         #[cfg(libmirage)]
@@ -29,7 +30,7 @@ pub(crate) fn disc_mode(cdrom_backend: &CdromBackend) -> Result<Result<usize, ()
     }
 }
 
-pub(crate) fn read_sector(cdrom_backend: &CdromBackend, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Result<Result<Vec<u8>, ()>, String> {
+pub(crate) fn read_sector(cdrom_backend: &CdromBackend, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> ControllerResult<Result<Vec<u8>, ()>> {
     match cdrom_backend {
         CdromBackend::None => Ok(Err(())),
         #[cfg(libmirage)]

@@ -30,7 +30,7 @@ use crate::{
     },
 };
 
-pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) -> ControllerResult {
+pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) -> ControllerResult<()> {
     handle_adpcm_block(state, controller_state, voice_id);
 
     let adpcm_sample_raw = {
@@ -53,7 +53,7 @@ pub(crate) fn handle_dac(state: &State, controller_state: &mut ControllerState, 
     Ok(())
 }
 
-fn handle_play_sound_buffer(controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) -> ControllerResult {
+fn handle_play_sound_buffer(controller_state: &mut ControllerState, audio_backend: &AudioBackend, voice_id: usize) -> ControllerResult<()> {
     let muted = controller_state.muted;
     let voice_state = get_voice_state(controller_state, voice_id);
 

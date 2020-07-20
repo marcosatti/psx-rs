@@ -13,7 +13,7 @@ use crate::system::{
     },
 };
 
-pub(crate) fn handle_irq_trigger(state: &State, timer_state: &mut TimerState, timer_id: usize, irq_type: IrqType) -> ControllerResult {
+pub(crate) fn handle_irq_trigger(state: &State, timer_state: &mut TimerState, timer_id: usize, irq_type: IrqType) -> ControllerResult<()> {
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.
     if timer_state.oneshot_mode {
         if timer_state.irq_raised {
@@ -34,7 +34,7 @@ pub(crate) fn handle_irq_trigger(state: &State, timer_state: &mut TimerState, ti
     Ok(())
 }
 
-fn handle_irq_raise(state: &State, timer_state: &mut TimerState, timer_id: usize) -> ControllerResult {
+fn handle_irq_raise(state: &State, timer_state: &mut TimerState, timer_id: usize) -> ControllerResult<()> {
     let mode = get_mode(state, timer_id);
 
     let raise_irq = if timer_state.irq_toggle {

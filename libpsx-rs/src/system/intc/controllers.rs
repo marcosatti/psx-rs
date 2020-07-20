@@ -11,13 +11,13 @@ use crate::system::{
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult {
+fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
     let controller_state = &mut state.intc.controller_state.lock();
     controller_state.clock += duration;
 

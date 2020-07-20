@@ -31,13 +31,13 @@ use crate::{
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(duration) => run_time(context.state, context.cdrom_backend, duration),
     }
 }
 
-fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) -> ControllerResult {
+fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) -> ControllerResult<()> {
     let controller_state = &mut state.cdrom.controller_state.lock();
     controller_state.clock += duration;
 
@@ -49,7 +49,7 @@ fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) -> Contr
     Ok(())
 }
 
-fn tick(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult {
+fn tick(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult<()> {
     handle_command_register(state, controller_state)?;
     handle_request(state, controller_state)?;
     handle_interrupt_flag(state, controller_state)?;

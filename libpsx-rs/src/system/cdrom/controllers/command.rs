@@ -14,9 +14,9 @@ use crate::{
 
 type LengthFn = fn(usize) -> usize;
 
-type HandlerFn = fn(&State, &mut ControllerState, &CdromBackend, usize) -> Result<bool, String>;
+type HandlerFn = fn(&State, &mut ControllerState, &CdromBackend, usize) -> ControllerResult<bool>;
 
-pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult<()> {
     if controller_state.command_index.is_none() {
         return Ok(());
     }
@@ -51,7 +51,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
     Ok(())
 }
 
-fn get_handler_fn(command_index: u8) -> Result<(LengthFn, HandlerFn), String> {
+fn get_handler_fn(command_index: u8) -> ControllerResult<(LengthFn, HandlerFn)> {
     match command_index {
         0x01 => Ok((command_impl::command_01_length, command_impl::command_01_handler)),
         0x02 => Ok((command_impl::command_02_length, command_impl::command_02_handler)),

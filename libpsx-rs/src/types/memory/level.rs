@@ -30,12 +30,10 @@ impl B32LevelRegister {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> u8 {
         u32::extract_u8_le(self.memory.load(Ordering::Acquire), offset as usize)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) {
         self.memory.store(u32::insert_u8_le(self.memory.load(Ordering::Acquire), offset as usize, value), Ordering::Release);
     }
@@ -91,12 +89,10 @@ impl B16LevelRegister {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> u8 {
         u16::extract_u8_le(self.memory.load(Ordering::Acquire), offset as usize)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) {
         self.memory.store(u16::insert_u8_le(self.memory.load(Ordering::Acquire), offset as usize, value), Ordering::Release);
     }
@@ -109,7 +105,6 @@ impl B16LevelRegister {
         self.memory.store(value, Ordering::Release);
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_bitfield(&self, bitfield: Bitfield) -> u16 {
         bitfield.extract_from(self.read_u16())
     }

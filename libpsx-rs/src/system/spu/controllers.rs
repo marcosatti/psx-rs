@@ -24,13 +24,13 @@ use crate::{
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(time) => run_time(context.state, context.audio_backend, time),
     }
 }
 
-fn run_time(state: &State, audio_backend: &AudioBackend, duration: f64) -> ControllerResult {
+fn run_time(state: &State, audio_backend: &AudioBackend, duration: f64) -> ControllerResult<()> {
     let controller_state = &mut state.spu.controller_state.lock();
     controller_state.clock += duration;
     controller_state.dac_state.clock += duration;
@@ -66,7 +66,7 @@ fn run_time(state: &State, audio_backend: &AudioBackend, duration: f64) -> Contr
     Ok(())
 }
 
-fn handle_tick(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+fn handle_tick(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     handle_control(state, controller_state)?;
 
     if !controller_state.enabled {
@@ -81,7 +81,7 @@ fn handle_tick(state: &State, controller_state: &mut ControllerState) -> Control
     Ok(())
 }
 
-fn handle_dac_tick(state: &State, audio_backend: &AudioBackend, controller_state: &mut ControllerState) -> ControllerResult {
+fn handle_dac_tick(state: &State, audio_backend: &AudioBackend, controller_state: &mut ControllerState) -> ControllerResult<()> {
     for voice_id in 0..VOICES_COUNT {
         handle_dac(state, controller_state, audio_backend, voice_id)?;
     }

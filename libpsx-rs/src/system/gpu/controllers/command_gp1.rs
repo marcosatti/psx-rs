@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult<()> {
     let command = match controller_state.gp1_command {
         Some(v) => v,
         None => return Ok(()),

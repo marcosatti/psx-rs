@@ -17,7 +17,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     let mut write_fn = |value| {
         controller_state.enabled = CONTROL_ENABLE.extract_from(value) > 0;
 
@@ -49,7 +49,7 @@ pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerSta
     })
 }
 
-pub(crate) fn handle_data_transfer_address(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_data_transfer_address(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     let mut write_fn = |value| {
         controller_state.transfer_state.current_address = value as usize * 8;
     };
@@ -65,7 +65,7 @@ pub(crate) fn handle_data_transfer_address(state: &State, controller_state: &mut
     })
 }
 
-pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     // Initializes voice state (starts ADSR envelope).
     // Copies start address to current address (internal).
     // Copies start Address to repeat address register.
@@ -96,7 +96,7 @@ pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerStat
     })
 }
 
-pub(crate) fn handle_key_off(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_key_off(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     // Changes voice ADSR phase to the release state.
 
     let mut write_fn = |value| {

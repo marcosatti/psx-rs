@@ -9,7 +9,7 @@ use crate::system::{
     },
 };
 
-pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     match controller_state.transfer_state.current_mode {
         TransferMode::Stop => Ok(()),
         TransferMode::ManualWrite => handle_manual_write_transfer(state, controller_state),
@@ -18,7 +18,7 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
     }
 }
 
-fn handle_manual_write_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+fn handle_manual_write_transfer(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     if state.spu.data_transfer_control.read_u16() != 0x4 {
         return Err(format!("Data transfer control not set to normal mode"));
     }

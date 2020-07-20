@@ -54,14 +54,12 @@ impl B32EdgeRegister {
         Ok(())
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> Result<u8, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| value = u32::extract_u8_le(*r, offset as usize))?;
         Ok(value)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
             *r = u32::insert_u8_le(*r, offset as usize, value);
@@ -166,14 +164,12 @@ impl B16EdgeRegister {
         Ok(())
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_u8(&self, offset: u32) -> Result<u8, ()> {
         let mut value = 0;
         self.try_op(LatchKind::Read, |r| value = u16::extract_u8_le(*r, offset as usize))?;
         Ok(value)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn write_u8(&self, offset: u32, value: u8) -> Result<(), ()> {
         self.try_op(LatchKind::Write, |r| {
             *r = u16::insert_u8_le(*r, offset as usize, value);

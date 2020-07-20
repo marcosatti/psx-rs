@@ -66,6 +66,15 @@ fn main() {
         time_delta: config.time_delta_secs,
         worker_threads: config.worker_threads,
         internal_scale_factor: config.internal_scale_factor,
+        global_bias: config.global_bias,
+        r3000_bias: config.r3000_bias,
+        gpu_bias: config.gpu_bias,
+        dmac_bias: config.dmac_bias,
+        spu_bias: config.spu_bias,
+        timers_bias: config.timers_bias,
+        cdrom_bias: config.cdrom_bias,
+        padmc_bias: config.padmc_bias,
+        intc_bias: config.intc_bias,
     };
 
     state::main_inner(&window, &mut event_pump, config, core_config);

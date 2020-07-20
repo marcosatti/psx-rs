@@ -16,6 +16,15 @@ struct TomlConfig {
     pause_on_start: bool,
     quit_on_exception: bool,
     internal_scale_factor: usize,
+    global_bias: f64,
+    r3000_bias: f64,
+    gpu_bias: f64,
+    dmac_bias: f64,
+    spu_bias: f64,
+    timers_bias: f64,
+    cdrom_bias: f64,
+    padmc_bias: f64,
+    intc_bias: f64,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -28,6 +37,15 @@ pub(crate) struct Config {
     pub(crate) pause_on_start: bool,
     pub(crate) quit_on_exception: bool,
     pub(crate) internal_scale_factor: usize,
+    pub(crate) global_bias: f64,
+    pub(crate) r3000_bias: f64,
+    pub(crate) gpu_bias: f64,
+    pub(crate) dmac_bias: f64,
+    pub(crate) spu_bias: f64,
+    pub(crate) timers_bias: f64,
+    pub(crate) cdrom_bias: f64,
+    pub(crate) padmc_bias: f64,
+    pub(crate) intc_bias: f64,
 }
 
 pub(crate) fn load(workspace_path: &Path) -> Config {
@@ -65,5 +83,14 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
         pause_on_start: toml_config.pause_on_start,
         quit_on_exception: toml_config.quit_on_exception,
         internal_scale_factor: { toml_config.internal_scale_factor.max(1) },
+        global_bias: toml_config.global_bias,
+        r3000_bias: toml_config.r3000_bias,
+        gpu_bias: toml_config.gpu_bias,
+        dmac_bias: toml_config.dmac_bias,
+        spu_bias: toml_config.spu_bias,
+        timers_bias: toml_config.timers_bias,
+        cdrom_bias: toml_config.cdrom_bias,
+        padmc_bias: toml_config.padmc_bias,
+        intc_bias: toml_config.intc_bias,
     }
 }

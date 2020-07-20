@@ -10,7 +10,7 @@ use crate::system::{
     },
 };
 
-pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, interrupt_index: usize) -> ControllerResult {
+pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState, interrupt_index: usize) -> ControllerResult<()> {
     if controller_state.interrupt_index > 0 {
         return Err("Previous interrupt hasn't been acknowledged".into());
     }
@@ -34,7 +34,7 @@ pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerS
     Ok(())
 }
 
-pub(crate) fn calculate_interrupt_flag_value(controller_state: &ControllerState) -> Result<u8, String> {
+pub(crate) fn calculate_interrupt_flag_value(controller_state: &ControllerState) -> ControllerResult<u8> {
     let mut value = 0xFF;
 
     if controller_state.interrupt_index >= 16 {

@@ -20,40 +20,37 @@ use crate::system::{
     },
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(time) => run_time(context.state, time),
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult {
-    // TODO: Properly obey priorities of channels.
+fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
+    // TODO: Properly obey priorities of channels, for now just goes from DMA6 -> DMA0.
 
     let controller_state = &mut state.dmac.controller_state.lock();
     controller_state.clock += duration;
 
-    // Don't run if the CPU needs to use the bus.
-    if controller_state.cooloff_runs > 0 {
-        controller_state.clock = 0.0;
-        controller_state.cooloff_runs -= 1;
-        return Ok(());
-    }
-
-    let mut channel_id = 0;
+    let mut channel_id = 6;
     while controller_state.clock > 0.0 {
         handle_dicr(state, controller_state)?;
         handle_chcr(state, controller_state, channel_id)?;
 
         let ticks_available = (controller_state.clock / CLOCK_SPEED_PERIOD) as usize;
-        let (ticks_used, cooloff) = handle_transfer(state, controller_state, channel_id, ticks_available)?;
+        let (ticks_used, cooloff_required) = handle_transfer(state, controller_state, channel_id, ticks_available)?;
         controller_state.clock -= (ticks_used as f64) * CLOCK_SPEED_PERIOD;
 
         handle_irq_raise(state, controller_state)?;
-        channel_id = (channel_id + 1) % CHANNEL_COUNT;
 
-        if cooloff {
-            controller_state.cooloff_runs = 4;
-            break;
+        if cooloff_required {
+            // Delay the DMAC a litte bit and allow the CPU to use the memory bus.
+            controller_state.clock = -100.0 * CLOCK_SPEED_PERIOD;
+        } else {
+            if ticks_used <= 1 {
+                // Channel had no meaningful progress made, so process the next one.
+                channel_id = (channel_id + CHANNEL_COUNT - 1) % CHANNEL_COUNT;
+            }
         }
     }
 

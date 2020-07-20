@@ -132,10 +132,6 @@ pub(crate) struct ControllerState {
     pub(crate) spu_transfer_state: TransferState,
     pub(crate) pio_transfer_state: TransferState,
     pub(crate) otc_transfer_state: TransferState,
-
-    /// Number of runs to cool off (not run).
-    /// Intended for cases where the DMAC is holding the bus preventing the CPU from doing any work.
-    pub(crate) cooloff_runs: usize,
 }
 
 impl ControllerState {
@@ -151,7 +147,6 @@ impl ControllerState {
             spu_transfer_state: TransferState::new(),
             pio_transfer_state: TransferState::new(),
             otc_transfer_state: TransferState::new(),
-            cooloff_runs: 0,
         }
     }
 }

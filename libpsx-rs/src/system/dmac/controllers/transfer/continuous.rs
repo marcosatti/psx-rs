@@ -4,12 +4,12 @@ use crate::system::{
         controllers::fifo::*,
         types::*,
     },
-    types::State,
+    types::{ControllerResult, State},
 };
 
 pub(crate) fn handle_transfer(
     state: &State, continuous_state: &mut ContinuousState, channel_id: usize, transfer_direction: TransferDirection, step_direction: StepDirection,
-) -> Result<(bool, bool), String> {
+) -> ControllerResult<(bool, bool)> {
     match transfer_direction {
         TransferDirection::FromChannel => {
             let last_transfer = transfers_remaining(continuous_state) == 1;

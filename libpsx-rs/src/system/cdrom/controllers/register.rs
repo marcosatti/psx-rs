@@ -13,7 +13,7 @@ use crate::{
     types::memory::*,
 };
 
-pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.cdrom.command.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),
@@ -29,7 +29,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
     })
 }
 
-pub(crate) fn handle_request(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_request(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.cdrom.request.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),
@@ -54,7 +54,7 @@ pub(crate) fn handle_request(state: &State, controller_state: &mut ControllerSta
     })
 }
 
-pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.cdrom.interrupt_flag.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),

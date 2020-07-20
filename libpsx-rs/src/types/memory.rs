@@ -26,7 +26,6 @@ impl B8Memory {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_raw(&self, byte_offset: u32) -> &[u8] {
         unsafe { &(*self.memory.get())[byte_offset as usize..] }
     }

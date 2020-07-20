@@ -20,7 +20,7 @@ pub(crate) fn handle_irq_trigger(transfer_state: &mut TransferState) {
     }
 }
 
-pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     // TODO: Force IRQ bit not handled yet.
 
     let mut master_trigger = false;

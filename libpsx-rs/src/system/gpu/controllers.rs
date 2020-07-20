@@ -31,13 +31,13 @@ use crate::{
     video::VideoBackend,
 };
 
-pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
     match event {
         Event::Time(time) => run_time(context.state, context.video_backend, time),
     }
 }
 
-fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> ControllerResult {
+fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> ControllerResult<()> {
     let controller_state = &mut state.gpu.controller_state.lock();
     controller_state.clock += duration;
 
@@ -51,7 +51,7 @@ fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> Contr
     Ok(())
 }
 
-fn tick(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult {
+fn tick(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult<()> {
     handle_gp1(state, controller_state)?;
 
     handle_command(state, controller_state, video_backend)?;

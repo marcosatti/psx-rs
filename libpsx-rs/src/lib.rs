@@ -25,7 +25,6 @@ use crate::{
         },
     },
     system::types::{
-        Event,
         State,
     },
 };
@@ -48,6 +47,15 @@ pub struct Config<'a: 'b, 'b> {
     pub time_delta: f64,
     pub worker_threads: usize,
     pub internal_scale_factor: usize,
+    pub global_bias: f64,
+    pub r3000_bias: f64,
+    pub gpu_bias: f64,
+    pub dmac_bias: f64,
+    pub spu_bias: f64,
+    pub timers_bias: f64,
+    pub cdrom_bias: f64,
+    pub padmc_bias: f64,
+    pub intc_bias: f64,
 }
 
 pub struct Core<'a: 'b, 'b> {
@@ -60,7 +68,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
     pub fn new(config: Config<'a, 'b>) -> IoResult<Core<'a, 'b>> {
         log::info!("Initializing core");
 
-        let state = State::from_bios(&config.workspace_path, &config.bios_filename)?;
+        let state = State::with_bios(&config.workspace_path, &config.bios_filename)?;
         let executor = Executor::new(config.worker_threads);
 
         video::setup(&config);
@@ -76,7 +84,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
 
     pub fn reset(&mut self, hard_reset: bool) -> IoResult<()> {
         if hard_reset {
-            self.state = State::from_bios(&self.config.workspace_path, &self.config.bios_filename)?;
+            self.state = State::with_bios(&self.config.workspace_path, &self.config.bios_filename)?;
         } else {
             State::initialize(&mut self.state);
         }
@@ -92,9 +100,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
             cdrom_backend: &self.config.cdrom_backend,
         };
 
-        let event = Event::Time(self.config.time_delta);
-
-        self.executor.run(&context, event)
+        self.executor.run(&self.config, &context)
     }
 
     pub fn change_disc(&mut self, path: &Path) -> Result<(), String> {

@@ -2,14 +2,15 @@
 
 use crate::backends::cdrom::libcdio::*;
 use libcdio_sys::*;
+use crate::system::types::ControllerResult;
 
-pub(crate) fn disc_loaded(backend_params: &BackendParams) -> Result<bool, String> {
+pub(crate) fn disc_loaded(backend_params: &BackendParams) -> ControllerResult<bool> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe { Ok(!DISC.is_null()) }
 }
 
-pub(crate) fn disc_mode(backend_params: &BackendParams) -> Result<usize, String> {
+pub(crate) fn disc_mode(backend_params: &BackendParams) -> ControllerResult<usize> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {
@@ -26,7 +27,7 @@ pub(crate) fn disc_mode(backend_params: &BackendParams) -> Result<usize, String>
     }
 }
 
-pub(crate) fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> Result<Vec<u8>, String> {
+pub(crate) fn read_sector(backend_params: &BackendParams, msf_address_base: (u8, u8, u8), msf_address_offset: usize) -> ControllerResult<Vec<u8>> {
     let (_context_guard, _context) = backend_params.context.guard();
 
     unsafe {

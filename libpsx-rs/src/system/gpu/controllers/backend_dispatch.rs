@@ -12,10 +12,10 @@ use crate::{
             Point2D,
             Size2D,
         },
-    },
+    }, system::types::ControllerResult,
 };
 
-pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color) -> Result<Result<(), ()>, String> {
+pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
@@ -26,7 +26,7 @@ pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Poi
 
 pub(crate) fn draw_polygon_4_textured_framebuffer(
     video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
-) -> Result<Result<(), ()>, String> {
+) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
@@ -35,7 +35,7 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
     }
 }
 
-pub(crate) fn draw_polygon_3_shaded(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) -> Result<Result<(), ()>, String> {
+pub(crate) fn draw_polygon_3_shaded(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], colors: [Color; 3]) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
@@ -44,7 +44,7 @@ pub(crate) fn draw_polygon_3_shaded(video_backend: &VideoBackend, positions: [Po
     }
 }
 
-pub(crate) fn draw_polygon_4_shaded(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) -> Result<Result<(), ()>, String> {
+pub(crate) fn draw_polygon_4_shaded(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
@@ -56,7 +56,7 @@ pub(crate) fn draw_polygon_4_shaded(video_backend: &VideoBackend, positions: [Po
 pub(crate) fn draw_polygon_4_textured(
     video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize,
     texture_colors: &[Color],
-) -> Result<Result<(), ()>, String>
+) -> ControllerResult<Result<(), ()>>
 {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
@@ -66,7 +66,7 @@ pub(crate) fn draw_polygon_4_textured(
     }
 }
 
-pub(crate) fn read_framebuffer_5551(video_backend: &VideoBackend, origin: Point2D<f32, Normalized>, size: Size2D<f32, Normalized>) -> Result<Result<Vec<u16>, ()>, String> {
+pub(crate) fn read_framebuffer_5551(video_backend: &VideoBackend, origin: Point2D<f32, Normalized>, size: Size2D<f32, Normalized>) -> ControllerResult<Result<Vec<u16>, ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]

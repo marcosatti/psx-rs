@@ -10,7 +10,7 @@ use crate::{
             },
             types::ControllerState,
         },
-        types::State,
+        types::{ControllerResult, State},
     },
     types::bitfield::Bitfield,
 };
@@ -19,7 +19,7 @@ pub(crate) fn command_01_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub(crate) fn command_01_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_01_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // GetStat
     if command_iteration > 0 {
         return Err("GetStat: command iteration was above 0".into());
@@ -35,7 +35,7 @@ pub(crate) fn command_02_length(_command_iteration: usize) -> usize {
     3
 }
 
-pub(crate) fn command_02_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_02_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // Setloc
     if command_iteration > 0 {
         return Err("Setloc: command iteration was above 0".into());
@@ -63,7 +63,7 @@ pub(crate) fn command_06_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub(crate) fn command_06_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_06_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // ReadN
     if command_iteration > 0 {
         return Err("ReadN: command iteration was above 0".into());
@@ -82,7 +82,7 @@ pub(crate) fn command_09_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub(crate) fn command_09_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_09_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // Pause
     let (finished, interrupt_index) = match command_iteration {
         0 => {
@@ -103,7 +103,7 @@ pub(crate) fn command_0e_length(_command_iteration: usize) -> usize {
     1
 }
 
-pub(crate) fn command_0e_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_0e_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // Setmode
     if command_iteration > 0 {
         return Err("Setmode: command iteration was above 0".into());
@@ -125,7 +125,7 @@ pub(crate) fn command_15_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub(crate) fn command_15_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_15_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // SeekL
     let (finished, interrupt_index) = match command_iteration {
         0 => {
@@ -149,7 +149,7 @@ pub(crate) fn command_19_length(_command_iteration: usize) -> usize {
     1
 }
 
-pub(crate) fn command_19_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_19_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // Test
     if command_iteration > 0 {
         return Err("Test: command iteration was above 0".into());
@@ -175,7 +175,7 @@ pub(crate) fn command_1a_length(_command_iteration: usize) -> usize {
     0
 }
 
-pub(crate) fn command_1a_handler(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend, command_iteration: usize) -> Result<bool, String> {
+pub(crate) fn command_1a_handler(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
     // GetID
     const NO_DISC_DATA: [u8; 8] = [0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     const DISC_LOADED_DATA: [u8; 8] = [0x02, 0x00, 0x20, 0x00, 0x53, 0x43, 0x45, 0x41]; // SCEx: ASCII A = 0x41, E = 0x45, I = 0x49

@@ -20,9 +20,9 @@ use crate::{
 type LengthFn = fn(&[u32]) -> Option<usize>;
 
 /// The handler logic for the command.
-type HandlerFn = fn(&State, &mut ControllerState, &VideoBackend, &[u32]) -> ControllerResult;
+type HandlerFn = fn(&State, &mut ControllerState, &VideoBackend, &[u32]) -> ControllerResult<()>;
 
-pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult<()> {
     // Update the command buffer with any new incoming data.
     process_gp0_fifo(state, controller_state);
 
@@ -75,7 +75,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
     Ok(())
 }
 
-fn get_command_handler(command_index: u8) -> Result<(LengthFn, HandlerFn), String> {
+fn get_command_handler(command_index: u8) -> ControllerResult<(LengthFn, HandlerFn)> {
     match command_index {
         0x00 => Ok((command_gp0_impl::command_00_length, command_gp0_impl::command_00_handler)),
         0x01 => Ok((command_gp0_impl::command_01_length, command_gp0_impl::command_01_handler)),

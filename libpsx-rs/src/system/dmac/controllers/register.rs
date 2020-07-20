@@ -17,7 +17,7 @@ use crate::{
     utilities::bool_to_flag,
 };
 
-pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) -> ControllerResult {
+pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) -> ControllerResult<()> {
     get_chcr(state, channel_id).acknowledge(|mut value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),
@@ -72,6 +72,11 @@ pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState,
                     _ => return Err("Invalid sync mode".into()),
                 };
 
+                let cpu_chopping_size = 1 << (CHCR_CHOPPING_CPU_SIZE.extract_from(value) as usize);
+                if cpu_chopping_size > 1 {
+                    log::warn!("DMAC CPU chopping size of {} clocks not handled", cpu_chopping_size);
+                }
+
                 if transfer_state.started {
                     handle_transfer_initialization(state, transfer_state, channel_id);
                 }
@@ -82,7 +87,7 @@ pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState,
     })
 }
 
-pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState) -> ControllerResult {
+pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.dmac.dicr.acknowledge(|value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),
@@ -109,7 +114,7 @@ pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState)
     })
 }
 
-pub(crate) fn calculate_dicr_value(controller_state: &mut ControllerState) -> Result<u32, String> {
+pub(crate) fn calculate_dicr_value(controller_state: &mut ControllerState) -> ControllerResult<u32> {
     let mut value = 0;
 
     value = DICR_IRQ_MASTER_ENABLE.insert_into(value, bool_to_flag(controller_state.master_interrupt_enabled));

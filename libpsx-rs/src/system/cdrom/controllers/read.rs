@@ -18,7 +18,7 @@ use crate::{
     utilities::binary_to_ascii_escaped,
 };
 
-pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult {
+pub(crate) fn handle_read(state: &State, controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult<()> {
     if controller_state.sector_buffer.len() > 0 {
         if controller_state.loading_data {
             fill_data_fifo(state, controller_state);
@@ -70,7 +70,7 @@ fn fill_data_fifo(state: &State, controller_state: &mut ControllerState) {
     }
 }
 
-fn read_sector(controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult {
+fn read_sector(controller_state: &mut ControllerState, cdrom_backend: &CdromBackend) -> ControllerResult<()> {
     assert_eq!(controller_state.sector_buffer.len(), 0);
     let msf_address_base = controller_state.msf_address_base;
     let msf_address_offset = controller_state.msf_address_offset;

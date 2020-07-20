@@ -60,7 +60,7 @@ pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut
     }
 }
 
-pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) -> ControllerResult {
+pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) -> ControllerResult<()> {
     get_chcr(state, channel_id).update::<_, String>(|value| Ok(CHCR_STARTBUSY.insert_into(value, 0)))?;
 
     let madr = get_madr(state, channel_id);
@@ -86,7 +86,7 @@ pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut T
     Ok(())
 }
 
-pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_available: usize) -> Result<(usize, bool), String> {
+pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_available: usize) -> ControllerResult<(usize, bool)> {
     if state.dmac.dpcr.read_bitfield(DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id]) == 0 {
         return Ok((1, false));
     }
@@ -135,10 +135,11 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
             handle_transfer_finalization(state, transfer_state, channel_id)?;
             transfer_state.started = false;
             handle_irq_trigger(transfer_state);
+            state.bus_locked.store_barrier(false);
+            break;
         }
     }
 
-    state.bus_locked.store_barrier(false);
     Ok((ticks_consumed, false))
 }
 
