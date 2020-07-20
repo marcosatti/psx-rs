@@ -24,9 +24,7 @@ use crate::{
             VideoBackend,
         },
     },
-    system::types::{
-        State,
-    },
+    system::types::State,
 };
 use executor::Executor;
 use std::{

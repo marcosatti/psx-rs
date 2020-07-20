@@ -1,8 +1,10 @@
 #![allow(non_upper_case_globals)]
 
-use crate::backends::cdrom::libmirage::*;
+use crate::{
+    backends::cdrom::libmirage::*,
+    system::types::ControllerResult,
+};
 use libmirage_sys::*;
-use crate::system::types::ControllerResult;
 
 pub(crate) fn disc_loaded(backend_params: &BackendParams) -> ControllerResult<bool> {
     let (_context_guard, _context) = backend_params.context.guard();

@@ -48,6 +48,15 @@ fn main() {
         time_delta: time_delta_us as f64 / 1e6,
         worker_threads,
         internal_scale_factor: 1,
+        global_bias: 1.0,
+        r3000_bias: 1.0,
+        gpu_bias: 1.0,
+        dmac_bias: 1.0,
+        spu_bias: 1.0,
+        timers_bias: 1.0,
+        cdrom_bias: 1.0,
+        padmc_bias: 1.0,
+        intc_bias: 1.0,
     };
 
     main_inner(config);

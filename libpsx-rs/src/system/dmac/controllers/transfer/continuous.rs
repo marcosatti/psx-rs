@@ -4,7 +4,10 @@ use crate::system::{
         controllers::fifo::*,
         types::*,
     },
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn handle_transfer(

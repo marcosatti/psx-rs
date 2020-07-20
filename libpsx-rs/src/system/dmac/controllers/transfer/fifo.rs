@@ -1,6 +1,9 @@
 use crate::system::{
     dmac::constants::*,
-    types::{ControllerResult, State},
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn pop_channel_data(state: &State, channel_id: usize, current_address: u32, last_transfer: bool) -> ControllerResult<Option<u32>> {

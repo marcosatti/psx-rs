@@ -5,7 +5,8 @@ mod openal;
 
 use crate::{
     backends::audio::AudioBackend,
-    types::stereo::Stereo, system::types::ControllerResult,
+    system::types::ControllerResult,
+    types::stereo::Stereo,
 };
 
 pub(crate) fn play_pcm_samples(audio_backend: &AudioBackend, sample_buffer: &[Stereo], voice_id: usize) -> ControllerResult<Result<(), ()>> {

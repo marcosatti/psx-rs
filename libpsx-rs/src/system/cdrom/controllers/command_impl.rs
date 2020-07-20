@@ -10,7 +10,10 @@ use crate::{
             },
             types::ControllerState,
         },
-        types::{ControllerResult, State},
+        types::{
+            ControllerResult,
+            State,
+        },
     },
     types::bitfield::Bitfield,
 };

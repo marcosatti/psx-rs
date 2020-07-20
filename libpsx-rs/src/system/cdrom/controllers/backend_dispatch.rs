@@ -5,8 +5,10 @@ mod libcdio;
 #[cfg(libmirage)]
 mod libmirage;
 
-use crate::backends::cdrom::CdromBackend;
-use crate::system::types::ControllerResult;
+use crate::{
+    backends::cdrom::CdromBackend,
+    system::types::ControllerResult,
+};
 
 pub(crate) fn disc_loaded(cdrom_backend: &CdromBackend) -> ControllerResult<Result<bool, ()>> {
     match cdrom_backend {

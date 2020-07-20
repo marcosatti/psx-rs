@@ -106,7 +106,7 @@ pub(crate) fn command_08(state: &State, _controller_state: &mut ControllerState,
 
     let display_color_depth = Bitfield::new(4, 1).extract_from(command);
     if display_color_depth == 1 {
-        return Err(format!("24-bit color depth unsupported: 0x{:08X}", command))
+        return Err(format!("24-bit color depth unsupported: 0x{:08X}", command));
     }
 
     stat.write_bitfield(STAT_HORIZONTAL_RES_1, Bitfield::new(0, 2).extract_from(command));

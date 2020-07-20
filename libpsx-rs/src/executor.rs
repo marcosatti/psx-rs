@@ -1,25 +1,27 @@
-use crate::system::{
-    cdrom::controllers::run as run_cdrom,
-    dmac::controllers::run as run_dmac,
-    gpu::controllers::run as run_gpu,
-    intc::controllers::run as run_intc,
-    padmc::controllers::run as run_padmc,
-    r3000::controllers::run as run_r3000,
-    spu::controllers::run as run_spu,
-    timers::controllers::run as run_timers,
-    types::{
-        ControllerContext,
-        ControllerHandler,
-        ControllerResult,
-        Event,
+use crate::{
+    system::{
+        cdrom::controllers::run as run_cdrom,
+        dmac::controllers::run as run_dmac,
+        gpu::controllers::run as run_gpu,
+        intc::controllers::run as run_intc,
+        padmc::controllers::run as run_padmc,
+        r3000::controllers::run as run_r3000,
+        spu::controllers::run as run_spu,
+        timers::controllers::run as run_timers,
+        types::{
+            ControllerContext,
+            ControllerHandler,
+            ControllerResult,
+            Event,
+        },
     },
+    Config,
 };
 use crossbeam::channel::bounded;
 use rayon::{
     ThreadPool,
     ThreadPoolBuilder,
 };
-use crate::Config;
 
 pub(crate) struct Executor {
     thread_pool: ThreadPool,

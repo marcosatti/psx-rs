@@ -1,11 +1,11 @@
 use crate::system::{
     dmac::{
+        constants::*,
         controllers::{
             channel::*,
             register::*,
         },
         types::*,
-        constants::*,
     },
     intc::types::Line,
     types::{

@@ -5,6 +5,7 @@ mod opengl;
 
 use crate::{
     backends::video::VideoBackend,
+    system::types::ControllerResult,
     types::{
         color::Color,
         geometry::{
@@ -12,7 +13,7 @@ use crate::{
             Point2D,
             Size2D,
         },
-    }, system::types::ControllerResult,
+    },
 };
 
 pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color) -> ControllerResult<Result<(), ()>> {
