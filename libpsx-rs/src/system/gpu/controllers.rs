@@ -18,7 +18,6 @@ use crate::{
                 read::*,
                 register::*,
             },
-            crtc::controllers::run_time as crtc_run_time,
             types::ControllerState,
         },
         types::{
@@ -45,8 +44,6 @@ fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> Contr
         tick(state, controller_state, video_backend)?;
         controller_state.clock -= CLOCK_SPEED_NTSC_PERIOD;
     }
-
-    crtc_run_time(state, video_backend, duration);
 
     Ok(())
 }

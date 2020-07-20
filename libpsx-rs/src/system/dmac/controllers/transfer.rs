@@ -87,13 +87,9 @@ pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut T
 }
 
 pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerState, channel_id: usize, ticks_available: usize) -> ControllerResult<(usize, bool)> {
-    if state.dmac.dpcr.read_bitfield(DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id]) == 0 {
-        return Ok((1, false));
-    }
-
     let transfer_state = get_transfer_state(controller_state, channel_id);
 
-    if !transfer_state.started {
+    if (!transfer_state.enabled) || (!transfer_state.started) {
         return Ok((1, false));
     }
 

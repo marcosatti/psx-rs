@@ -2,7 +2,10 @@ use crate::{
     system::{
         cdrom::controllers::run as run_cdrom,
         dmac::controllers::run as run_dmac,
-        gpu::controllers::run as run_gpu,
+        gpu::{
+            controllers::run as run_gpu,
+            crtc::controllers::run as run_gpu_crtc,
+        },
         intc::controllers::run as run_intc,
         padmc::controllers::run as run_padmc,
         r3000::controllers::run as run_r3000,
@@ -37,11 +40,12 @@ impl Executor {
     }
 
     pub(crate) fn run(&self, config: &Config, context: &ControllerContext) -> Result<(), Vec<String>> {
-        const CONTROLLERS_COUNT: usize = 8;
+        const CONTROLLERS_COUNT: usize = 9;
 
         let time_delta = config.time_delta * config.global_bias;
         let r3000_event = Event::Time(time_delta * config.r3000_bias);
         let gpu_event = Event::Time(time_delta * config.gpu_bias);
+        let gpu_crtc_event = Event::Time(time_delta * config.gpu_crtc_bias);
         let dmac_event = Event::Time(time_delta * config.dmac_bias);
         let spu_event = Event::Time(time_delta * config.spu_bias);
         let timers_event = Event::Time(time_delta * config.timers_bias);
@@ -52,6 +56,7 @@ impl Executor {
         let (sender, collector) = bounded(CONTROLLERS_COUNT);
 
         self.thread_pool.scope(|s| {
+            s.spawn(|_| sender.send(run_controller_proxy("gpu_crtc", run_gpu_crtc, context, gpu_crtc_event)).unwrap());
             s.spawn(|_| sender.send(run_controller_proxy("intc", run_intc, context, intc_event)).unwrap());
             s.spawn(|_| sender.send(run_controller_proxy("padmc", run_padmc, context, padmc_event)).unwrap());
             s.spawn(|_| sender.send(run_controller_proxy("cdrom", run_cdrom, context, cdrom_event)).unwrap());

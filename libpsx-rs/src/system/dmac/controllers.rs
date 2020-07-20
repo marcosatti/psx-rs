@@ -27,13 +27,12 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
 }
 
 fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
-    // TODO: Properly obey priorities of channels, for now just goes from DMA6 -> DMA0.
-
     let controller_state = &mut state.dmac.controller_state.lock();
     controller_state.clock += duration;
 
     let mut channel_id = 6;
     while controller_state.clock > 0.0 {
+        handle_dpcr(state, controller_state)?;
         handle_dicr(state, controller_state)?;
         handle_chcr(state, controller_state, channel_id)?;
 

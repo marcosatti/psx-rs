@@ -8,10 +8,13 @@ pub(crate) mod debug {
     }
 }
 
-use crate::backends::video::opengl;
+use crate::{
+    backends::video::opengl,
+    system::types::ControllerResult,
+};
 use opengl_sys::*;
 
-pub(crate) fn render(backend_params: &opengl::BackendParams) {
+pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<opengl::rendering::ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
@@ -81,4 +84,6 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) {
             glViewport(0, 0, opengl::rendering::SCENE_TEXTURE_WIDTH, opengl::rendering::SCENE_TEXTURE_HEIGHT);
         }
     }
+
+    Ok(())
 }

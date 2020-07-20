@@ -17,6 +17,24 @@ use crate::{
     utilities::bool_to_flag,
 };
 
+pub(crate) fn handle_dpcr(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
+    // TODO: Properly obey priorities of channels, for now just goes from DMA6 -> DMA0 in main loop.
+
+    state.dmac.dpcr.acknowledge(|value, latch_kind| {
+        match latch_kind {
+            LatchKind::Read => Ok(value),
+            LatchKind::Write => {
+                for channel_id in 0..CHANNEL_COUNT {
+                    let transfer_state = get_transfer_state(controller_state, channel_id);
+                    transfer_state.enabled = DPCR_CHANNEL_ENABLE_BITFIELDS[channel_id].extract_from(value) > 0;
+                }
+
+                Ok(value)
+            },
+        }
+    })
+}
+
 pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState, channel_id: usize) -> ControllerResult<()> {
     get_chcr(state, channel_id).acknowledge(|mut value, latch_kind| {
         match latch_kind {

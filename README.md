@@ -30,6 +30,16 @@ time_delta = 15              # Number of microseconds before a hard synchronize 
 quit_on_exception = false    # Quit automatically when an state exception occurs.
 pause_on_start = true        # Pause upon starting the emulator.
 internal_scale_factor = 3    # Internal scaling factor for the GPU; must be an integer.
+global_bias = 1.0            # 
+r3000_bias = 1.0             #
+gpu_bias = 1.0               #
+dmac_bias = 1.0              #
+spu_bias = 1.0               # Bias' for each controller.
+timers_bias = 1.0            #
+cdrom_bias = 1.0             #
+padmc_bias = 1.0             #
+intc_bias = 1.0              #
+gpu_crtc_bias = 1.0          #
 ```
 
 You will need to put the BIOS (scph5501.bin) into the folder ${cwd}/workspace/bios.

@@ -33,6 +33,7 @@ pub(crate) enum SyncMode {
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub(crate) struct TransferState {
+    pub(crate) enabled: bool,
     pub(crate) started: bool,
     pub(crate) direction: TransferDirection,
     pub(crate) step_direction: StepDirection,
@@ -44,6 +45,7 @@ pub(crate) struct TransferState {
 impl TransferState {
     pub(crate) fn new() -> TransferState {
         TransferState {
+            enabled: false,
             started: false,
             direction: TransferDirection::ToChannel,
             step_direction: StepDirection::Forwards,
@@ -154,7 +156,7 @@ impl ControllerState {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct State {
-    pub(crate) dpcr: B32LevelRegister,
+    pub(crate) dpcr: B32EdgeRegister,
     pub(crate) dicr: B32EdgeRegister,
 
     pub(crate) mdecin_madr: B32LevelRegister,
@@ -191,7 +193,7 @@ pub(crate) struct State {
 impl State {
     pub(crate) fn new() -> State {
         State {
-            dpcr: B32LevelRegister::new(),
+            dpcr: B32EdgeRegister::new(),
             dicr: B32EdgeRegister::new(),
             mdecin_madr: B32LevelRegister::new(),
             mdecin_bcr: B32LevelRegister::new(),

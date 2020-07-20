@@ -3,10 +3,7 @@ use crate::{
     system::{
         gpu::{
             constants::*,
-            controllers::{
-                command_gp0_impl,
-                debug,
-            },
+            controllers::command_gp0_impl,
             types::ControllerState,
         },
         types::{
@@ -63,10 +60,6 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
     // Execute it.
     let command_buffer_slice = Box::<[u32]>::from(&controller_state.gp0_command_buffer[0..required_length_value]);
     (command_handler.1)(state, controller_state, video_backend, &command_buffer_slice)?;
-
-    if (command_buffer_slice[0] >> 24) < 0xE0 {
-        debug::trace_gp0_command_render(state, video_backend);
-    }
 
     // Setup for the next one.
     controller_state.gp0_command_buffer.drain(0..required_length_value);

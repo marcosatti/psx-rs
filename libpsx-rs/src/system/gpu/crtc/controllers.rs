@@ -14,12 +14,23 @@ use crate::{
                 },
             },
         },
-        types::State,
+        types::{
+            ControllerContext,
+            ControllerResult,
+            Event,
+            State,
+        },
     },
     video::VideoBackend,
 };
 
-pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) {
+pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult<()> {
+    match event {
+        Event::Time(time) => run_time(context.state, context.video_backend, time),
+    }
+}
+
+pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> ControllerResult<()> {
     let crtc_state = &mut state.gpu.crtc.controller_state.lock();
 
     crtc_state.scanline_elapsed += duration;
@@ -34,6 +45,8 @@ pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f6
     while crtc_state.frame_elapsed > 0.0 {
         crtc_state.frame_elapsed -= REFRESH_RATE_NTSC_PERIOD;
         handle_vblank_interrupt(state);
-        handle_render(state, video_backend);
+        handle_render(state, video_backend)?;
     }
+
+    Ok(())
 }

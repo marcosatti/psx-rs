@@ -69,6 +69,7 @@ fn main() {
         global_bias: config.global_bias,
         r3000_bias: config.r3000_bias,
         gpu_bias: config.gpu_bias,
+        gpu_crtc_bias: config.gpu_crtc_bias,
         dmac_bias: config.dmac_bias,
         spu_bias: config.spu_bias,
         timers_bias: config.timers_bias,

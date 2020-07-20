@@ -51,6 +51,7 @@ fn main() {
         global_bias: 1.0,
         r3000_bias: 1.0,
         gpu_bias: 1.0,
+        gpu_crtc_bias: 1.0,
         dmac_bias: 1.0,
         spu_bias: 1.0,
         timers_bias: 1.0,

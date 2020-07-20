@@ -26,47 +26,58 @@ impl B8Memory {
         }
     }
 
+    pub(crate) fn from_vec(memory: Vec<u8>) -> B8Memory {
+        B8Memory {
+            memory: UnsafeCell::new(memory),
+        }
+    }
+
+    fn as_mut(&self) -> &mut Vec<u8> {
+        unsafe { &mut (*self.memory.get()) }
+    }
+
     pub(crate) fn read_raw(&self, byte_offset: u32) -> &[u8] {
-        unsafe { &(*self.memory.get())[byte_offset as usize..] }
+        &self.as_mut()[byte_offset as usize..]
     }
 
     pub(crate) fn write_raw(&self, byte_offset: u32, data: &[u8]) {
-        unsafe {
-            (*self.memory.get())[byte_offset as usize..(byte_offset as usize) + data.len()].copy_from_slice(data);
-        }
+        let base = byte_offset as usize;
+        self.as_mut()[base..(base + data.len())].copy_from_slice(data);
     }
 
     pub(crate) fn read_u8(&self, byte_offset: u32) -> u8 {
-        unsafe { (*self.memory.get())[byte_offset as usize] }
+        self.as_mut()[byte_offset as usize]
     }
 
     pub(crate) fn write_u8(&self, byte_offset: u32, value: u8) {
-        unsafe {
-            (*self.memory.get())[byte_offset as usize] = value;
-        }
+        self.as_mut()[byte_offset as usize] = value;
     }
 
     pub(crate) fn read_u16(&self, byte_offset: u32) -> u16 {
         assert_eq!(byte_offset % 2, 0);
-        unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u16) }
+        let cell = &self.as_mut()[byte_offset as usize];
+        unsafe { *(cell as *const u8 as *const u16) }
     }
 
     pub(crate) fn write_u16(&self, byte_offset: u32, value: u16) {
         assert_eq!(byte_offset % 2, 0);
+        let cell = &mut self.as_mut()[byte_offset as usize];
         unsafe {
-            *((&mut (*self.memory.get())[byte_offset as usize] as *mut u8) as *mut u16) = value;
+            *(cell as *mut u8 as *mut u16) = value;
         }
     }
 
     pub(crate) fn read_u32(&self, byte_offset: u32) -> u32 {
         assert_eq!(byte_offset % 4, 0);
-        unsafe { *((&(*self.memory.get())[byte_offset as usize] as *const u8) as *const u32) }
+        let cell = &self.as_mut()[byte_offset as usize];
+        unsafe { *(cell as *const u8 as *const u32) }
     }
 
     pub(crate) fn write_u32(&self, byte_offset: u32, value: u32) {
         assert_eq!(byte_offset % 4, 0);
+        let cell = &mut self.as_mut()[byte_offset as usize];
         unsafe {
-            *((&mut (*self.memory.get())[byte_offset as usize] as *mut u8) as *mut u32) = value;
+            *(cell as *mut u8 as *mut u32) = value;
         }
     }
 }
@@ -100,7 +111,7 @@ mod serialization {
     impl Serialize for B8Memory {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer {
-            let buffer = unsafe { &*self.memory.get() };
+            let buffer = self.as_mut();
             <Vec<u8> as Serialize>::serialize(buffer, serializer)
         }
     }
@@ -109,9 +120,7 @@ mod serialization {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where D: Deserializer<'de> {
             let buffer = <Vec<u8> as Deserialize>::deserialize(deserializer)?;
-            Ok(B8Memory {
-                memory: UnsafeCell::new(buffer),
-            })
+            Ok(B8Memory::from_vec(buffer))
         }
     }
 }

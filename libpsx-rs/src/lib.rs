@@ -48,6 +48,7 @@ pub struct Config<'a: 'b, 'b> {
     pub global_bias: f64,
     pub r3000_bias: f64,
     pub gpu_bias: f64,
+    pub gpu_crtc_bias: f64,
     pub dmac_bias: f64,
     pub spu_bias: f64,
     pub timers_bias: f64,
