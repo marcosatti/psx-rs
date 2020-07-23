@@ -16,6 +16,15 @@ use crate::{
     },
 };
 
+pub(crate) fn draw_polygon_3_solid(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], color: Color) -> ControllerResult<Result<(), ()>> {
+    match video_backend {
+        VideoBackend::None => Ok(Err(())),
+        #[cfg(opengl)]
+        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_3_solid(backend_params, positions, color)?)),
+        _ => unimplemented!(),
+    }
+}
+
 pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),

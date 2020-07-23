@@ -214,6 +214,60 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
     Ok(())
 }
 
+pub(crate) fn draw_polygon_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], color: Color) -> ControllerResult<()> {
+    static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
+
+    debug::trace_call(stdext::function_name!());
+
+    let (r, g, b, a) = color.normalize();
+
+    let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
+
+    {
+        let (_context_guard, _context) = backend_params.context.guard();
+
+        unsafe {
+            if PROGRAM_CONTEXT.is_none() {
+                let vs = shaders::compile_shader(shaders::vertex::SOLID_POLYGON, GL_VERTEX_SHADER);
+                let fs = shaders::compile_shader(shaders::fragment::SOLID_POLYGON, GL_FRAGMENT_SHADER);
+                let program = shaders::create_program(&[vs, fs]);
+
+                let mut vao = 0;
+                glGenVertexArrays(1, &mut vao);
+                glBindVertexArray(vao);
+                glEnableVertexAttribArray(0);
+
+                let mut vbo_position = 0;
+                glGenBuffers(1, &mut vbo_position);
+                glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
+                glBufferData(GL_ARRAY_BUFFER, 6 * std::mem::size_of::<f32>() as GLsizeiptr, std::ptr::null(), GL_DYNAMIC_DRAW);
+                glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
+
+                PROGRAM_CONTEXT = Some(ProgramContext::new(program, vao, &[vbo_position], &[]));
+            }
+
+            let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
+            glUseProgram(program_context.program_id);
+
+            let in_color_cstr = b"in_color\0";
+            let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
+            glUniform4f(uniform_in_color, r, g, b, a);
+
+            glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
+
+            glBindVertexArray(program_context.vao_id);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+    }
+
+    if debug::DEBUG_DRAW_OUTLINE {
+        draw_line_loop_3_solid(backend_params, positions)?;
+    }
+
+    Ok(())
+}
+
 pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], colors: [Color; 4]) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 

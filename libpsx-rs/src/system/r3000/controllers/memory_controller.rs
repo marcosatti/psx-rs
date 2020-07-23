@@ -4,7 +4,10 @@ use crate::system::{
         controllers::debug,
         types::*,
     },
-    types::State,
+    types::{
+        ControllerResult,
+        State,
+    },
 };
 
 pub(crate) fn translate_address(va: u32) -> u32 {
@@ -23,10 +26,10 @@ pub(crate) fn translate_address(va: u32) -> u32 {
     }
 }
 
-pub(crate) fn read_u8(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u8, Hazard> {
+pub(crate) fn read_u8(state: &State, r3000_state: &ControllerState, physical_address: u32) -> ControllerResult<Result<u8, Hazard>> {
     let result = {
         if state.bus_locked.load() {
-            return Err(Hazard::BusLockedMemoryRead(physical_address));
+            return Ok(Err(Hazard::BusLockedMemoryRead(physical_address)));
         }
 
         debug::track_memory_read_pending::<u8>(r3000_state, physical_address);
@@ -37,13 +40,13 @@ pub(crate) fn read_u8(state: &State, r3000_state: &ControllerState, physical_add
         debug::track_memory_read(r3000_state, physical_address, result.unwrap());
     }
 
-    result
+    Ok(result)
 }
 
-pub(crate) fn write_u8(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u8) -> Result<(), Hazard> {
+pub(crate) fn write_u8(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u8) -> ControllerResult<Result<(), Hazard>> {
     let result = {
         if state.bus_locked.load() {
-            return Err(Hazard::BusLockedMemoryWrite(physical_address));
+            return Ok(Err(Hazard::BusLockedMemoryWrite(physical_address)));
         }
 
         debug::track_memory_write_pending(r3000_state, physical_address, value);
@@ -54,13 +57,13 @@ pub(crate) fn write_u8(state: &State, r3000_state: &ControllerState, physical_ad
         debug::track_memory_write(r3000_state, physical_address, value);
     }
 
-    result
+    Ok(result)
 }
 
-pub(crate) fn read_u16(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u16, Hazard> {
+pub(crate) fn read_u16(state: &State, r3000_state: &ControllerState, physical_address: u32) -> ControllerResult<Result<u16, Hazard>> {
     let result = {
         if state.bus_locked.load() {
-            return Err(Hazard::BusLockedMemoryRead(physical_address));
+            return Ok(Err(Hazard::BusLockedMemoryRead(physical_address)));
         }
 
         debug::track_memory_read_pending::<u16>(r3000_state, physical_address);
@@ -71,13 +74,13 @@ pub(crate) fn read_u16(state: &State, r3000_state: &ControllerState, physical_ad
         debug::track_memory_read(r3000_state, physical_address, result.unwrap());
     }
 
-    result
+    Ok(result)
 }
 
-pub(crate) fn write_u16(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u16) -> Result<(), Hazard> {
+pub(crate) fn write_u16(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u16) -> ControllerResult<Result<(), Hazard>> {
     let result = {
         if state.bus_locked.load() {
-            return Err(Hazard::BusLockedMemoryWrite(physical_address));
+            return Ok(Err(Hazard::BusLockedMemoryWrite(physical_address)));
         }
 
         debug::track_memory_write_pending(r3000_state, physical_address, value);
@@ -88,13 +91,13 @@ pub(crate) fn write_u16(state: &State, r3000_state: &ControllerState, physical_a
         debug::track_memory_write(r3000_state, physical_address, value);
     }
 
-    result
+    Ok(result)
 }
 
-pub(crate) fn read_u32(state: &State, r3000_state: &ControllerState, physical_address: u32) -> Result<u32, Hazard> {
+pub(crate) fn read_u32(state: &State, r3000_state: &ControllerState, physical_address: u32) -> ControllerResult<Result<u32, Hazard>> {
     let result = {
         if state.bus_locked.load() {
-            return Err(Hazard::BusLockedMemoryRead(physical_address));
+            return Ok(Err(Hazard::BusLockedMemoryRead(physical_address)));
         }
 
         debug::track_memory_read_pending::<u32>(r3000_state, physical_address);
@@ -105,13 +108,13 @@ pub(crate) fn read_u32(state: &State, r3000_state: &ControllerState, physical_ad
         debug::track_memory_read(r3000_state, physical_address, result.unwrap());
     }
 
-    result
+    Ok(result)
 }
 
-pub(crate) fn write_u32(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u32) -> Result<(), Hazard> {
+pub(crate) fn write_u32(state: &State, r3000_state: &ControllerState, physical_address: u32, value: u32) -> ControllerResult<Result<(), Hazard>> {
     let result = {
         if state.bus_locked.load() {
-            return Err(Hazard::BusLockedMemoryWrite(physical_address));
+            return Ok(Err(Hazard::BusLockedMemoryWrite(physical_address)));
         }
 
         debug::track_memory_write_pending(r3000_state, physical_address, value);
@@ -122,5 +125,5 @@ pub(crate) fn write_u32(state: &State, r3000_state: &ControllerState, physical_a
         debug::track_memory_write(r3000_state, physical_address, value);
     }
 
-    result
+    Ok(result)
 }

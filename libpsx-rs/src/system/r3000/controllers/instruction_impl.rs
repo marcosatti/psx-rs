@@ -1,20 +1,23 @@
 use crate::{
-    system::r3000::{
-        constants::INSTRUCTION_SIZE,
-        controllers::{
-            debug,
-            exception::{
-                clear_ip_field,
-                set_exception,
+    system::{
+        r3000::{
+            constants::INSTRUCTION_SIZE,
+            controllers::{
+                debug,
+                exception::{
+                    clear_ip_field,
+                    set_exception,
+                },
+                memory_controller::*,
+                register::*,
             },
-            memory_controller::*,
-            register::*,
+            cp0::constants::{
+                CAUSE_EXCCODE_SYSCALL,
+                STATUS_ISC,
+            },
+            types::*,
         },
-        cp0::constants::{
-            CAUSE_EXCCODE_SYSCALL,
-            STATUS_ISC,
-        },
-        types::*,
+        types::ControllerResult,
     },
     types::mips1::instruction::Instruction,
     utilities::mips1::{
@@ -27,37 +30,37 @@ use std::intrinsics::{
     unlikely,
 };
 
-pub(crate) fn sll(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sll(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     let value = rt.read_u32();
     let shamt = instruction.shamt();
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value << shamt);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn srl(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn srl(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     let value = rt.read_u32();
     let shamt = instruction.shamt();
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value >> shamt);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sra(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sra(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     let value = rt.read_u32() as i32;
     let shamt = instruction.shamt();
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32((value >> shamt) as u32);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sllv(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sllv(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &context.r3000_state.gpr[instruction.rt()];
@@ -71,10 +74,10 @@ pub(crate) fn sllv(context: &mut ControllerContext, instruction: Instruction) ->
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn srlv(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn srlv(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &context.r3000_state.gpr[instruction.rt()];
@@ -88,10 +91,10 @@ pub(crate) fn srlv(context: &mut ControllerContext, instruction: Instruction) ->
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn srav(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn srav(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &context.r3000_state.gpr[instruction.rt()];
@@ -109,70 +112,70 @@ pub(crate) fn srav(context: &mut ControllerContext, instruction: Instruction) ->
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn jr(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn jr(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let target = context.r3000_state.gpr[instruction.rs()].read_u32();
     context.r3000_state.branch_delay.set(target, 1);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn jalr(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn jalr(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let target = context.r3000_state.gpr[instruction.rs()].read_u32();
     context.r3000_state.branch_delay.set(target, 1);
     let pc = context.r3000_state.pc.read_u32();
     context.r3000_state.gpr[instruction.rd()].write_u32(pc + INSTRUCTION_SIZE);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn syscall(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
+pub(crate) fn syscall(context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
     debug::trace_syscall(context.r3000_state);
 
     if context.r3000_state.branch_delay.branching() {
-        unimplemented!("SYSCALL in branch delay slot not handled");
+        return Err("SYSCALL in branch delay slot not handled".into());
     }
 
     set_exception(context.r3000_state, context.cp0_state, CAUSE_EXCCODE_SYSCALL);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn break_(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction break not implemented");
+pub(crate) fn break_(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction break not implemented".into())
 }
 
-pub(crate) fn mfhi(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mfhi(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let value = context.r3000_state.hi.read_u32();
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn mthi(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mthi(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     context.r3000_state.hi.write_u32(value);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn mflo(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mflo(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let value = context.r3000_state.lo.read_u32();
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn mtlo(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mtlo(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     context.r3000_state.lo.write_u32(value);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn mult(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mult(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32 as i64;
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -188,10 +191,10 @@ pub(crate) fn mult(context: &mut ControllerContext, instruction: Instruction) ->
     lo.write_u32(lo_value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn multu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn multu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32() as u64;
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -207,10 +210,10 @@ pub(crate) fn multu(context: &mut ControllerContext, instruction: Instruction) -
     lo.write_u32(lo_value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn div(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn div(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32;
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -228,10 +231,10 @@ pub(crate) fn div(context: &mut ControllerContext, instruction: Instruction) -> 
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn divu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn divu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -249,10 +252,10 @@ pub(crate) fn divu(context: &mut ControllerContext, instruction: Instruction) ->
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn add(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn add(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -260,17 +263,17 @@ pub(crate) fn add(context: &mut ControllerContext, instruction: Instruction) -> 
     let (result, of_flag) = (value1 as i32).overflowing_add(value2 as i32);
 
     if of_flag {
-        unimplemented!("Overflowing exception not implemented (add)");
+        return Err("Overflowing exception not implemented (add)".into());
     } else {
         let rd = &mut context.r3000_state.gpr[instruction.rd()];
         rd.write_u32(result as u32);
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn addu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn addu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -279,14 +282,14 @@ pub(crate) fn addu(context: &mut ControllerContext, instruction: Instruction) ->
     rd.write_u32(value1.wrapping_add(value2));
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sub(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction sub not implemented");
+pub(crate) fn sub(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction sub not implemented".into())
 }
 
-pub(crate) fn subu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn subu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &context.r3000_state.gpr[instruction.rt()];
@@ -294,10 +297,10 @@ pub(crate) fn subu(context: &mut ControllerContext, instruction: Instruction) ->
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value1.wrapping_sub(value2));
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn and(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn and(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -305,10 +308,10 @@ pub(crate) fn and(context: &mut ControllerContext, instruction: Instruction) -> 
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value1 & value2);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn or(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn or(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -316,10 +319,10 @@ pub(crate) fn or(context: &mut ControllerContext, instruction: Instruction) -> I
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value1 | value2);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn xor(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn xor(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -327,10 +330,10 @@ pub(crate) fn xor(context: &mut ControllerContext, instruction: Instruction) -> 
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value1 ^ value2);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn nor(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn nor(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -338,10 +341,10 @@ pub(crate) fn nor(context: &mut ControllerContext, instruction: Instruction) -> 
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(!(value1 | value2));
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn slt(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn slt(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32() as i32;
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -355,10 +358,10 @@ pub(crate) fn slt(context: &mut ControllerContext, instruction: Instruction) -> 
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sltu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sltu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value1 = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
@@ -372,10 +375,10 @@ pub(crate) fn sltu(context: &mut ControllerContext, instruction: Instruction) ->
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn bltz(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn bltz(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = context.r3000_state.gpr[instruction.rs()].read_u32() as i32;
 
@@ -385,10 +388,10 @@ pub(crate) fn bltz(context: &mut ControllerContext, instruction: Instruction) ->
         context.r3000_state.branch_delay.set(target, 1);
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn bgez(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn bgez(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = context.r3000_state.gpr[instruction.rs()].read_u32() as i32;
 
@@ -398,34 +401,34 @@ pub(crate) fn bgez(context: &mut ControllerContext, instruction: Instruction) ->
         context.r3000_state.branch_delay.set(target, 1);
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn bltzal(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction bltzal not implemented");
+pub(crate) fn bltzal(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction bltzal not implemented".into())
 }
 
-pub(crate) fn bgezal(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction bgezal not implemented");
+pub(crate) fn bgezal(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction bgezal not implemented".into())
 }
 
-pub(crate) fn j(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn j(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let target = pc_calc_jump_target(context.r3000_state.pc.read_u32(), instruction.addr());
     context.r3000_state.branch_delay.set(target, 1);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn jal(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn jal(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let target = pc_calc_jump_target(context.r3000_state.pc.read_u32(), instruction.addr());
     context.r3000_state.branch_delay.set(target, 1);
 
     let pc = context.r3000_state.pc.read_u32();
     context.r3000_state.gpr[31].write_u32(pc + INSTRUCTION_SIZE);
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn beq(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn beq(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = context.r3000_state.gpr[instruction.rs()].read_u32();
     let value2 = context.r3000_state.gpr[instruction.rt()].read_u32();
@@ -436,10 +439,10 @@ pub(crate) fn beq(context: &mut ControllerContext, instruction: Instruction) -> 
         context.r3000_state.branch_delay.set(target, 1);
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn bne(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn bne(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let offset = (instruction.i_imm() as i32) << 2;
     let value1 = context.r3000_state.gpr[instruction.rs()].read_u32();
     let value2 = context.r3000_state.gpr[instruction.rt()].read_u32();
@@ -450,10 +453,10 @@ pub(crate) fn bne(context: &mut ControllerContext, instruction: Instruction) -> 
         context.r3000_state.branch_delay.set(target, 1);
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn blez(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn blez(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = context.r3000_state.gpr[instruction.rs()].read_u32() as i32;
 
@@ -463,10 +466,10 @@ pub(crate) fn blez(context: &mut ControllerContext, instruction: Instruction) ->
         context.r3000_state.branch_delay.set(target, 1);
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn bgtz(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn bgtz(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let offset = (instruction.i_imm() as i32) << 2;
     let value = context.r3000_state.gpr[instruction.rs()].read_u32() as i32;
 
@@ -476,37 +479,37 @@ pub(crate) fn bgtz(context: &mut ControllerContext, instruction: Instruction) ->
         context.r3000_state.branch_delay.set(target, 1);
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn addi(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn addi(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let imm = instruction.i_imm() as i32;
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value: u32 = rs.read_u32();
     let (result, of_flag) = (value as i32).overflowing_add(imm);
 
     if of_flag {
-        unimplemented!("Overflowing exception not implemented (addi)");
+        return Err("Overflowing exception not implemented (addi)".into());
     } else {
         let rt = &mut context.r3000_state.gpr[instruction.rt()];
         rt.write_u32(result as u32);
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn addiu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn addiu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let imm = instruction.i_imm() as i32 as u32;
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     rt.write_u32(value.wrapping_add(imm));
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn slti(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn slti(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32() as i32;
     let imm = instruction.i_imm() as i32;
@@ -519,10 +522,10 @@ pub(crate) fn slti(context: &mut ControllerContext, instruction: Instruction) ->
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sltiu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sltiu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &mut context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     let imm = instruction.i_imm() as i32 as u32;
@@ -535,86 +538,86 @@ pub(crate) fn sltiu(context: &mut ControllerContext, instruction: Instruction) -
     }
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn andi(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn andi(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     rt.write_u32(value & (instruction.u_imm() as u32));
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn ori(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn ori(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     rt.write_u32(value | (instruction.u_imm() as u32));
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn xori(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn xori(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rs = &context.r3000_state.gpr[instruction.rs()];
     let value = rs.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     rt.write_u32(value ^ (instruction.u_imm() as u32));
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lui(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lui(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rt = instruction.rt();
     let imm = (instruction.u_imm() as u32) << 16;
     context.r3000_state.gpr[rt].write_u32(imm);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn mfc0(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mfc0(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rd = get_cp0_register(context.cp0_state, instruction.rd());
     let value = rd.read_u32();
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     rt.write_u32(value);
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn mtc0(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn mtc0(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let rt = &mut context.r3000_state.gpr[instruction.rt()];
     let value = rt.read_u32();
     let rd = get_cp0_register(context.cp0_state, instruction.rd());
     rd.write_u32(value);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn bc0f(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction bc0f not implemented");
+pub(crate) fn bc0f(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction bc0f not implemented".into())
 }
 
-pub(crate) fn bc0t(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction bc0t not implemented");
+pub(crate) fn bc0t(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction bc0t not implemented".into())
 }
 
-pub(crate) fn tlbr(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction tlbr not implemented");
+pub(crate) fn tlbr(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction tlbr not implemented".into())
 }
 
-pub(crate) fn tlbwi(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction tlbwi not implemented");
+pub(crate) fn tlbwi(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction tlbwi not implemented".into())
 }
 
-pub(crate) fn tlbwr(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction tlbwr not implemented");
+pub(crate) fn tlbwr(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction tlbwr not implemented".into())
 }
 
-pub(crate) fn tlbp(_context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
-    unimplemented!("Instruction tlbp not implemented");
+pub(crate) fn tlbp(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
+    Err("Instruction tlbp not implemented".into())
 }
 
-pub(crate) fn rfe(context: &mut ControllerContext, _instruction: Instruction) -> InstResult {
+pub(crate) fn rfe(context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
     debug::trace_rfe(context.r3000_state);
     let status = &mut context.cp0_state.status;
     let old_status_value = status.read_u32();
@@ -632,17 +635,20 @@ pub(crate) fn rfe(context: &mut ControllerContext, _instruction: Instruction) ->
     // interrupts are level triggered).
     clear_ip_field(context.state, context.cp0_state);
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lb(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lb(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u8(context.state, context.r3000_state, addr).map(|v| v as i8 as i32 as u32)?
+        match read_u8(context.state, context.r3000_state, addr)?.map(|v| v as i8 as i32 as u32) {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -650,17 +656,20 @@ pub(crate) fn lb(context: &mut ControllerContext, instruction: Instruction) -> I
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lh(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lh(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u16(context.state, context.r3000_state, addr).map(|v| v as i16 as i32 as u32)?
+        match read_u16(context.state, context.r3000_state, addr)?.map(|v| v as i16 as i32 as u32) {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -668,10 +677,10 @@ pub(crate) fn lh(context: &mut ControllerContext, instruction: Instruction) -> I
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lwl(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lwl(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     const MASK: [u32; 4] = [0x00FF_FFFF, 0x0000_FFFF, 0x0000_00FF, 0x0000_0000];
     const SHIFT: [usize; 4] = [24, 16, 8, 0];
 
@@ -684,7 +693,10 @@ pub(crate) fn lwl(context: &mut ControllerContext, instruction: Instruction) -> 
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u32(context.state, context.r3000_state, addr)?
+        match read_u32(context.state, context.r3000_state, addr)? {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -696,17 +708,20 @@ pub(crate) fn lwl(context: &mut ControllerContext, instruction: Instruction) -> 
     rt.write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lw(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lw(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u32(context.state, context.r3000_state, addr)?
+        match read_u32(context.state, context.r3000_state, addr)? {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -714,17 +729,20 @@ pub(crate) fn lw(context: &mut ControllerContext, instruction: Instruction) -> I
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lbu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lbu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u8(context.state, context.r3000_state, addr).map(|v| v as u32)?
+        match read_u8(context.state, context.r3000_state, addr)?.map(|v| v as u32) {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -732,17 +750,20 @@ pub(crate) fn lbu(context: &mut ControllerContext, instruction: Instruction) -> 
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lhu(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lhu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
     addr = translate_address(addr);
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u16(context.state, context.r3000_state, addr).map(|v| v as u32)?
+        match read_u16(context.state, context.r3000_state, addr)?.map(|v| v as u32) {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -750,10 +771,10 @@ pub(crate) fn lhu(context: &mut ControllerContext, instruction: Instruction) -> 
     context.r3000_state.gpr[instruction.rt()].write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn lwr(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn lwr(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     const MASK: [u32; 4] = [0x0000_0000, 0xFF00_0000, 0xFFFF_0000, 0xFFFF_FF00];
     const SHIFT: [usize; 4] = [0, 8, 16, 24];
 
@@ -766,7 +787,10 @@ pub(crate) fn lwr(context: &mut ControllerContext, instruction: Instruction) -> 
 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
     let value = if likely(!isc) {
-        read_u32(context.state, context.r3000_state, addr)?
+        match read_u32(context.state, context.r3000_state, addr)? {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -778,10 +802,10 @@ pub(crate) fn lwr(context: &mut ControllerContext, instruction: Instruction) -> 
     rt.write_u32(value);
 
     handle_zero(context.r3000_state);
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sb(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sb(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let value = context.r3000_state.gpr[instruction.rt()].read_u8(0);
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -790,13 +814,16 @@ pub(crate) fn sb(context: &mut ControllerContext, instruction: Instruction) -> I
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
 
     if likely(!isc) {
-        write_u8(context.state, context.r3000_state, addr, value)?
+        match write_u8(context.state, context.r3000_state, addr, value)? {
+            Ok(()) => {},
+            Err(h) => return Ok(Err(h)),
+        }
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sh(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sh(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let value = context.r3000_state.gpr[instruction.rt()].read_u16(0);
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -805,13 +832,16 @@ pub(crate) fn sh(context: &mut ControllerContext, instruction: Instruction) -> I
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
 
     if likely(!isc) {
-        write_u16(context.state, context.r3000_state, addr, value)?
+        match write_u16(context.state, context.r3000_state, addr, value)? {
+            Ok(()) => {},
+            Err(h) => return Ok(Err(h)),
+        }
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn swl(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn swl(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     const MASK: [u32; 4] = [0xFFFF_FF00, 0xFFFF_0000, 0xFF00_0000, 0x0000_0000];
     const SHIFT: [usize; 4] = [24, 16, 8, 0];
 
@@ -825,7 +855,10 @@ pub(crate) fn swl(context: &mut ControllerContext, instruction: Instruction) -> 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
 
     let mem_value = if likely(!isc) {
-        read_u32(context.state, context.r3000_state, addr)?
+        match read_u32(context.state, context.r3000_state, addr)? {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -835,13 +868,16 @@ pub(crate) fn swl(context: &mut ControllerContext, instruction: Instruction) -> 
     let value = (rt_value >> SHIFT[shift]) | (mem_value & MASK[shift]);
 
     if likely(!isc) {
-        write_u32(context.state, context.r3000_state, addr, value)?
+        match write_u32(context.state, context.r3000_state, addr, value)? {
+            Ok(()) => {},
+            Err(h) => return Ok(Err(h)),
+        }
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn sw(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn sw(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let value = context.r3000_state.gpr[instruction.rt()].read_u32();
     let mut addr = context.r3000_state.gpr[instruction.rs()].read_u32();
     addr = addr.wrapping_add(instruction.i_imm() as i32 as u32);
@@ -850,13 +886,16 @@ pub(crate) fn sw(context: &mut ControllerContext, instruction: Instruction) -> I
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
 
     if likely(!isc) {
-        write_u32(context.state, context.r3000_state, addr, value)?
+        match write_u32(context.state, context.r3000_state, addr, value)? {
+            Ok(()) => {},
+            Err(h) => return Ok(Err(h)),
+        }
     }
 
-    Ok(())
+    Ok(Ok(()))
 }
 
-pub(crate) fn swr(context: &mut ControllerContext, instruction: Instruction) -> InstResult {
+pub(crate) fn swr(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     const MASK: [u32; 4] = [0x0000_0000, 0x0000_00FF, 0x0000_FFFF, 0x00FF_FFFF];
     const SHIFT: [usize; 4] = [0, 8, 16, 24];
 
@@ -870,7 +909,10 @@ pub(crate) fn swr(context: &mut ControllerContext, instruction: Instruction) -> 
     let isc = context.cp0_state.status.read_bitfield(STATUS_ISC) != 0;
 
     let mem_value = if likely(!isc) {
-        read_u32(context.state, context.r3000_state, addr)?
+        match read_u32(context.state, context.r3000_state, addr)? {
+            Ok(v) => v,
+            Err(h) => return Ok(Err(h)),
+        }
     } else {
         0
     };
@@ -880,8 +922,11 @@ pub(crate) fn swr(context: &mut ControllerContext, instruction: Instruction) -> 
     let value = (rt_value << SHIFT[shift]) | (mem_value & MASK[shift]);
 
     if likely(!isc) {
-        write_u32(context.state, context.r3000_state, addr, value)?
+        match write_u32(context.state, context.r3000_state, addr, value)? {
+            Ok(()) => {},
+            Err(h) => return Ok(Err(h)),
+        }
     }
 
-    Ok(())
+    Ok(Ok(()))
 }

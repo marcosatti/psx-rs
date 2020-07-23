@@ -5,6 +5,7 @@ import csv
 
 def main():    
     print('use crate::types::mips1::instruction::Instruction;')
+    print('use crate::system::types::ControllerResult;')
     print('use crate::system::r3000::types::InstructionFn;')
     print('')
 
@@ -28,7 +29,7 @@ def generate_lookup_fn(table_name):
 
     print(f'use crate::system::r3000::controllers::instruction_impl{suffix}::*;')
     print('')
-    print(f'pub(crate) fn lookup{suffix}(instruction: Instruction) -> (InstructionFn, usize) {{')
+    print(f'pub(crate) fn lookup{suffix}(instruction: Instruction) -> ControllerResult<(InstructionFn, usize)> {{')
     proxy_tables = generate_match(headers, 0, 'opcode', records)
     print('}')
     print('')
@@ -56,14 +57,14 @@ def generate_match(headers, level, field, base_records):
                 print(f'{indent}{value} => lookup_{mnemonic}(instruction),')
                 proxy_tables.append(mnemonic)
             else:
-                print(f'{indent}{value} => ({mnemonic}, {cpi}),')
+                print(f'{indent}{value} => Ok(({mnemonic}, {cpi})),')
         else:
             next_field = get_next_defined_field(headers, records, field)
             print(f'{indent}{value} => {{')
             generate_match(headers, level + 2, next_field, records)
             print(f'{indent}}},')
 
-    print(f'{indent}_ => panic!("Unknown instruction {{:?}} (using field {field})", instruction),')
+    print(f'{indent}_ => Err(format!("Unknown instruction {{:?}} (using field {field})", instruction)),')
     print(f'{base_indent}}}')
     
     return proxy_tables

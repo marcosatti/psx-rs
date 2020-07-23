@@ -76,6 +76,7 @@ fn get_command_handler(command_index: u8) -> ControllerResult<(LengthFn, Handler
         0x05 => Ok((command_gp0_impl::command_05_length, command_gp0_impl::command_05_handler)),
         0x06 => Ok((command_gp0_impl::command_06_length, command_gp0_impl::command_06_handler)),
         0x0c => Ok((command_gp0_impl::command_0c_length, command_gp0_impl::command_0c_handler)),
+        0x20 => Ok((command_gp0_impl::command_20_length, command_gp0_impl::command_20_handler)),
         0x28 => Ok((command_gp0_impl::command_28_length, command_gp0_impl::command_28_handler)),
         0x2C => Ok((command_gp0_impl::command_2c_length, command_gp0_impl::command_2c_handler)),
         0x2D => Ok((command_gp0_impl::command_2d_length, command_gp0_impl::command_2d_handler)),

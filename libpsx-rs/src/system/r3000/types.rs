@@ -11,7 +11,10 @@ use crate::{
                 State as Cp2State,
             },
         },
-        types::State as SystemState,
+        types::{
+            ControllerResult,
+            State as SystemState,
+        },
     },
     types::{
         exclusive_state::ExclusiveState,
@@ -61,9 +64,9 @@ pub(crate) struct ControllerContext<'a> {
     pub(crate) cp2_state: &'a mut Cp2ControllerState,
 }
 
-pub(crate) type InstResult = Result<(), Hazard>;
+pub(crate) type InstructionResult = Result<(), Hazard>;
 
-pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> InstResult;
+pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> ControllerResult<InstructionResult>;
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]

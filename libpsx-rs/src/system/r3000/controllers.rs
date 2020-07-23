@@ -82,8 +82,8 @@ fn tick(context: &mut R3000ControllerContext) -> ControllerResult<usize> {
 
     context.r3000_state.pc.write_u32(pc_va + INSTRUCTION_SIZE);
 
-    let (fn_ptr, cycles) = instruction_lookup(inst);
-    let result = fn_ptr(context, inst);
+    let (fn_ptr, cycles) = instruction_lookup(inst)?;
+    let result = fn_ptr(context, inst)?;
     debug::trace_hazard(result);
 
     if unlikely(result.is_err()) {

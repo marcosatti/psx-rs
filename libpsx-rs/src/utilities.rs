@@ -13,6 +13,8 @@ pub(crate) fn bool_to_flag(value: bool) -> u32 {
 }
 
 pub(crate) fn checked_clamp<T: PartialOrd>(input: T, min: T, max: T) -> (T, bool) {
+    debug_assert!(min <= max);
+
     if input < min {
         (min, true)
     } else if input > max {

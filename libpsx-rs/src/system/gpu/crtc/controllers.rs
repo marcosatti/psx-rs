@@ -31,22 +31,41 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
 }
 
 pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> ControllerResult<()> {
-    let crtc_state = &mut state.gpu.crtc.controller_state.lock();
+    let controller_state = &mut state.gpu.crtc.controller_state.lock();
+    controller_state.scanline_clock += duration;
+    controller_state.frame_clock += duration;
 
-    crtc_state.scanline_elapsed += duration;
-    while crtc_state.scanline_elapsed > 0.0 {
-        crtc_state.scanline_elapsed -= SCANLINE_NTSC_PERIOD;
-        let old_drawing_odd_bit = state.gpu.stat.read_bitfield(STAT_DRAWING_ODD);
-        let new_drawing_odd_bit = old_drawing_odd_bit ^ 1;
-        state.gpu.stat.write_bitfield(STAT_DRAWING_ODD, new_drawing_odd_bit);
+    loop {
+        let mut handled = false;
+
+        if controller_state.scanline_clock > 0.0 {
+            handle_scanline_tick(state);
+            controller_state.scanline_clock -= SCANLINE_NTSC_PERIOD;
+            handled = true;
+        }
+
+        if controller_state.frame_clock > 0.0 {
+            handle_frame_tick(state, video_backend)?;
+            controller_state.frame_clock -= REFRESH_RATE_NTSC_PERIOD;
+            handled = true;
+        }
+
+        if !handled {
+            break;
+        }
     }
 
-    crtc_state.frame_elapsed += duration;
-    while crtc_state.frame_elapsed > 0.0 {
-        crtc_state.frame_elapsed -= REFRESH_RATE_NTSC_PERIOD;
-        handle_vblank_interrupt(state);
-        handle_render(state, video_backend)?;
-    }
+    Ok(())
+}
+
+fn handle_scanline_tick(state: &State) {
+    let drawing_odd_bit = state.gpu.stat.read_bitfield(STAT_DRAWING_ODD) ^ 1;
+    state.gpu.stat.write_bitfield(STAT_DRAWING_ODD, drawing_odd_bit);
+}
+
+fn handle_frame_tick(state: &State, video_backend: &VideoBackend) -> ControllerResult<()> {
+    handle_vblank_interrupt(state);
+    handle_render(state, video_backend)?;
 
     Ok(())
 }
