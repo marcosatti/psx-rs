@@ -56,6 +56,7 @@ fn get_handler_fn(command_index: u8) -> ControllerResult<(LengthFn, HandlerFn)> 
         0x01 => Ok((command_impl::command_01_length, command_impl::command_01_handler)),
         0x02 => Ok((command_impl::command_02_length, command_impl::command_02_handler)),
         0x06 => Ok((command_impl::command_06_length, command_impl::command_06_handler)),
+        0x08 => Ok((command_impl::command_08_length, command_impl::command_08_handler)),
         0x09 => Ok((command_impl::command_09_length, command_impl::command_09_handler)),
         0x0A => Ok((command_impl::command_0a_length, command_impl::command_0a_handler)),
         0x0E => Ok((command_impl::command_0e_length, command_impl::command_0e_handler)),

@@ -81,6 +81,30 @@ pub(crate) fn command_06_handler(state: &State, controller_state: &mut Controlle
     Ok(true)
 }
 
+pub(crate) fn command_08_length(_command_iteration: usize) -> usize {
+    0
+}
+
+pub(crate) fn command_08_handler(state: &State, controller_state: &mut ControllerState, _cdrom_backend: &CdromBackend, command_iteration: usize) -> ControllerResult<bool> {
+    // Stop
+    let (finished, interrupt_index) = match command_iteration {
+        0 => {
+            controller_state.reading = false;
+            controller_state.seeking = false;
+            (false, 3)
+        },
+        1 => { 
+            (true, 2)
+        },
+        _ => return Err(format!("Stop: command iteration invalid: {}", command_iteration)),
+    };
+
+    let stat_value = calculate_stat_value(controller_state);
+    state.cdrom.response.write_one(stat_value).map_err(|_| "Couldn't write to the response FIFO".to_owned())?;
+    handle_irq_raise(state, controller_state, interrupt_index)?;
+    Ok(finished)
+}
+
 pub(crate) fn command_09_length(_command_iteration: usize) -> usize {
     0
 }
@@ -110,11 +134,11 @@ pub(crate) fn command_0a_handler(state: &State, controller_state: &mut Controlle
     // Init
     let (finished, interrupt_index) = match command_iteration {
         0 => {
+            controller_state.reading = false;
+            controller_state.seeking = false;
             (false, 3)
         },
         1 => { 
-            controller_state.reading = false;
-            controller_state.seeking = false;
             (true, 2)
         },
         _ => return Err(format!("Init: command iteration invalid: {}", command_iteration)),
