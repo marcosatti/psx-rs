@@ -20,7 +20,7 @@ pub(crate) fn draw_polygon_3_solid(video_backend: &VideoBackend, positions: [Poi
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
-        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_3_solid(backend_params, positions, color, transparency)?)),
+        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_3_solid(backend_params, positions, color)?)),
         _ => unimplemented!(),
     }
 }

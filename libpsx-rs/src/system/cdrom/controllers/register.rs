@@ -68,6 +68,7 @@ pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut Contro
                     }
 
                     state.cdrom.response.clear();
+                    log::debug!("Response cleared");
                 }
 
                 calculate_interrupt_flag_value(controller_state)

@@ -35,6 +35,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
         return Err("CDROM response FIFO still had bytes when a new command was run!".into());
     }
 
+    log::debug!("Executing command {:02X} iteration {}", command_index, command_iteration);
     let finished = (handler.1)(state, controller_state, cdrom_backend, command_iteration)?;
 
     if finished {
