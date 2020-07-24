@@ -106,6 +106,22 @@ pub(crate) fn command_20_handler(_state: &State, _controller_state: &mut Control
     Ok(())
 }
 
+pub(crate) fn command_22_length(_data: &[u32]) -> Option<usize> {
+    Some(4)
+}
+
+pub(crate) fn command_22_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
+    debug::trace_gp0_command("Monochrome three-point polygon, semi-transparent", data);
+
+    let color = extract_color_rgb(data[0], std::u8::MAX);
+    let positions = extract_vertices_3_normalized([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let transparency = controller_state.transparency_mode;
+
+    let _ = backend_dispatch::draw_polygon_3_transparent(video_backend, positions, color, transparency)?;
+
+    Ok(())
+}
+
 pub(crate) fn command_28_length(_data: &[u32]) -> Option<usize> {
     Some(5)
 }
@@ -117,6 +133,22 @@ pub(crate) fn command_28_handler(_state: &State, _controller_state: &mut Control
     let positions = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
 
     let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color)?;
+
+    Ok(())
+}
+
+pub(crate) fn command_2a_length(_data: &[u32]) -> Option<usize> {
+    Some(5)
+}
+
+pub(crate) fn command_2a_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
+    debug::trace_gp0_command("Monochrome four-point polygon, semi-transparent", data);
+
+    let color = extract_color_rgb(data[0], std::u8::MAX);
+    let positions = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let transparency = controller_state.transparency_mode;
+
+    let _ = backend_dispatch::draw_polygon_4_transparent(video_backend, positions, color, transparency)?;
 
     Ok(())
 }

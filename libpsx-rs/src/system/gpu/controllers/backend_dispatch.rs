@@ -5,7 +5,7 @@ mod opengl;
 
 use crate::{
     backends::video::VideoBackend,
-    system::types::ControllerResult,
+    system::{gpu::types::TransparencyMode, types::ControllerResult},
     types::{
         color::Color,
         geometry::{
@@ -20,7 +20,16 @@ pub(crate) fn draw_polygon_3_solid(video_backend: &VideoBackend, positions: [Poi
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
-        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_3_solid(backend_params, positions, color)?)),
+        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_3_solid(backend_params, positions, color, transparency)?)),
+        _ => unimplemented!(),
+    }
+}
+
+pub(crate) fn draw_polygon_3_transparent(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], color: Color, transparency: TransparencyMode) -> ControllerResult<Result<(), ()>> {
+    match video_backend {
+        VideoBackend::None => Ok(Err(())),
+        #[cfg(opengl)]
+        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_3_transparent(backend_params, positions, color, transparency)?)),
         _ => unimplemented!(),
     }
 }
@@ -30,6 +39,15 @@ pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Poi
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
         VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_4_solid(backend_params, positions, color)?)),
+        _ => unimplemented!(),
+    }
+}
+
+pub(crate) fn draw_polygon_4_transparent(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color, transparency: TransparencyMode) -> ControllerResult<Result<(), ()>> {
+    match video_backend {
+        VideoBackend::None => Ok(Err(())),
+        #[cfg(opengl)]
+        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_4_transparent(backend_params, positions, color, transparency)?)),
         _ => unimplemented!(),
     }
 }
