@@ -45,6 +45,14 @@ gpu_crtc_bias = 1.0          #
 You will need to put the BIOS (scph5501.bin) into the folder ${cwd}/workspace/bios.
 Optionally, specify a path to a supported disc file by the CDROM backend as the first argument.
 
+Keymap:
+F1 => Pause / resume
+F2 => Quit
+F3 => Soft reset (R3000 only)
+F4 => Hard reset (All state)
+F10 => Save state
+F11 => Load state
+
 ![BIOS Intro](/media/2019-03-18.png?raw=true "BIOS Intro")
 
 ![Reading CDROM](/media/2020-03-12.png?raw=true "Reading CDROM")

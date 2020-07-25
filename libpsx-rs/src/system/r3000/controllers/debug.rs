@@ -33,12 +33,12 @@ const ENABLE_HAZARD_TRACING: bool = false;
 const ENABLE_INTERRUPT_TRACING: bool = false;
 const ENABLE_SYSCALL_TRACING: bool = false;
 const ENABLE_RFE_TRACING: bool = false;
-const ENABLE_MEMORY_TRACKING_READ: bool = false;
-const ENABLE_MEMORY_TRACKING_WRITE: bool = false;
+const ENABLE_MEMORY_TRACKING_READ: bool = true;
+const ENABLE_MEMORY_TRACKING_WRITE: bool = true;
 const ENABLE_BIOS_CALL_TRACING: bool = false;
 
-const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x0013_8D3C;
-const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x0013_8D3F;
+const MEMORY_TRACKING_ADDRESS_RANGE_START: u32 = 0x1F80_1800;
+const MEMORY_TRACKING_ADDRESS_RANGE_END: u32 = 0x1F80_1804;
 
 static DEBUG_TICK_COUNT: AtomicUsize = AtomicUsize::new(0);
 static DEBUG_BIOS_CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
@@ -122,7 +122,7 @@ pub(crate) fn track_memory_read_pending<T>(state: &ControllerState, physical_add
         return;
     }
 
-    if true {
+    if false {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();
@@ -156,7 +156,7 @@ pub(crate) fn track_memory_write_pending<T: Copy + UpperHex>(state: &ControllerS
         return;
     }
 
-    if true {
+    if false {
         let tick_count = DEBUG_TICK_COUNT.load(Ordering::Relaxed);
         let type_name = core::any::type_name::<T>();
         let pc = state.pc.read_u32();

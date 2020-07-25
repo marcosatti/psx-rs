@@ -64,10 +64,10 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                         Keycode::F4 => {
                             reset(&mut core, true);
                         },
-                        Keycode::F11 => {
+                        Keycode::F10 => {
                             save_state(&mut core);
                         },
-                        Keycode::F12 => {
+                        Keycode::F11 => {
                             load_state(&mut core);
                         },
                         _ => return false,
@@ -98,10 +98,10 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                         Keycode::F4 => {
                             reset(&mut core, true);
                         },
-                        Keycode::F11 => {
+                        Keycode::F10 => {
                             save_state(&mut core);
                         },
-                        Keycode::F12 => {
+                        Keycode::F11 => {
                             load_state(&mut core);
                         },
                         _ => return false,
@@ -138,10 +138,10 @@ pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: C
                                     log::info!("Paused");
                                 }
                             },
-                            Keycode::F11 => {
+                            Keycode::F10 => {
                                 save_state(&mut core);
                             },
-                            Keycode::F12 => {
+                            Keycode::F11 => {
                                 if load_state(&mut core) {
                                     state.set(State::Paused);
                                     log::info!("Paused");

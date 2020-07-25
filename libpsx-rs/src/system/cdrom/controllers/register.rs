@@ -67,6 +67,10 @@ pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut Contro
                         return Err(format!("Interrupt still pending after acknowledgement: {}", controller_state.interrupt_index));
                     }
 
+                    if !state.cdrom.response.is_empty() {
+                        return Err("Response FIFO not empty when clearing".into());
+                    }
+
                     state.cdrom.response.clear();
                     log::debug!("Response cleared");
                 }
