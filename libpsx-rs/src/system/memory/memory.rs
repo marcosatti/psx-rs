@@ -208,3 +208,27 @@ pub(crate) fn cache_control_read_u32(state: &State, offset: u32) -> ReadResult<u
 pub(crate) fn cache_control_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     Ok(state.memory.cache_control.write_u32(offset, value))
 }
+
+pub(crate) fn scratchpad_read_u8(state: &State, offset: u32) -> ReadResult<u8> {
+    Ok(state.memory.scratchpad.read_u8(offset))
+}
+
+pub(crate) fn scratchpad_write_u8(state: &State, offset: u32, value: u8) -> WriteResult {
+    Ok(state.memory.scratchpad.write_u8(offset, value))
+}
+
+pub(crate) fn scratchpad_read_u16(state: &State, offset: u32) -> ReadResult<u16> {
+    Ok(state.memory.scratchpad.read_u16(offset))
+}
+
+pub(crate) fn scratchpad_write_u16(state: &State, offset: u32, value: u16) -> WriteResult {
+    Ok(state.memory.scratchpad.write_u16(offset, value))
+}
+
+pub(crate) fn scratchpad_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
+    Ok(state.memory.scratchpad.read_u32(offset))
+}
+
+pub(crate) fn scratchpad_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
+    Ok(state.memory.scratchpad.write_u32(offset, value))
+}

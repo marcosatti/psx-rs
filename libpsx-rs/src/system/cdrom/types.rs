@@ -1,15 +1,21 @@
-use crate::{system::types::ControllerResult, types::{
-    exclusive_state::ExclusiveState,
-    fifo::Fifo,
-    memory::*,
-}, backends::cdrom::CdromBackend};
+use crate::{
+    backends::cdrom::CdromBackend,
+    system::types::{
+        ControllerResult,
+        State as SystemState,
+    },
+    types::{
+        exclusive_state::ExclusiveState,
+        fifo::Fifo,
+        memory::*,
+    },
+};
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
 };
 use std::collections::VecDeque;
-use crate::system::types::State as SystemState;
 
 pub(crate) type WaitCyclesFn = fn(usize) -> ControllerResult<usize>;
 

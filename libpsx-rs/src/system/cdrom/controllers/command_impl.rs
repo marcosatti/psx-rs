@@ -101,9 +101,7 @@ pub(crate) fn command_08_handler(state: &State, controller_state: &mut Controlle
             controller_state.seeking = false;
             (false, 3)
         },
-        1 => { 
-            (true, 2)
-        },
+        1 => (true, 2),
         _ => return Err(format!("Stop: command iteration invalid: {}", command_iteration)),
     };
 
@@ -154,9 +152,7 @@ pub(crate) fn command_0a_handler(state: &State, controller_state: &mut Controlle
             controller_state.seeking = false;
             (false, 3)
         },
-        1 => { 
-            (true, 2)
-        },
+        1 => (true, 2),
         _ => return Err(format!("Init: command iteration invalid: {}", command_iteration)),
     };
 

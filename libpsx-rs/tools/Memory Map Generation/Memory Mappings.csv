@@ -5,6 +5,7 @@ Bus address,Length (bytes),State object path,Handler function path,u8 read,u8 wr
 0x0040_0000,0x0020_0000,memory.main_memory,memory::main_memory,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,
 0x0060_0000,0x0020_0000,memory.main_memory,memory::main_memory,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,
 0x1F00_0000,0x0000_0100,memory.pio,memory::pio,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,
+0x1F80_0000,0x0000_0400,memory.scratchpad,memory::scratchpad,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,
 0x1F80_1000,0x0000_0004,memory.expansion_1_base_address,memory::expansion_1_base_address,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,
 0x1F80_1004,0x0000_0004,memory.expansion_2_base_address,memory::expansion_2_base_address,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,
 0x1F80_1008,0x0000_0004,memory.expansion_1_delay,memory::expansion_1_delay,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,

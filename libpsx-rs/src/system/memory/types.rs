@@ -12,6 +12,7 @@ use serde::{
 #[derive(Clone)]
 pub(crate) struct State {
     pub(crate) main_memory: B8Memory,
+    pub(crate) scratchpad: B8Memory,
     pub(crate) bios: B8Memory,
     pub(crate) expansion_1_base_address: B32LevelRegister,
     pub(crate) expansion_2_base_address: B32LevelRegister,
@@ -32,6 +33,7 @@ impl State {
     pub(crate) fn new() -> State {
         State {
             main_memory: B8Memory::new(MAIN_MEMORY_SIZE),
+            scratchpad: B8Memory::new(SCRATCHPAD_SIZE),
             bios: B8Memory::new(BIOS_SIZE),
             expansion_1_base_address: B32LevelRegister::new(),
             expansion_2_base_address: B32LevelRegister::new(),

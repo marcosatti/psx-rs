@@ -5,7 +5,10 @@ mod opengl;
 
 use crate::{
     backends::video::VideoBackend,
-    system::{gpu::types::TransparencyMode, types::ControllerResult},
+    system::{
+        gpu::types::TransparencyMode,
+        types::ControllerResult,
+    },
     types::{
         color::Color,
         geometry::{
@@ -25,7 +28,9 @@ pub(crate) fn draw_polygon_3_solid(video_backend: &VideoBackend, positions: [Poi
     }
 }
 
-pub(crate) fn draw_polygon_3_transparent(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], color: Color, transparency: TransparencyMode) -> ControllerResult<Result<(), ()>> {
+pub(crate) fn draw_polygon_3_transparent(
+    video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], color: Color, transparency: TransparencyMode,
+) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
@@ -43,7 +48,9 @@ pub(crate) fn draw_polygon_4_solid(video_backend: &VideoBackend, positions: [Poi
     }
 }
 
-pub(crate) fn draw_polygon_4_transparent(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color, transparency: TransparencyMode) -> ControllerResult<Result<(), ()>> {
+pub(crate) fn draw_polygon_4_transparent(
+    video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], color: Color, transparency: TransparencyMode,
+) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]

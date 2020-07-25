@@ -14,7 +14,10 @@ use crate::{
         rendering::*,
         *,
     },
-    system::types::ControllerResult,
+    system::{
+        gpu::types::TransparencyMode,
+        types::ControllerResult,
+    },
     types::{
         color::*,
         geometry::*,
@@ -22,7 +25,6 @@ use crate::{
     utilities::array::extract_rectangle,
 };
 use opengl_sys::*;
-use crate::system::gpu::types::TransparencyMode;
 
 pub(crate) fn draw_line_loop_3_solid(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3]) -> ControllerResult<()> {
     debug::trace_call(stdext::function_name!());
@@ -215,11 +217,13 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
     Ok(())
 }
 
-pub(crate) fn draw_polygon_4_transparent(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color, transparency: TransparencyMode) -> ControllerResult<()> {
+pub(crate) fn draw_polygon_4_transparent(
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], color: Color, transparency: TransparencyMode,
+) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
-    
+
     log::warn!("Transparency not implemented in shaders yet");
 
     let (r, g, b, a) = color.normalize();
@@ -349,11 +353,13 @@ pub(crate) fn draw_polygon_3_solid(backend_params: &BackendParams, positions: [P
     Ok(())
 }
 
-pub(crate) fn draw_polygon_3_transparent(backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], color: Color, transparency: TransparencyMode) -> ControllerResult<()> {
+pub(crate) fn draw_polygon_3_transparent(
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 3], color: Color, transparency: TransparencyMode,
+) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
-    
+
     log::warn!("Transparency not implemented in shaders yet");
 
     let (r, g, b, a) = color.normalize();
