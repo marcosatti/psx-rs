@@ -19,7 +19,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
             LatchKind::Read => Ok(value),
             LatchKind::Write => {
                 if !controller_state.command_index.is_none() {
-                    return Err("Write to command register before previous one is acknowledged".into());
+                    return Err(format!("Write to command register before previous one is acknowledged: 0x{:X}", value));
                 }
 
                 controller_state.command_index = Some(value);

@@ -18,6 +18,14 @@ use crate::{
     types::bitfield::Bitfield,
 };
 
+pub(crate) fn default_wait_cycles(command_iteration: usize) -> ControllerResult<usize> {
+    match command_iteration {
+        0 => Ok(COMMAND_FIRST_DEFAULT_WAIT_CYCLES),
+        1 => Ok(COMMAND_SECOND_DEFAULT_WAIT_CYCLES),
+        _ => Err(format!("Default wait cycles for command iteration {} not implemented", command_iteration)),
+    }
+}
+
 pub(crate) fn command_01_length(_command_iteration: usize) -> usize {
     0
 }
@@ -126,6 +134,14 @@ pub(crate) fn command_09_handler(state: &State, controller_state: &mut Controlle
     Ok(finished)
 }
 
+pub(crate) fn command_0a_wait_cycles(command_iteration: usize) -> ControllerResult<usize> {
+    match command_iteration {
+        0 => Ok(COMMAND_FIRST_INIT_WAIT_CYCLES),
+        1 => Ok(COMMAND_SECOND_DEFAULT_WAIT_CYCLES),
+        _ => Err(format!("Init: Invalid command iteration {}", command_iteration)),
+    }
+}
+
 pub(crate) fn command_0a_length(_command_iteration: usize) -> usize {
     0
 }
@@ -145,6 +161,7 @@ pub(crate) fn command_0a_handler(state: &State, controller_state: &mut Controlle
     };
 
     let stat_value = calculate_stat_value(controller_state);
+    log::debug!("Stat value: 0x{:X}", stat_value);
     state.cdrom.response.write_one(stat_value).map_err(|_| "Couldn't write to the response FIFO".to_owned())?;
     handle_irq_raise(state, controller_state, interrupt_index)?;
     Ok(finished)

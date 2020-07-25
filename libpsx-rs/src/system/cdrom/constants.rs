@@ -17,3 +17,7 @@ pub(crate) const CLOCK_SPEED: f64 = 33.8688 * 1e6; // Unknown; 33.8688 MHz
 pub(crate) const CLOCK_SPEED_PERIOD: f64 = 1.0 / CLOCK_SPEED;
 pub(crate) const VERSION: [u8; 4] = [0x94, 0x09, 0x19, 0x19];
 pub(crate) const SECTOR_DELAY_CYCLES_SINGLE_SPEED: usize = 0x6E1CD;
+
+pub(crate) const COMMAND_FIRST_DEFAULT_WAIT_CYCLES: usize = 0xC4E1;
+pub(crate) const COMMAND_FIRST_INIT_WAIT_CYCLES: usize = 0x13CCE;
+pub(crate) const COMMAND_SECOND_DEFAULT_WAIT_CYCLES: usize = 0x20000;

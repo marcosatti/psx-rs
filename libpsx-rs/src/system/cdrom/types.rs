@@ -1,14 +1,29 @@
-use crate::types::{
+use crate::{system::types::ControllerResult, types::{
     exclusive_state::ExclusiveState,
     fifo::Fifo,
     memory::*,
-};
+}, backends::cdrom::CdromBackend};
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
     Serialize,
 };
 use std::collections::VecDeque;
+use crate::system::types::State as SystemState;
+
+pub(crate) type WaitCyclesFn = fn(usize) -> ControllerResult<usize>;
+
+pub(crate) type LengthFn = fn(usize) -> usize;
+
+pub(crate) type HandlerFn = fn(&SystemState, &mut ControllerState, &CdromBackend, usize) -> ControllerResult<bool>;
+
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum WaitCyclesMode {
+    Ready,
+    Waiting(usize),
+    Executing,
+}
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
@@ -20,6 +35,7 @@ pub(crate) struct ControllerState {
     /// Command state.
     pub(crate) command_index: Option<u8>,
     pub(crate) command_iteration: usize,
+    pub(crate) command_wait_cycles: WaitCyclesMode,
     /// Seeking status.
     pub(crate) seeking: bool,
     /// Reading status.
@@ -41,6 +57,7 @@ impl ControllerState {
             interrupt_index: 0,
             command_index: None,
             command_iteration: 0,
+            command_wait_cycles: WaitCyclesMode::Ready,
             seeking: false,
             reading: false,
             msf_address_base: (0, 0, 0),
