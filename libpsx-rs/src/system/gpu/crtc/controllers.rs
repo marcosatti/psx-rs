@@ -14,6 +14,13 @@ use crate::{
                 },
             },
         },
+        timers::{
+            constants::TIMER_COUNT,
+            controllers::timer::{
+                get_hblank,
+                get_vblank,
+            },
+        },
         types::{
             ControllerContext,
             ControllerResult,
@@ -39,12 +46,20 @@ pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f6
         let mut handled = false;
 
         if controller_state.scanline_clock > 0.0 {
+            for timer_id in 0..TIMER_COUNT {
+                get_hblank(state, timer_id).store(true);
+            }
+
             handle_scanline_tick(state);
             controller_state.scanline_clock -= SCANLINE_NTSC_PERIOD;
             handled = true;
         }
 
         if controller_state.frame_clock > 0.0 {
+            for timer_id in 0..TIMER_COUNT {
+                get_vblank(state, timer_id).store(true);
+            }
+
             handle_frame_tick(state, video_backend)?;
             controller_state.frame_clock -= REFRESH_RATE_NTSC_PERIOD;
             handled = true;

@@ -20,14 +20,64 @@ pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerSta
 
     let target_value = target.read_u32();
     let mut count_value = count.read_u32();
-    let reset_on_target = timer_state.reset_on_target;
     let tick_period = calc_clock_source_period(timer_state.clock_source);
 
-    while timer_state.clock > tick_period {
+    while timer_state.clock > 0.0 {
         count_value = (count_value + 1) & (std::u16::MAX as u32);
 
+        let hblank_current = get_hblank(state, timer_id).load();
+        let vblank_current = get_vblank(state, timer_id).load();
+
+        match timer_state.sync_mode {
+            SyncMode::Off => {},
+            SyncMode::HblankReset => {
+                // TODO: properly implement.
+                // if (!timer_state.hblank_old) && hblank_current {
+                //     count_value = 0;
+                // }
+                if hblank_current {
+                    get_hblank(state, timer_id).store(false);
+                    count_value = 0;
+                }
+            },
+            SyncMode::HblankPauseOff => {
+                if !hblank_current {
+                    timer_state.clock -= tick_period;
+                    continue;
+                } else {
+                    get_hblank(state, timer_id).store(false);
+                    timer_state.sync_mode = SyncMode::Off;
+                }
+            },
+            SyncMode::VblankReset => {
+                // TODO: properly implement.
+                // if (!timer_state.vblank_old) && vblank_current {
+                //     count_value = 0;
+                // }
+                if vblank_current {
+                    get_vblank(state, timer_id).store(false);
+                    count_value = 0;
+                }
+            },
+            SyncMode::VblankPauseOff => {
+                if !vblank_current {
+                    timer_state.clock -= tick_period;
+                    continue;
+                } else {
+                    get_vblank(state, timer_id).store(false);
+                    timer_state.sync_mode = SyncMode::Off;
+                }
+            },
+            _ => return Err(format!("Sync mode {:?} not implemented", timer_state.sync_mode)),
+        }
+
+        timer_state.hblank_old = hblank_current;
+        timer_state.vblank_old = vblank_current;
+
+        count.write_u32(count_value);
+
         // Check if timer has reached a reset/IRQ condition.
-        if reset_on_target {
+        if timer_state.reset_on_target {
             if count_value == target_value {
                 count_value = 0;
                 timer_state.target_hit = true;
@@ -41,7 +91,6 @@ pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerSta
             }
         }
 
-        count.write_u32(count_value);
         timer_state.clock -= tick_period;
     }
 

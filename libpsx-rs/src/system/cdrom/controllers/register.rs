@@ -73,3 +73,15 @@ pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut Contro
         }
     })
 }
+
+pub(crate) fn handle_audio_apply(state: &State, _controller_state: &mut ControllerState) -> ControllerResult<()> {
+    state.cdrom.audio_apply.acknowledge(|value, latch_kind| {
+        match latch_kind {
+            LatchKind::Read => Err("Tried to read from the audio apply register".into()),
+            LatchKind::Write => {
+                log::warn!("Write to audio apply register unimplemented");
+                Ok(value)
+            },
+        }
+    })
+}

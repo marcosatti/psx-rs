@@ -73,6 +73,7 @@ fn get_handler_fn(command_index: u8) -> ControllerResult<(WaitCyclesFn, LengthFn
         0x08 => Ok((command_impl::default_wait_cycles, command_impl::command_08_length, command_impl::command_08_handler)),
         0x09 => Ok((command_impl::default_wait_cycles, command_impl::command_09_length, command_impl::command_09_handler)),
         0x0A => Ok((command_impl::command_0a_wait_cycles, command_impl::command_0a_length, command_impl::command_0a_handler)),
+        0x0C => Ok((command_impl::default_wait_cycles, command_impl::command_0c_length, command_impl::command_0c_handler)),
         0x0E => Ok((command_impl::default_wait_cycles, command_impl::command_0e_length, command_impl::command_0e_handler)),
         0x15 => Ok((command_impl::default_wait_cycles, command_impl::command_15_length, command_impl::command_15_handler)),
         0x19 => Ok((command_impl::default_wait_cycles, command_impl::command_19_length, command_impl::command_19_handler)),

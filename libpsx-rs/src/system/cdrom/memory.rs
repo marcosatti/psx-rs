@@ -38,7 +38,8 @@ pub(crate) fn cdrom1801_write_u8(state: &State, offset: u32, value: u8) -> Write
     assert_eq!(offset, 0);
     match state.cdrom.status.read_bitfield(STATUS_INDEX) {
         0 => state.cdrom.command.write_u8(value).map_err(|_| WriteErrorKind::NotReady),
-        1..=3 => unimplemented!(),
+        1..=2 => unimplemented!(),
+        3 => Ok(state.cdrom.audio_right_to_right.write_u8(value)),
         _ => unreachable!(),
     }
 }
@@ -56,7 +57,8 @@ pub(crate) fn cdrom1802_write_u8(state: &State, offset: u32, value: u8) -> Write
     match state.cdrom.status.read_bitfield(STATUS_INDEX) {
         0 => state.cdrom.parameter.write_one(value).map_err(|_| WriteErrorKind::Full),
         1 => Ok(state.cdrom.interrupt_enable.write_u8(value)),
-        2..=3 => unimplemented!(),
+        2 => Ok(state.cdrom.audio_left_to_left.write_u8(value)),
+        3 => Ok(state.cdrom.audio_right_to_left.write_u8(value)),
         _ => unreachable!(),
     }
 }
@@ -86,7 +88,8 @@ pub(crate) fn cdrom1803_write_u8(state: &State, offset: u32, value: u8) -> Write
 
             Ok(())
         },
-        2..=3 => unimplemented!(),
+        2 => Ok(state.cdrom.audio_left_to_right.write_u8(value)),
+        3 => state.cdrom.audio_apply.write_u8(value).map_err(|_| WriteErrorKind::NotReady),
         _ => unreachable!(),
     }
 }

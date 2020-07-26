@@ -87,6 +87,11 @@ pub(crate) struct State {
     pub(crate) interrupt_enable: B8LevelRegister,
     pub(crate) interrupt_flag: B8EdgeRegister,
     pub(crate) request: B8EdgeRegister,
+    pub(crate) audio_left_to_left: B8LevelRegister,
+    pub(crate) audio_left_to_right: B8LevelRegister,
+    pub(crate) audio_right_to_left: B8LevelRegister,
+    pub(crate) audio_right_to_right: B8LevelRegister,
+    pub(crate) audio_apply: B8EdgeRegister,
     pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
 
@@ -101,6 +106,11 @@ impl State {
             interrupt_enable: B8LevelRegister::new(),
             interrupt_flag: B8EdgeRegister::new(),
             request: B8EdgeRegister::new(),
+            audio_left_to_left: B8LevelRegister::new(),
+            audio_left_to_right: B8LevelRegister::new(),
+            audio_right_to_left: B8LevelRegister::new(),
+            audio_right_to_right: B8LevelRegister::new(),
+            audio_apply: B8EdgeRegister::new(),
             controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }

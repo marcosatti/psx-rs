@@ -4,10 +4,13 @@ pub(crate) mod register;
 pub(crate) mod timer;
 
 use crate::system::{
-    timers::controllers::{
-        count::*,
-        register::*,
-        timer::*,
+    timers::{
+        constants::TIMER_COUNT,
+        controllers::{
+            count::*,
+            register::*,
+            timer::*,
+        },
     },
     types::{
         ControllerContext,
@@ -26,7 +29,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
 fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
     let controller_state = &mut state.timers.controller_state.lock();
 
-    for timer_id in 0..3 {
+    for timer_id in 0..TIMER_COUNT {
         get_state(controller_state, timer_id).clock += duration;
 
         handle_mode(state, controller_state, timer_id)?;

@@ -336,7 +336,8 @@ pub(crate) fn extern_volume_write_u32(state: &State, offset: u32, value: u32) ->
 
 pub(crate) fn current_volume_left_read_u16(_state: &State, offset: u32) -> ReadResult<u16> {
     assert_eq!(offset, 0);
-    unimplemented!();
+    log::warn!("Read from current volume left - returning max volume (0x7FFF)");
+    Ok(0x7FFF)
 }
 
 pub(crate) fn current_volume_left_write_u16(_state: &State, offset: u32, _value: u16) -> WriteResult {
@@ -346,7 +347,8 @@ pub(crate) fn current_volume_left_write_u16(_state: &State, offset: u32, _value:
 
 pub(crate) fn current_volume_right_read_u16(_state: &State, offset: u32) -> ReadResult<u16> {
     assert_eq!(offset, 0);
-    unimplemented!();
+    log::warn!("Read from current volume right - returning max volume (0x7FFF)");
+    Ok(0x7FFF)
 }
 
 pub(crate) fn current_volume_right_write_u16(_state: &State, offset: u32, _value: u16) -> WriteResult {

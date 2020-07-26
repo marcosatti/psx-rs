@@ -15,6 +15,7 @@ use crate::{
                 command::*,
                 read::*,
                 register::{
+                    handle_audio_apply,
                     handle_command as handle_command_register,
                     handle_interrupt_flag,
                     handle_request,
@@ -53,6 +54,7 @@ fn tick(state: &State, controller_state: &mut ControllerState, cdrom_backend: &C
     handle_command_register(state, controller_state)?;
     handle_request(state, controller_state)?;
     handle_interrupt_flag(state, controller_state)?;
+    handle_audio_apply(state, controller_state)?;
 
     if controller_state.interrupt_index == 0 {
         handle_read(state, controller_state, cdrom_backend)?;

@@ -32,9 +32,50 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
                 // Reset and apply parameters.
                 let timer_state = get_state(controller_state, timer_id);
 
-                let sync_mode = MODE_SYNC_EN.extract_from(value);
-                if sync_mode > 0 {
-                    return Err(format!("Sync via bit1-2 not implemented: {}, timer_id = {}", sync_mode, timer_id));
+                timer_state.sync_enable_mode_raw = MODE_SYNC_ENABLE_MODE.extract_from(value);
+
+                if MODE_SYNC_ENABLE.extract_from(value) > 0 {
+                    let sync_mode = MODE_SYNC_MODE.extract_from(value);
+                    timer_state.sync_mode = match timer_id {
+                        0 => {
+                            match sync_mode {
+                                0 => SyncMode::HblankPause,
+                                1 => {
+                                    log::warn!("HblankReset sync mode not properly implemented (needs CRTC & Timers work)");
+                                    SyncMode::HblankReset
+                                },
+                                2 => SyncMode::HblankResetPause,
+                                3 => {
+                                    log::warn!("HblankPauseOff sync mode not properly implemented (needs CRTC & Timers work)");
+                                    SyncMode::HblankPauseOff
+                                },
+                                _ => return Err(format!("Invalid sync mode: {}", sync_mode)),
+                            }
+                        },
+                        1 => {
+                            match sync_mode {
+                                0 => SyncMode::VblankPause,
+                                1 => {
+                                    log::warn!("VblankReset sync mode not properly implemented (needs CRTC & Timers work)");
+                                    SyncMode::VblankReset
+                                },
+                                2 => SyncMode::VblankResetPause,
+                                3 => {
+                                    log::warn!("VblankPauseOff sync mode not properly implemented (needs CRTC & Timers work)");
+                                    SyncMode::VblankPauseOff
+                                },
+                                _ => return Err(format!("Invalid sync mode: {}", sync_mode)),
+                            }
+                        },
+                        2 => {
+                            match sync_mode {
+                                0 | 3 => SyncMode::Stop,
+                                1 | 2 => SyncMode::Off,
+                                _ => return Err(format!("Invalid sync mode: {}", sync_mode)),
+                            }
+                        },
+                        _ => return Err(format!("Invalid timer ID: {}", timer_id)),
+                    };
                 }
 
                 timer_state.reset_on_target = MODE_RESET.extract_from(value) > 0;
@@ -91,6 +132,7 @@ pub(crate) fn handle_mode(state: &State, controller_state: &mut ControllerState,
 pub(crate) fn calculate_mode_value(timer_state: &TimerState) -> ControllerResult<u32> {
     let mut value = 0;
 
+    value = MODE_SYNC_ENABLE_MODE.insert_into(value, timer_state.sync_enable_mode_raw);
     value = MODE_RESET.insert_into(value, bool_to_flag(timer_state.reset_on_target));
     value = MODE_IRQ_TARGET.insert_into(value, bool_to_flag(timer_state.irq_on_target));
     value = MODE_IRQ_OVERFLOW.insert_into(value, bool_to_flag(timer_state.irq_on_overflow));
