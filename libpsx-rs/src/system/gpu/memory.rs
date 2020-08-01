@@ -9,6 +9,11 @@ use crate::{
 
 pub(crate) fn gpu1810_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
     assert_eq!(offset, 0);
+
+    if state.gpu.gp1_command_pending.load() {
+        return Err(ReadErrorKind::NotReady);
+    }
+
     Ok(state.gpu.read.read_one().unwrap_or_else(|_| {
         log::warn!("GPUREAD is empty - returning 0xFFFF_FFFF");
         0xFFFF_FFFF
@@ -36,5 +41,11 @@ pub(crate) fn gpu1814_read_u32(state: &State, offset: u32) -> ReadResult<u32> {
 
 pub(crate) fn gpu1814_write_u32(state: &State, offset: u32, value: u32) -> WriteResult {
     assert_eq!(offset, 0);
-    state.gpu.gp1.write_u32(value).map_err(|_| WriteErrorKind::NotReady)
+
+    if state.gpu.gp1_command_pending.load() {
+        return Err(WriteErrorKind::NotReady);
+    }
+
+    state.gpu.gp1_command_pending.store(true);    
+    Ok(state.gpu.gp1.write_u32(value))
 }

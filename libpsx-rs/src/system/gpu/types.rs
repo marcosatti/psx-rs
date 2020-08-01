@@ -3,7 +3,7 @@ use crate::{
     types::{
         exclusive_state::ExclusiveState,
         fifo::Fifo,
-        memory::*,
+        memory::*, flag::Flag,
     },
 };
 #[cfg(feature = "serialization")]
@@ -36,7 +36,6 @@ pub(crate) enum ClutMode {
 pub(crate) struct ControllerState {
     /// Synchronization state.
     pub(crate) clock: f64,
-    pub(crate) gp1_command: Option<u32>,
     pub(crate) textured_rect_x_flip: bool,
     pub(crate) textured_rect_y_flip: bool,
     pub(crate) display_area_start_x: usize,
@@ -68,7 +67,6 @@ impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
             clock: 0.0,
-            gp1_command: None,
             textured_rect_x_flip: false,
             textured_rect_y_flip: false,
             display_area_start_x: 0,
@@ -104,7 +102,8 @@ pub(crate) struct State {
     pub(crate) crtc: Crtc,
     pub(crate) gp0: Fifo<u32>,
     pub(crate) read: Fifo<u32>,
-    pub(crate) gp1: B32EdgeRegister,
+    pub(crate) gp1: B32LevelRegister,
+    pub(crate) gp1_command_pending: Flag,
     pub(crate) stat: B32LevelRegister,
     pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
@@ -115,7 +114,8 @@ impl State {
             crtc: Crtc::new(),
             gp0: Fifo::new(2048),
             read: Fifo::new(2048),
-            gp1: B32EdgeRegister::new(),
+            gp1: B32LevelRegister::new(),
+            gp1_command_pending: Flag::new(),
             stat: B32LevelRegister::new(),
             controller_state: ExclusiveState::new(ControllerState::new()),
         }

@@ -19,7 +19,7 @@ type LengthFn = fn(&[u32]) -> Option<usize>;
 /// The handler logic for the command.
 type HandlerFn = fn(&State, &mut ControllerState, &VideoBackend, &[u32]) -> ControllerResult<()>;
 
-pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult<()> {
+pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult<bool> {
     // Update the command buffer with any new incoming data.
     process_gp0_fifo(state, controller_state);
 
@@ -28,7 +28,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
         let command_buffer = &mut controller_state.gp0_command_buffer;
 
         if command_buffer.is_empty() {
-            return Ok(());
+            return Ok(false);
         }
 
         let command = command_buffer[0];
@@ -45,7 +45,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
             match (command_handler.0)(&command_buffer) {
                 Some(command_length) => *required_length = Some(command_length),
                 // We don't have enough data yet so try again later.
-                None => return Ok(()),
+                None => return Ok(true),
             }
         }
 
@@ -54,7 +54,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
 
     // Check if we can execute the command.
     if controller_state.gp0_command_buffer.len() < required_length_value {
-        return Ok(());
+        return Ok(true);
     }
 
     // Execute it.
@@ -65,7 +65,7 @@ pub(crate) fn handle_command(state: &State, controller_state: &mut ControllerSta
     controller_state.gp0_command_buffer.drain(0..required_length_value);
     controller_state.gp0_command_required_length = None;
 
-    Ok(())
+    Ok(true)
 }
 
 fn get_command_handler(command_index: u8) -> ControllerResult<(LengthFn, HandlerFn)> {

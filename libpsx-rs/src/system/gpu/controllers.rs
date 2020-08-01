@@ -7,7 +7,6 @@ pub(crate) mod command_gp1_impl;
 pub(crate) mod data;
 pub(crate) mod debug;
 pub(crate) mod read;
-pub(crate) mod register;
 
 use crate::{
     system::{
@@ -16,7 +15,6 @@ use crate::{
             controllers::{
                 command::*,
                 read::*,
-                register::*,
             },
             types::ControllerState,
         },
@@ -49,11 +47,18 @@ fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> Contr
 }
 
 fn tick(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend) -> ControllerResult<()> {
-    handle_gp1(state, controller_state)?;
+    let mut handled = false;
 
-    handle_command(state, controller_state, video_backend)?;
+    if !handled {
+        handled = handle_command(state, controller_state, video_backend)?;
+    }
 
-    handle_read(state, controller_state)?;
+    if !handled {
+        handled = handle_read(state, controller_state)?;
+    }
+
+    if !handled {
+    }
 
     Ok(())
 }

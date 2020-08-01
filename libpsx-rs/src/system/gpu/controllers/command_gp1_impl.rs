@@ -119,3 +119,9 @@ pub(crate) fn command_08(state: &State, _controller_state: &mut ControllerState,
 
     Ok(())
 }
+
+pub(crate) fn command_10(state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, _command: u32) -> ControllerResult<()> {
+    state.gpu.read.write_one(0x2).map_err(|_| "GP1(0x10): Error writing to GPUREAD".to_owned())?;
+
+    Ok(())
+}
