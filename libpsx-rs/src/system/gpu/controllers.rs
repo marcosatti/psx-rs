@@ -57,8 +57,7 @@ fn tick(state: &State, controller_state: &mut ControllerState, video_backend: &V
         handled = handle_read(state, controller_state)?;
     }
 
-    if !handled {
-    }
+    if !handled {}
 
     Ok(())
 }

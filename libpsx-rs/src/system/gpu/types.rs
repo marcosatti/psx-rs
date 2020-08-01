@@ -3,7 +3,8 @@ use crate::{
     types::{
         exclusive_state::ExclusiveState,
         fifo::Fifo,
-        memory::*, flag::Flag,
+        flag::Flag,
+        memory::*,
     },
 };
 #[cfg(feature = "serialization")]

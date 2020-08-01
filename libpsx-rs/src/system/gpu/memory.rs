@@ -46,6 +46,6 @@ pub(crate) fn gpu1814_write_u32(state: &State, offset: u32, value: u32) -> Write
         return Err(WriteErrorKind::NotReady);
     }
 
-    state.gpu.gp1_command_pending.store(true);    
+    state.gpu.gp1_command_pending.store(true);
     Ok(state.gpu.gp1.write_u32(value))
 }

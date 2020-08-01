@@ -6,7 +6,7 @@ pub(crate) const _CONTROL_CD_AUDIO_REVERB: Bitfield = Bitfield::new(2, 1);
 pub(crate) const _CONTROL_EXTERNAL_AUDIO_REVERB: Bitfield = Bitfield::new(3, 1);
 pub(crate) const CONTROL_TRANSFER_MODE: Bitfield = Bitfield::new(4, 2);
 pub(crate) const CONTROL_UNMUTE: Bitfield = Bitfield::new(14, 1);
-pub(crate) const CONTROL_ENABLE: Bitfield = Bitfield::new(15, 1);
+pub(crate) const _CONTROL_ENABLE: Bitfield = Bitfield::new(15, 1);
 
 pub(crate) const _STAT_CD_AUDIO_ENABLE: Bitfield = Bitfield::new(0, 1);
 pub(crate) const _STAT_EXTERNAL_AUDIO_ENABLE: Bitfield = Bitfield::new(1, 1);

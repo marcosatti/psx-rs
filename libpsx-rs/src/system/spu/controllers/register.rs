@@ -19,8 +19,6 @@ use crate::{
 
 pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     let mut write_fn = |value| {
-        controller_state.enabled = CONTROL_ENABLE.extract_from(value) > 0;
-
         controller_state.muted = CONTROL_UNMUTE.extract_from(value) == 0;
 
         let transfer_mode = match CONTROL_TRANSFER_MODE.extract_from(value) {

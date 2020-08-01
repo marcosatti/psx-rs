@@ -18,7 +18,6 @@ pub(crate) use transfer::*;
 #[derive(Clone)]
 pub(crate) struct ControllerState {
     pub(crate) clock: f64,
-    pub(crate) enabled: bool,
     pub(crate) muted: bool,
     pub(crate) transfer_state: TransferState,
     pub(crate) dac_state: DacState,
@@ -29,7 +28,6 @@ impl ControllerState {
     pub(crate) fn new() -> ControllerState {
         ControllerState {
             clock: 0.0,
-            enabled: false,
             muted: false,
             transfer_state: TransferState::new(),
             dac_state: DacState::new(),

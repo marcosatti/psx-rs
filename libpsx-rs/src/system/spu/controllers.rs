@@ -68,11 +68,6 @@ fn run_time(state: &State, audio_backend: &AudioBackend, duration: f64) -> Contr
 
 fn handle_tick(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     handle_control(state, controller_state)?;
-
-    if !controller_state.enabled {
-        return Ok(());
-    }
-
     handle_transfer(state, controller_state)?;
     handle_data_transfer_address(state, controller_state)?;
     handle_key_on(state, controller_state)?;
