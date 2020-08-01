@@ -39,6 +39,22 @@ pub(crate) fn pop_channel_data(state: &State, channel_id: usize, current_address
 pub(crate) fn push_channel_data(state: &State, channel_id: usize, value: u32) -> ControllerResult<Option<()>> {
     let result = match channel_id {
         2 => state.gpu.gp0.write_one(value),
+        4 => {
+            let fifo = &state.spu.data_fifo;
+
+            if fifo.write_available() < 2 {
+                return Ok(None);
+            }
+
+            let bytes = u32::to_le_bytes(value);
+            let data_u16_1 = u16::from_le_bytes([bytes[0], bytes[1]]);
+            let data_u16_2 = u16::from_le_bytes([bytes[2], bytes[3]]);
+
+            fifo.write_one(data_u16_1).unwrap();
+            fifo.write_one(data_u16_2).unwrap();
+
+            Ok(())
+        },
         6 => return Err("Channel 6 cannot recieve data (OTC)".into()),
         _ => return Err(format!("Unhandled DMAC channel push {}", channel_id)),
     };
