@@ -1,7 +1,13 @@
-use crate::{system::{
+use crate::{
+    system::{
         dmac::types::*,
         types::State,
-    }, types::flag::Flag, types::memory::*};
+    },
+    types::{
+        flag::Flag,
+        memory::*,
+    },
+};
 
 pub(crate) fn get_madr(state: &State, channel_id: usize) -> &B32LevelRegister {
     match channel_id {

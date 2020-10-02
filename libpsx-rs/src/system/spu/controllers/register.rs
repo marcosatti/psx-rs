@@ -34,8 +34,8 @@ pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerSta
 
         controller_state.transfer_state.current_mode = transfer_mode;
         controller_state.transfer_count = 0;
-        
-        let data_busy = transfer_mode != TransferMode::Stop; 
+
+        let data_busy = transfer_mode != TransferMode::Stop;
         state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, bool_to_flag(data_busy) as u16);
 
         let header = Bitfield::new(0, 5);

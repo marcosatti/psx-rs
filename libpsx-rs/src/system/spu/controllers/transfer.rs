@@ -35,6 +35,7 @@ fn handle_manual_write_transfer(state: &State, controller_state: &mut Controller
             memory[*current_transfer_address as usize + 1] = bytes[1];
             *current_transfer_address += 2;
             *current_transfer_address &= 0x7FFFF;
+            controller_state.transfer_count += 1;
         },
         Err(_) => {
             *current_transfer_mode = TransferMode::Stop;

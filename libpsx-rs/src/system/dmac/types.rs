@@ -1,4 +1,8 @@
-use crate::types::{exclusive_state::ExclusiveState, flag::Flag, memory::*};
+use crate::types::{
+    exclusive_state::ExclusiveState,
+    flag::Flag,
+    memory::*,
+};
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,

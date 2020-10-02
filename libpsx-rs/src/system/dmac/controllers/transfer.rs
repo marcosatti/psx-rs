@@ -88,7 +88,7 @@ pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut T
             madr.write_u32(0x00FF_FFFF);
         },
     }
-    
+
     if channel_id == 4 {
         log::debug!("SPU DMA transfer finished");
     }
