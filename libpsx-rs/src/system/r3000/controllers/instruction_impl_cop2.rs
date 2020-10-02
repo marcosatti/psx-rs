@@ -6,7 +6,12 @@ use crate::{
                 register::*,
             },
             cp0::constants::STATUS_ISC,
-            cp2::types::GteInstruction,
+            cp2::types::{
+                GteInstruction,
+                MultiplyMatrix,
+                MultiplyVector,
+                TranslationVector,
+            },
             types::{
                 ControllerContext,
                 InstructionResult,
@@ -373,9 +378,159 @@ pub(crate) fn intpl(_context: &mut ControllerContext, instruction: Instruction) 
     Err("Instruction intpl not implemented".into())
 }
 
-pub(crate) fn mvmva(_context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
-    let _instruction = GteInstruction::new(instruction);
-    Err("Instruction mvmva not implemented".into())
+pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
+    let instruction = GteInstruction::new(instruction);
+
+    if !instruction.sf() {
+        return Err("Assumes sf bit is on for now".into());
+    }
+
+    let mut ir_clamp_min = 0;
+    if !instruction.lm() {
+        ir_clamp_min = std::i16::MIN;
+    }
+
+    let mx1_raw_value;
+    let mx2_raw_value;
+    let mx3_raw_value;
+    let mx4_raw_value;
+    let mx5_raw_value;
+
+    match instruction.mvmva_mm() {
+        MultiplyMatrix::Rotation => {
+            mx1_raw_value = context.cp2_state.gc[0].read_u32();
+            mx2_raw_value = context.cp2_state.gc[1].read_u32();
+            mx3_raw_value = context.cp2_state.gc[2].read_u32();
+            mx4_raw_value = context.cp2_state.gc[3].read_u32();
+            mx5_raw_value = context.cp2_state.gc[4].read_u32();
+        },
+        MultiplyMatrix::Light => {
+            mx1_raw_value = context.cp2_state.gc[8].read_u32();
+            mx2_raw_value = context.cp2_state.gc[9].read_u32();
+            mx3_raw_value = context.cp2_state.gc[10].read_u32();
+            mx4_raw_value = context.cp2_state.gc[11].read_u32();
+            mx5_raw_value = context.cp2_state.gc[12].read_u32();
+        },
+        MultiplyMatrix::Color => {
+            mx1_raw_value = context.cp2_state.gc[16].read_u32();
+            mx2_raw_value = context.cp2_state.gc[17].read_u32();
+            mx3_raw_value = context.cp2_state.gc[18].read_u32();
+            mx4_raw_value = context.cp2_state.gc[19].read_u32();
+            mx5_raw_value = context.cp2_state.gc[20].read_u32();
+        },
+        MultiplyMatrix::Reserved => return Err("Invalid mvmva_mm bitfield value".into()),
+    }
+
+    let (mx11_value, mx12_value) = split_32_fixedi16_f64::<U12>(mx1_raw_value);
+    let (mx13_value, mx21_value) = split_32_fixedi16_f64::<U12>(mx2_raw_value);
+    let (mx22_value, mx23_value) = split_32_fixedi16_f64::<U12>(mx3_raw_value);
+    let (mx31_value, mx32_value) = split_32_fixedi16_f64::<U12>(mx4_raw_value);
+    let (mx33_value, _) = split_32_fixedi16_f64::<U12>(mx5_raw_value);
+
+    let vx1_raw_value;
+    let vx2_raw_value;
+    let vx3_raw_value;
+    let mut ir_mode = false;
+
+    match instruction.mvmva_mv() {
+        MultiplyVector::V0 => {
+            vx1_raw_value = context.cp2_state.gd[0].read_u32();
+            vx2_raw_value = context.cp2_state.gd[1].read_u32();
+            vx3_raw_value = 0;
+        },
+        MultiplyVector::V1 => {
+            vx1_raw_value = context.cp2_state.gd[2].read_u32();
+            vx2_raw_value = context.cp2_state.gd[3].read_u32();
+            vx3_raw_value = 0;
+        },
+        MultiplyVector::V2 => {
+            vx1_raw_value = context.cp2_state.gd[4].read_u32();
+            vx2_raw_value = context.cp2_state.gd[5].read_u32();
+            vx3_raw_value = 0;
+        },
+        MultiplyVector::IR => {
+            vx1_raw_value = context.cp2_state.gd[9].read_u32();
+            vx2_raw_value = context.cp2_state.gd[10].read_u32();
+            vx3_raw_value = context.cp2_state.gd[11].read_u32();
+            ir_mode = true;
+        },
+    }
+
+    let vxx_value;
+    let vxy_value;
+    let vxz_value;
+
+    if !ir_mode {
+        let temp = split_32_fixedi16_f64::<U12>(vx1_raw_value);
+        vxx_value = temp.0;
+        vxy_value = temp.1;
+        let temp = split_32_fixedi16_f64::<U12>(vx2_raw_value);
+        vxz_value = temp.0;
+    } else {
+        vxx_value = split_32_fixedi16_f64::<U12>(vx1_raw_value).0;
+        vxy_value = split_32_fixedi16_f64::<U12>(vx2_raw_value).0;
+        vxz_value = split_32_fixedi16_f64::<U12>(vx3_raw_value).0;
+    }
+
+    let txx_value;
+    let txy_value;
+    let txz_value;
+
+    match instruction.mvmva_tv() {
+        TranslationVector::TR => {
+            txx_value = context.cp2_state.gc[5].read_u32() as i32 as f64;
+            txy_value = context.cp2_state.gc[6].read_u32() as i32 as f64;
+            txz_value = context.cp2_state.gc[7].read_u32() as i32 as f64;
+        },
+        TranslationVector::BK => {
+            txx_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[13].read_u32() as i32);
+            txy_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[14].read_u32() as i32);
+            txz_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[15].read_u32() as i32);
+        },
+        TranslationVector::FC => return Err("Bugged behaviour not implemented".into()),
+        TranslationVector::None => {
+            txx_value = 0.0;
+            txy_value = 0.0;
+            txz_value = 0.0;
+        },
+    }
+
+    let mac1_value = txx_value + (mx11_value * vxx_value) + (mx12_value * vxy_value) + (mx13_value * vxz_value);
+    let mac2_value = txy_value + (mx21_value * vxx_value) + (mx22_value * vxy_value) + (mx23_value * vxz_value);
+    let mac3_value = txz_value + (mx31_value * vxx_value) + (mx32_value * vxy_value) + (mx33_value * vxz_value);
+
+    let (ir1_value, ir1_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir2_value, ir2_overflow_flag) = checked_clamp(mac2_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir3_value, ir3_overflow_flag) = checked_clamp(mac3_value, ir_clamp_min as f64, std::i16::MAX as f64);
+
+    let mac1_overflow_flag = f64::abs(mac1_value) >= ((1u64 << 44) as f64);
+    let mac1_negative_flag = mac1_value < 0.0;
+    let mac2_overflow_flag = f64::abs(mac2_value) >= ((1u64 << 44) as f64);
+    let mac2_negative_flag = mac2_value < 0.0;
+    let mac3_overflow_flag = f64::abs(mac3_value) >= ((1u64 << 44) as f64);
+    let mac3_negative_flag = mac3_value < 0.0;
+
+    context.cp2_state.gd[25].write_u32(mac1_value as i32 as u32);
+    context.cp2_state.gd[9].write_u32(ir1_value as i32 as u32);
+    context.cp2_state.gd[26].write_u32(mac2_value as i32 as u32);
+    context.cp2_state.gd[10].write_u32(ir2_value as i32 as u32);
+    context.cp2_state.gd[27].write_u32(mac3_value as i32 as u32);
+    context.cp2_state.gd[11].write_u32(ir3_value as i32 as u32);
+
+    // Flag register.
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+
+    handle_cp2_flag_error_bit(context.cp2_state);
+
+    Ok(Ok(()))
 }
 
 pub(crate) fn ncds(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
