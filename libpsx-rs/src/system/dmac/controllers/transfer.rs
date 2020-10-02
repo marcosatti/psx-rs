@@ -58,6 +58,12 @@ pub(crate) fn handle_transfer_initialization(state: &State, transfer_state: &mut
             lls.target_count = 0;
         },
     }
+
+    if channel_id == 4 {
+        log::debug!("SPU DMA transfer started");
+    }
+
+    get_transfer_flag(state, channel_id).store(true);
 }
 
 pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut TransferState, channel_id: usize) -> ControllerResult<()> {
@@ -82,6 +88,12 @@ pub(crate) fn handle_transfer_finalization(state: &State, transfer_state: &mut T
             madr.write_u32(0x00FF_FFFF);
         },
     }
+    
+    if channel_id == 4 {
+        log::debug!("SPU DMA transfer finished");
+    }
+
+    get_transfer_flag(state, channel_id).store(false);
 
     Ok(())
 }

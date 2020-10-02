@@ -54,7 +54,7 @@ fn handle_dma_write_transfer(state: &State, controller_state: &mut ControllerSta
 
     let fifo = &state.spu.data_fifo;
     let memory = &mut controller_state.memory;
-    let _current_transfer_mode = &mut controller_state.transfer_state.current_mode;
+    let current_transfer_mode = &mut controller_state.transfer_state.current_mode;
     let current_transfer_address = &mut controller_state.transfer_state.current_address;
 
     match fifo.read_one() {
@@ -64,8 +64,17 @@ fn handle_dma_write_transfer(state: &State, controller_state: &mut ControllerSta
             memory[*current_transfer_address as usize + 1] = bytes[1];
             *current_transfer_address += 2;
             *current_transfer_address &= 0x7FFFF;
+            controller_state.transfer_count += 1;
         },
-        Err(_) => {},
+        Err(_) => {
+            let dma_finished = !state.dmac.spu_transfer_flag.load();
+            let dma_started = controller_state.transfer_count != 0;
+
+            if dma_started && dma_finished {
+                log::debug!("SPU Control DmaWrite finished");
+                *current_transfer_mode = TransferMode::Stop;
+            }
+        },
     }
 
     Ok(())

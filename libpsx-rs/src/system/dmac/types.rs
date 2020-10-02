@@ -1,7 +1,4 @@
-use crate::types::{
-    exclusive_state::ExclusiveState,
-    memory::*,
-};
+use crate::types::{exclusive_state::ExclusiveState, flag::Flag, memory::*};
 #[cfg(feature = "serialization")]
 use serde::{
     Deserialize,
@@ -162,30 +159,37 @@ pub(crate) struct State {
     pub(crate) mdecin_madr: B32LevelRegister,
     pub(crate) mdecin_bcr: B32LevelRegister,
     pub(crate) mdecin_chcr: B32EdgeRegister,
+    pub(crate) mdecin_transfer_flag: Flag,
 
     pub(crate) mdecout_madr: B32LevelRegister,
     pub(crate) mdecout_bcr: B32LevelRegister,
     pub(crate) mdecout_chcr: B32EdgeRegister,
+    pub(crate) mdecout_transfer_flag: Flag,
 
     pub(crate) gpu_madr: B32LevelRegister,
     pub(crate) gpu_bcr: B32LevelRegister,
     pub(crate) gpu_chcr: B32EdgeRegister,
+    pub(crate) gpu_transfer_flag: Flag,
 
     pub(crate) cdrom_madr: B32LevelRegister,
     pub(crate) cdrom_bcr: B32LevelRegister,
     pub(crate) cdrom_chcr: B32EdgeRegister,
+    pub(crate) cdrom_transfer_flag: Flag,
 
     pub(crate) spu_madr: B32LevelRegister,
     pub(crate) spu_bcr: B32LevelRegister,
     pub(crate) spu_chcr: B32EdgeRegister,
+    pub(crate) spu_transfer_flag: Flag,
 
     pub(crate) pio_madr: B32LevelRegister,
     pub(crate) pio_bcr: B32LevelRegister,
     pub(crate) pio_chcr: B32EdgeRegister,
+    pub(crate) pio_transfer_flag: Flag,
 
     pub(crate) otc_madr: B32LevelRegister,
     pub(crate) otc_bcr: B32LevelRegister,
     pub(crate) otc_chcr: B32EdgeRegister,
+    pub(crate) otc_transfer_flag: Flag,
 
     pub(crate) controller_state: ExclusiveState<ControllerState>,
 }
@@ -198,24 +202,31 @@ impl State {
             mdecin_madr: B32LevelRegister::new(),
             mdecin_bcr: B32LevelRegister::new(),
             mdecin_chcr: B32EdgeRegister::new(),
+            mdecin_transfer_flag: Flag::new(),
             mdecout_madr: B32LevelRegister::new(),
             mdecout_bcr: B32LevelRegister::new(),
             mdecout_chcr: B32EdgeRegister::new(),
+            mdecout_transfer_flag: Flag::new(),
             gpu_madr: B32LevelRegister::new(),
             gpu_bcr: B32LevelRegister::new(),
             gpu_chcr: B32EdgeRegister::new(),
+            gpu_transfer_flag: Flag::new(),
             cdrom_madr: B32LevelRegister::new(),
             cdrom_bcr: B32LevelRegister::new(),
             cdrom_chcr: B32EdgeRegister::new(),
+            cdrom_transfer_flag: Flag::new(),
             spu_madr: B32LevelRegister::new(),
             spu_bcr: B32LevelRegister::new(),
             spu_chcr: B32EdgeRegister::new(),
+            spu_transfer_flag: Flag::new(),
             pio_madr: B32LevelRegister::new(),
             pio_bcr: B32LevelRegister::new(),
             pio_chcr: B32EdgeRegister::new(),
+            pio_transfer_flag: Flag::new(),
             otc_madr: B32LevelRegister::new(),
             otc_bcr: B32LevelRegister::new(),
             otc_chcr: B32EdgeRegister::new(),
+            otc_transfer_flag: Flag::new(),
             controller_state: ExclusiveState::new(ControllerState::new()),
         }
     }

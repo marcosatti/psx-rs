@@ -24,13 +24,19 @@ pub(crate) fn handle_control(state: &State, controller_state: &mut ControllerSta
         let transfer_mode = match CONTROL_TRANSFER_MODE.extract_from(value) {
             0 => TransferMode::Stop,
             1 => TransferMode::ManualWrite,
-            2 => TransferMode::DmaWrite,
+            2 => {
+                log::debug!("SPU Control DmaWrite started");
+                TransferMode::DmaWrite
+            },
             3 => TransferMode::DmaRead,
             _ => unreachable!("Invalid transfer mode"),
         };
 
         controller_state.transfer_state.current_mode = transfer_mode;
-        state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, bool_to_flag(transfer_mode != TransferMode::Stop) as u16);
+        controller_state.transfer_count = 0;
+        
+        let data_busy = transfer_mode != TransferMode::Stop; 
+        state.spu.stat.write_bitfield(STAT_DATA_BUSY_FLAG, bool_to_flag(data_busy) as u16);
 
         let header = Bitfield::new(0, 5);
         state.spu.stat.write_bitfield(header, header.extract_from(value));
@@ -70,7 +76,7 @@ pub(crate) fn handle_key_on(state: &State, controller_state: &mut ControllerStat
     // Clears the corresponding voice status bit.
 
     let mut write_fn = |value| {
-        for voice_id in 0..24 {
+        for voice_id in 0..VOICES_COUNT {
             let voice_bitfield = Bitfield::new(voice_id, 1);
 
             if voice_bitfield.extract_from(value) > 0 {
@@ -98,7 +104,7 @@ pub(crate) fn handle_key_off(state: &State, controller_state: &mut ControllerSta
     // Changes voice ADSR phase to the release state.
 
     let mut write_fn = |value| {
-        for voice_id in 0..24 {
+        for voice_id in 0..VOICES_COUNT {
             let voice_bitfield = Bitfield::new(voice_id, 1);
 
             if voice_bitfield.extract_from(value) > 0 {

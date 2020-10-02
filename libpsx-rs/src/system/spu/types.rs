@@ -20,6 +20,7 @@ pub(crate) struct ControllerState {
     pub(crate) clock: f64,
     pub(crate) muted: bool,
     pub(crate) transfer_state: TransferState,
+    pub(crate) transfer_count: usize,
     pub(crate) dac_state: DacState,
     pub(crate) memory: Vec<u8>,
 }
@@ -30,6 +31,7 @@ impl ControllerState {
             clock: 0.0,
             muted: false,
             transfer_state: TransferState::new(),
+            transfer_count: 0,
             dac_state: DacState::new(),
             memory: vec![0; 0x8_0000],
         }
