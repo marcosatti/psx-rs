@@ -280,13 +280,19 @@ pub(crate) fn addu(context: &mut ControllerContext, instruction: Instruction) ->
     let value2 = rt.read_u32();
     let rd = &mut context.r3000_state.gpr[instruction.rd()];
     rd.write_u32(value1.wrapping_add(value2));
-
     handle_zero(context.r3000_state);
     Ok(Ok(()))
 }
 
-pub(crate) fn sub(_context: &mut ControllerContext, _instruction: Instruction) -> ControllerResult<InstructionResult> {
-    Err("Instruction sub not implemented".into())
+pub(crate) fn sub(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
+    let rs = &context.r3000_state.gpr[instruction.rs()];
+    let value1 = rs.read_u32() as i32;
+    let rt = &context.r3000_state.gpr[instruction.rt()];
+    let value2 = rt.read_u32() as i32;
+    let rd = &mut context.r3000_state.gpr[instruction.rd()];
+    rd.write_u32(value1.wrapping_sub(value2) as u32);
+    handle_zero(context.r3000_state);
+    Ok(Ok(()))
 }
 
 pub(crate) fn subu(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {

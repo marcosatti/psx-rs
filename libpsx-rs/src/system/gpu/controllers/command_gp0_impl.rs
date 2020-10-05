@@ -196,6 +196,28 @@ pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut Control
     Ok(())
 }
 
+pub(crate) fn command_2e_length(_data: &[u32]) -> Option<usize> {
+    Some(9)
+}
+
+pub(crate) fn command_2e_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
+    debug::trace_gp0_command("Textured four-point polygon, semi-transparent, texture-blending", data);
+
+    // TODO: implement this properly - need to make a shader to do this I think...
+    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
+
+    let _color = extract_color_rgb(data[0], std::u8::MAX);
+    let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let clut_mode = extract_texpage_clut_mode(data[4]);
+    let _transparency_mode = extract_texpage_transparency_mode(data[4]);
+    let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
+    let _clut = extract_clut_base_normalized(data[2]);
+
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+
+    Ok(())
+}
+
 pub(crate) fn command_30_length(_data: &[u32]) -> Option<usize> {
     Some(6)
 }
@@ -284,6 +306,38 @@ pub(crate) fn command_6f_length(_data: &[u32]) -> Option<usize> {
 
 pub(crate) fn command_6f_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured Rectangle, 1x1 (nonsense), semi-transp, raw-texture", data);
+
+    Ok(())
+}
+
+pub(crate) fn command_7c_length(_data: &[u32]) -> Option<usize> {
+    Some(3)
+}
+
+pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
+    debug::trace_gp0_command("Textured Rectangle, 16x16, opaque, texture-blending", data);
+
+    // TODO: texture-blending not supported yet.
+    // Seems to be based on the formula ((texel * color) / 128)?
+
+    let _color = extract_color_rgb(data[0], std::u8::MAX);
+    // Upper left corner is starting point.
+    let base_point = extract_point_normalized(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
+    let size = normalize_size(Size2D::new(16, 16));
+    let clut_mode = controller_state.clut_mode;
+    let texpage_base = Point2D::new(controller_state.texpage_base_x, controller_state.texpage_base_y);
+    let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
+    let texcoords = [texcoords[2], texcoords[3], texcoords[0], texcoords[1]];
+    let _clut = extract_clut_base_normalized(data[2]);
+
+    let positions: [Point2D<f32, Normalized>; 4] = [
+        Point2D::new(base_point.x, base_point.y - size.height),
+        Point2D::new(base_point.x + size.width, base_point.y - size.height),
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
+    ];
+
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
 
     Ok(())
 }
