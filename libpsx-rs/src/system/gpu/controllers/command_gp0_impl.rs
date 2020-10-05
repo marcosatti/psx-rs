@@ -258,6 +258,25 @@ pub(crate) fn command_3c_handler(_state: &State, _controller_state: &mut Control
     Ok(())
 }
 
+pub(crate) fn command_3e_length(_data: &[u32]) -> Option<usize> {
+    Some(12)
+}
+
+pub(crate) fn command_3e_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
+    debug::trace_gp0_command("Shaded Textured four-point polygon, semi-transparent, tex-blend", data);
+
+    let _colors = extract_colors_4_rgb([data[0], data[3], data[6], data[9]], std::u8::MAX);
+    let positions = extract_vertices_4_normalized([data[1], data[4], data[7], data[10]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let clut_mode = extract_texpage_clut_mode(data[5]);
+    let _transparency_mode = extract_texpage_transparency_mode(data[5]);
+    let texcoords = extract_texcoords_4_normalized(data[5], clut_mode, [data[2], data[5], data[8], data[11]]);
+    let _clut = extract_clut_base_normalized(data[2]);
+
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+
+    Ok(())
+}
+
 pub(crate) fn command_50_length(_data: &[u32]) -> Option<usize> {
     Some(4)
 }

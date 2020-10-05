@@ -82,7 +82,8 @@ fn rtps_vector(context: &mut ControllerContext, sf_bit: bool, lm_bit: bool, vect
     let (plane_constant, plane_overflow_flag) = if h_value < (sz3_value * 2.0) {
         (h_value / sz3_value, false)
     } else {
-        return Err("Plane constant overflow - unimplemented".into());
+        // TODO: is this correct?
+        (0x1_FFFF as f64 / 4096.0, true)
     };
 
     let sx2_value = ofx_value + ir1_value * plane_constant;
