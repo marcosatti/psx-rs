@@ -37,8 +37,8 @@ pub(crate) fn initialize_cdrom_backend_libmirage<'a>() -> CdromBackend<'a> {
 
 #[cfg(libmirage)]
 pub(crate) fn initialize_cdrom_backend_libmirage<'a>() -> CdromBackend<'a> {
-    use libpsx_rs::backends::context::BackendContext;
     use libmirage_sys::*;
+    use libpsx_rs::backends::context::BackendContext;
 
     unsafe {
         mirage_initialize(std::ptr::null_mut());
@@ -50,7 +50,7 @@ pub(crate) fn initialize_cdrom_backend_libmirage<'a>() -> CdromBackend<'a> {
     log::info!("CDROM initialized: libmirage {}", libmirage_version_string);
 
     CdromBackend::Libmirage(libmirage::BackendParams {
-        context: BackendContext::new(&move || { unsafe { LIBMIRAGE_CONTEXT } }, &move || {}),
+        context: BackendContext::new(&move || unsafe { LIBMIRAGE_CONTEXT }, &move || {}),
     })
 }
 
@@ -78,8 +78,8 @@ pub(crate) fn initialize_cdrom_backend_libcdio<'a>() -> CdromBackend<'a> {
 
 #[cfg(libcdio)]
 pub(crate) fn initialize_cdrom_backend_libcdio<'a>() -> CdromBackend<'a> {
-    use libpsx_rs::backends::context::BackendContext;
     use libcdio_sys::*;
+    use libpsx_rs::backends::context::BackendContext;
 
     unsafe {
         let result = cdio_init();

@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use crossbeam::queue::ArrayQueue;
+use std::fmt::Debug;
 
 pub(crate) struct Fifo<T> {
     fifo: ArrayQueue<T>,

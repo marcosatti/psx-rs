@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
-use libpsx_rs::backends::video::*;
-use libpsx_rs::backends::context::*;
+use libpsx_rs::backends::{
+    context::*,
+    video::*,
+};
 use sdl2::video::Window;
 
 #[derive(Copy, Clone, Debug)]
@@ -56,10 +58,10 @@ pub(crate) fn initialize_video_backend_opengl<'a>(window: &'a Window) -> VideoBa
         window.subsystem().gl_release_current_context().unwrap();
     }));
 
-    let acquire_fn = Box::leak(Box::new(move || { 
+    let acquire_fn = Box::leak(Box::new(move || {
         let context = unsafe { OPENGL_CONTEXT.as_ref().unwrap() };
         window.gl_make_current(context).unwrap();
-        
+
         opengl::Callbacks {
             viewport_fn,
             present_fn,

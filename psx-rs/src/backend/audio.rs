@@ -47,7 +47,7 @@ pub(crate) fn initialize_audio_backend_openal<'a>() -> AudioBackend<'a> {
         assert!(!OPENAL_CONTEXT.is_null());
         alcMakeContextCurrent(OPENAL_CONTEXT);
     }
-    
+
     unsafe { alListener3f(AL_POSITION as ALenum, 0.0, 0.0, 0.0) };
     unsafe { alListener3f(AL_VELOCITY as ALenum, 0.0, 0.0, 0.0) };
     unsafe { alListenerfv(AL_ORIENTATION as ALenum, [0.0, 0.0, -1.0, 0.0, 1.0, 0.0].as_ptr()) };

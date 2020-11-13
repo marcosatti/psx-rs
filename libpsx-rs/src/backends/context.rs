@@ -25,7 +25,12 @@ impl<'a: 'b, 'b, Ctx: Copy> BackendContext<'a, Ctx> {
     pub fn guard(&'b self) -> (ContextGuard<'a, 'b, Ctx>, Ctx) {
         let lock = self.context.lock();
         let context = (lock.0)();
-        (ContextGuard { guard: lock }, context)
+        (
+            ContextGuard {
+                guard: lock,
+            },
+            context,
+        )
     }
 }
 

@@ -84,9 +84,7 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
             }
         },
         worker_threads: toml_config.worker_threads,
-        time_delta_secs: { 
-            toml_config.time_delta as f64 / 1e6 
-        },
+        time_delta_secs: { toml_config.time_delta as f64 / 1e6 },
         pause_on_start: toml_config.pause_on_start,
         quit_on_exception: toml_config.quit_on_exception,
         internal_scale_factor: { toml_config.internal_scale_factor.max(1) },
