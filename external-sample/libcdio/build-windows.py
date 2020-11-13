@@ -1,14 +1,14 @@
 import json
 
 include_paths = [
-    r'C:\Devel\libcdio_release-2.1.0-1_msvc16\include',
+    r'C:\Development\libcdio_release-2.1.0-1_msvc16\include',
 ]
 header_paths = [
-    r'C:\Devel\libcdio_release-2.1.0-1_msvc16\include\cdio\cdio.h',
-    r'C:\Devel\libcdio_release-2.1.0-1_msvc16\include\cdio\util.h',
+    r'C:\Development\libcdio_release-2.1.0-1_msvc16\include\cdio\cdio.h',
+    r'C:\Development\libcdio_release-2.1.0-1_msvc16\include\cdio\util.h',
 ]
 library_search_paths = [
-    r'C:\Devel\libcdio_release-2.1.0-1_msvc16\lib\x64',
+    r'C:\Development\libcdio_release-2.1.0-1_msvc16\lib\x64',
 ]
 library_names = [
     'libcdio',

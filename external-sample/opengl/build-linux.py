@@ -12,12 +12,6 @@ library_names = [
 ]
 defines = [
     'GL_GLEXT_PROTOTYPES=1',
-    'GL_VERSION_4_0=0',
-    'GL_VERSION_4_1=0',
-    'GL_VERSION_4_2=0',
-    'GL_VERSION_4_3=0',
-    'GL_VERSION_4_4=0',
-    'GL_VERSION_4_5=0',
     'GL_VERSION_4_6=0',
 ]
 blacklist_item_regexes = [
@@ -33,7 +27,7 @@ whitelist_variable_regexes = [
 ]
 
 process = subprocess.run(
-    ['pkgconf', 'gl', '--cflags', '--libs'], 
+    ['pkgconf', 'opengl', '--cflags', '--libs'], 
     check=True, 
     capture_output=True, 
     text=True

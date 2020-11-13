@@ -17,8 +17,8 @@ pub trait Present = Fn() -> ();
 
 #[derive(Copy, Clone)]
 pub struct Callbacks<'a> {
-    pub viewport_fn: &'a (dyn Viewport + 'a),
-    pub present_fn: &'a (dyn Present + 'a),
+    pub viewport_fn: &'a dyn Viewport,
+    pub present_fn: &'a dyn Present,
 }
 
 pub struct BackendParams<'a> {

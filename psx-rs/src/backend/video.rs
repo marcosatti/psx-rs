@@ -45,12 +45,12 @@ pub(crate) fn initialize_video_backend_opengl<'a>(window: &'a Window) -> VideoBa
         window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
     }
 
-    let viewport_fn: &'a (dyn opengl::Viewport + 'a) = Box::leak(Box::new(move || {
+    let viewport_fn: &'a dyn opengl::Viewport = Box::leak(Box::new(move || {
         let (width, height) = window.drawable_size();
         (width as usize, height as usize)
     }));
 
-    let present_fn: &'a (dyn opengl::Present + 'a) = Box::leak(Box::new(move || {
+    let present_fn: &'a dyn opengl::Present = Box::leak(Box::new(move || {
         window.gl_swap_window();
     }));
 
