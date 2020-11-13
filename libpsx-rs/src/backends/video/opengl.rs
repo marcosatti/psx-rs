@@ -12,32 +12,20 @@ use crate::{
 };
 use opengl_sys::*;
 
-static mut INITIALIZED: bool = false;
+pub trait Viewport = Fn() -> (usize, usize);
+pub trait Present = Fn() -> ();
 
-type ViewportCallbackFn<'a> = Box<dyn Fn() -> (usize, usize) + 'a>;
-
+#[derive(Copy, Clone)]
 pub struct Callbacks<'a> {
-    pub(crate) viewport_callback_fn: ViewportCallbackFn<'a>,
+    pub viewport_fn: &'a (dyn Viewport + 'a),
+    pub present_fn: &'a (dyn Present + 'a),
 }
 
-impl<'a> Callbacks<'a> {
-    pub fn new(viewport_callback_fn: ViewportCallbackFn<'a>) -> Callbacks<'a> {
-        Callbacks {
-            viewport_callback_fn,
-        }
-    }
+pub struct BackendParams<'a> {
+    pub context: BackendContext<'a, Callbacks<'a>>,
 }
 
-unsafe impl<'a> Send for Callbacks<'a> {
-}
-
-unsafe impl<'a> Sync for Callbacks<'a> {
-}
-
-pub struct BackendParams<'a: 'b, 'b> {
-    pub context: BackendContext<'a, 'b, ()>,
-    pub callbacks: Callbacks<'a>,
-}
+static mut INITIALIZED: bool = false;
 
 pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
     let (_context_guard, _context) = backend_params.context.guard();
@@ -48,8 +36,8 @@ pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
         rendering::INTERNAL_SCALE_FACTOR = config.internal_scale_factor;
 
         // Debug.
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
-        glDebugMessageCallbackARB(Some(debug::debug_callback), std::ptr::null());
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
+        glDebugMessageCallback(Some(debug::debug_callback), std::ptr::null());
 
         let mut window_fbo = 0;
         glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &mut window_fbo);
@@ -123,8 +111,8 @@ pub(crate) fn teardown(_config: &Config, backend_params: &BackendParams) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
             // Debug.
-            glDebugMessageCallbackARB(None, std::ptr::null());
-            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_FALSE as GLboolean);
+            glDebugMessageCallback(None, std::ptr::null());
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_FALSE as GLboolean);
 
             if glGetError() != GL_NO_ERROR {
                 panic!("Error tearing down OpenGL video backend");

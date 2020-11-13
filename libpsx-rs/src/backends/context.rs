@@ -3,46 +3,43 @@ use parking_lot::{
     MutexGuard,
 };
 
-type AcquireFn<'context, 'closure, T> = Box<dyn (Fn() -> &'context T) + 'closure>;
+pub trait Acquire<Ctx: Copy> = Fn() -> Ctx;
 
-type ReleaseFn<'closure> = Box<dyn (Fn()) + 'closure>;
+pub trait Release = Fn() -> ();
 
-pub struct BackendContext<'a: 'b, 'b, T> {
-    context: Mutex<(AcquireFn<'a, 'b, T>, ReleaseFn<'b>)>,
+type InternalContext<'a, Ctx> = (&'a (dyn Acquire<Ctx> + 'a), &'a (dyn Release + 'a));
+
+pub struct BackendContext<'a, Ctx: Copy> {
+    context: Mutex<InternalContext<'a, Ctx>>,
 }
 
-impl<'a: 'b, 'b, T> BackendContext<'a, 'b, T> {
-    pub fn new(acquire_context: AcquireFn<'a, 'b, T>, release_context: ReleaseFn<'a>) -> BackendContext<'a, 'b, T> {
+impl<'a, Ctx: Copy> BackendContext<'a, Ctx> {
+    pub fn new(acquire_context: &'a (dyn Acquire<Ctx> + 'a), release_context: &'a (dyn Release + 'a)) -> BackendContext<'a, Ctx> {
         BackendContext {
             context: Mutex::new((acquire_context, release_context)),
         }
     }
 }
 
-impl<'a: 'b, 'b: 'c, 'c, T> BackendContext<'a, 'b, T> {
-    pub(crate) fn guard(&'c self) -> (ContextGuard<'a, 'b, 'c, T>, &'c T) {
+impl<'a: 'b, 'b, Ctx: Copy> BackendContext<'a, Ctx> {
+    pub fn guard(&'b self) -> (ContextGuard<'a, 'b, Ctx>, Ctx) {
         let lock = self.context.lock();
         let context = (lock.0)();
-        (
-            ContextGuard {
-                guard: lock,
-            },
-            context,
-        )
+        (ContextGuard { guard: lock }, context)
     }
 }
 
-unsafe impl<'a: 'b, 'b, T> Send for BackendContext<'a, 'b, T> {
+unsafe impl<'a, Ctx: Copy> Send for BackendContext<'a, Ctx> {
 }
 
-unsafe impl<'a: 'b, 'b, T> Sync for BackendContext<'a, 'b, T> {
+unsafe impl<'a, Ctx: Copy> Sync for BackendContext<'a, Ctx> {
 }
 
-pub(crate) struct ContextGuard<'a: 'b, 'b: 'c, 'c, T> {
-    guard: MutexGuard<'c, (AcquireFn<'a, 'b, T>, ReleaseFn<'b>)>,
+pub struct ContextGuard<'a: 'b, 'b, Ctx> {
+    guard: MutexGuard<'b, InternalContext<'a, Ctx>>,
 }
 
-impl<'a: 'b, 'b: 'c, 'c, T> Drop for ContextGuard<'a, 'b, 'c, T> {
+impl<'a: 'b, 'b, Ctx> Drop for ContextGuard<'a, 'b, Ctx> {
     fn drop(&mut self) {
         (self.guard.1)();
     }

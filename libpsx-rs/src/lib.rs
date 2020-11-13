@@ -1,4 +1,5 @@
 #![feature(core_intrinsics)]
+#![feature(trait_alias)]
 
 pub mod backends;
 pub(crate) mod debug;
@@ -36,12 +37,12 @@ use std::{
 };
 use system::types::ControllerContext;
 
-pub struct Config<'a: 'b, 'b> {
+pub struct Config<'a> {
     pub workspace_path: PathBuf,
     pub bios_filename: String,
-    pub video_backend: VideoBackend<'a, 'b>,
-    pub audio_backend: AudioBackend<'a, 'b>,
-    pub cdrom_backend: CdromBackend<'a, 'b>,
+    pub video_backend: VideoBackend<'a>,
+    pub audio_backend: AudioBackend<'a>,
+    pub cdrom_backend: CdromBackend<'a>,
     pub time_delta: f64,
     pub worker_threads: usize,
     pub internal_scale_factor: usize,
@@ -59,20 +60,20 @@ pub struct Config<'a: 'b, 'b> {
 
 pub struct Core<'a: 'b, 'b> {
     pub(crate) state: Box<State>,
-    pub(crate) config: Config<'a, 'b>,
+    pub(crate) config: &'b Config<'a>,
     executor: Executor,
 }
 
 impl<'a: 'b, 'b> Core<'a, 'b> {
-    pub fn new(config: Config<'a, 'b>) -> IoResult<Core<'a, 'b>> {
+    pub fn new(config: &'b Config<'a>) -> IoResult<Core<'a, 'b>> {
         log::info!("Initializing core");
 
         let state = State::with_bios(&config.workspace_path, &config.bios_filename)?;
         let executor = Executor::new(config.worker_threads);
 
-        video::setup(&config);
-        audio::setup(&config);
-        cdrom::setup(&config);
+        video::setup(config);
+        audio::setup(config);
+        cdrom::setup(config);
 
         Ok(Core {
             state,

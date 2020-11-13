@@ -28,8 +28,8 @@ enum State {
     Quit,
 }
 
-pub(crate) fn main_inner(_window: &Window, event_pump: &mut EventPump, config: Config, core_config: CoreConfig) {
-    let mut core = Core::new(core_config).unwrap();
+pub(crate) fn main_inner<'a>(_window: &'a Window, event_pump: &mut EventPump, config: Config, core_config: CoreConfig<'a>) {
+    let mut core = Core::new(&core_config).unwrap();
     handle_change_disc(&mut core);
     log::info!("Core initialized");
 

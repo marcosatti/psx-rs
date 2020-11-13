@@ -8,6 +8,7 @@ use std::{
 
 #[derive(Deserialize)]
 struct TomlConfig {
+    sdl2_force_wayland_video_driver: bool,
     audio_backend: String,
     cdrom_backend: String,
     video_backend: String,
@@ -30,6 +31,7 @@ struct TomlConfig {
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct Config {
+    pub(crate) sdl2_force_wayland_video_driver: bool,
     pub(crate) audio_backend_kind: AudioBackendKind,
     pub(crate) cdrom_backend_kind: CdromBackendKind,
     pub(crate) video_backend_kind: VideoBackendKind,
@@ -58,6 +60,7 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
     let toml_config: TomlConfig = toml::from_str(&config_str).unwrap();
 
     Config {
+        sdl2_force_wayland_video_driver: toml_config.sdl2_force_wayland_video_driver,
         audio_backend_kind: {
             match toml_config.audio_backend.as_ref() {
                 "none" => AudioBackendKind::None,
@@ -80,8 +83,10 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
                 _ => panic!("Unrecongnised config option for the video backend"),
             }
         },
-        worker_threads: { toml_config.worker_threads },
-        time_delta_secs: { toml_config.time_delta as f64 / 1e6 },
+        worker_threads: toml_config.worker_threads,
+        time_delta_secs: { 
+            toml_config.time_delta as f64 / 1e6 
+        },
         pause_on_start: toml_config.pause_on_start,
         quit_on_exception: toml_config.quit_on_exception,
         internal_scale_factor: { toml_config.internal_scale_factor.max(1) },

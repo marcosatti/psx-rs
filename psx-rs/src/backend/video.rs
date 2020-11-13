@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use libpsx_rs::backends::video::*;
+use libpsx_rs::backends::context::*;
 use sdl2::video::Window;
 
 #[derive(Copy, Clone, Debug)]
@@ -9,7 +10,7 @@ pub(crate) enum VideoBackendKind {
     Opengl,
 }
 
-pub(crate) fn initialize_video_backend<'a: 'b, 'b>(kind: VideoBackendKind, window: &'a Window) -> VideoBackend<'a, 'b> {
+pub(crate) fn initialize_video_backend<'a>(kind: VideoBackendKind, window: &'a Window) -> VideoBackend<'a> {
     match kind {
         VideoBackendKind::None => VideoBackend::None,
         VideoBackendKind::Opengl => initialize_video_backend_opengl(window),
@@ -29,13 +30,12 @@ pub(crate) fn terminate_video_backend(kind: VideoBackendKind) {
 static mut OPENGL_CONTEXT: Option<sdl2::video::GLContext> = None;
 
 #[cfg(not(opengl))]
-pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) -> VideoBackend<'a, 'b> {
+pub(crate) fn initialize_video_backend_opengl<'a>(window: &'a Window) -> VideoBackend<'a> {
     panic!("Not available");
 }
 
 #[cfg(opengl)]
-pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) -> VideoBackend<'a, 'b> {
-    use libpsx_rs::backends::context::BackendContext;
+pub(crate) fn initialize_video_backend_opengl<'a>(window: &'a Window) -> VideoBackend<'a> {
     use opengl_sys::*;
 
     unsafe {
@@ -43,21 +43,30 @@ pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) ->
         window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
     }
 
-    let opengl_viewport_fn = Box::new(move || {
+    let viewport_fn: &'a (dyn opengl::Viewport + 'a) = Box::leak(Box::new(move || {
         let (width, height) = window.drawable_size();
         (width as usize, height as usize)
-    });
+    }));
 
-    let opengl_acquire_context = Box::new(move || {
-        unsafe {
-            window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
+    let present_fn: &'a (dyn opengl::Present + 'a) = Box::leak(Box::new(move || {
+        window.gl_swap_window();
+    }));
+
+    let release_fn = Box::leak(Box::new(move || {
+        window.subsystem().gl_release_current_context().unwrap();
+    }));
+
+    let acquire_fn = Box::leak(Box::new(move || { 
+        let context = unsafe { OPENGL_CONTEXT.as_ref().unwrap() };
+        window.gl_make_current(context).unwrap();
+        
+        opengl::Callbacks {
+            viewport_fn,
+            present_fn,
         }
-        &()
-    });
+    }));
 
-    let opengl_release_context = Box::new(|| {});
-
-    opengl_acquire_context();
+    acquire_fn();
     let opengl_vendor_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VENDOR as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_version_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_VERSION as GLenum) as *const i8).to_string_lossy().into_owned() };
     let opengl_renderer_string = unsafe { std::ffi::CStr::from_ptr(glGetString(GL_RENDERER as GLenum) as *const i8).to_string_lossy().into_owned() };
@@ -65,12 +74,12 @@ pub(crate) fn initialize_video_backend_opengl<'a: 'b, 'b>(window: &'a Window) ->
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
     }
+    present_fn();
     log::info!("Video initialized: {}, {}, {}", opengl_vendor_string, opengl_version_string, opengl_renderer_string);
-    opengl_release_context();
+    release_fn();
 
     VideoBackend::Opengl(opengl::BackendParams {
-        context: BackendContext::new(opengl_acquire_context, opengl_release_context),
-        callbacks: opengl::Callbacks::new(opengl_viewport_fn),
+        context: BackendContext::new(acquire_fn, release_fn),
     })
 }
 

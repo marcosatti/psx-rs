@@ -16,8 +16,8 @@ static mut INITIALIZED: bool = false;
 
 pub(crate) static mut DISC: *mut MirageDisc = std::ptr::null_mut();
 
-pub struct BackendParams<'a: 'b, 'b> {
-    pub context: BackendContext<'a, 'b, *mut MirageContext>,
+pub struct BackendParams<'a> {
+    pub context: BackendContext<'a, *mut MirageContext>,
 }
 
 pub(crate) fn setup(_config: &Config, backend_params: &BackendParams) {
@@ -62,7 +62,7 @@ pub(crate) fn change_disc(_config: &Config, backend_params: &BackendParams, path
             let mut error: *mut GError = std::ptr::null_mut();
 
             info!("Changing disc to {}", path.display());
-            DISC = mirage_context_load_image(*context, buffer.as_ptr() as *mut *mut i8, &mut error as *mut *mut GError);
+            DISC = mirage_context_load_image(context, buffer.as_ptr() as *mut *mut i8, &mut error as *mut *mut GError);
 
             if DISC.is_null() {
                 assert!(!error.is_null());

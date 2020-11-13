@@ -3,11 +3,11 @@ pub mod openal;
 
 use crate::Config;
 
-pub enum AudioBackend<'a: 'b, 'b> {
+pub enum AudioBackend<'a> {
     None,
     #[cfg(openal)]
-    Openal(openal::BackendParams<'a, 'b>),
-    _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
+    Openal(openal::BackendParams<'a>),
+    _Phantom(std::marker::PhantomData<&'a ()>),
 }
 
 pub(crate) fn setup(config: &Config) {

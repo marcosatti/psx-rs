@@ -85,7 +85,7 @@ fn setup_signal_handler() {
 }
 
 fn main_inner(config: Config) {
-    let mut core = Core::new(config).unwrap();
+    let mut core = Core::new(&config).unwrap();
     log::info!("Core initialized");
 
     while !EXIT.load(Ordering::Acquire) {

@@ -21,7 +21,7 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
 
     {
         let (_context_guard, context) = backend_params.context.guard();
-        let (width, height) = (backend_params.callbacks.viewport_callback_fn)();
+        let (width, height) = (context.viewport_fn)();
 
         unsafe {
             glFinish();
@@ -76,6 +76,8 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
             // Draw the off-screen texture to the window FBO, hard synchronise after.
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             glFinish();
+
+            (context.present_fn)();
 
             // Bind the off-screen FBO again, ready for the GPU to draw into.
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, opengl::rendering::SCENE_FBO);

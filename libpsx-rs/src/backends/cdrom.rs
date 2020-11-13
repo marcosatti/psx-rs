@@ -8,13 +8,13 @@ pub mod libmirage;
 use crate::Config;
 use std::path::Path;
 
-pub enum CdromBackend<'a: 'b, 'b> {
+pub enum CdromBackend<'a> {
     None,
     #[cfg(libmirage)]
-    Libmirage(libmirage::BackendParams<'a, 'b>),
+    Libmirage(libmirage::BackendParams<'a>),
     #[cfg(libcdio)]
-    Libcdio(libcdio::BackendParams<'a, 'b>),
-    _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
+    Libcdio(libcdio::BackendParams<'a>),
+    _Phantom(std::marker::PhantomData<&'a ()>),
 }
 
 pub(crate) fn setup(config: &Config) {

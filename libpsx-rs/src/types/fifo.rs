@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crossbeam::queue::ArrayQueue;
 
 pub(crate) struct Fifo<T> {
@@ -12,7 +13,7 @@ impl<T> Fifo<T> {
     }
 
     pub(crate) fn read_one(&self) -> Result<T, ()> {
-        self.fifo.pop().map_err(|_| ())
+        self.fifo.pop().ok_or_else(|| ())
     }
 
     pub(crate) fn write_one(&self, data: T) -> Result<(), ()> {
@@ -36,19 +37,19 @@ impl<T> Fifo<T> {
     }
 
     pub(crate) fn clear(&self) {
-        while let Ok(_) = self.fifo.pop() {}
+        while let Some(_) = self.fifo.pop() {}
         assert!(self.fifo.is_empty())
     }
 }
 
 impl<T> Clone for Fifo<T>
-where T: Clone
+where T: Clone + Debug
 {
     fn clone(&self) -> Self {
         let capacity = self.fifo.capacity();
 
         let mut buffer = Vec::with_capacity(capacity);
-        while let Ok(item) = self.fifo.pop() {
+        while let Some(item) = self.fifo.pop() {
             buffer.push(item);
         }
 
@@ -85,7 +86,7 @@ mod serialization {
             let capacity = self.fifo.capacity();
             let mut buffer = Vec::with_capacity(self.fifo.len());
 
-            while let Ok(item) = self.fifo.pop() {
+            while let Some(item) = self.fifo.pop() {
                 buffer.push(item);
             }
 

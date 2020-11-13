@@ -13,8 +13,8 @@ static mut INITIALIZED: bool = false;
 
 pub(crate) static mut DISC: *mut CdIo_t = std::ptr::null_mut();
 
-pub struct BackendParams<'a: 'b, 'b> {
-    pub context: BackendContext<'a, 'b, ()>,
+pub struct BackendParams<'a> {
+    pub context: BackendContext<'a, ()>,
 }
 
 pub(crate) fn setup(_config: &Config, backend_params: &BackendParams) {

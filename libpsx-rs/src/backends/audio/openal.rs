@@ -12,8 +12,8 @@ use openal_sys::*;
 
 static mut INITIALIZED: bool = false;
 
-pub struct BackendParams<'a: 'b, 'b> {
-    pub context: BackendContext<'a, 'b, ()>,
+pub struct BackendParams<'a> {
+    pub context: BackendContext<'a, ()>,
 }
 
 pub(crate) fn setup(_config: &Config, backend_params: &BackendParams) {

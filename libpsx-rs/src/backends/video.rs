@@ -3,11 +3,11 @@ pub mod opengl;
 
 use crate::Config;
 
-pub enum VideoBackend<'a: 'b, 'b> {
+pub enum VideoBackend<'a> {
     None,
     #[cfg(opengl)]
-    Opengl(opengl::BackendParams<'a, 'b>),
-    _Phantom(std::marker::PhantomData<(&'a (), &'b ())>),
+    Opengl(opengl::BackendParams<'a>),
+    _Phantom(std::marker::PhantomData<&'a ()>),
 }
 
 pub(crate) fn setup(config: &Config) {

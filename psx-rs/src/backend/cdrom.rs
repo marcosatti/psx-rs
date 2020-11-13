@@ -9,7 +9,7 @@ pub(crate) enum CdromBackendKind {
     Libcdio,
 }
 
-pub(crate) fn initialize_cdrom_backend<'a: 'b, 'b>(kind: CdromBackendKind) -> CdromBackend<'a, 'b> {
+pub(crate) fn initialize_cdrom_backend<'a>(kind: CdromBackendKind) -> CdromBackend<'a> {
     match kind {
         CdromBackendKind::None => CdromBackend::None,
         CdromBackendKind::Libmirage => initialize_cdrom_backend_libmirage(),
@@ -31,14 +31,14 @@ pub(crate) fn terminate_cdrom_backend(kind: CdromBackendKind) {
 static mut LIBMIRAGE_CONTEXT: *mut libmirage_sys::MirageContext = std::ptr::null_mut();
 
 #[cfg(not(libmirage))]
-pub(crate) fn initialize_cdrom_backend_libmirage<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
+pub(crate) fn initialize_cdrom_backend_libmirage<'a>() -> CdromBackend<'a> {
     panic!("Not available");
 }
 
 #[cfg(libmirage)]
-pub(crate) fn initialize_cdrom_backend_libmirage<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
-    use libmirage_sys::*;
+pub(crate) fn initialize_cdrom_backend_libmirage<'a>() -> CdromBackend<'a> {
     use libpsx_rs::backends::context::BackendContext;
+    use libmirage_sys::*;
 
     unsafe {
         mirage_initialize(std::ptr::null_mut());
@@ -46,13 +46,11 @@ pub(crate) fn initialize_cdrom_backend_libmirage<'a: 'b, 'b>() -> CdromBackend<'
         assert!(!LIBMIRAGE_CONTEXT.is_null());
     }
 
-    let libmirage_acquire_context = || unsafe { &LIBMIRAGE_CONTEXT };
-    let libmirage_release_context = || {};
     let libmirage_version_string = unsafe { std::ffi::CStr::from_ptr(mirage_version_long).to_string_lossy().into_owned() };
     log::info!("CDROM initialized: libmirage {}", libmirage_version_string);
 
     CdromBackend::Libmirage(libmirage::BackendParams {
-        context: BackendContext::new(Box::new(libmirage_acquire_context), Box::new(libmirage_release_context)),
+        context: BackendContext::new(&move || { unsafe { LIBMIRAGE_CONTEXT } }, &move || {}),
     })
 }
 
@@ -74,27 +72,25 @@ pub(crate) fn terminate_cdrom_backend_libmirage() {
 /// Libcdio
 
 #[cfg(not(libcdio))]
-pub(crate) fn initialize_cdrom_backend_libcdio<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
+pub(crate) fn initialize_cdrom_backend_libcdio<'a>() -> CdromBackend<'a> {
     panic!("Not available");
 }
 
 #[cfg(libcdio)]
-pub(crate) fn initialize_cdrom_backend_libcdio<'a: 'b, 'b>() -> CdromBackend<'a, 'b> {
-    use libcdio_sys::*;
+pub(crate) fn initialize_cdrom_backend_libcdio<'a>() -> CdromBackend<'a> {
     use libpsx_rs::backends::context::BackendContext;
+    use libcdio_sys::*;
 
     unsafe {
         let result = cdio_init();
         assert_eq!(result, 1);
     }
 
-    let libcdio_acquire_context = || &();
-    let libcdio_release_context = || {};
     let libcdio_version_string = unsafe { std::ffi::CStr::from_ptr(cdio_version_string).to_string_lossy().into_owned() };
     log::info!("CDROM initialized: libcdio {}", libcdio_version_string);
 
     CdromBackend::Libcdio(libcdio::BackendParams {
-        context: BackendContext::new(Box::new(libcdio_acquire_context), Box::new(libcdio_release_context)),
+        context: BackendContext::new(&move || {}, &move || {}),
     })
 }
 

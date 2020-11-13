@@ -36,12 +36,16 @@ fn main() {
     log::info!("Logging initialized");
 
     // Initialize SDL
+    if config.sdl2_force_wayland_video_driver {
+        std::env::set_var("SDL_VIDEODRIVER", "wayland");
+    }
+
     let sdl_context = sdl2::init().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let gl_attr = video_subsystem.gl_attr();
     gl_attr.set_context_profile(GLProfile::Core);
-    gl_attr.set_context_version(3, 3);
+    gl_attr.set_context_version(4, 5);
     gl_attr.set_double_buffer(false);
     gl_attr.set_context_flags().debug().set();
     let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().resizable().allow_highdpi().opengl().build().unwrap();

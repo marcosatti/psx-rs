@@ -44,11 +44,11 @@ pub(crate) enum Event {
     Time(f64),
 }
 
-pub(crate) struct ControllerContext<'a: 'b, 'b: 'c, 'c> {
-    pub(crate) state: &'c State,
-    pub(crate) video_backend: &'c VideoBackend<'a, 'b>,
-    pub(crate) audio_backend: &'c AudioBackend<'a, 'b>,
-    pub(crate) cdrom_backend: &'c CdromBackend<'a, 'b>,
+pub(crate) struct ControllerContext<'a: 'b, 'b> {
+    pub(crate) state: &'b State,
+    pub(crate) video_backend: &'b VideoBackend<'a>,
+    pub(crate) audio_backend: &'b AudioBackend<'a>,
+    pub(crate) cdrom_backend: &'b CdromBackend<'a>,
 }
 
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
