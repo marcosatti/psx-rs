@@ -23,14 +23,12 @@ jobs:
           name: Make external directory structure
           command: |
             mkdir -p external/openal
-            mkdir -p external/opengl
             mkdir -p external/libmirage
             mkdir -p external/libcdio
       - run:
           name: Copy external build scripts (check-disable)
           command: |
             cp external-sample/check-disable.py external/openal/check.py
-            cp external-sample/check-disable.py external/opengl/check.py
             cp external-sample/check-disable.py external/libmirage/check.py
             cp external-sample/check-disable.py external/libcdio/check.py
       - run:
