@@ -23,10 +23,15 @@ struct Output {
     whitelist_variable_regexes: Vec<String>,
 }
 
-pub fn external_build(external_name: &str) {
+pub fn generate_external_include(external_name: &str) -> PathBuf {
     let out_file_name = format!("{}_build.rs", external_name);
     let out_file_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join(out_file_name);
     println!("cargo:rustc-env=EXTERNAL_INCLUDE={}", out_file_path.to_str().unwrap());
+    out_file_path
+}
+
+pub fn external_build(external_name: &str, cxx_mode: bool) {
+    let out_file_path = generate_external_include(external_name);
 
     if !external_check_inner(external_name).enable {
         write(out_file_path, b"").unwrap();
@@ -47,6 +52,11 @@ pub fn external_build(external_name: &str) {
     builder = builder.derive_debug(false);
     builder = builder.layout_tests(false);
     builder = builder.generate_comments(false);
+
+    if cxx_mode {
+        builder = builder.enable_cxx_namespaces();
+        builder = builder.clang_arg("--language=c++");
+    }
 
     for define in output.defines {
         builder = builder.clang_arg(&format!("-D{}", &define));

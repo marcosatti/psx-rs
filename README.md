@@ -6,16 +6,17 @@ Work in progress!
 See BUILD.md for build details.
 
 ## Targeting
-- OpenGL 4.5 (Video, Windows / Linux, Mesa's llvmpipe software renderer, hardware rendering supported on Linux)
+- OpenGL 4.5 (Video, Windows / Linux)
 - OpenAL 1.1 (Audio, Windows / Linux, openal-soft)
 - libmirage 3.2 (CDROM, Linux)
-- libcdio (CDROM, Windows / Linux)
+- libcdio 2.1 (CDROM, Windows / Linux)
 
 ## Status
 - Video starting to work, needs implementing / bug fixing.
 - Audio starting to work, needs implementing / bug fixing, but you can make out the BIOS intro reasonably well.
 - CDROM starting to work, needs implementing (reading sectors is working).
 - Input not done at all (Hi-Z always).
+- Able to get to the main menu in Crash Bandicoot!
 
 ## Running
 The psx-rs binary is the main entry point.
@@ -48,12 +49,12 @@ You will need to put the BIOS (scph5501.bin) into the folder ${cwd}/workspace/bi
 Optionally, specify a path to a supported disc file by the CDROM backend as the first argument.
 
 Keymap:
-F1 => Pause / resume
-F2 => Quit
-F3 => Soft reset (R3000 only)
-F4 => Hard reset (All state)
-F10 => Save state
-F11 => Load state
+- F1 => Pause / resume
+- F2 => Quit
+- F3 => Soft reset (R3000 only)
+- F4 => Hard reset (All state)
+- F10 => Save state
+- F11 => Load state
 
 ![BIOS Intro](/media/2019-03-18.png?raw=true "BIOS Intro")
 

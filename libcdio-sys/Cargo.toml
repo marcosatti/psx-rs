@@ -1,6 +1,6 @@
 [package]
 name = "libcdio-sys"
-version = "2.1.0"
+version = "1.0.0"
 authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 

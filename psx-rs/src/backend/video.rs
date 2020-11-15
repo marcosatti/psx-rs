@@ -45,6 +45,12 @@ pub(crate) fn initialize_video_backend_opengl<'a>(window: &'a Window) -> VideoBa
         window.gl_make_current(OPENGL_CONTEXT.as_ref().unwrap()).unwrap();
     }
 
+    opengl_sys::load_with(|s| {
+        let fn_ptr = window.subsystem().gl_get_proc_address(s) as *const std::ffi::c_void;
+        assert!(!fn_ptr.is_null(), format!("Error loading OpenGL function {}: GL_GetProcAddress returned null!", s));
+        fn_ptr
+    });
+
     let viewport_fn: &'a dyn opengl::Viewport = Box::leak(Box::new(move || {
         let (width, height) = window.drawable_size();
         (width as usize, height as usize)
