@@ -1,4 +1,4 @@
-#![cfg_attr(target_os="windows", feature(link_args))]
+#![cfg_attr(target_os = "windows", feature(link_args))]
 
 mod backend;
 mod config;
@@ -20,23 +20,23 @@ use std::{
 
 pub(crate) static EXIT: AtomicBool = AtomicBool::new(false);
 
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 #[allow(non_upper_case_globals)]
 #[no_mangle]
 pub static NvOptimusEnablement: std::os::raw::c_ulong = 0x00000001;
 
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 #[allow(non_upper_case_globals)]
 #[no_mangle]
-pub static AmdPowerXpressRequestHighPerformance : std::os::raw::c_int = 1;
+pub static AmdPowerXpressRequestHighPerformance: std::os::raw::c_int = 1;
 
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 #[link_args = "/EXPORT:NvOptimusEnablement"]
-extern {}
+extern "C" {}
 
-#[cfg(target_os="windows")]
+#[cfg(target_os = "windows")]
 #[link_args = "/EXPORT:AmdPowerXpressRequestHighPerformance"]
-extern {}
+extern "C" {}
 
 fn main() {
     // Signal handlers
