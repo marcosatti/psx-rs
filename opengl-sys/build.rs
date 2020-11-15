@@ -7,9 +7,7 @@ fn main() {
 
     let out_file_path = generate_external_include(external_name);
     let mut file = File::create(&out_file_path).unwrap();
-    Registry::new(Api::Gl, (4, 5), Profile::Core, Fallbacks::None, [])
-        .write_bindings(bindings_generator::OpenglGenerator, &mut file)
-        .unwrap();
+    Registry::new(Api::Gl, (4, 5), Profile::Core, Fallbacks::None, []).write_bindings(bindings_generator::OpenglGenerator, &mut file).unwrap();
 
     println!("cargo:warning=Enabling {}", external_name);
     println!("cargo:rustc-cfg={}", external_name);
@@ -37,17 +35,15 @@ mod bindings_generator {
     // Removed fallback functionality as it's not needed.
     // Removed comments as they are not needed (reduce size).
 
-    use Registry;
     use std::io;
+    use Registry;
 
     #[allow(missing_copy_implementations)]
     pub struct OpenglGenerator;
 
     impl Generator for OpenglGenerator {
         fn write<W>(&self, registry: &Registry, dest: &mut W) -> io::Result<()>
-        where
-            W: io::Write,
-        {
+        where W: io::Write {
             write_header(dest)?;
             write_metaloadfn(dest)?;
             write_type_aliases(registry, dest)?;
@@ -63,9 +59,7 @@ mod bindings_generator {
     }
 
     fn write_header<W>(dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         writeln!(
             dest,
             r#"
@@ -78,9 +72,7 @@ mod bindings_generator {
     }
 
     fn write_metaloadfn<W>(dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         writeln!(
             dest,
             r#"
@@ -94,9 +86,7 @@ mod bindings_generator {
     }
 
     fn write_type_aliases<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         writeln!(
             dest,
             r#"
@@ -116,9 +106,7 @@ mod bindings_generator {
     }
 
     fn write_enums<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         for enm in &registry.enums {
             let mut prefixed_enum = enm.clone();
             prefixed_enum.ident = format!("{}_{}", generators::gen_symbol_name(registry.api, "").to_uppercase(), enm.ident);
@@ -129,11 +117,10 @@ mod bindings_generator {
     }
 
     fn write_fns<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         for cmd in &registry.cmds {
-            writeln!(dest,
+            writeln!(
+                dest,
                 "#[allow(non_snake_case, unused_variables, dead_code)] #[inline]
                 pub unsafe fn {name}({params}) -> {return_suffix} {{ \
                     __gl_imports::mem::transmute::<_, extern \"system\" fn({typed_params}) -> {return_suffix}>\
@@ -151,11 +138,10 @@ mod bindings_generator {
     }
 
     fn write_fnptr_struct_def<W>(dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
-        writeln!(dest,
-                "
+    where W: io::Write {
+        writeln!(
+            dest,
+            "
             #[allow(missing_copy_implementations)]
             pub struct FnPtr {{
                 f: *const __gl_imports::raw::c_void,
@@ -171,13 +157,12 @@ mod bindings_generator {
                     }}
                 }}
             }}
-        ")
+        "
+        )
     }
 
     fn write_ptrs<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         writeln!(
             dest,
             "mod storage {{
@@ -202,9 +187,7 @@ mod bindings_generator {
     }
 
     fn write_fn_mods<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         for c in &registry.cmds {
             let fnname = generators::gen_symbol_name(registry.api, &c.proto.ident);
             let symbol = generators::gen_symbol_name(registry.api, &c.proto.ident[..]);
@@ -242,9 +225,7 @@ mod bindings_generator {
     }
 
     fn write_panicking_fns<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
+    where W: io::Write {
         writeln!(
             dest,
             "#[inline(never)]
@@ -257,23 +238,19 @@ mod bindings_generator {
     }
 
     fn write_load_fn<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
-    where
-        W: io::Write,
-    {
-        writeln!(dest,
-                    "
+    where W: io::Write {
+        writeln!(
+            dest,
+            "
             #[allow(dead_code)]
             pub fn load_with<F>(mut loadfn: F) where F: FnMut(&'static str) -> *const __gl_imports::raw::c_void {{
                 #[inline(never)]
                 fn inner(loadfn: &mut dyn FnMut(&'static str) -> *const __gl_imports::raw::c_void) {{
-        ")?;
+        "
+        )?;
 
         for c in &registry.cmds {
-            writeln!(
-                dest,
-                "{cmd_name}::load_with(&mut *loadfn);",
-                cmd_name = generators::gen_symbol_name(registry.api, &c.proto.ident),
-            )?;
+            writeln!(dest, "{cmd_name}::load_with(&mut *loadfn);", cmd_name = generators::gen_symbol_name(registry.api, &c.proto.ident),)?;
         }
 
         writeln!(
