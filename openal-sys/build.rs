@@ -1,5 +1,7 @@
 use build_tools::external_build;
 
 fn main() {
-    external_build("openal");
+    println!("cargo:rerun-if-changed=../external/openal/build.py");
+    println!("cargo:rerun-if-changed=../external/openal/check.py");
+    external_build("openal", false);
 }

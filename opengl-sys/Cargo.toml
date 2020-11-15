@@ -1,8 +1,9 @@
 [package]
 name = "opengl-sys"
-version = "3.3.0"
+version = "1.0.0"
 authors = ["Marco Satti <marcosatti@gmail.com>"]
 edition = "2018"
 
 [build-dependencies]
 build-tools = { path = "../build-tools" }
+gl_generator = { version = "*", features = ["unstable_generator_utils"] }

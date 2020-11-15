@@ -36,6 +36,7 @@ pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
         rendering::INTERNAL_SCALE_FACTOR = config.internal_scale_factor;
 
         // Debug.
+        glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, std::ptr::null(), GL_TRUE as GLboolean);
         glDebugMessageCallback(Some(debug::debug_callback), std::ptr::null());
 
