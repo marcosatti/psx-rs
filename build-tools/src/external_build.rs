@@ -31,6 +31,8 @@ pub fn generate_external_include(external_name: &str) -> PathBuf {
 }
 
 pub fn external_build(external_name: &str, cxx_mode: bool) {
+    println!("cargo:rerun-if-changed=../external/{}/build.py", external_name);
+
     let out_file_path = generate_external_include(external_name);
 
     if !external_check_inner(external_name).enable {

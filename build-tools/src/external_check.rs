@@ -19,6 +19,8 @@ pub(crate) fn external_check_inner(external_name: &str) -> Output {
 }
 
 pub fn external_check(external_name: &str) {
+    println!("cargo:rerun-if-changed=../external/{}/check.py", external_name);
+
     let output = external_check_inner(external_name);
 
     if output.enable {

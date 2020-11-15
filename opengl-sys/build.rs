@@ -8,9 +8,6 @@ fn main() {
     let out_file_path = generate_external_include(external_name);
     let mut file = File::create(&out_file_path).unwrap();
     Registry::new(Api::Gl, (4, 5), Profile::Core, Fallbacks::None, []).write_bindings(bindings_generator::OpenglGenerator, &mut file).unwrap();
-
-    println!("cargo:warning=Enabling {}", external_name);
-    println!("cargo:rustc-cfg={}", external_name);
 }
 
 mod bindings_generator {

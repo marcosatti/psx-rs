@@ -9,7 +9,10 @@ use std::{
 };
 
 fn main() {
-    external_check("opengl");
+    // OpenGL is always enabled.
+    println!("cargo:warning=Enabling opengl");
+    println!("cargo:rustc-cfg=opengl");
+
     external_check("openal");
     external_check("libmirage");
     external_check("libcdio");
