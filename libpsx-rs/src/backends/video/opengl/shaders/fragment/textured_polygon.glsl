@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 
 uniform sampler2D tex2d;
 in vec2 texcoord;

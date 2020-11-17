@@ -15,7 +15,10 @@ use crate::{
         *,
     },
     system::{
-        gpu::types::TransparencyMode,
+        gpu::types::{
+            rendering::ClutKind,
+            TransparencyMode,
+        },
         types::ControllerResult,
     },
     types::{
@@ -616,7 +619,7 @@ pub(crate) fn draw_polygon_4_textured(
 }
 
 pub(crate) fn draw_polygon_4_textured_framebuffer(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], clut_kind: ClutKind,
 ) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
