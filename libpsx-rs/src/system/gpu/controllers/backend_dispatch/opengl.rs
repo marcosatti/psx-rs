@@ -1,13 +1,5 @@
-pub(crate) mod debug {
-    pub(crate) const DEBUG_DRAW_OUTLINE: bool = false;
-    pub(crate) const TRACE_CALLS: bool = false;
-
-    pub(crate) fn trace_call(description: &str) {
-        if TRACE_CALLS {
-            log::trace!("GPU: OpenGL call: {}", description);
-        }
-    }
-}
+pub(crate) mod debug;
+pub(crate) mod data;
 
 use crate::{
     backends::video::opengl::{
@@ -15,6 +7,9 @@ use crate::{
         *,
     },
     system::{
+        gpu::controllers::backend_dispatch::opengl::{
+            data::*,
+        },
         gpu::types::{
             rendering::ClutKind,
             TransparencyMode,
@@ -74,7 +69,7 @@ pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: 
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
 
-            let in_color_cstr = b"in_color\0";
+            let in_color_cstr = b"color\0";
             let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
             glUniform4f(uniform_in_color, r, g, b, a);
 
@@ -201,7 +196,7 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
 
-            let in_color_cstr = b"in_color\0";
+            let in_color_cstr = b"color\0";
             let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
             glUniform4f(uniform_in_color, r, g, b, a);
 
@@ -246,12 +241,7 @@ pub(crate) fn draw_polygon_4_transparent(
         positions[3].y,
     ];
 
-    let transparency_value = match transparency {
-        TransparencyMode::Average => 0,
-        TransparencyMode::Additive => 1,
-        TransparencyMode::Difference => 2,
-        TransparencyMode::Quarter => 3,
-    };
+    let transparency_value = transparency_value(transparency);
 
     {
         let (_context_guard, _context) = backend_params.context.guard();
@@ -279,13 +269,13 @@ pub(crate) fn draw_polygon_4_transparent(
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
 
-            let in_color_cstr = b"in_color\0";
+            let in_color_cstr = b"color\0";
             let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
             glUniform4f(uniform_in_color, r, g, b, a);
 
             let transparency_cstr = b"transparency\0";
             let uniform_transparency = glGetUniformLocation(program_context.program_id, transparency_cstr.as_ptr() as *const GLchar);
-            glUniform1i(uniform_transparency, transparency_value);
+            glUniform1ui(uniform_transparency, transparency_value);
 
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
             glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
@@ -337,7 +327,7 @@ pub(crate) fn draw_polygon_3_solid(backend_params: &BackendParams, positions: [P
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
 
-            let in_color_cstr = b"in_color\0";
+            let in_color_cstr = b"color\0";
             let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
             glUniform4f(uniform_in_color, r, g, b, a);
 
@@ -369,12 +359,7 @@ pub(crate) fn draw_polygon_3_transparent(
 
     let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
-    let transparency_value = match transparency {
-        TransparencyMode::Average => 0,
-        TransparencyMode::Additive => 1,
-        TransparencyMode::Difference => 2,
-        TransparencyMode::Quarter => 3,
-    };
+    let transparency_value = transparency_value(transparency);
 
     {
         let (_context_guard, _context) = backend_params.context.guard();
@@ -402,13 +387,13 @@ pub(crate) fn draw_polygon_3_transparent(
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
 
-            let in_color_cstr = b"in_color\0";
+            let in_color_cstr = b"color\0";
             let uniform_in_color = glGetUniformLocation(program_context.program_id, in_color_cstr.as_ptr() as *const GLchar);
             glUniform4f(uniform_in_color, r, g, b, a);
 
             let transparency_cstr = b"transparency\0";
             let uniform_transparency = glGetUniformLocation(program_context.program_id, transparency_cstr.as_ptr() as *const GLchar);
-            glUniform1i(uniform_transparency, transparency_value);
+            glUniform1ui(uniform_transparency, transparency_value);
 
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
             glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
@@ -599,6 +584,10 @@ pub(crate) fn draw_polygon_4_textured(
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
+            
+            let clut_mode_cstr = b"clut_mode\0";
+            let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
+            glUniform1ui(uniform_clut_mode, 2);
 
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
             glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
@@ -622,6 +611,16 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
     backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], clut_kind: ClutKind,
 ) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
+
+    // for (i, position) in positions.iter().enumerate() {
+    //     log::debug!("position [{}]: {:?}", i, position);
+    // }
+
+    // for (i, texcoord) in texcoords.iter().enumerate() {
+    //     log::debug!("texcoord [{}]: {:?}", i, texcoord);
+    // }
+
+    // log::debug!("clut_kind: {:?}", clut_kind);
 
     debug::trace_call(stdext::function_name!());
 
@@ -654,6 +653,10 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
         texcoords[3].x,
         texcoords[3].y,
     ];
+
+    let clut_mode_value = clut_mode_value(clut_kind);
+
+    let clut_base_value = clut_base_value(clut_kind);
 
     {
         let (_context_guard, _context) = backend_params.context.guard();
@@ -697,6 +700,18 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
+            
+            let clut_mode_cstr = b"clut_mode\0";
+            let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
+            glUniform1ui(uniform_clut_mode, clut_mode_value);
+            
+            let clut_coord_base_cstr = b"clut_coord_base\0";
+            let uniform_clut_coord_base = glGetUniformLocation(program_context.program_id, clut_coord_base_cstr.as_ptr() as *const GLchar);
+            glUniform2fv(uniform_clut_coord_base, 1, clut_base_value.as_ptr());
+            
+            let tex_coord_base_x_cstr = b"tex_coord_base_x\0";
+            let uniform_tex_coord_base_x = glGetUniformLocation(program_context.program_id, tex_coord_base_x_cstr.as_ptr() as *const GLchar);
+            glUniform1f(uniform_tex_coord_base_x, texcoords[0].x);
 
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[0]);
             glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const GLvoid);
@@ -800,6 +815,10 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
+            
+            let clut_mode_cstr = b"clut_mode\0";
+            let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
+            glUniform1ui(uniform_clut_mode, 2);
 
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             glFinish();

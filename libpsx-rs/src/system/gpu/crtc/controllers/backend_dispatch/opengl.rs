@@ -72,6 +72,10 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
+            
+            let clut_mode_cstr = b"clut_mode\0";
+            let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
+            glUniform1ui(uniform_clut_mode, 2);
 
             // Draw the off-screen texture to the window FBO, hard synchronise after.
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

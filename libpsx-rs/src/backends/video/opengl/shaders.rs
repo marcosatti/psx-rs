@@ -5,17 +5,17 @@ use parking_lot::Mutex;
 use std::ffi::CString;
 
 pub(crate) mod vertex {
-    pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/vertex/solid_line_loop.glsl");
-    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/vertex/solid_polygon.glsl");
-    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/vertex/shaded_polygon.glsl");
-    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/vertex/textured_polygon.glsl");
+    pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/solid_line_loop.vert");
+    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/solid_polygon.vert");
+    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/shaded_polygon.vert");
+    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/textured_polygon.vert");
 }
 
 pub(crate) mod fragment {
-    pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/fragment/solid_line_loop.glsl");
-    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/fragment/solid_polygon.glsl");
-    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/fragment/shaded_polygon.glsl");
-    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/fragment/textured_polygon.glsl");
+    pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/solid_line_loop.frag");
+    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/solid_polygon.frag");
+    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/shaded_polygon.frag");
+    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/textured_polygon.frag");
 }
 
 lazy_static! {
