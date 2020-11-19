@@ -6,4 +6,5 @@ pub(crate) use euclid::{
 
 // Units
 pub(crate) struct Normalized;
+pub(crate) struct TexcoordNormalized;
 pub(crate) struct Pixel;

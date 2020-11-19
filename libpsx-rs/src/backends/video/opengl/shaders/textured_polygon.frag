@@ -9,9 +9,7 @@ layout(location = 0) in vec2 in_tex_coord;
 layout(location = 0) out vec4 out_color;
 
 const float WIDTH = 1024.0;
-const float HEIGHT = 512.0;
-const float NORMALIZED_WIDTH_PER_PIXEL_U = 1.0 / WIDTH;
-const float NORMALIZED_HEIGHT_PER_PIXEL_U = 1.0 / HEIGHT;
+const float TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL = 1.0 / WIDTH;
 const float MAX_VALUE_5BIT = 31.0;
 
 uint compressed_texel_value_16(const vec4 texel_color) {
@@ -37,7 +35,7 @@ void main() {
     vec4 texel_color = texture(tex2d, in_tex_coord);
 
     if (clut_mode == 2) {
-        // 15-bits per texel (direct / no CLUT).
+        // 15-bits per texel (5551 direct / no CLUT).
         // No conversion needed, can directly output the texel.
         out_color = texel_color;
     } else {
@@ -55,14 +53,13 @@ void main() {
         }
 
         float tex_offset_x = in_tex_coord.x - tex_coord_base_x;
-        float sub_pixel_offset = mod(tex_offset_x, NORMALIZED_WIDTH_PER_PIXEL_U);
-        uint sub_pixel_data_index = uint(floor(sub_pixel_offset / (NORMALIZED_WIDTH_PER_PIXEL_U / ratio)));
+        float sub_pixel_offset = mod(tex_offset_x, TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL);
+        uint sub_pixel_data_index = uint(floor(sub_pixel_offset / (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL / ratio)));
         uint sub_pixel_index = (packed_value_16 >> (sub_pixel_data_index * ratio)) & ((1 << ratio) - 1);
         vec2 clut_coord = vec2(
-            clut_coord_base.x + (NORMALIZED_WIDTH_PER_PIXEL_U * float(sub_pixel_index)),
-            clut_coord_base.y - (NORMALIZED_HEIGHT_PER_PIXEL_U * 0.5)
+            clut_coord_base.x + (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * float(sub_pixel_index)),
+            clut_coord_base.y
         );
-        //out_color = texture(tex2d, clut_coord);
-        out_color = vec4(float(sub_pixel_index) * (1.0 / float(1 << ratio)), 0.0, 0.0, 1.0);
+        out_color = texture(tex2d, clut_coord);
     }
 }

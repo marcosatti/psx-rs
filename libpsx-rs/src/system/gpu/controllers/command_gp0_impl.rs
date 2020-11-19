@@ -286,9 +286,6 @@ pub(crate) fn command_65_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_65_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
-    // TODO: implement this properly - need to make a shader to do this I think...
-    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
-
     let _color = extract_color_rgb(data[0], std::u8::MAX);
     // Upper left corner is starting point.
     let base_point = extract_point_normalized(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
@@ -393,7 +390,7 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let texcoords: [Point2D<f32, Normalized>; 4] = [Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0), Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0)];
+    let texcoords: [Point2D<f32, TexcoordNormalized>; 4] = [Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0), Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0)];
 
     // TODO: This is not a proper way to implement this command - the halfwords do not strictly represent pixels (16-bit
     // colors / 5-5-5-1 colors). However, the command addresses the VRAM (and incoming data) as 16-bit units through

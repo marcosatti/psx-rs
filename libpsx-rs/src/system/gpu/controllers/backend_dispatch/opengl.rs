@@ -37,7 +37,7 @@ pub(crate) fn draw_line_loop_4_solid(backend_params: &BackendParams, positions: 
 
     debug::trace_call(stdext::function_name!());
 
-    let (r, g, b, a) = Color::new(255, 0, 0, 255).normalize();
+    let (r, g, b, a) = Color::from_8888(255, 0, 0, 255).as_flat();
 
     let positions_flat: [f32; 8] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[3].x, positions[3].y, positions[2].x, positions[2].y];
 
@@ -89,9 +89,9 @@ pub(crate) fn draw_polygon_3_shaded(backend_params: &BackendParams, positions: [
 
     debug::trace_call(stdext::function_name!());
 
-    let (r0, g0, b0, a0) = colors[0].normalize();
-    let (r1, g1, b1, a1) = colors[1].normalize();
-    let (r2, g2, b2, a2) = colors[2].normalize();
+    let (r0, g0, b0, a0) = colors[0].as_flat();
+    let (r1, g1, b1, a1) = colors[1].as_flat();
+    let (r2, g2, b2, a2) = colors[2].as_flat();
 
     let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
@@ -153,7 +153,7 @@ pub(crate) fn draw_polygon_4_solid(backend_params: &BackendParams, positions: [P
 
     debug::trace_call(stdext::function_name!());
 
-    let (r, g, b, a) = color.normalize();
+    let (r, g, b, a) = color.as_flat();
 
     let positions_flat: [f32; 12] = [
         positions[0].x,
@@ -224,7 +224,7 @@ pub(crate) fn draw_polygon_4_transparent(
 
     log::warn!("Transparency not implemented in shaders yet");
 
-    let (r, g, b, a) = color.normalize();
+    let (r, g, b, a) = color.as_flat();
 
     let positions_flat: [f32; 12] = [
         positions[0].x,
@@ -297,7 +297,7 @@ pub(crate) fn draw_polygon_3_solid(backend_params: &BackendParams, positions: [P
 
     debug::trace_call(stdext::function_name!());
 
-    let (r, g, b, a) = color.normalize();
+    let (r, g, b, a) = color.as_flat();
 
     let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
@@ -355,7 +355,7 @@ pub(crate) fn draw_polygon_3_transparent(
 
     log::warn!("Transparency not implemented in shaders yet");
 
-    let (r, g, b, a) = color.normalize();
+    let (r, g, b, a) = color.as_flat();
 
     let positions_flat: [f32; 6] = [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y];
 
@@ -415,10 +415,10 @@ pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [
 
     debug::trace_call(stdext::function_name!());
 
-    let (r0, g0, b0, a0) = colors[0].normalize();
-    let (r1, g1, b1, a1) = colors[1].normalize();
-    let (r2, g2, b2, a2) = colors[2].normalize();
-    let (r3, g3, b3, a3) = colors[3].normalize();
+    let (r0, g0, b0, a0) = colors[0].as_flat();
+    let (r1, g1, b1, a1) = colors[1].as_flat();
+    let (r2, g2, b2, a2) = colors[2].as_flat();
+    let (r3, g3, b3, a3) = colors[3].as_flat();
 
     let positions_flat: [f32; 12] = [
         positions[0].x,
@@ -489,7 +489,7 @@ pub(crate) fn draw_polygon_4_shaded(backend_params: &BackendParams, positions: [
 }
 
 pub(crate) fn draw_polygon_4_textured(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize,
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, TexcoordNormalized>; 4], texture_width: usize, texture_height: usize,
     texture_data: &[Color],
 ) -> ControllerResult<()>
 {
@@ -608,7 +608,7 @@ pub(crate) fn draw_polygon_4_textured(
 }
 
 pub(crate) fn draw_polygon_4_textured_framebuffer(
-    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], clut_kind: ClutKind,
+    backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, TexcoordNormalized>; 4], clut_kind: ClutKind,
 ) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
@@ -620,7 +620,7 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
     //     log::debug!("texcoord [{}]: {:?}", i, texcoord);
     // }
 
-    // log::debug!("clut_kind: {:?}", clut_kind);
+    //log::debug!("clut_kind: {:?}", clut_kind);
 
     debug::trace_call(stdext::function_name!());
 
