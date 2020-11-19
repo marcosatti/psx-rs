@@ -55,9 +55,9 @@ void main() {
         float tex_offset_x = in_tex_coord.x - tex_coord_base_x;
         float sub_pixel_offset = mod(tex_offset_x, TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL);
         uint sub_pixel_data_index = uint(floor(sub_pixel_offset / (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL / ratio)));
-        uint sub_pixel_index = (packed_value_16 >> (sub_pixel_data_index * ratio)) & ((1 << ratio) - 1);
+        uint clut_index = (packed_value_16 >> (sub_pixel_data_index * ratio)) & ((1 << ratio) - 1);
         vec2 clut_coord = vec2(
-            clut_coord_base.x + (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * float(sub_pixel_index)),
+            clut_coord_base.x + (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * float(clut_index)),
             clut_coord_base.y
         );
         out_color = texture(tex2d, clut_coord);

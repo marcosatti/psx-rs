@@ -527,6 +527,14 @@ pub(crate) fn draw_polygon_4_textured(
         texcoords[3].y,
     ];
 
+    let mut texture_data_flat: Vec<f32> = vec![0.0; texture_data.len() * 4];
+    for (i, color) in texture_data.iter().enumerate() {
+        texture_data_flat[(i * 4) + 0] = color.r;
+        texture_data_flat[(i * 4) + 1] = color.g;
+        texture_data_flat[(i * 4) + 2] = color.b;
+        texture_data_flat[(i * 4) + 3] = color.a;
+    }
+
     {
         let (_context_guard, _context) = backend_params.context.guard();
 
@@ -557,8 +565,8 @@ pub(crate) fn draw_polygon_4_textured(
                 let mut texture = 0;
                 glGenTextures(1, &mut texture);
                 glBindTexture(GL_TEXTURE_2D, texture);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE as GLint);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
 
@@ -577,8 +585,8 @@ pub(crate) fn draw_polygon_4_textured(
                 texture_height as GLsizei,
                 0,
                 GL_RGBA,
-                GL_UNSIGNED_BYTE,
-                texture_data.as_ptr() as *const std::ffi::c_void,
+                GL_FLOAT,
+                texture_data_flat.as_ptr() as *const std::ffi::c_void,
             );
 
             let tex2d_cstr = b"tex2d\0";
@@ -611,16 +619,6 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
     backend_params: &BackendParams, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, TexcoordNormalized>; 4], clut_kind: ClutKind,
 ) -> ControllerResult<()> {
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
-
-    // for (i, position) in positions.iter().enumerate() {
-    //     log::debug!("position [{}]: {:?}", i, position);
-    // }
-
-    // for (i, texcoord) in texcoords.iter().enumerate() {
-    //     log::debug!("texcoord [{}]: {:?}", i, texcoord);
-    // }
-
-    //log::debug!("clut_kind: {:?}", clut_kind);
 
     debug::trace_call(stdext::function_name!());
 
@@ -762,10 +760,10 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
                 glGenTextures(1, &mut downsample_texture);
                 glBindTexture(GL_TEXTURE_2D, downsample_texture);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, downsample_texture_width, downsample_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as GLint);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST as GLint);
 
                 glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, downsample_texture, 0);
                 assert!(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
