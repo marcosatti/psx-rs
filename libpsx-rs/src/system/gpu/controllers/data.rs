@@ -11,10 +11,9 @@ use crate::{
 };
 
 pub(crate) fn normalize_point(point: Point2D<isize, Pixel>) -> Point2D<f32, Normalized> {
-    // Accounts for half pixel offset (+0.5).
     Point2D::new(
-        -1.0 + ((2.0 / VRAM_WIDTH_16B as f32) * (point.x as f32 + 0.5)),
-        1.0 - ((2.0 / VRAM_HEIGHT_LINES as f32) * (point.y as f32 + 0.5)),
+        -1.0 + ((2.0 / VRAM_WIDTH_16B as f32) * (point.x as f32 + 0.0)),
+        1.0 - ((2.0 / VRAM_HEIGHT_LINES as f32) * (point.y as f32 + 0.0)),
     )
 }
 
@@ -34,9 +33,10 @@ pub(crate) fn normalize_texcoord_size(texcoord_size: Size2D<isize, Pixel>) -> Si
 }
 
 pub(crate) fn normalized_to_texcoord_normalized(normalized: Point2D<f32, Normalized>) -> Point2D<f32, TexcoordNormalized> {
+    // Accounts for half pixel offset (+0.5).
     Point2D::new(
-        (normalized.x + 1.0) / 2.0,
-        (normalized.y + 1.0) / 2.0,
+        ((normalized.x + (0.5 * 2.0 / VRAM_WIDTH_16B as f32)) + 1.0) / 2.0,
+        ((normalized.y - (0.5 * 2.0 / VRAM_HEIGHT_LINES as f32)) + 1.0) / 2.0,
     )
 }
 
