@@ -1,3 +1,5 @@
+pub(crate) mod rendering;
+
 use crate::{
     system::gpu::crtc::types::Crtc,
     types::{

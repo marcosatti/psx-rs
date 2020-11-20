@@ -8,7 +8,10 @@ use crate::{
                 data::*,
                 debug,
             },
-            types::ControllerState,
+            types::{
+                rendering::ClutKind,
+                ControllerState,
+            },
         },
         types::{
             ControllerResult,
@@ -47,7 +50,7 @@ pub(crate) fn command_02_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
-    let color = extract_color_rgb(data[0], std::u8::MAX);
+    let color = extract_color_rgb(data[0], 0);
     // Upper left corner is starting point.
     let base_point = extract_point_normalized(data[1], default_fill_x_position_modifier, default_fill_y_position_modifier);
     let size = extract_size_normalized(data[2], default_fill_x_size_modifier, default_fill_y_size_modifier);
@@ -160,17 +163,15 @@ pub(crate) fn command_2c_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2c_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured four-point polygon, opaque, texture-blending", data);
 
-    // TODO: implement this properly - need to make a shader to do this I think...
-    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
-
     let _color = extract_color_rgb(data[0], std::u8::MAX);
     let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
-    let _clut = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -182,16 +183,14 @@ pub(crate) fn command_2d_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured four-point polygon, opaque, raw-texture", data);
 
-    // TODO: implement this properly - need to make a shader to do this I think...
-    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
-
     let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
-    let _clut = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -203,17 +202,15 @@ pub(crate) fn command_2e_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2e_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured four-point polygon, semi-transparent, texture-blending", data);
 
-    // TODO: implement this properly - need to make a shader to do this I think...
-    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
-
     let _color = extract_color_rgb(data[0], std::u8::MAX);
     let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
-    let _clut = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -270,9 +267,10 @@ pub(crate) fn command_3e_handler(_state: &State, _controller_state: &mut Control
     let clut_mode = extract_texpage_clut_mode(data[5]);
     let _transparency_mode = extract_texpage_transparency_mode(data[5]);
     let texcoords = extract_texcoords_4_normalized(data[5], clut_mode, [data[2], data[5], data[8], data[11]]);
-    let _clut = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -294,9 +292,6 @@ pub(crate) fn command_65_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_65_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
-    // TODO: implement this properly - need to make a shader to do this I think...
-    // CLUT not implemented at all, texcoords currently passed through scaled by the CLUT mode.
-
     let _color = extract_color_rgb(data[0], std::u8::MAX);
     // Upper left corner is starting point.
     let base_point = extract_point_normalized(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
@@ -305,7 +300,8 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
     let texpage_base = Point2D::new(controller_state.texpage_base_x, controller_state.texpage_base_y);
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let texcoords = [texcoords[2], texcoords[3], texcoords[0], texcoords[1]];
-    let _clut = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let positions: [Point2D<f32, Normalized>; 4] = [
         Point2D::new(base_point.x, base_point.y - size.height),
@@ -314,7 +310,7 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -347,7 +343,8 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
     let texpage_base = Point2D::new(controller_state.texpage_base_x, controller_state.texpage_base_y);
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let texcoords = [texcoords[2], texcoords[3], texcoords[0], texcoords[1]];
-    let _clut = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let positions: [Point2D<f32, Normalized>; 4] = [
         Point2D::new(base_point.x, base_point.y - size.height),
@@ -356,7 +353,7 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords)?;
+    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -399,7 +396,7 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let texcoords: [Point2D<f32, Normalized>; 4] = [Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0), Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0)];
+    let texcoords: [Point2D<f32, TexcoordNormalized>; 4] = [Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0), Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0)];
 
     // TODO: This is not a proper way to implement this command - the halfwords do not strictly represent pixels (16-bit
     // colors / 5-5-5-1 colors). However, the command addresses the VRAM (and incoming data) as 16-bit units through

@@ -6,16 +6,15 @@ mod opengl;
 use crate::{
     backends::video::VideoBackend,
     system::{
-        gpu::types::TransparencyMode,
+        gpu::types::{
+            rendering::ClutKind,
+            TransparencyMode,
+        },
         types::ControllerResult,
     },
     types::{
         color::Color,
-        geometry::{
-            Normalized,
-            Point2D,
-            Size2D,
-        },
+        geometry::*,
     },
 };
 
@@ -60,12 +59,12 @@ pub(crate) fn draw_polygon_4_transparent(
 }
 
 pub(crate) fn draw_polygon_4_textured_framebuffer(
-    video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4],
+    video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, TexcoordNormalized>; 4], clut_kind: ClutKind,
 ) -> ControllerResult<Result<(), ()>> {
     match video_backend {
         VideoBackend::None => Ok(Err(())),
         #[cfg(opengl)]
-        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_4_textured_framebuffer(backend_params, positions, texcoords)?)),
+        VideoBackend::Opengl(ref backend_params) => Ok(Ok(opengl::draw_polygon_4_textured_framebuffer(backend_params, positions, texcoords, clut_kind)?)),
         _ => unimplemented!(),
     }
 }
@@ -89,7 +88,7 @@ pub(crate) fn draw_polygon_4_shaded(video_backend: &VideoBackend, positions: [Po
 }
 
 pub(crate) fn draw_polygon_4_textured(
-    video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, Normalized>; 4], texture_width: usize, texture_height: usize,
+    video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 4], texcoords: [Point2D<f32, TexcoordNormalized>; 4], texture_width: usize, texture_height: usize,
     texture_colors: &[Color],
 ) -> ControllerResult<Result<(), ()>>
 {
