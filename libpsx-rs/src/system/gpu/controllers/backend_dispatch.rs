@@ -3,10 +3,20 @@
 #[cfg(opengl)]
 mod opengl;
 
-use crate::{backends::video::VideoBackend, system::{gpu::types::{rendering::ClutKind, TransparencyMode}, types::ControllerResult}, types::{
+use crate::{
+    backends::video::VideoBackend,
+    system::{
+        gpu::types::{
+            rendering::ClutKind,
+            TransparencyMode,
+        },
+        types::ControllerResult,
+    },
+    types::{
         color::Color,
         geometry::*,
-    }};
+    },
+};
 
 pub(crate) fn draw_polygon_3_solid(video_backend: &VideoBackend, positions: [Point2D<f32, Normalized>; 3], color: Color) -> ControllerResult<Result<(), ()>> {
     match video_backend {

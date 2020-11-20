@@ -1,15 +1,30 @@
-use crate::{backends::video::VideoBackend, system::{gpu::{types::rendering::ClutKind, constants::*, controllers::{
+use crate::{
+    backends::video::VideoBackend,
+    system::{
+        gpu::{
+            constants::*,
+            controllers::{
                 backend_dispatch,
                 data::*,
                 debug,
-            }, types::ControllerState}, types::{
+            },
+            types::{
+                rendering::ClutKind,
+                ControllerState,
+            },
+        },
+        types::{
             ControllerResult,
             State,
-        }}, types::{
+        },
+    },
+    types::{
         bitfield::Bitfield,
         color::Color,
         geometry::*,
-    }, utilities::array::flip_rows};
+    },
+    utilities::array::flip_rows,
+};
 
 pub(crate) fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
@@ -337,7 +352,7 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
         Point2D::new(base_point.x, base_point.y),
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
-        
+
     let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
@@ -381,12 +396,7 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let texcoords: [Point2D<f32, TexcoordNormalized>; 4] = [
-        Point2D::new(0.0, 1.0), 
-        Point2D::new(1.0, 1.0), 
-        Point2D::new(0.0, 0.0), 
-        Point2D::new(1.0, 0.0),
-    ];
+    let texcoords: [Point2D<f32, TexcoordNormalized>; 4] = [Point2D::new(0.0, 1.0), Point2D::new(1.0, 1.0), Point2D::new(0.0, 0.0), Point2D::new(1.0, 0.0)];
 
     // TODO: This is not a proper way to implement this command - the halfwords do not strictly represent pixels (16-bit
     // colors / 5-5-5-1 colors). However, the command addresses the VRAM (and incoming data) as 16-bit units through

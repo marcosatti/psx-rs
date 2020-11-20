@@ -11,40 +11,25 @@ use crate::{
 };
 
 pub(crate) fn normalize_point(point: Point2D<isize, Pixel>) -> Point2D<f32, Normalized> {
-    Point2D::new(
-        -1.0 + ((2.0 / VRAM_WIDTH_16B as f32) * (point.x as f32 + 0.0)),
-        1.0 - ((2.0 / VRAM_HEIGHT_LINES as f32) * (point.y as f32 + 0.0)),
-    )
+    Point2D::new(-1.0 + ((2.0 / VRAM_WIDTH_16B as f32) * (point.x as f32 + 0.0)), 1.0 - ((2.0 / VRAM_HEIGHT_LINES as f32) * (point.y as f32 + 0.0)))
 }
 
 pub(crate) fn normalize_texcoord(texcoord: Point2D<isize, Pixel>) -> Point2D<f32, TexcoordNormalized> {
     // Accounts for half pixel offset (+0.5).
-    Point2D::new(
-        (1.0 / VRAM_WIDTH_16B as f32) * (texcoord.x as f32 + 0.5),
-        1.0 - ((1.0 / VRAM_HEIGHT_LINES as f32) * (texcoord.y as f32 + 0.5)),
-    )
+    Point2D::new((1.0 / VRAM_WIDTH_16B as f32) * (texcoord.x as f32 + 0.5), 1.0 - ((1.0 / VRAM_HEIGHT_LINES as f32) * (texcoord.y as f32 + 0.5)))
 }
 
 pub(crate) fn normalize_texcoord_size(texcoord_size: Size2D<isize, Pixel>) -> Size2D<f32, TexcoordNormalized> {
-    Size2D::new(
-        texcoord_size.width as f32 / VRAM_WIDTH_16B as f32,
-        texcoord_size.height as f32 / VRAM_HEIGHT_LINES as f32,
-    )
+    Size2D::new(texcoord_size.width as f32 / VRAM_WIDTH_16B as f32, texcoord_size.height as f32 / VRAM_HEIGHT_LINES as f32)
 }
 
 pub(crate) fn normalized_to_texcoord_normalized(normalized: Point2D<f32, Normalized>) -> Point2D<f32, TexcoordNormalized> {
     // Accounts for half pixel offset (+0.5).
-    Point2D::new(
-        ((normalized.x + (0.5 * 2.0 / VRAM_WIDTH_16B as f32)) + 1.0) / 2.0,
-        ((normalized.y - (0.5 * 2.0 / VRAM_HEIGHT_LINES as f32)) + 1.0) / 2.0,
-    )
+    Point2D::new(((normalized.x + (0.5 * 2.0 / VRAM_WIDTH_16B as f32)) + 1.0) / 2.0, ((normalized.y - (0.5 * 2.0 / VRAM_HEIGHT_LINES as f32)) + 1.0) / 2.0)
 }
 
 pub(crate) fn normalized_to_texcoord_normalized_size(normalized_size: Size2D<f32, Normalized>) -> Size2D<f32, TexcoordNormalized> {
-    Size2D::new(
-        normalized_size.width / 2.0,
-        normalized_size.height / 2.0,
-    )
+    Size2D::new(normalized_size.width / 2.0, normalized_size.height / 2.0)
 }
 
 pub(crate) fn default_render_x_position_modifier(d: isize) -> isize {
@@ -190,8 +175,9 @@ pub(crate) fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMo
     let texpage_base = Point2D::new(texpage_x_base, texpage_y_base);
 
     // The raw texcoords are offsets given in terms of CLUT-mode-relative texture pixels, not framebuffer pixels.
-    // For example, if the raw value of offset.x is 24, and we are using the 8-bit CLUT mode, that means the framebuffer offset is 12 framebuffer pixels,
-    // since there are 2 framebuffer pixels per texture pixel in 8-bit CLUT mode. This always assumes each framebuffer pixel is 16-bit.
+    // For example, if the raw value of offset.x is 24, and we are using the 8-bit CLUT mode, that means the framebuffer
+    // offset is 12 framebuffer pixels, since there are 2 framebuffer pixels per texture pixel in 8-bit CLUT mode. This
+    // always assumes each framebuffer pixel is 16-bit.
     let texcoord_offsets: [Size2D<isize, Pixel>; 4] = [
         Size2D::new(TEXCOORD_X_BITFIELD.extract_from(texcoords_raw[0]) as isize, TEXCOORD_Y_BITFIELD.extract_from(texcoords_raw[0]) as isize),
         Size2D::new(TEXCOORD_X_BITFIELD.extract_from(texcoords_raw[1]) as isize, TEXCOORD_Y_BITFIELD.extract_from(texcoords_raw[1]) as isize),
@@ -205,7 +191,7 @@ pub(crate) fn extract_texcoords_4_normalized(texpage_raw: u32, clut_mode: ClutMo
         ClutMode::Bits15 => 1.0,
         _ => unimplemented!("Extracting texcoords CLUT mode unimplemented: {:?}", clut_mode),
     };
-    
+
     let mut normalized_texcoords = [normalize_texcoord(texpage_base); 4];
     for i in 0..4 {
         let offset = normalize_texcoord_size(texcoord_offsets[i]);
@@ -227,12 +213,8 @@ pub(crate) fn extract_texcoords_rect_normalized(
 
     let mut texcoords = [texpage_base_normalized; 4];
 
-    let texcoord_offset_points: [Point2D<f32, TexcoordNormalized>; 4] =[
-        Point2D::new(0.0, 0.0), 
-        Point2D::new(texcoord_size.width, 0.0), 
-        Point2D::new(0.0, texcoord_size.height), 
-        Point2D::new(texcoord_size.width, texcoord_size.height)
-    ];
+    let texcoord_offset_points: [Point2D<f32, TexcoordNormalized>; 4] =
+        [Point2D::new(0.0, 0.0), Point2D::new(texcoord_size.width, 0.0), Point2D::new(0.0, texcoord_size.height), Point2D::new(texcoord_size.width, texcoord_size.height)];
 
     let scale_factor = match clut_mode {
         ClutMode::Bits4 => 16.0 / 4.0,

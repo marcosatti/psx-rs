@@ -1,5 +1,5 @@
-pub(crate) mod debug;
 pub(crate) mod data;
+pub(crate) mod debug;
 
 use crate::{
     backends::video::opengl::{
@@ -7,12 +7,12 @@ use crate::{
         *,
     },
     system::{
-        gpu::controllers::backend_dispatch::opengl::{
-            data::*,
-        },
-        gpu::types::{
-            rendering::ClutKind,
-            TransparencyMode,
+        gpu::{
+            controllers::backend_dispatch::opengl::data::*,
+            types::{
+                rendering::ClutKind,
+                TransparencyMode,
+            },
         },
         types::ControllerResult,
     },
@@ -592,7 +592,7 @@ pub(crate) fn draw_polygon_4_textured(
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
-            
+
             let clut_mode_cstr = b"clut_mode\0";
             let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
             glUniform1ui(uniform_clut_mode, 2);
@@ -698,15 +698,15 @@ pub(crate) fn draw_polygon_4_textured_framebuffer(
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
-            
+
             let clut_mode_cstr = b"clut_mode\0";
             let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
             glUniform1ui(uniform_clut_mode, clut_mode_value);
-            
+
             let clut_coord_base_cstr = b"clut_coord_base\0";
             let uniform_clut_coord_base = glGetUniformLocation(program_context.program_id, clut_coord_base_cstr.as_ptr() as *const GLchar);
             glUniform2fv(uniform_clut_coord_base, 1, clut_base_value.as_ptr());
-            
+
             let tex_coord_base_x_cstr = b"tex_coord_base_x\0";
             let uniform_tex_coord_base_x = glGetUniformLocation(program_context.program_id, tex_coord_base_x_cstr.as_ptr() as *const GLchar);
             glUniform1f(uniform_tex_coord_base_x, texcoords[0].x);
@@ -813,7 +813,7 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
             let tex2d_cstr = b"tex2d\0";
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
-            
+
             let clut_mode_cstr = b"clut_mode\0";
             let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
             glUniform1ui(uniform_clut_mode, 2);
