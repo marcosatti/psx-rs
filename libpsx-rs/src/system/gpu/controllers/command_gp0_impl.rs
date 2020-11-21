@@ -168,7 +168,7 @@ pub(crate) fn command_2c_handler(_state: &State, _controller_state: &mut Control
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
-    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
@@ -187,7 +187,7 @@ pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut Control
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
-    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
@@ -207,7 +207,7 @@ pub(crate) fn command_2e_handler(_state: &State, _controller_state: &mut Control
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let _transparency_mode = extract_texpage_transparency_mode(data[4]);
     let texcoords = extract_texcoords_4_normalized(data[4], clut_mode, [data[2], data[4], data[6], data[8]]);
-    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
@@ -267,7 +267,7 @@ pub(crate) fn command_3e_handler(_state: &State, _controller_state: &mut Control
     let clut_mode = extract_texpage_clut_mode(data[5]);
     let _transparency_mode = extract_texpage_transparency_mode(data[5]);
     let texcoords = extract_texcoords_4_normalized(data[5], clut_mode, [data[2], data[5], data[8], data[11]]);
-    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
@@ -300,7 +300,7 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
     let texpage_base = Point2D::new(controller_state.texpage_base_x, controller_state.texpage_base_y);
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let texcoords = [texcoords[2], texcoords[3], texcoords[0], texcoords[1]];
-    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let positions: [Point2D<f32, Normalized>; 4] = [
@@ -343,7 +343,7 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
     let texpage_base = Point2D::new(controller_state.texpage_base_x, controller_state.texpage_base_y);
     let texcoords = extract_texcoords_rect_normalized(texpage_base, data[2], clut_mode, size);
     let texcoords = [texcoords[2], texcoords[3], texcoords[0], texcoords[1]];
-    let clut_base = extract_clut_base_normalized(data[2]);
+    let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
     let positions: [Point2D<f32, Normalized>; 4] = [

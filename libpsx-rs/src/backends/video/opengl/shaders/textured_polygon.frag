@@ -10,17 +10,19 @@ layout(location = 0) out vec4 out_color;
 
 const float WIDTH = 1024.0;
 const float TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL = 1.0 / WIDTH;
-const float MAX_VALUE_5BIT = 31.0;
+const uint MAX_VALUE_5BIT = (1 << 5) - 1;
 
 uint compressed_texel_value_16(const vec4 texel_color) {
     // 5551 RGBA format.
-    vec4 unpacked_value_16 = floor(vec4(MAX_VALUE_5BIT * texel_color.rgb, round(texel_color.a)));
-    uint packed_r_value_16 = uint(unpacked_value_16.r);
-    uint packed_g_value_16 = uint(unpacked_value_16.g) << 5;
-    uint packed_b_value_16 = uint(unpacked_value_16.b) << 10;
-    uint packed_a_value_16 = uint(unpacked_value_16.a) << 15;
-    uint packed_value_16 = packed_r_value_16 | packed_g_value_16 | packed_g_value_16 | packed_a_value_16;
-    return packed_value_16;
+    uint packed_r_value_16 = uint(round(float(MAX_VALUE_5BIT) * texel_color.r));
+    uint packed_g_value_16 = uint(round(float(MAX_VALUE_5BIT) * texel_color.g)) << 5;
+    uint packed_b_value_16 = uint(round(float(MAX_VALUE_5BIT) * texel_color.b)) << 10;
+    uint packed_a_value_16 = uint(round(texel_color.a)) << 15;
+    return packed_r_value_16 | packed_g_value_16 | packed_b_value_16 | packed_a_value_16;
+}
+
+uint extract_bitfield(const uint value, const uint index, const uint size) {
+    return (value >> (index * size)) & ((1 << size) - 1);
 }
 
 void main() {
@@ -28,18 +30,22 @@ void main() {
     out_color = vec4(1.0, 0.0, 0.0, 1.0);
 
     if (clut_mode > 2) {
+        // Invalid.
         return;
     }
-
-    // Get raw texture color.
-    vec4 texel_color = texture(tex2d, in_tex_coord);
 
     if (clut_mode == 2) {
         // 15-bits per texel (5551 direct / no CLUT).
         // No conversion needed, can directly output the texel.
-        out_color = texel_color;
+        out_color = texture(tex2d, in_tex_coord);
     } else {
         // Using CLUT mode.
+        // Sample from the CLUT texture, correcting for the half-pixel offset w/ texcoords.
+        float tex_coord_offset_x = in_tex_coord.x - tex_coord_base_x;
+        uint texel_index = uint(floor(tex_coord_offset_x / TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL));
+        vec2 tex_coord_real = vec2(tex_coord_base_x + (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * float(texel_index)), in_tex_coord.y);
+        vec4 texel_color = texture(tex2d, tex_coord_real);
+
         // Convert texel back to 16-bit value.
         uint packed_value_16 = compressed_texel_value_16(texel_color);
 
@@ -52,14 +58,18 @@ void main() {
             ratio = 8;
         }
 
-        float tex_offset_x = in_tex_coord.x - tex_coord_base_x;
-        float sub_pixel_offset = mod(tex_offset_x, TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL);
-        uint sub_pixel_data_index = uint(floor(sub_pixel_offset / (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL / ratio)));
-        uint clut_index = (packed_value_16 >> (sub_pixel_data_index * ratio)) & ((1 << ratio) - 1);
+        // Determine which framebuffer pixel / sub-texel is being rendered (can use texcoords to determine this as it's a linear relationship).
+        float sub_texel_offset = mod(tex_coord_offset_x, TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL);
+        uint sub_texel_data_index = uint(floor(sub_texel_offset / (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL / ratio)));
+
+        // Get the appropriate bits out of the packed data and work out the CLUT pixel to use.
+        uint clut_index = extract_bitfield(packed_value_16, sub_texel_data_index, ratio);
         vec2 clut_coord = vec2(
             clut_coord_base.x + (TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * float(clut_index)),
             clut_coord_base.y
         );
+
+        // Sample it and we are done.
         out_color = texture(tex2d, clut_coord);
     }
 }

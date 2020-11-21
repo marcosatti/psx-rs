@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub(crate) fn normalize_point(point: Point2D<isize, Pixel>) -> Point2D<f32, Normalized> {
-    Point2D::new(-1.0 + ((2.0 / VRAM_WIDTH_16B as f32) * (point.x as f32 + 0.0)), 1.0 - ((2.0 / VRAM_HEIGHT_LINES as f32) * (point.y as f32 + 0.0)))
+    Point2D::new(-1.0 + ((2.0 / VRAM_WIDTH_16B as f32) * (point.x as f32)), 1.0 - ((2.0 / VRAM_HEIGHT_LINES as f32) * (point.y as f32)))
 }
 
 pub(crate) fn normalize_texcoord(texcoord: Point2D<isize, Pixel>) -> Point2D<f32, TexcoordNormalized> {
@@ -239,6 +239,6 @@ pub(crate) fn extract_clut_base(clut_raw: u32) -> Point2D<isize, Pixel> {
     Point2D::new(clut_x, clut_y)
 }
 
-pub(crate) fn extract_clut_base_normalized(clut_raw: u32) -> Point2D<f32, Normalized> {
-    normalize_point(extract_clut_base(clut_raw))
+pub(crate) fn extract_clut_base_texcoord_normalized(clut_raw: u32) -> Point2D<f32, TexcoordNormalized> {
+    normalize_texcoord(extract_clut_base(clut_raw))
 }

@@ -1,6 +1,5 @@
 use crate::{
     system::gpu::{
-        controllers::data::normalized_to_texcoord_normalized,
         types::ClutMode,
     },
     types::geometry::*,
@@ -18,17 +17,13 @@ pub(crate) enum ClutKind {
 }
 
 impl ClutKind {
-    pub(crate) fn from_data(mode: ClutMode, base: Point2D<f32, Normalized>) -> ClutKind {
+    pub(crate) fn from_data(mode: ClutMode, base: Point2D<f32, TexcoordNormalized>) -> ClutKind {
         match mode {
             ClutMode::Bits4 => {
-                ClutKind::Bits4 {
-                    base: normalized_to_texcoord_normalized(base),
-                }
+                ClutKind::Bits4 { base }
             },
             ClutMode::Bits8 => {
-                ClutKind::Bits8 {
-                    base: normalized_to_texcoord_normalized(base),
-                }
+                ClutKind::Bits8 { base }
             },
             ClutMode::Bits15 => ClutKind::Direct,
             ClutMode::Reserved => unreachable!("Reserved CLUT mode used!"),
