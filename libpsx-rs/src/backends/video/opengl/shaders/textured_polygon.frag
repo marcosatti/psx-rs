@@ -25,6 +25,22 @@ uint extract_bitfield(const uint value, const uint index, const uint size) {
     return (value >> (index * size)) & ((1 << size) - 1);
 }
 
+void discard_test(const vec4 color) {
+    uint packed_value_16 = compressed_texel_value_16(color);
+
+    for (uint i = 0; i < 3; i++) {
+        if (extract_bitfield(packed_value_16, i, 5) != 0) {
+            return;
+        }
+    }
+
+    // if (extract_bitfield(packed_value_16, 15, 1) == 0) {
+    //     return;
+    // }
+
+    discard;
+}
+
 void main() {
     // Default / error color.
     out_color = vec4(1.0, 0.0, 0.0, 1.0);
@@ -37,7 +53,13 @@ void main() {
     if (clut_mode == 2) {
         // 15-bits per texel (5551 direct / no CLUT).
         // No conversion needed, can directly output the texel.
-        out_color = texture(tex2d, in_tex_coord);
+        vec4 color = texture(tex2d, in_tex_coord);
+
+        // Discard transparent pixels.
+        discard_test(color);
+
+        // Done.
+        out_color = color;
     } else {
         // Using CLUT mode.
         // Sample from the CLUT texture, correcting for the half-pixel offset w/ texcoords.
@@ -69,7 +91,19 @@ void main() {
             clut_coord_base.y
         );
 
-        // Sample it and we are done.
-        out_color = texture(tex2d, clut_coord);
+        // Sample the CLUT.
+        vec4 clut_color = texture(tex2d, clut_coord);
+        
+        uint raw_color = compressed_texel_value_16(clut_color);
+        if (raw_color == 0x8000) {
+            out_color = vec4(0.0, 1.0, 0.0, 0.0);
+            return;
+        }
+
+        // Discard transparent pixels.
+        discard_test(clut_color);
+
+        // Done.
+        out_color = clut_color;
     }
 }
