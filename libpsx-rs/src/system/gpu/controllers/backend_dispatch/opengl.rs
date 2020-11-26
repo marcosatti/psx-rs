@@ -580,7 +580,7 @@ pub(crate) fn draw_polygon_4_textured(
             glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
-                GL_RGBA as GLint,
+                GL_RGBA32F as GLint,
                 texture_width as GLsizei,
                 texture_height as GLsizei,
                 0,
@@ -759,7 +759,7 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
                 let mut downsample_texture = 0;
                 glGenTextures(1, &mut downsample_texture);
                 glBindTexture(GL_TEXTURE_2D, downsample_texture);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, downsample_texture_width, downsample_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1 as GLint, downsample_texture_width, downsample_texture_height, 0, GL_RGBA, GL_FLOAT, std::ptr::null());
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE as GLint);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE as GLint);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
@@ -776,8 +776,8 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
 
                 let texcoords_flat: [f32; 8] = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
 
-                let vs = shaders::compile_shader(shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
-                let fs = shaders::compile_shader(shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
+                let vs = shaders::compile_shader(shaders::vertex::CRTC, GL_VERTEX_SHADER);
+                let fs = shaders::compile_shader(shaders::fragment::CRTC, GL_FRAGMENT_SHADER);
                 let program = shaders::create_program(&[vs, fs]);
 
                 let mut vao = 0;
@@ -814,10 +814,6 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
             let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
             glUniform1i(uniform_tex2d, 0);
 
-            let clut_mode_cstr = b"clut_mode\0";
-            let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
-            glUniform1ui(uniform_clut_mode, 2);
-
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             glFinish();
 
@@ -834,7 +830,7 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
         unsafe {
             let fbo_context = FBO_CONTEXT.unwrap();
             glBindTexture(GL_TEXTURE_2D, fbo_context.1);
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, buffer.as_mut_ptr() as *mut std::ffi::c_void);
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, buffer.as_mut_ptr() as *mut std::ffi::c_void);
         }
     }
 
@@ -846,5 +842,5 @@ pub(crate) fn read_framebuffer_5551(backend_params: &BackendParams, origin: Poin
     let pixel_size_height = ((VRAM_HEIGHT_LINES / 2) as f32 * size.height) as usize;
     let pixel_size = Size2D::new(pixel_size_width, pixel_size_height);
 
-    Ok(extract_rectangle(&buffer, pixel_origin, pixel_size))
+    Ok(extract_rectangle(&buffer, VRAM_WIDTH_16B, pixel_origin, pixel_size))
 }

@@ -449,7 +449,7 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
         let mut word: u32 = 0;
         word = Bitfield::new(0, 16).insert_into(word, data[i * 2] as u32);
         word = Bitfield::new(16, 16).insert_into(word, data[i * 2 + 1] as u32);
-        controller_state.gp0_read_buffer.push_back(word)
+        controller_state.gp0_read_buffer.push_back(word);
     }
 
     Ok(())

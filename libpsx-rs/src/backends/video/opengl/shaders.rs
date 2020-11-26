@@ -5,6 +5,7 @@ use parking_lot::Mutex;
 use std::ffi::CString;
 
 pub(crate) mod vertex {
+    pub(crate) const CRTC: &'static str = include_str!("./shaders/crtc.vert");
     pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/solid_line_loop.vert");
     pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/solid_polygon.vert");
     pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/shaded_polygon.vert");
@@ -12,6 +13,7 @@ pub(crate) mod vertex {
 }
 
 pub(crate) mod fragment {
+    pub(crate) const CRTC: &'static str = include_str!("./shaders/crtc.frag");
     pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/solid_line_loop.frag");
     pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/solid_polygon.frag");
     pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/shaded_polygon.frag");

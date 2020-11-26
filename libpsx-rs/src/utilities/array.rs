@@ -13,7 +13,7 @@ pub(crate) fn flip_rows<T: Clone>(array: &[T], row_length: usize) -> Vec<T> {
     assert!(total_row_count * row_length == total_count);
 
     let mut new_array = Vec::new();
-    new_array.reserve(array.len());
+    new_array.reserve(total_count);
 
     let mut row_count = 0;
     while row_count < total_row_count {
@@ -37,13 +37,13 @@ pub(crate) fn flip_rows<T: Clone>(array: &[T], row_length: usize) -> Vec<T> {
 ///           - - - - -
 /// Min index
 /// The items marked as 'e' are extracted into a new flattened array.
-pub(crate) fn extract_rectangle<T: Clone>(array: &[T], origin: Point2D<usize, UnknownUnit>, size: Size2D<usize, UnknownUnit>) -> Vec<T> {
+pub(crate) fn extract_rectangle<T: Clone>(array: &[T], row_length: usize, origin: Point2D<usize, UnknownUnit>, size: Size2D<usize, UnknownUnit>) -> Vec<T> {
     let mut rect_buffer = Vec::new();
     rect_buffer.reserve(size.width * size.height);
 
     let mut row_count = 0;
     while row_count < size.height {
-        let base_index = (origin.y + row_count) * size.width + origin.x;
+        let base_index = (origin.y + row_count) * row_length + origin.x;
         let slice = &array[base_index..(base_index + size.width)];
         rect_buffer.extend_from_slice(slice);
         row_count += 1;

@@ -56,7 +56,7 @@ pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
         let scene_texture_height = (VRAM_HEIGHT_LINES * rendering::INTERNAL_SCALE_FACTOR) as GLint;
         glGenTextures(1, &mut scene_texture);
         glBindTexture(GL_TEXTURE_2D, scene_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_FLOAT, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
@@ -70,7 +70,7 @@ pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
         let mut scene_copy_texture = 0;
         glGenTextures(1, &mut scene_copy_texture);
         glBindTexture(GL_TEXTURE_2D, scene_copy_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, std::ptr::null());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F as GLint, scene_texture_width, scene_texture_height, 0, GL_RGBA, GL_FLOAT, std::ptr::null());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE as GLint);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST as GLint);
@@ -86,7 +86,18 @@ pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
 
         // Other.
         glViewport(0, 0, scene_texture_width, scene_texture_height);
-        glClearColor(0.0, 0.0, 0.0, 1.0);
+        
+        glDisable(GL_DITHER);
+        glDisable(GL_MULTISAMPLE);
+
+        glPixelStorei(GL_PACK_SWAP_BYTES, GL_FALSE as GLint);
+        glPixelStorei(GL_PACK_LSB_FIRST, GL_TRUE as GLint);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE as GLint);
+        glPixelStorei(GL_UNPACK_LSB_FIRST, GL_TRUE as GLint);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
         if glGetError() != GL_NO_ERROR {

@@ -34,16 +34,16 @@ void discard_test(const vec4 color) {
         }
     }
 
-    // if (extract_bitfield(packed_value_16, 15, 1) == 0) {
-    //     return;
-    // }
+    if (extract_bitfield(packed_value_16, 15, 1) != 0) {
+        return;
+    }
 
     discard;
 }
 
 void main() {
     // Default / error color.
-    out_color = vec4(1.0, 0.0, 0.0, 1.0);
+    out_color = vec4(1.0, 0.0, 0.0, 0.0);
 
     if (clut_mode > 2) {
         // Invalid.
@@ -56,7 +56,7 @@ void main() {
         vec4 color = texture(tex2d, in_tex_coord);
 
         // Discard transparent pixels.
-        discard_test(color);
+        //discard_test(color);
 
         // Done.
         out_color = color;
@@ -93,12 +93,6 @@ void main() {
 
         // Sample the CLUT.
         vec4 clut_color = texture(tex2d, clut_coord);
-        
-        uint raw_color = compressed_texel_value_16(clut_color);
-        if (raw_color == 0x8000) {
-            out_color = vec4(0.0, 1.0, 0.0, 0.0);
-            return;
-        }
 
         // Discard transparent pixels.
         discard_test(clut_color);
