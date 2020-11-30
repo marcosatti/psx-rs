@@ -4,6 +4,7 @@ uniform sampler2D tex2d;
 uniform uint clut_mode;
 uniform vec2 clut_coord_base;
 uniform float tex_coord_base_x;
+uniform uint transparency_mode;
 
 layout(location = 0) in vec2 in_tex_coord;
 layout(location = 0) out vec4 out_color;
@@ -43,7 +44,7 @@ void discard_test(const vec4 color) {
 
 void main() {
     // Default / error color.
-    out_color = vec4(1.0, 0.0, 0.0, 0.0);
+    out_color = vec4(1.0, 0.0, 0.0, 1.0);
 
     if (clut_mode > 2) {
         // Invalid.

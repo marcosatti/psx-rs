@@ -1,5 +1,6 @@
 #![feature(core_intrinsics)]
 #![feature(trait_alias)]
+#![feature(min_const_generics)]
 
 pub mod backends;
 pub(crate) mod debug;

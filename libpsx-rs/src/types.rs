@@ -7,3 +7,4 @@ pub(crate) mod geometry;
 pub(crate) mod memory;
 pub(crate) mod mips1;
 pub(crate) mod stereo;
+pub(crate) mod array;

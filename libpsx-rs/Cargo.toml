@@ -20,6 +20,7 @@ hashbrown = "*"
 fixed = "*"
 typenum = "*"
 stdext = "*"
+smallvec = { version = "*", features = ["union", "const_generics"] }
 serde = { version = "*", optional = true, features = ["derive"] }
 bincode = { version = "*", optional = true }
 zstd = { version = "*", optional = true }

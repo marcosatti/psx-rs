@@ -1,14 +1,15 @@
 use crate::system::gpu::types::{
     rendering::ClutKind,
-    TransparencyMode,
+    rendering::TransparencyKind,
 };
 
-pub(crate) fn transparency_value(transparency: TransparencyMode) -> u32 {
+pub(crate) fn transparency_mode_value(transparency: TransparencyKind) -> u32 {
     match transparency {
-        TransparencyMode::Average => 0,
-        TransparencyMode::Additive => 1,
-        TransparencyMode::Difference => 2,
-        TransparencyMode::Quarter => 3,
+        TransparencyKind::Opaque => 0,
+        TransparencyKind::Average => 1,
+        TransparencyKind::Additive => 2,
+        TransparencyKind::Difference => 3,
+        TransparencyKind::Quarter => 4,
     }
 }
 

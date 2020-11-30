@@ -1,30 +1,19 @@
-use crate::{
-    backends::video::VideoBackend,
-    system::{
-        gpu::{
-            constants::*,
-            controllers::{
+use crate::{backends::video::VideoBackend, system::{gpu::{constants::*, controllers::{
                 backend_dispatch,
                 data::*,
                 debug,
-            },
-            types::{
+            }, types::{
                 rendering::ClutKind,
+                rendering::TransparencyKind,
                 ControllerState,
-            },
-        },
-        types::{
+            }}, types::{
             ControllerResult,
             State,
-        },
-    },
-    types::{
+        }}, types::{
         bitfield::Bitfield,
         color::Color,
         geometry::*,
-    },
-    utilities::array::flip_rows,
-};
+    }, utilities::array::flip_rows};
 
 pub(crate) fn command_00_length(_data: &[u32]) -> Option<usize> {
     Some(1)
@@ -51,18 +40,14 @@ pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut Control
     debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
     let color = extract_color_rgb(data[0], 0);
-    // Upper left corner is starting point.
+    let colors = [color; 4];
     let base_point = extract_point_normalized(data[1], default_fill_x_position_modifier, default_fill_y_position_modifier);
     let size = extract_size_normalized(data[2], default_fill_x_size_modifier, default_fill_y_size_modifier);
+    let positions = make_positions_rect(base_point, size);
+    let transparency_kind = TransparencyKind::Opaque;
+    let indices = [0, 1, 2, 1, 2, 3];
 
-    let positions = [
-        Point2D::new(base_point.x, base_point.y - size.height),
-        Point2D::new(base_point.x + size.width, base_point.y - size.height),
-        Point2D::new(base_point.x, base_point.y),
-        Point2D::new(base_point.x + size.width, base_point.y),
-    ];
-
-    let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color)?;
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -102,9 +87,12 @@ pub(crate) fn command_20_handler(_state: &State, _controller_state: &mut Control
     debug::trace_gp0_command("Monochrome three-point polygon, opaque", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
+    let colors = [color; 3];
     let positions = extract_vertices_3_normalized([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let transparency_kind = TransparencyKind::Opaque;
+    let indices = [0, 1, 2];
 
-    let _ = backend_dispatch::draw_polygon_3_solid(video_backend, positions, color)?;
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -117,10 +105,12 @@ pub(crate) fn command_22_handler(_state: &State, controller_state: &mut Controll
     debug::trace_gp0_command("Monochrome three-point polygon, semi-transparent", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
+    let colors = [color; 3];
     let positions = extract_vertices_3_normalized([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
-    let transparency = controller_state.transparency_mode;
+    let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
+    let indices = [0, 1, 2];
 
-    let _ = backend_dispatch::draw_polygon_3_transparent(video_backend, positions, color, transparency)?;
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -133,9 +123,12 @@ pub(crate) fn command_28_handler(_state: &State, _controller_state: &mut Control
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
+    let colors = [color; 4];
     let positions = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
-
-    let _ = backend_dispatch::draw_polygon_4_solid(video_backend, positions, color)?;
+    let transparency_kind = TransparencyKind::Opaque;
+    let indices = [0, 1, 2, 1, 2, 3];
+    
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -148,10 +141,12 @@ pub(crate) fn command_2a_handler(_state: &State, controller_state: &mut Controll
     debug::trace_gp0_command("Monochrome four-point polygon, semi-transparent", data);
 
     let color = extract_color_rgb(data[0], std::u8::MAX);
+    let colors = [color; 4];
     let positions = extract_vertices_4_normalized([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
-    let transparency = controller_state.transparency_mode;
+    let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
+    let indices = [0, 1, 2, 1, 2, 3];
 
-    let _ = backend_dispatch::draw_polygon_4_transparent(video_backend, positions, color, transparency)?;
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -171,7 +166,7 @@ pub(crate) fn command_2c_handler(_state: &State, _controller_state: &mut Control
     let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
+    let _ = backend_dispatch::draw_triangles_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -190,7 +185,7 @@ pub(crate) fn command_2d_handler(_state: &State, _controller_state: &mut Control
     let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
+    let _ = backend_dispatch::draw_triangles_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -210,7 +205,7 @@ pub(crate) fn command_2e_handler(_state: &State, _controller_state: &mut Control
     let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
+    let _ = backend_dispatch::draw_triangles_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -224,8 +219,10 @@ pub(crate) fn command_30_handler(_state: &State, _controller_state: &mut Control
 
     let colors = extract_colors_3_rgb([data[0], data[2], data[4]], std::u8::MAX);
     let positions = extract_vertices_3_normalized([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let transparency_kind = TransparencyKind::Opaque;
+    let indices = [0, 1, 2];
 
-    let _ = backend_dispatch::draw_polygon_3_shaded(video_backend, positions, colors)?;
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -239,8 +236,10 @@ pub(crate) fn command_38_handler(_state: &State, _controller_state: &mut Control
 
     let colors = extract_colors_4_rgb([data[0], data[2], data[4], data[6]], std::u8::MAX);
     let positions = extract_vertices_4_normalized([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let transparency_kind = TransparencyKind::Opaque;
+    let indices = [0, 1, 2, 1, 2, 3];
 
-    let _ = backend_dispatch::draw_polygon_4_shaded(video_backend, positions, colors)?;
+    let _ = backend_dispatch::draw_triangles_shaded(video_backend, &indices, &positions, &colors, transparency_kind)?;
 
     Ok(())
 }
@@ -270,7 +269,7 @@ pub(crate) fn command_3e_handler(_state: &State, _controller_state: &mut Control
     let clut_base = extract_clut_base_texcoord_normalized(data[2]);
     let clut = ClutKind::from_data(clut_mode, clut_base);
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
+    let _ = backend_dispatch::draw_triangles_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -310,7 +309,7 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
+    let _ = backend_dispatch::draw_triangles_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -353,7 +352,7 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
         Point2D::new(base_point.x + size.width, base_point.y),
     ];
 
-    let _ = backend_dispatch::draw_polygon_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
+    let _ = backend_dispatch::draw_triangles_4_textured_framebuffer(video_backend, positions, texcoords, clut)?;
 
     Ok(())
 }
@@ -410,7 +409,7 @@ pub(crate) fn command_a0_handler(_state: &State, _controller_state: &mut Control
         texture_colors.push(colors[1]);
     }
 
-    let _ = backend_dispatch::draw_polygon_4_textured(video_backend, positions, texcoords, texture_width, texture_height, &texture_colors)?;
+    let _ = backend_dispatch::draw_triangles_4_textured(video_backend, positions, texcoords, texture_width, texture_height, &texture_colors)?;
 
     Ok(())
 }

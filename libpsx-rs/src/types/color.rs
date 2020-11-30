@@ -1,4 +1,6 @@
+use smallvec::SmallVec;
 use crate::types::bitfield::Bitfield;
+use crate::types::array::AsFlattened;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Color {
@@ -47,7 +49,23 @@ impl Color {
         [Color::from_packed_5551(Bitfield::new(0, 16).extract_from(packed) as u16), Color::from_packed_5551(Bitfield::new(16, 16).extract_from(packed) as u16)]
     }
 
-    pub(crate) fn as_flat(&self) -> (f32, f32, f32, f32) {
-        (self.r, self.g, self.b, self.a)
+    pub(crate) fn as_flat(&self) -> [f32; 4] {
+        [self.r, self.g, self.b, self.a]
+    }
+}
+
+impl AsFlattened for [Color] {
+    type Output = f32;
+    
+    fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
+        let mut buffer = SmallVec::new();
+        
+        for item in self.iter() {
+            for component in item.as_flat().iter() {
+                buffer.push(*component);
+            }
+        }
+
+        buffer
     }
 }

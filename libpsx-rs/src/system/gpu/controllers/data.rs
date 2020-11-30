@@ -242,3 +242,13 @@ pub(crate) fn extract_clut_base(clut_raw: u32) -> Point2D<isize, Pixel> {
 pub(crate) fn extract_clut_base_texcoord_normalized(clut_raw: u32) -> Point2D<f32, TexcoordNormalized> {
     normalize_texcoord(extract_clut_base(clut_raw))
 }
+
+/// Make normalized positions from a rectangle (upper left base point plus size).
+pub(crate) fn make_positions_rect(base_point: Point2D<f32, Normalized>, size: Size2D<f32, Normalized>) -> [Point2D<f32, Normalized>; 4] {
+    [
+        Point2D::new(base_point.x, base_point.y - size.height),
+        Point2D::new(base_point.x + size.width, base_point.y - size.height),
+        Point2D::new(base_point.x, base_point.y),
+        Point2D::new(base_point.x + size.width, base_point.y),
+    ]
+}

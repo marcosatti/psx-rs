@@ -1,5 +1,8 @@
 use crate::{
-    system::gpu::types::ClutMode,
+    system::gpu::types::{
+        ClutMode,
+        TransparencyMode,
+    },
     types::geometry::*,
 };
 
@@ -29,6 +32,26 @@ impl ClutKind {
             },
             ClutMode::Bits15 => ClutKind::Direct,
             ClutMode::Reserved => unreachable!("Reserved CLUT mode used!"),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub(crate) enum TransparencyKind {
+    Opaque,
+    Average,
+    Additive,
+    Difference,
+    Quarter,
+}
+
+impl TransparencyKind {
+    pub(crate) fn from_data(mode: TransparencyMode) -> TransparencyKind {
+        match mode {
+            TransparencyMode::Additive => TransparencyKind::Additive,
+            TransparencyMode::Average => TransparencyKind::Average,
+            TransparencyMode::Difference => TransparencyKind::Difference,
+            TransparencyMode::Quarter => TransparencyKind::Quarter,
         }
     }
 }
