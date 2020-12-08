@@ -38,8 +38,6 @@ pub(crate) fn normalized_to_texcoord_normalized_size(normalized_size: Size2D<f32
     Size2D::new(normalized_size.width / 2.0, normalized_size.height / 2.0)
 }
 
-////////////
-
 pub(crate) fn make_triangle_fan(rect: Rect<isize, Pixel>) -> [f32; 8] {
     let mut positions = [rect.origin; 4];
     // Upper left corner
@@ -50,10 +48,10 @@ pub(crate) fn make_triangle_fan(rect: Rect<isize, Pixel>) -> [f32; 8] {
     positions[1].y += 0;
     // Lower right corner
     positions[2].x += rect.size.width;
-    positions[2].y -= rect.size.height;
+    positions[2].y += rect.size.height;
     // Lower left corner
     positions[3].x += 0;
-    positions[3].y -= rect.size.height;
+    positions[3].y += rect.size.height;
 
     let positions = [
         normalize_position(positions[0]), 
@@ -81,8 +79,6 @@ pub(crate) fn make_colors_normalized(colors: &[Color]) -> SmallVec<[NormalizedCo
 pub(crate) fn make_texture_position_offsets_normalized(texture_position_offsets: &[Size2D<isize, Pixel>]) -> SmallVec<[Size2D<f32, NormalizedTexcoord>; 4]> {
     texture_position_offsets.iter().map(|p| normalize_texcoord_size(*p)).collect()
 }
-
-////////////
 
 pub(crate) fn rendering_mode_value(rendering_kind: RenderingKind) -> u32 {
     match rendering_kind {

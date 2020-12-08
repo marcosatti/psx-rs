@@ -1,4 +1,4 @@
-pub(crate) const TRACE_CALLS: bool = true;
+pub(crate) const TRACE_CALLS: bool = false;
 
 pub(crate) fn trace_call(description: &str) {
     if TRACE_CALLS {

@@ -51,6 +51,9 @@ void handle_render() {
 }
 
 void main() {
+    // Default / error color
+    out_color = vec4(1.0, 0.0, 0.0, 1.0);
+
     handle_mask_bit_check();
     handle_render();
     handle_mask_bit_force_set();

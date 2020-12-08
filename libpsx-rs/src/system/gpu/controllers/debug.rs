@@ -1,4 +1,4 @@
-const ENABLE_GP0_COMMAND_TRACING: bool = true;
+const ENABLE_GP0_COMMAND_TRACING: bool = false;
 
 pub(crate) fn trace_gp0_command(description: &str, data: &[u32]) {
     if !ENABLE_GP0_COMMAND_TRACING {

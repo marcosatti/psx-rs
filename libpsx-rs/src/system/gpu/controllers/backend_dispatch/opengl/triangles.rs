@@ -35,7 +35,6 @@ pub(crate) fn draw_triangles(backend_params: &BackendParams, params: TrianglesPa
         4 => 6,
         _ => panic!("Unsupported number of vertices: {}", params.vertices),
     };
-    log::debug!("indices_len = {:?}", indices_len);
 
     let positions_flat = make_positions_normalized(params.positions).as_flattened();
     let colors_flat = make_colors_normalized(params.colors).as_flattened();
@@ -107,49 +106,39 @@ pub(crate) fn draw_triangles(backend_params: &BackendParams, params: TrianglesPa
             let rendering_mode_cstr = b"rendering_mode\0";
             let rendering_mode_uniform = glGetUniformLocation(program_context.program_id, rendering_mode_cstr.as_ptr() as _);
             glUniform1ui(rendering_mode_uniform, rendering_mode_value);
-            log::debug!("rendering_mode_value = {:?}", rendering_mode_value);
 
             let texture_position_base_cstr = b"texture_position_base\0";
             let texture_position_base_uniform = glGetUniformLocation(program_context.program_id, texture_position_base_cstr.as_ptr() as _);
             glUniform2fv(texture_position_base_uniform, 1, texture_position_base_value.as_ptr());
-            log::debug!("texture_position_base_value = {:?}", texture_position_base_value);
             
             let clut_mode_cstr = b"clut_mode\0";
             let clut_mode_uniform = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as _);
             glUniform1ui(clut_mode_uniform, clut_mode_value);
-            log::debug!("clut_mode_value = {:?}", clut_mode_value);
 
             let clut_texture_position_base_cstr = b"clut_texture_position_base\0";
             let clut_texture_position_base_uniform = glGetUniformLocation(program_context.program_id, clut_texture_position_base_cstr.as_ptr() as _);
             glUniform2fv(clut_texture_position_base_uniform, 1, clut_texture_position_base_value.as_ptr());
-            log::debug!("clut_texture_position_base_value = {:?}", clut_texture_position_base_value);
             
             let transparency_mode_cstr = b"transparency_mode\0";
             let transparency_mode_uniform = glGetUniformLocation(program_context.program_id, transparency_mode_cstr.as_ptr() as _);
             glUniform1ui(transparency_mode_uniform, transparency_mode_value);
-            log::debug!("transparency_mode_value = {:?}", transparency_mode_value);
 
             let mask_bit_force_set_cstr = b"mask_bit_force_set\0";
             let mask_bit_force_set_uniform = glGetUniformLocation(program_context.program_id, mask_bit_force_set_cstr.as_ptr() as _);
             glUniform1i(mask_bit_force_set_uniform, mask_bit_force_set_value);
-            log::debug!("mask_bit_force_set_value = {:?}", mask_bit_force_set_value);
 
             let mask_bit_check_cstr = b"mask_bit_check\0";
             let mask_bit_check_uniform = glGetUniformLocation(program_context.program_id, mask_bit_check_cstr.as_ptr() as _);
             glUniform1i(mask_bit_check_uniform, mask_bit_check_value);
-            log::debug!("mask_bit_check_value = {:?}", mask_bit_check_value);
             
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[1]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, (params.vertices * std::mem::size_of::<f32>()) as _, positions_flat.as_ptr() as _);
-            log::debug!("positions_flat = {:?}", positions_flat);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, (params.vertices * 2 * std::mem::size_of::<f32>()) as _, positions_flat.as_ptr() as _);
 
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[2]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, (params.vertices * std::mem::size_of::<f32>()) as _, colors_flat.as_ptr() as _);
-            log::debug!("colors_flat = {:?}", colors_flat);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, (params.vertices * 3 * std::mem::size_of::<f32>()) as _, colors_flat.as_ptr() as _);
 
             glBindBuffer(GL_ARRAY_BUFFER, program_context.vbo_ids[3]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, (params.vertices * std::mem::size_of::<f32>()) as _, texture_position_offsets_flat.as_ptr() as _);
-            log::debug!("texture_position_offsets_flat = {:?}", texture_position_offsets_flat);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, (params.vertices * 2 * std::mem::size_of::<f32>()) as _, texture_position_offsets_flat.as_ptr() as _);
 
             glTextureBarrier();
             glDrawElements(GL_TRIANGLES, indices_len, GL_UNSIGNED_INT, std::ptr::null());

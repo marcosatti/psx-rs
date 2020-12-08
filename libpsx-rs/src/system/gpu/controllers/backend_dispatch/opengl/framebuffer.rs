@@ -31,9 +31,9 @@ pub(crate) fn read_framebuffer(backend_params: &BackendParams, params: ReadFrame
     static mut PROGRAM_CONTEXT: Option<ProgramContext> = None;
 
     debug::trace_call(stdext::function_name!());
-    
-    let mut rect = params.rectangle;
-    rect.origin.y -= rect.size.height;
+
+    let mut rectangle = params.rectangle;
+    rectangle.origin.y = VRAM_HEIGHT_LINES as isize - rect.origin.y - rect.size.height;
 
     let downsample_texture_width = VRAM_WIDTH_16B as GLint;
     let downsample_texture_height = VRAM_HEIGHT_LINES as GLint;
@@ -132,8 +132,8 @@ pub(crate) fn read_framebuffer(backend_params: &BackendParams, params: ReadFrame
     let mut buffer = Vec::new();
     buffer.reserve(VRAM_WIDTH_16B * VRAM_HEIGHT_LINES);
     raw_buffer.iter().for_each(|c| buffer.push(PackedColor::new(*c)));
-    buffer = extract_rectangle(&buffer, VRAM_WIDTH_16B, rect);
-    buffer = flip_rows(&buffer, rect.size.width as usize);
+    buffer = extract_rectangle(&buffer, VRAM_WIDTH_16B, rectangle);
+    buffer = flip_rows(&buffer, rectangle.size.width as usize);
 
     Ok(buffer)
 }
@@ -147,9 +147,9 @@ pub(crate) fn write_framebuffer(backend_params: &BackendParams, params: WriteFra
     let mask_bit_force_set_value = bool_to_flag(params.mask_bit_force_set) as i32;
     let mask_bit_check_value = bool_to_flag(params.mask_bit_check) as i32;
 
-    let mut buffer = Vec::new();
+    let mut buffer: Vec<u16> = Vec::new();
     buffer.reserve(params.rectangle.size.width as usize * params.rectangle.size.height as usize);
-    params.data.iter().for_each(|pc| buffer.push(PackedColor::new(pc.color)));
+    params.data.iter().for_each(|pc| buffer.push(pc.color));
     buffer = flip_rows(&buffer, params.rectangle.size.width as usize);
 
     {
@@ -157,7 +157,7 @@ pub(crate) fn write_framebuffer(backend_params: &BackendParams, params: WriteFra
 
         unsafe {
             if PROGRAM_CONTEXT.is_none() {
-                let texcoords_flat: [f32; 8] = [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0];
+                let texcoords_flat: [f32; 8] = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0];
 
                 let vs = shaders::compile_shader(shaders::vertex::RAW_WRITE, GL_VERTEX_SHADER);
                 let fs = shaders::compile_shader(shaders::fragment::RAW_WRITE, GL_FRAGMENT_SHADER);

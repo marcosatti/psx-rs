@@ -200,9 +200,7 @@ void main() {
         return;
     }
 
-    out_color = vec4(in_color.rgb, 0.0);
-
-    //handle_mask_bit_check();
-    //handle_render();
-    //handle_mask_bit_force_set();
+    handle_mask_bit_check();
+    handle_render();
+    handle_mask_bit_force_set();
 }
