@@ -33,7 +33,7 @@ pub(crate) fn read_framebuffer(backend_params: &BackendParams, params: ReadFrame
     debug::trace_call(stdext::function_name!());
 
     let mut rectangle = params.rectangle;
-    rectangle.origin.y = VRAM_HEIGHT_LINES as isize - rect.origin.y - rect.size.height;
+    rectangle.origin.y = VRAM_HEIGHT_LINES as isize - rectangle.origin.y - rectangle.size.height;
 
     let downsample_texture_width = VRAM_WIDTH_16B as GLint;
     let downsample_texture_height = VRAM_HEIGHT_LINES as GLint;

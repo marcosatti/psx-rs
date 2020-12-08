@@ -16,7 +16,9 @@ layout(location = 0) out vec4 out_color;
 
 const uint MAX_VALUE_5BIT = (1 << 5) - 1;
 const float WIDTH = 1024.0;
+const float HEIGHT = 512.0;
 const float TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL = 1.0 / WIDTH;
+const float TEXCOORD_NORMALIZED_HEIGHT_PER_PIXEL = 1.0 / HEIGHT;
 const uint RENDERING_MODE_SHADED = 0;
 const uint RENDERING_MODE_TEXTURE_BLENDING = 1;
 const uint RENDERING_MODE_RAW_TEXTURE = 2;
@@ -26,8 +28,8 @@ const uint TRANSPARENCY_MODE_ADDITIVE = 2;
 const uint TRANSPARENCY_MODE_DIFFERENCE = 3;
 const uint TRANSPARENCY_MODE_QUARTER = 4;
 const uint CLUT_MODE_DIRECT = 0;
-const uint CLUT_MODE_BIT4 = 0;
-const uint CLUT_MODE_BIT8 = 1;
+const uint CLUT_MODE_BIT4 = 1;
+const uint CLUT_MODE_BIT8 = 2;
 
 bool mask_bit(const vec4 texture_color) {
     return abs(texture_color.a - 1.0) < 0.00001;
@@ -132,14 +134,9 @@ void handle_clut() {
         ratio = 8.0;
     }
 
-    vec2 offset = in_texture_position_offset - texture_position_base;
-    offset.x = offset.x / ratio;
+    vec2 offset = vec2(in_texture_position_offset.x / ratio, -in_texture_position_offset.y);
     vec2 texture_position = texture_position_base + offset;
     vec4 texture_color = texture(framebuffer, texture_position);
-
-    if (is_texture_color_fully_transparent(texture_color)) {
-        discard;
-    }
 
     if (clut_mode == CLUT_MODE_DIRECT) {
         out_color = texture_color;
@@ -155,14 +152,15 @@ void handle_clut() {
         vec2 clut_texture_offset = vec2(TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * float(clut_index), 0.0);
         vec2 clut_texture_position = clut_texture_position_base + clut_texture_offset;
 
+        // Make sure we sample the CLUT by using the centre of the pixel.
+        clut_texture_position += vec2(0.5 * TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL, -0.5 * TEXCOORD_NORMALIZED_HEIGHT_PER_PIXEL);
+
         // Sample the CLUT.
-        vec4 clut_texture_color = texture(framebuffer, clut_texture_position);
-
-        if (is_texture_color_fully_transparent(clut_texture_color)) {
-            discard;
-        }
-
-        out_color = clut_texture_color;
+        out_color = texture(framebuffer, clut_texture_position);
+    }
+    
+    if (is_texture_color_fully_transparent(out_color)) {
+        discard;
     }
 }
 
@@ -174,8 +172,7 @@ void handle_render() {
         handle_clut();
 
         if (rendering_mode == RENDERING_MODE_TEXTURE_BLENDING) {
-            // TODO: Whats the proper formula for this??? 
-            out_color.rgb = mix(out_color.rgb, in_color.rgb, 0.5);
+            out_color.rgb = out_color.rgb * in_color.rgb / 0.5;
         }
 
         if (transparency_flag(out_color)) {

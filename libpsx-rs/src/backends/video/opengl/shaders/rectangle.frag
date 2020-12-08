@@ -27,8 +27,8 @@ const uint TRANSPARENCY_MODE_ADDITIVE = 2;
 const uint TRANSPARENCY_MODE_DIFFERENCE = 3;
 const uint TRANSPARENCY_MODE_QUARTER = 4;
 const uint CLUT_MODE_DIRECT = 0;
-const uint CLUT_MODE_BIT4 = 0;
-const uint CLUT_MODE_BIT8 = 1;
+const uint CLUT_MODE_BIT4 = 1;
+const uint CLUT_MODE_BIT8 = 2;
 
 bool mask_bit(const vec4 texture_color) {
     return abs(texture_color.a - 1.0) < 0.00001;
