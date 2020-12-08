@@ -4,33 +4,47 @@ use crate::{
         TransparencyMode,
     },
     types::geometry::*,
+    types::color::*,
 };
 
 #[derive(Copy, Clone, Debug)]
+pub(crate) enum RenderingKind {
+    Shaded,
+    TextureBlending {
+        page_base: Point2D<isize, Pixel>,
+        clut_kind: ClutKind,
+    },
+    RawTexture {
+        page_base: Point2D<isize, Pixel>,
+        clut_kind: ClutKind,
+    },
+}
+
+#[derive(Copy, Clone, Debug)]
 pub(crate) enum ClutKind {
+    Direct,
     Bits4 {
-        base: Point2D<f32, TexcoordNormalized>,
+        clut_base: Point2D<isize, Pixel>,
     },
     Bits8 {
-        base: Point2D<f32, TexcoordNormalized>,
+        clut_base: Point2D<isize, Pixel>,
     },
-    Direct,
 }
 
 impl ClutKind {
-    pub(crate) fn from_data(mode: ClutMode, base: Point2D<f32, TexcoordNormalized>) -> ClutKind {
+    pub(crate) fn from_data(mode: ClutMode, base: Point2D<isize, Pixel>) -> ClutKind {
         match mode {
+            ClutMode::Bits15 => ClutKind::Direct,
             ClutMode::Bits4 => {
                 ClutKind::Bits4 {
-                    base,
+                    clut_base: base,
                 }
             },
             ClutMode::Bits8 => {
                 ClutKind::Bits8 {
-                    base,
+                    clut_base: base,
                 }
             },
-            ClutMode::Bits15 => ClutKind::Direct,
             ClutMode::Reserved => unreachable!("Reserved CLUT mode used!"),
         }
     }
@@ -54,4 +68,36 @@ impl TransparencyKind {
             TransparencyMode::Quarter => TransparencyKind::Quarter,
         }
     }
+}
+
+pub(crate) struct ReadFramebufferParams {
+    pub(crate) rectangle: Rect<isize, Pixel>,
+}
+
+pub(crate) struct WriteFramebufferParams<'a> {
+    pub(crate) rectangle: Rect<isize, Pixel>,
+    pub(crate) data: &'a [PackedColor],
+    pub(crate) mask_bit_force_set: bool,
+    pub(crate) mask_bit_check: bool,
+}
+
+pub(crate) struct RectangleParams {
+    pub(crate) rectangle: Rect<isize, Pixel>,
+    pub(crate) color: Color,
+    pub(crate) texture_position_base_offset: Size2D<isize, Pixel>,
+    pub(crate) rendering_kind: RenderingKind,
+    pub(crate) transparency_kind: TransparencyKind,
+    pub(crate) mask_bit_force_set: bool,
+    pub(crate) mask_bit_check: bool,
+}
+
+pub(crate) struct TrianglesParams<'a> {
+    pub(crate) vertices: usize,
+    pub(crate) positions: &'a [Point2D<isize, Pixel>],
+    pub(crate) colors: &'a [Color],
+    pub(crate) texture_position_offsets: &'a [Size2D<isize, Pixel>],
+    pub(crate) rendering_kind: RenderingKind,
+    pub(crate) transparency_kind: TransparencyKind,
+    pub(crate) mask_bit_force_set: bool,
+    pub(crate) mask_bit_check: bool,
 }

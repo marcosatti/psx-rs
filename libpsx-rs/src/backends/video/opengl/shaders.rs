@@ -6,16 +6,18 @@ use std::ffi::CString;
 
 pub(crate) mod vertex {
     pub(crate) const CRTC: &'static str = include_str!("./shaders/crtc.vert");
-    pub(crate) const LINE_LOOP: &'static str = include_str!("./shaders/LINE_LOOP.vert");
-    pub(crate) const SHADED_TRIANGLES: &'static str = include_str!("./shaders/shaded_triangles.vert");
-    pub(crate) const TEXTURED_TRIANGLES: &'static str = include_str!("./shaders/textured_triangles.vert");
+    pub(crate) const RAW_READ: &'static str = include_str!("./shaders/raw_read.vert");
+    pub(crate) const RAW_WRITE: &'static str = include_str!("./shaders/raw_write.vert");
+    pub(crate) const RECTANGLE: &'static str = include_str!("./shaders/rectangle.vert");
+    pub(crate) const TRIANGLES: &'static str = include_str!("./shaders/triangles.vert");
 }
 
 pub(crate) mod fragment {
     pub(crate) const CRTC: &'static str = include_str!("./shaders/crtc.frag");
-    pub(crate) const LINE_LOOP: &'static str = include_str!("./shaders/LINE_LOOP.frag");
-    pub(crate) const SHADED_TRIANGLES: &'static str = include_str!("./shaders/shaded_triangles.frag");
-    pub(crate) const TEXTURED_TRIANGLES: &'static str = include_str!("./shaders/textured_triangles.frag");
+    pub(crate) const RAW_READ: &'static str = include_str!("./shaders/raw_read.frag");
+    pub(crate) const RAW_WRITE: &'static str = include_str!("./shaders/raw_write.frag");
+    pub(crate) const RECTANGLE: &'static str = include_str!("./shaders/rectangle.frag");
+    pub(crate) const TRIANGLES: &'static str = include_str!("./shaders/triangles.frag");
 }
 
 lazy_static! {

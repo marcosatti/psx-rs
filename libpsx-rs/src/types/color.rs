@@ -1,60 +1,70 @@
 use smallvec::SmallVec;
-use crate::types::bitfield::Bitfield;
 use crate::types::array::AsFlattened;
+use crate::types::bitfield::Bitfield;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Color {
-    pub(crate) r: f32,
-    pub(crate) g: f32,
-    pub(crate) b: f32,
-    pub(crate) a: f32,
+    pub(crate) r: u8,
+    pub(crate) g: u8,
+    pub(crate) b: u8,
 }
 
 impl Color {
-    pub(crate) fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
+    pub(crate) const fn new(r: u8, g: u8, b: u8) -> Color {
         Color {
             r,
             g,
             b,
-            a,
         }
     }
 
-    pub(crate) fn from_8888(r: u8, g: u8, b: u8, a: u8) -> Color {
-        const DIVISOR: f32 = std::u8::MAX as f32;
-        let r = r as f32 / DIVISOR;
-        let g = g as f32 / DIVISOR;
-        let b = b as f32 / DIVISOR;
-        let a = a as f32 / DIVISOR;
-        Color::new(r, g, b, a)
+    pub(crate) fn as_flat(&self) -> [u8; 3] {
+        [self.r, self.g, self.b]
     }
 
-    pub(crate) fn from_packed_888(packed: u32, a: u8) -> Color {
-        let r = Bitfield::new(0, 8).extract_from(packed) as u8;
-        let g = Bitfield::new(8, 8).extract_from(packed) as u8;
-        let b = Bitfield::new(16, 8).extract_from(packed) as u8;
-        Color::from_8888(r, g, b, a)
-    }
-
-    pub(crate) fn from_packed_5551(packed: u16) -> Color {
-        const DIVISOR: f32 = ((1u16 << 5) - 1) as f32;
-        let r = Bitfield::new(0, 5).extract_from(packed) as f32 / DIVISOR;
-        let g = Bitfield::new(5, 5).extract_from(packed) as f32 / DIVISOR;
-        let b = Bitfield::new(10, 5).extract_from(packed) as f32 / DIVISOR;
-        let a = Bitfield::new(15, 1).extract_from(packed) as f32;
-        Color::new(r, g, b, a)
-    }
-
-    pub(crate) fn from_packed_5551_x2(packed: u32) -> [Color; 2] {
-        [Color::from_packed_5551(Bitfield::new(0, 16).extract_from(packed) as u16), Color::from_packed_5551(Bitfield::new(16, 16).extract_from(packed) as u16)]
-    }
-
-    pub(crate) fn as_flat(&self) -> [f32; 4] {
-        [self.r, self.g, self.b, self.a]
+    pub(crate) fn to_normalized(&self) -> NormalizedColor {
+        NormalizedColor::new(self.r as f32 / std::u8::MAX as f32, self.g as f32 / std::u8::MAX as f32, self.b as f32 / std::u8::MAX as f32)
     }
 }
 
 impl AsFlattened for [Color] {
+    type Output = u8;
+    
+    fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
+        let mut buffer = SmallVec::new();
+        
+        for item in self.iter() {
+            for component in item.as_flat().iter() {
+                buffer.push(*component);
+            }
+        }
+
+        buffer
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub(crate) struct NormalizedColor {
+    pub(crate) r: f32,
+    pub(crate) g: f32,
+    pub(crate) b: f32,
+}
+
+impl NormalizedColor {
+    pub(crate) fn new(r: f32, g: f32, b: f32) -> NormalizedColor {
+        NormalizedColor {
+            r,
+            g,
+            b,
+        }
+    }
+
+    pub(crate) fn as_flat(&self) -> [f32; 3] {
+        [self.r, self.g, self.b]
+    }
+}
+
+impl AsFlattened for [NormalizedColor] {
     type Output = f32;
     
     fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
@@ -64,6 +74,41 @@ impl AsFlattened for [Color] {
             for component in item.as_flat().iter() {
                 buffer.push(*component);
             }
+        }
+
+        buffer
+    }
+}
+
+/// 5551 RGBA Packed Color.
+#[derive(Copy, Clone, Debug)]
+pub(crate) struct PackedColor {
+    pub(crate) color: u16,
+}
+
+impl PackedColor {
+    pub(crate) fn new(color: u16) -> PackedColor {
+        PackedColor {
+            color
+        }
+    }
+
+    pub(crate) fn from_x2(packed: u32) -> [PackedColor; 2] {
+        [
+            PackedColor::new(Bitfield::new(0, 16).extract_from(packed) as u16), 
+            PackedColor::new(Bitfield::new(16, 16).extract_from(packed) as u16),
+        ]
+    }
+}
+
+impl AsFlattened for [PackedColor] {
+    type Output = u16;
+    
+    fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
+        let mut buffer = SmallVec::new();
+        
+        for item in self.iter() {
+            buffer.push(item.color);
         }
 
         buffer
