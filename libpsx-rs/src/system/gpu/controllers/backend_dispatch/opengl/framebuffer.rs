@@ -33,7 +33,7 @@ pub(crate) fn read_framebuffer(backend_params: &BackendParams, params: ReadFrame
     debug::trace_call(stdext::function_name!());
 
     let mut rectangle = params.rectangle;
-    rectangle.origin.y = VRAM_HEIGHT_LINES as isize - rectangle.origin.y - rectangle.size.height;
+    rectangle.origin.y = VRAM_HEIGHT_LINES - rectangle.origin.y - rectangle.size.height;
 
     let downsample_texture_width = VRAM_WIDTH_16B as GLint;
     let downsample_texture_height = VRAM_HEIGHT_LINES as GLint;
@@ -143,7 +143,7 @@ pub(crate) fn write_framebuffer(backend_params: &BackendParams, params: WriteFra
 
     debug::trace_call(stdext::function_name!());
 
-    let positions_flat = make_triangle_fan(params.rectangle);
+    let positions_flat = make_triangle_fan(params.rectangle.cast());
     let mask_bit_force_set_value = bool_to_flag(params.mask_bit_force_set) as i32;
     let mask_bit_check_value = bool_to_flag(params.mask_bit_check) as i32;
 

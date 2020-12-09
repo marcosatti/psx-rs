@@ -6,49 +6,28 @@ uniform bool mask_bit_force_set;
 uniform bool mask_bit_check;
 
 layout(location = 0) in vec2 in_position;
-layout(location = 1) in vec2 in_tex_coord;
+layout(location = 1) in vec2 in_texture_position;
 layout(location = 0) out vec4 out_color;
 
-const float WIDTH = 1024.0;
-const float HEIGHT = 512.0;
-const float TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL = 1.0 / WIDTH;
-const float TEXCOORD_NORMALIZED_HEIGHT_PER_PIXEL = 1.0 / HEIGHT;
+/////////////////////////
+/// Utility functions ///
+/////////////////////////
 
-bool mask_bit(const vec4 color) {
-    return abs(color.a - 1.0) < 0.00001;
-}
-
-float coordinate_to_texture_coordinate_single(const float coordinate) {
-    return (coordinate + 1.0) / 2.0;
+bool alpha_set(const vec4 texture_color) {
+    return abs(texture_color.a - 1.0) < 0.00001;
 }
 
 vec2 coordinate_to_texture_coordinate(const vec2 coordinate) {
-    return vec2(
-        coordinate_to_texture_coordinate_single(coordinate.x),
-        coordinate_to_texture_coordinate_single(coordinate.y)
-    );
+    return vec2((coordinate.x + 1.0) / 2.0, (coordinate.y + 1.0) / 2.0);
 }
 
-void handle_mask_bit_check() {
-    if (mask_bit_check) {
-        vec2 framebuffer_texture_position = coordinate_to_texture_coordinate(in_position);
-        vec4 framebuffer_color = texture(framebuffer, framebuffer_texture_position);
+////////////////////
+/// Shader logic ///
+////////////////////
 
-        if (mask_bit(framebuffer_color)) {
-            discard;
-        }
-    }
-}
-
-void handle_mask_bit_force_set() {
-    if (mask_bit_force_set) {
-        out_color.a = 1.0;
-    }
-}
-
-void handle_render() {
-    out_color = texture(raw_texture, in_tex_coord);
-}
+void handle_mask_bit_check();
+void handle_mask_bit_force_set();
+void handle_render();
 
 void main() {
     // Default / error color
@@ -57,4 +36,25 @@ void main() {
     handle_mask_bit_check();
     handle_render();
     handle_mask_bit_force_set();
+}
+
+void handle_mask_bit_check() {
+    if (mask_bit_check) {
+        vec2 framebuffer_texture_position = coordinate_to_texture_coordinate(in_position);
+        vec4 framebuffer_color = texture(framebuffer, framebuffer_texture_position);
+
+        if (alpha_set(framebuffer_color)) {
+            discard;
+        }
+    }
+}
+
+void handle_render() {
+    out_color = texture(raw_texture, in_texture_position);
+}
+
+void handle_mask_bit_force_set() {
+    if (mask_bit_force_set) {
+        out_color.a = 1.0;
+    }
 }

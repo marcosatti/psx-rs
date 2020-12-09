@@ -13,7 +13,15 @@ use smallvec::SmallVec;
 /// Calculates the normalized coordinates from given pixel coordinates.
 /// Returned values are pixel-corner aligned (upper left corner). Corrections might need to be done as post-processing.
 pub(crate) fn normalize_position(point: Point2D<isize, Pixel>) -> Point2D<f32, Normalized> {
-    Point2D::new(-1.0 + (2.0 * point.x as f32 / VRAM_WIDTH_16B as f32), 1.0 - (2.0 * point.y as f32 / VRAM_HEIGHT_LINES as f32))
+    let position = Point2D::new(-1.0 + (2.0 * point.x as f32 / VRAM_WIDTH_16B as f32), 1.0 - (2.0 * point.y as f32 / VRAM_HEIGHT_LINES as f32));
+
+    if false {
+        if (position.x > 1.0) || (position.x < -1.0) || (position.y > 1.0) || (position.y < -1.0) {
+            log::warn!("Position outside of valid range: {:?}", point);
+        }
+    }
+
+    position
 }
 
 pub(crate) fn normalize_size(size: Size2D<isize, Pixel>) -> Size2D<f32, Normalized> {
@@ -22,11 +30,19 @@ pub(crate) fn normalize_size(size: Size2D<isize, Pixel>) -> Size2D<f32, Normaliz
 
 /// Calculates the normalized texture coordinates from given pixel coordinates.
 /// Returned values are pixel-corner aligned (upper left corner). Corrections might need to be done as post-processing.
-pub(crate) fn normalize_texcoord(texcoord: Point2D<isize, Pixel>) -> Point2D<f32, NormalizedTexcoord> {
-    Point2D::new(texcoord.x as f32 / VRAM_WIDTH_16B as f32, 1.0 - (texcoord.y as f32 / VRAM_HEIGHT_LINES as f32))
+pub(crate) fn normalize_texture_position(texcoord: Point2D<usize, Pixel>) -> Point2D<f32, NormalizedTexcoord> {
+    let position = Point2D::new(texcoord.x as f32 / VRAM_WIDTH_16B as f32, 1.0 - (texcoord.y as f32 / VRAM_HEIGHT_LINES as f32));
+
+    if false {
+        if (position.x > 1.0) || (position.x < 0.0) || (position.y > 1.0) || (position.y < 0.0) {
+            log::warn!("Texture position outside of valid range: {:?}", texcoord);
+        }
+    }
+
+    position
 }
 
-pub(crate) fn normalize_texcoord_size(texcoord_size: Size2D<isize, Pixel>) -> Size2D<f32, NormalizedTexcoord> {
+pub(crate) fn normalize_texture_size(texcoord_size: Size2D<isize, Pixel>) -> Size2D<f32, NormalizedTexcoord> {
     Size2D::new(texcoord_size.width as f32 / VRAM_WIDTH_16B as f32, texcoord_size.height as f32 / VRAM_HEIGHT_LINES as f32)
 }
 
@@ -77,7 +93,7 @@ pub(crate) fn make_colors_normalized(colors: &[Color]) -> SmallVec<[NormalizedCo
 }
 
 pub(crate) fn make_texture_position_offsets_normalized(texture_position_offsets: &[Size2D<isize, Pixel>]) -> SmallVec<[Size2D<f32, NormalizedTexcoord>; 4]> {
-    texture_position_offsets.iter().map(|p| normalize_texcoord_size(*p)).collect()
+    texture_position_offsets.iter().map(|p| normalize_texture_size(*p)).collect()
 }
 
 pub(crate) fn rendering_mode_value(rendering_kind: RenderingKind) -> u32 {
@@ -91,8 +107,8 @@ pub(crate) fn rendering_mode_value(rendering_kind: RenderingKind) -> u32 {
 pub(crate) fn texture_position_base_value(rendering_kind: RenderingKind) -> [f32; 2] {
     match rendering_kind {
         RenderingKind::Shaded => [0.0, 0.0],
-        RenderingKind::TextureBlending { page_base, .. } => normalize_texcoord(page_base).to_array(),
-        RenderingKind::RawTexture { page_base, .. } => normalize_texcoord(page_base).to_array(),
+        RenderingKind::TextureBlending { page_base, .. } => normalize_texture_position(page_base).to_array(),
+        RenderingKind::RawTexture { page_base, .. } => normalize_texture_position(page_base).to_array(),
     }
 }
 
@@ -152,12 +168,12 @@ pub(crate) fn clut_texture_position_base_value(rendering_kind: RenderingKind) ->
         ClutKind::Bits4 {
             clut_base,
         } => { 
-            normalize_texcoord(clut_base).to_array()
+            normalize_texture_position(clut_base).to_array()
         },
         ClutKind::Bits8 {
             clut_base,
         } => { 
-            normalize_texcoord(clut_base).to_array()
+            normalize_texture_position(clut_base).to_array()
         },
     }
 }

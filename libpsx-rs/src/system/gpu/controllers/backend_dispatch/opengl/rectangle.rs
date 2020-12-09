@@ -31,10 +31,12 @@ pub(crate) fn draw_rectangle(backend_params: &BackendParams, params: RectanglePa
     let color_value = params.color.to_normalized().as_flat();
     let rendering_mode_value = rendering_mode_value(params.rendering_kind);
     let texture_position_base_value = texture_position_base_value(params.rendering_kind);
-    let texture_position_base_offset_value = normalize_texcoord_size(params.texture_position_base_offset).to_array();
+    let texture_position_base_offset_value = normalize_texture_size(params.texture_position_base_offset).to_array();
     let clut_mode_value = clut_mode_value(params.rendering_kind);
     let clut_texture_position_base_value = clut_texture_position_base_value(params.rendering_kind);
     let transparency_mode_value = transparency_mode_value(params.transparency_kind);
+    let drawing_area_top_left_flat = normalize_position(params.drawing_area.min()).to_array();
+    let drawing_area_bottom_right_flat = normalize_position(params.drawing_area.max()).to_array();
     let mask_bit_force_set_value = bool_to_flag(params.mask_bit_force_set) as i32;
     let mask_bit_check_value = bool_to_flag(params.mask_bit_check) as i32;
 
@@ -104,6 +106,14 @@ pub(crate) fn draw_rectangle(backend_params: &BackendParams, params: RectanglePa
             let transparency_mode_cstr = b"transparency_mode\0";
             let transparency_mode_uniform = glGetUniformLocation(program_context.program_id, transparency_mode_cstr.as_ptr() as _);
             glUniform1ui(transparency_mode_uniform, transparency_mode_value);
+            
+            let drawing_area_top_left_cstr = b"drawing_area_top_left\0";
+            let drawing_area_top_left_uniform = glGetUniformLocation(program_context.program_id, drawing_area_top_left_cstr.as_ptr() as _);
+            glUniform2fv(drawing_area_top_left_uniform, 1, drawing_area_top_left_flat.as_ptr());
+
+            let drawing_area_bottom_right_cstr = b"drawing_area_bottom_right\0";
+            let drawing_area_bottom_right_uniform = glGetUniformLocation(program_context.program_id, drawing_area_bottom_right_cstr.as_ptr() as _);
+            glUniform2fv(drawing_area_bottom_right_uniform, 1, drawing_area_bottom_right_flat.as_ptr());
 
             let mask_bit_force_set_cstr = b"mask_bit_force_set\0";
             let mask_bit_force_set_uniform = glGetUniformLocation(program_context.program_id, mask_bit_force_set_cstr.as_ptr() as _);

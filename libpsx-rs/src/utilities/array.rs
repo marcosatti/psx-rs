@@ -37,14 +37,7 @@ pub(crate) fn flip_rows<T: Clone>(array: &[T], row_length: usize) -> Vec<T> {
 ///           - - - - -
 /// Min index
 /// The items marked as 'e' are extracted into a new flattened array.
-pub(crate) fn extract_rectangle<T: Clone, U>(array: &[T], row_length: usize, rect: Rect<isize, U>) -> Vec<T> {
-    assert!(rect.origin.x >= 0);
-    assert!(rect.origin.y >= 0);
-    assert!(rect.size.width >= 0);
-    assert!(rect.size.height >= 0);
-
-    let rect: Rect<usize, U> = rect.cast();
-
+pub(crate) fn extract_rectangle<T: Clone, U>(array: &[T], row_length: usize, rect: Rect<usize, U>) -> Vec<T> {
     let mut rect_buffer = Vec::new();
     rect_buffer.reserve(rect.size.width * rect.size.height);
 

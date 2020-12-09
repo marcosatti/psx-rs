@@ -2,18 +2,14 @@ use crate::{backends::video::VideoBackend, system::{gpu::{constants::*, controll
                 backend_dispatch,
                 data::*,
                 debug,
-            }, types::{
-                rendering::*,
-                ControllerState,
-            }}, types::{
+            }, types::TransparencyMode, types::{ClutMode, ControllerState, rendering::*}}, types::{
             ControllerResult,
             State,
         }}, types::{
         bitfield::Bitfield,
         color::*,
         geometry::*,
-    }
-};
+    }};
 use crate::utilities::bool_to_flag;
 
 const NULL_TEXTURE_POSITION_OFFSET: Size2D<isize, Pixel> = Size2D::new(0, 0);
@@ -47,10 +43,13 @@ pub(crate) fn command_02_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Fill Rectangle in VRAM", data);
 
-    let origin = extract_position(data[1], default_fill_x_position_modifier, default_fill_y_position_modifier);
+    let base = Point2D::new(0, 0);
+    let offset = extract_position_offset(data[1], default_fill_x_position_modifier, default_fill_y_position_modifier);
+    let origin = make_position(base, offset);
     let size = extract_size(data[2], default_fill_x_size_modifier, default_fill_y_size_modifier);
     let rectangle = Rect::new(origin, size);
     let color = extract_color(data[0]);
+    let drawing_area = Rect::new(Point2D::new(0, 0), Size2D::new(VRAM_WIDTH_16B as isize, VRAM_HEIGHT_LINES as isize));
 
     let _ = backend_dispatch::draw_rectangle(video_backend, RectangleParams {
         rectangle,
@@ -58,6 +57,7 @@ pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut Control
         texture_position_base_offset: NULL_TEXTURE_POSITION_OFFSET,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: false,
         mask_bit_check: false,
     })?;
@@ -99,8 +99,11 @@ pub(crate) fn command_20_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_20_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Monochrome three-point polygon, opaque", data);
 
-    let positions = extract_positions_3([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_3([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_3(base, offsets);
     let color = extract_color(data[0]);
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
     
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 3,
@@ -109,6 +112,7 @@ pub(crate) fn command_20_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind:  TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -123,10 +127,13 @@ pub(crate) fn command_22_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_22_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Monochrome three-point polygon, semi-transparent", data);
 
-    let positions = extract_positions_3([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_3([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_3(base, offsets);
     let color = extract_color(data[0]);
     let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 3,
         positions: &positions,
@@ -134,6 +141,7 @@ pub(crate) fn command_22_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind:  transparency_kind,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -148,8 +156,11 @@ pub(crate) fn command_28_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_28_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Monochrome four-point polygon, opaque", data);
 
-    let positions = extract_positions_4([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let color = extract_color(data[0]);
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
     
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
@@ -158,6 +169,7 @@ pub(crate) fn command_28_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind:  TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -172,10 +184,13 @@ pub(crate) fn command_2a_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2a_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Monochrome four-point polygon, semi-transparent", data);
 
-    let positions = extract_positions_4([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let color = extract_color(data[0]);
     let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
         positions: &positions,
@@ -183,6 +198,7 @@ pub(crate) fn command_2a_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind:  transparency_kind,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -197,7 +213,9 @@ pub(crate) fn command_2c_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2c_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured four-point polygon, opaque, texture-blending", data);
 
-    let positions = extract_positions_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let color = extract_color(data[0]);
     let page_base = extract_texpage_base(data[4]);
     let texture_position_offsets = extract_texture_position_offsets_4([data[2], data[4], data[6], data[8]]);
@@ -205,7 +223,8 @@ pub(crate) fn command_2c_handler(_state: &State, controller_state: &mut Controll
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
     let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
         positions: &positions,
@@ -213,6 +232,7 @@ pub(crate) fn command_2c_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &texture_position_offsets,
         rendering_kind,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -227,14 +247,17 @@ pub(crate) fn command_2d_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2d_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured four-point polygon, opaque, raw-texture", data);
 
-    let positions = extract_positions_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let page_base = extract_texpage_base(data[4]);
     let texture_position_offsets = extract_texture_position_offsets_4([data[2], data[4], data[6], data[8]]);
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
     let rendering_kind = RenderingKind::RawTexture { page_base, clut_kind };
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
         positions: &positions,
@@ -242,6 +265,7 @@ pub(crate) fn command_2d_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &texture_position_offsets,
         rendering_kind,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -256,7 +280,9 @@ pub(crate) fn command_2e_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_2e_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured four-point polygon, semi-transparent, texture-blending", data);
 
-    let positions = extract_positions_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let color = extract_color(data[0]);
     let page_base = extract_texpage_base(data[4]);
     let texture_position_offsets = extract_texture_position_offsets_4([data[2], data[4], data[6], data[8]]);
@@ -264,8 +290,10 @@ pub(crate) fn command_2e_handler(_state: &State, controller_state: &mut Controll
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
     let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
-    let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
-
+    let transparency_mode = extract_texpage_transparency_mode(data[4]);
+    let transparency_kind = TransparencyKind::from_data(transparency_mode);
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
         positions: &positions,
@@ -273,6 +301,7 @@ pub(crate) fn command_2e_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &texture_position_offsets,
         rendering_kind,
         transparency_kind,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -287,9 +316,12 @@ pub(crate) fn command_30_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_30_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Shaded three-point polygon, opaque", data);
 
-    let positions = extract_positions_3([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_3([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_3(base, offsets);
     let colors = extract_colors_3([data[0], data[2], data[4]]);
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 3,
         positions: &positions,
@@ -297,6 +329,7 @@ pub(crate) fn command_30_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -311,9 +344,12 @@ pub(crate) fn command_38_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_38_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Shaded four-point polygon, opaque", data);
 
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let colors = extract_colors_4([data[0], data[2], data[4], data[6]]);
-    let positions = extract_positions_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
         positions: &positions,
@@ -321,6 +357,7 @@ pub(crate) fn command_38_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
         rendering_kind: RenderingKind::Shaded,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -347,7 +384,9 @@ pub(crate) fn command_3e_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_3e_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Shaded Textured four-point polygon, semi-transparent, tex-blend", data);
 
-    let positions = extract_positions_4([data[1], data[4], data[7], data[10]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_4([data[1], data[4], data[7], data[10]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_4(base, offsets);
     let colors = extract_colors_4([data[0], data[3], data[6], data[9]]);
     let page_base = extract_texpage_base(data[5]);
     let texture_position_offsets = extract_texture_position_offsets_4([data[2], data[5], data[8], data[11]]);
@@ -355,8 +394,10 @@ pub(crate) fn command_3e_handler(_state: &State, controller_state: &mut Controll
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
     let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
-    let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
-
+    let transparency_mode = extract_texpage_transparency_mode(data[5]);
+    let transparency_kind = TransparencyKind::from_data(transparency_mode);
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
         vertices: 4,
         positions: &positions,
@@ -364,6 +405,7 @@ pub(crate) fn command_3e_handler(_state: &State, controller_state: &mut Controll
         texture_position_offsets: &texture_position_offsets,
         rendering_kind,
         transparency_kind,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -390,7 +432,9 @@ pub(crate) fn command_65_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_65_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured Rectangle, variable size, opaque, raw-texture", data);
 
-    let origin = extract_position(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offset = extract_position_offset(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
+    let origin = make_position(base, offset);
     let size = extract_size(data[3], default_render_x_size_modifier, default_render_y_size_modifier);
     let rectangle = Rect::new(origin, size);
     let texture_position_base_offset = extract_texture_position_offset(data[2]);
@@ -399,13 +443,15 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
     let rendering_kind = RenderingKind::RawTexture { page_base, clut_kind };
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_rectangle(video_backend, RectangleParams {
         rectangle,
         color: NULL_COLOR,
         texture_position_base_offset,
         rendering_kind,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -432,7 +478,9 @@ pub(crate) fn command_7c_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Textured Rectangle, 16x16, opaque, texture-blending", data);
 
-    let origin = extract_position(data[1], default_render_x_position_modifier, default_render_y_position_modifier);
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offset = extract_position_offset(data[1], default_render_x_position_modifier, default_render_y_position_modifier).cast();
+    let origin = make_position(base, offset);
     let size = Size2D::new(16, 16);
     let rectangle = Rect::new(origin, size);
     let color = extract_color(data[0]);
@@ -442,13 +490,15 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
     let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
-
+    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+    
     let _ = backend_dispatch::draw_rectangle(video_backend, RectangleParams {
         rectangle,
         color,
         texture_position_base_offset,
         rendering_kind,
         transparency_kind: TransparencyKind::Opaque,
+        drawing_area,
         mask_bit_force_set: controller_state.mask_bit_force_set,
         mask_bit_check: controller_state.mask_bit_check,
     })?;
@@ -462,6 +512,8 @@ pub(crate) fn command_80_length(_data: &[u32]) -> Option<usize> {
 
 pub(crate) fn command_80_handler(_state: &State, _controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Copy Rectangle (VRAM to VRAM)", data);
+
+    log::warn!("Copy Rectangle (VRAM to VRAM) not implemented");
 
     Ok(())
 }
@@ -489,8 +541,10 @@ pub(crate) fn command_a0_handler(_state: &State, controller_state: &mut Controll
 
     debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
 
-    let origin = extract_position(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
-    let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier);
+    let base = Point2D::new(0, 0);
+    let offset = extract_position_offset(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
+    let origin = make_position(base, offset).to_usize_checked();
+    let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier).to_usize_checked();
     let rectangle = Rect::new(origin, size);
 
     let mut texture_colors = Vec::with_capacity((data.len() - 3) * 2);
@@ -500,14 +554,11 @@ pub(crate) fn command_a0_handler(_state: &State, controller_state: &mut Controll
         texture_colors.push(colors[1]);
     }
 
-    let mask_bit_force_set = controller_state.mask_bit_force_set;
-    let mask_bit_check = controller_state.mask_bit_check;
-
     let _ = backend_dispatch::write_framebuffer(video_backend, WriteFramebufferParams { 
         rectangle, 
         data: &texture_colors,
-        mask_bit_force_set,
-        mask_bit_check,
+        mask_bit_force_set: controller_state.mask_bit_force_set,
+        mask_bit_check: controller_state.mask_bit_check,
     })?;
 
     Ok(())
@@ -520,19 +571,16 @@ pub(crate) fn command_c0_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_c0_handler(state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Copy Rectangle (VRAM to CPU)", data);
 
-    let origin = extract_position(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
-    let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier);
-
-    let count = size.width as usize * size.height as usize;
-    assert!(count != 0, format!("Empty count (area) - what happens? ({:?})", size));
-
+    let base = Point2D::new(0, 0);
+    let offset = extract_position_offset(data[1], default_copy_x_position_modifier, default_copy_y_position_modifier);
+    let origin = make_position(base, offset).to_usize_checked();
+    let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier).to_usize_checked();
     let rectangle = Rect::new(origin, size);
+    assert!(rectangle.area() != 0, format!("Empty area - what happens? ({:?})", size));
 
-    let mut data = backend_dispatch::read_framebuffer(video_backend, ReadFramebufferParams {
-        rectangle
-    })?.map_err(|_| "No backend available for reading framebuffer".to_owned())?;
-    
-    assert!(data.len() == count, format!("Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", count, data.len()));
+    let params = ReadFramebufferParams { rectangle };
+    let mut data = backend_dispatch::read_framebuffer(video_backend, params)?.map_err(|_| "No backend available for reading framebuffer".to_owned())?;
+    assert!(data.len() == rectangle.area() as usize, format!("Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", rectangle.area(), data.len()));
 
     // Data is to be packed from 2 x u16 into u32. Pad the last u16 if its an odd amount.
     if data.len() % 2 != 0 {
@@ -542,7 +590,7 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
     state.gpu.read.clear();
     controller_state.gp0_read_buffer.clear();
 
-    let fifo_words = (count + 1) / 2;
+    let fifo_words = (rectangle.area() as usize + 1) / 2;
     for i in 0..fifo_words {
         let mut word: u32 = 0;
         word = Bitfield::new(0, 16).insert_into(word, data[i * 2].color as u32);
@@ -560,34 +608,45 @@ pub(crate) fn command_e1_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_e1_handler(state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Draw Mode setting", data);
 
-    let stat = &state.gpu.stat;
-
-    let texpage_base_x = Bitfield::new(0, 4).extract_from(data[0]);
-    stat.write_bitfield(STAT_TEXPAGEX, texpage_base_x);
-    controller_state.texpage_base_x = texpage_base_x as isize;
-
-    let texpage_base_y = Bitfield::new(4, 1).extract_from(data[0]);
-    stat.write_bitfield(STAT_TEXPAGEY, texpage_base_y);
-    controller_state.texpage_base_y = texpage_base_y as isize;
-
+    let texpage_base_x_raw = Bitfield::new(0, 4).extract_from(data[0]);
+    let texpage_base_y_raw = Bitfield::new(4, 1).extract_from(data[0]);
     let transparency_mode_raw = Bitfield::new(5, 2).extract_from(data[0]);
-    stat.write_bitfield(STAT_TRANSPARENCY, transparency_mode_raw);
-    controller_state.transparency_mode = extract_texpage_transparency_mode(data[0]);
-
     let clut_mode_raw = Bitfield::new(7, 2).extract_from(data[0]);
-    stat.write_bitfield(STAT_TEXPAGE_COLORS, clut_mode_raw);
-    controller_state.clut_mode = extract_texpage_clut_mode(data[0]);
+    let dither_raw = Bitfield::new(9, 1).extract_from(data[0]);
+    let draw_to_display_area_raw = Bitfield::new(10, 1).extract_from(data[0]);
+    let texture_disable_raw = Bitfield::new(11, 1).extract_from(data[0]);
+    let textured_rect_x_flip_raw = Bitfield::new(12, 1).extract_from(data[0]);
+    let textured_rect_y_flip_raw = Bitfield::new(13, 1).extract_from(data[0]);
 
-    stat.write_bitfield(STAT_DITHER, Bitfield::new(9, 1).extract_from(data[0]));
-
-    stat.write_bitfield(STAT_DRAW_DISPLAY, Bitfield::new(10, 1).extract_from(data[0]));
-
-    stat.write_bitfield(STAT_TEXTURE_DISABLE, Bitfield::new(11, 1).extract_from(data[0]));
-
-    controller_state.textured_rect_x_flip = Bitfield::new(12, 1).extract_from(data[0]) != 0;
-
-    controller_state.textured_rect_y_flip = Bitfield::new(13, 1).extract_from(data[0]) != 0;
-    // warn!("GP0(E1h) not properly implemented");
+    controller_state.texpage_base_x = texpage_base_x_raw as usize * 64;
+    controller_state.texpage_base_y = texpage_base_y_raw as usize * 256;
+    controller_state.transparency_mode = match transparency_mode_raw {
+        0 => TransparencyMode::Average,
+        1 => TransparencyMode::Additive,
+        2 => TransparencyMode::Difference,
+        3 => TransparencyMode::Quarter,
+        _ => unreachable!("Invalid transparency mode"),
+    };
+    controller_state.clut_mode = match clut_mode_raw {
+        0 => ClutMode::Bits4,
+        1 => ClutMode::Bits8,
+        2 => ClutMode::Bits15,
+        3 => ClutMode::Reserved,
+        _ => unreachable!("Invalid CLUT mode"),
+    };
+    controller_state.dither = dither_raw > 0;
+    controller_state.draw_to_display_area = draw_to_display_area_raw > 0;
+    controller_state.texture_disable = texture_disable_raw > 0;
+    controller_state.textured_rect_x_flip = textured_rect_x_flip_raw > 0;
+    controller_state.textured_rect_y_flip = textured_rect_y_flip_raw > 0;
+    
+    state.gpu.stat.write_bitfield(STAT_TEXPAGEX, texpage_base_x_raw);
+    state.gpu.stat.write_bitfield(STAT_TEXPAGEY, texpage_base_y_raw);
+    state.gpu.stat.write_bitfield(STAT_TRANSPARENCY, transparency_mode_raw);
+    state.gpu.stat.write_bitfield(STAT_TEXPAGE_COLORS, clut_mode_raw);
+    state.gpu.stat.write_bitfield(STAT_DITHER, dither_raw);
+    state.gpu.stat.write_bitfield(STAT_DRAW_DISPLAY, draw_to_display_area_raw);
+    state.gpu.stat.write_bitfield(STAT_TEXTURE_DISABLE, texture_disable_raw);
 
     Ok(())
 }
@@ -599,11 +658,10 @@ pub(crate) fn command_e2_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_e2_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Texture Window setting", data);
 
-    controller_state.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize;
-    controller_state.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize;
-    controller_state.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as isize;
-    controller_state.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as isize;
-    // warn!("GP0(E2h) not properly implemented");
+    controller_state.texture_window_mask_x = Bitfield::new(0, 5).extract_from(data[0]) as usize * 8;
+    controller_state.texture_window_mask_y = Bitfield::new(5, 5).extract_from(data[0]) as usize * 8;
+    controller_state.texture_window_offset_x = Bitfield::new(10, 5).extract_from(data[0]) as usize * 8;
+    controller_state.texture_window_offset_y = Bitfield::new(15, 5).extract_from(data[0]) as usize * 8;
 
     Ok(())
 }
@@ -617,12 +675,6 @@ pub(crate) fn command_e3_handler(_state: &State, controller_state: &mut Controll
 
     controller_state.drawing_area_x1 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     controller_state.drawing_area_y1 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
-    // warn!("GP0(E3h) not properly implemented");
-
-    if (controller_state.drawing_area_x1 != 0) || (controller_state.drawing_area_y1 != 0) {
-        // log::debug!("Non zero drawing area x1 y1: {}, {}", controller_state.drawing_area_x1,
-        // controller_state.drawing_area_y1);
-    }
 
     Ok(())
 }
@@ -633,15 +685,9 @@ pub(crate) fn command_e4_length(_data: &[u32]) -> Option<usize> {
 
 pub(crate) fn command_e4_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
-
+    
     controller_state.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     controller_state.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
-    // warn!("GP0(E4h) not properly implemented");
-
-    if (controller_state.drawing_area_x2 != 0) || (controller_state.drawing_area_y2 != 0) {
-        // log::debug!("Non zero drawing area x2 y2: {}, {}", controller_state.drawing_area_x2,
-        // controller_state.drawing_area_y2);
-    }
 
     Ok(())
 }
@@ -653,20 +699,9 @@ pub(crate) fn command_e5_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_e5_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Set Drawing Offset", data);
 
-    let x_offset = Bitfield::new(0, 11).extract_from(data[0]) as i16;
-    let y_offset = Bitfield::new(11, 11).extract_from(data[0]) as i16;
-    // warn!("GP0(E5h) not properly implemented");
-
-    // Sign extend from 11-bit to 16-bit.
-    controller_state.drawing_offset_x = ((x_offset << 5) >> 5) as isize;
-    controller_state.drawing_offset_y = ((y_offset << 5) >> 5) as isize;
-
-    // debug!("Drawing offset set to X = {} (raw = 0x{:X}), Y = {} (raw = 0x{:X})", x_offset,
-    // controller_state.drawing_offset_x, y_offset, controller_state.drawing_offset_y);
-    if (x_offset != 0) || (y_offset != 0) {
-        // log::debug!("Non zero drawing offset: {}, {}", controller_state.drawing_offset_x,
-        // controller_state.drawing_offset_y);
-    }
+    let sign_extend = |v: i16| ((v << 5) >> 5) as isize;
+    controller_state.drawing_offset_x = sign_extend(Bitfield::new(0, 11).extract_from(data[0]) as i16);
+    controller_state.drawing_offset_y = sign_extend(Bitfield::new(11, 11).extract_from(data[0]) as i16);
 
     Ok(())
 }
@@ -678,17 +713,14 @@ pub(crate) fn command_e6_length(_data: &[u32]) -> Option<usize> {
 pub(crate) fn command_e6_handler(state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Mask Bit Setting", data);
 
-    let stat = &state.gpu.stat;
-
     let mask_bit_force_set = Bitfield::new(0, 1).extract_from(data[0]) > 0;
     let mask_bit_check = Bitfield::new(1, 1).extract_from(data[0]) > 0;
 
     controller_state.mask_bit_force_set = mask_bit_force_set;
     controller_state.mask_bit_check = mask_bit_check;
 
-    stat.write_bitfield(STAT_DRAW_MASK, bool_to_flag(mask_bit_force_set));
-    stat.write_bitfield(STAT_DRAW_PIXELS, bool_to_flag(mask_bit_check));
-    // warn!("GP0(E6h) not properly implemented");
+    state.gpu.stat.write_bitfield(STAT_DRAW_MASK, bool_to_flag(mask_bit_force_set));
+    state.gpu.stat.write_bitfield(STAT_DRAW_PIXELS, bool_to_flag(mask_bit_check));
 
     Ok(())
 }

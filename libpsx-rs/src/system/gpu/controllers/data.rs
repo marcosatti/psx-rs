@@ -86,28 +86,28 @@ pub(crate) fn extract_colors_4(colors_raw: [u32; 4]) -> [Color; 4] {
     ]
 }
 
-pub(crate) fn extract_position(point_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Point2D<isize, Pixel> {
-    Point2D::new(x_modifier(Bitfield::new(0, 16).extract_from(point_raw) as isize), y_modifier(Bitfield::new(16, 16).extract_from(point_raw) as isize))
+pub(crate) fn extract_position_offset(point_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Size2D<isize, Pixel> {
+    Size2D::new(x_modifier(Bitfield::new(0, 16).extract_from(point_raw) as isize), y_modifier(Bitfield::new(16, 16).extract_from(point_raw) as isize))
 }
 
 pub(crate) fn extract_size(size_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Size2D<isize, Pixel> {
     Size2D::new(x_modifier(Bitfield::new(0, 16).extract_from(size_raw) as isize), y_modifier(Bitfield::new(16, 16).extract_from(size_raw) as isize))
 }
 
-pub(crate) fn extract_positions_3(positions_raw: [u32; 3], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Point2D<isize, Pixel>; 3] {
+pub(crate) fn extract_position_offsets_3(positions_raw: [u32; 3], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Size2D<isize, Pixel>; 3] {
     [
-        extract_position(positions_raw[0], x_modifier, y_modifier), 
-        extract_position(positions_raw[1], x_modifier, y_modifier), 
-        extract_position(positions_raw[2], x_modifier, y_modifier),
+        extract_position_offset(positions_raw[0], x_modifier, y_modifier), 
+        extract_position_offset(positions_raw[1], x_modifier, y_modifier), 
+        extract_position_offset(positions_raw[2], x_modifier, y_modifier),
     ]
 }
 
-pub(crate) fn extract_positions_4(positions_raw: [u32; 4], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Point2D<isize, Pixel>; 4] {
+pub(crate) fn extract_position_offsets_4(positions_raw: [u32; 4], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Size2D<isize, Pixel>; 4] {
     [
-        extract_position(positions_raw[0], x_modifier, y_modifier),
-        extract_position(positions_raw[1], x_modifier, y_modifier),
-        extract_position(positions_raw[2], x_modifier, y_modifier),
-        extract_position(positions_raw[3], x_modifier, y_modifier),
+        extract_position_offset(positions_raw[0], x_modifier, y_modifier),
+        extract_position_offset(positions_raw[1], x_modifier, y_modifier),
+        extract_position_offset(positions_raw[2], x_modifier, y_modifier),
+        extract_position_offset(positions_raw[3], x_modifier, y_modifier),
     ]
 }
 
@@ -134,26 +134,26 @@ pub(crate) fn extract_texture_position_offsets_4(texcoords_raw: [u32; 4]) -> [Si
     ]
 }
 
-pub(crate) fn extract_clut_base(clut_raw: u32) -> Point2D<isize, Pixel> {
+pub(crate) fn extract_clut_base(clut_raw: u32) -> Point2D<usize, Pixel> {
     const CLUT: Bitfield = Bitfield::new(16, 16);
     const CLUT_X: Bitfield = Bitfield::new(0, 6);
     const CLUT_Y: Bitfield = Bitfield::new(6, 9);
     
     let clut = CLUT.extract_from(clut_raw);
-    let clut_x = (CLUT_X.extract_from(clut) * 16) as isize;
-    let clut_y = CLUT_Y.extract_from(clut) as isize;
+    let clut_x = CLUT_X.extract_from(clut) as usize * 16;
+    let clut_y = CLUT_Y.extract_from(clut) as usize;
 
     Point2D::new(clut_x, clut_y)
 }
 
-pub(crate) fn extract_texpage_base(texpage_raw: u32) -> Point2D<isize, Pixel> {
+pub(crate) fn extract_texpage_base(texpage_raw: u32) -> Point2D<usize, Pixel> {
     const TEXPAGE: Bitfield = Bitfield::new(16, 16);
     const TEXPAGE_X: Bitfield = Bitfield::new(0, 4);
     const TEXPAGE_Y: Bitfield = Bitfield::new(4, 1);
 
     let texpage = TEXPAGE.extract_from(texpage_raw);
-    let texpage_x_base = TEXPAGE_X.extract_from(texpage) as isize * 64;
-    let texpage_y_base = TEXPAGE_Y.extract_from(texpage) as isize * 256;
+    let texpage_x_base = TEXPAGE_X.extract_from(texpage) as usize * 64;
+    let texpage_y_base = TEXPAGE_Y.extract_from(texpage) as usize * 256;
     
     Point2D::new(texpage_x_base, texpage_y_base)
 }
@@ -176,4 +176,22 @@ pub(crate) fn extract_texpage_clut_mode(texpage_raw: u32) -> ClutMode {
         3 => ClutMode::Reserved,
         _ => unreachable!("Invalid CLUT mode"),
     }
+}
+
+pub(crate) fn make_position(base: Point2D<isize, Pixel>, offset: Size2D<isize, Pixel>) -> Point2D<isize, Pixel> {
+    base + offset
+}
+
+pub(crate) fn make_positions_3(base: Point2D<isize, Pixel>, offsets: [Size2D<isize, Pixel>; 3]) -> [Point2D<isize, Pixel>; 3] {
+    [make_position(base, offsets[0]), make_position(base, offsets[1]), make_position(base, offsets[2])]
+}
+
+pub(crate) fn make_positions_4(base: Point2D<isize, Pixel>, offsets: [Size2D<isize, Pixel>; 4]) -> [Point2D<isize, Pixel>; 4] {
+    [make_position(base, offsets[0]), make_position(base, offsets[1]), make_position(base, offsets[2]), make_position(base, offsets[3])]
+}
+
+pub(crate) fn make_rectangle_by_corners(top_left_x: usize, top_left_y: usize, bottom_right_x: usize, bottom_right_y: usize) -> Rect<isize, Pixel> {
+    let origin = Point2D::new(top_left_x as isize, top_left_y as isize);
+    let size = Size2D::new(bottom_right_x as isize - top_left_x as isize, bottom_right_y as isize - top_left_y as isize);
+    Rect::new(origin, size)
 }
