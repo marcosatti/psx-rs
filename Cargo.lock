@@ -452,6 +452,7 @@ dependencies = [
  "parking_lot",
  "rayon",
  "serde",
+ "smallvec",
  "stdext",
  "typenum",
  "zstd",

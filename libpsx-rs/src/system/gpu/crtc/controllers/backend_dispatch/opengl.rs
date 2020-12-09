@@ -31,8 +31,8 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
 
                 let texcoords_flat: [f32; 8] = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
 
-                let vs = opengl::shaders::compile_shader(opengl::shaders::vertex::TEXTURED_POLYGON, GL_VERTEX_SHADER);
-                let fs = opengl::shaders::compile_shader(opengl::shaders::fragment::TEXTURED_POLYGON, GL_FRAGMENT_SHADER);
+                let vs = opengl::shaders::compile_shader(opengl::shaders::vertex::CRTC, GL_VERTEX_SHADER);
+                let fs = opengl::shaders::compile_shader(opengl::shaders::fragment::CRTC, GL_FRAGMENT_SHADER);
                 let program = opengl::shaders::create_program(&[vs, fs]);
 
                 let mut vao = 0;
@@ -44,13 +44,13 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
                 let mut vbo_position = 0;
                 glGenBuffers(1, &mut vbo_position);
                 glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
-                glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, positions_flat.as_ptr() as *const std::ffi::c_void, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, (8 * std::mem::size_of::<f32>()) as _, positions_flat.as_ptr() as _, GL_STATIC_DRAW);
                 glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
                 let mut vbo_texcoord = 0;
                 glGenBuffers(1, &mut vbo_texcoord);
                 glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoord);
-                glBufferData(GL_ARRAY_BUFFER, 8 * std::mem::size_of::<f32>() as GLsizeiptr, texcoords_flat.as_ptr() as *const std::ffi::c_void, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, (8 * std::mem::size_of::<f32>()) as _, texcoords_flat.as_ptr() as _, GL_STATIC_DRAW);
                 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE as GLboolean, 0, std::ptr::null());
 
                 PROGRAM_CONTEXT = Some(opengl::rendering::ProgramContext::new(program, vao, &[vbo_position, vbo_texcoord], &[]));
@@ -58,6 +58,7 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
 
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
+
             glBindVertexArray(program_context.vao_id);
 
             // Bind the window FBO so it's now active.
@@ -67,19 +68,16 @@ pub(crate) fn render(backend_params: &opengl::BackendParams) -> ControllerResult
             glViewport(0, 0, width as GLint, height as GLint);
 
             // Bind the off-screen texture to the uniform variable.
-            // Don't need to use the copy texture here as we are using a different FBO to render to.
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, opengl::rendering::SCENE_TEXTURE);
-            let tex2d_cstr = b"tex2d\0";
-            let uniform_tex2d = glGetUniformLocation(program_context.program_id, tex2d_cstr.as_ptr() as *const GLchar);
-            glUniform1i(uniform_tex2d, 0);
 
-            let clut_mode_cstr = b"clut_mode\0";
-            let uniform_clut_mode = glGetUniformLocation(program_context.program_id, clut_mode_cstr.as_ptr() as *const GLchar);
-            glUniform1ui(uniform_clut_mode, 2);
+            let framebuffer_cstr = b"framebuffer\0";
+            let framebuffer_uniform = glGetUniformLocation(program_context.program_id, framebuffer_cstr.as_ptr() as _);
+            glUniform1i(framebuffer_uniform, 0);
 
-            // Draw the off-screen texture to the window FBO, hard synchronise after.
+            // Draw the off-screen texture to the window FBO.
+            glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-            glFinish();
 
             (context.present_fn)();
 

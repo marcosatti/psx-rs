@@ -13,7 +13,7 @@ const SAVE_STATE_DEFAULT_NAME: &'static str = "save_state_default.bin.zst";
 #[derive(Serialize, Deserialize)]
 struct SaveState {
     state: Box<State>,
-    gpu_framebuffer: Vec<u8>,
+    gpu_framebuffer: Vec<f32>,
 }
 
 pub fn save_state(core: &Core, name: Option<&str>) -> Result<(), String> {
@@ -54,7 +54,7 @@ pub fn load_state(core: &mut Core, name: Option<&str>) -> Result<(), String> {
     Ok(())
 }
 
-fn read_gpu_framebuffer(video_backend: &VideoBackend) -> Result<Vec<u8>, String> {
+fn read_gpu_framebuffer(video_backend: &VideoBackend) -> Result<Vec<f32>, String> {
     match video_backend {
         VideoBackend::None => Err("Cannot serialize GPU framebuffer as there is no active backend".into()),
         #[cfg(opengl)]
@@ -63,7 +63,7 @@ fn read_gpu_framebuffer(video_backend: &VideoBackend) -> Result<Vec<u8>, String>
     }
 }
 
-fn write_gpu_framebuffer(video_backend: &VideoBackend, data: &[u8]) -> Result<(), String> {
+fn write_gpu_framebuffer(video_backend: &VideoBackend, data: &[f32]) -> Result<(), String> {
     match video_backend {
         VideoBackend::None => Err("Cannot deserialize GPU framebuffer as there is no active backend".into()),
         #[cfg(opengl)]
@@ -77,24 +77,24 @@ mod opengl {
     use crate::backends::video::opengl::rendering::*;
     use opengl_sys::*;
 
-    pub(crate) fn read_gpu_framebuffer(backend_params: &crate::backends::video::opengl::BackendParams) -> Result<Vec<u8>, String> {
+    pub(crate) fn read_gpu_framebuffer(backend_params: &crate::backends::video::opengl::BackendParams) -> Result<Vec<f32>, String> {
         unsafe {
             let buffer_size = SCENE_TEXTURE_WIDTH as usize * SCENE_TEXTURE_HEIGHT as usize * 4;
-            let mut buffer: Vec<u8> = vec![0; buffer_size];
+            let mut buffer: Vec<f32> = vec![0.0; buffer_size];
 
             {
                 let (_context_guard, _context) = backend_params.context.guard();
 
                 glFinish();
                 glBindTexture(GL_TEXTURE_2D, SCENE_TEXTURE);
-                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.as_mut_ptr() as *mut std::ffi::c_void);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer.as_mut_ptr() as *mut std::ffi::c_void);
             }
 
             Ok(buffer)
         }
     }
 
-    pub(crate) fn write_gpu_framebuffer(backend_params: &crate::backends::video::opengl::BackendParams, data: &[u8]) -> Result<(), String> {
+    pub(crate) fn write_gpu_framebuffer(backend_params: &crate::backends::video::opengl::BackendParams, data: &[f32]) -> Result<(), String> {
         unsafe {
             let buffer_size = SCENE_TEXTURE_WIDTH as usize * SCENE_TEXTURE_HEIGHT as usize * 4;
 
@@ -107,7 +107,7 @@ mod opengl {
 
                 glFinish();
                 glBindTexture(GL_TEXTURE_2D, crate::backends::video::opengl::rendering::SCENE_TEXTURE);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as GLint, SCENE_TEXTURE_WIDTH, SCENE_TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.as_ptr() as *const std::ffi::c_void);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F as GLint, SCENE_TEXTURE_WIDTH, SCENE_TEXTURE_HEIGHT, 0, GL_RGBA, GL_FLOAT, data.as_ptr() as *const std::ffi::c_void);
             }
 
             Ok(())

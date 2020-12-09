@@ -5,17 +5,19 @@ use parking_lot::Mutex;
 use std::ffi::CString;
 
 pub(crate) mod vertex {
-    pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/solid_line_loop.vert");
-    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/solid_polygon.vert");
-    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/shaded_polygon.vert");
-    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/textured_polygon.vert");
+    pub(crate) const CRTC: &'static str = include_str!("./shaders/crtc.vert");
+    pub(crate) const RAW_READ: &'static str = include_str!("./shaders/raw_read.vert");
+    pub(crate) const RAW_WRITE: &'static str = include_str!("./shaders/raw_write.vert");
+    pub(crate) const RECTANGLE: &'static str = include_str!("./shaders/rectangle.vert");
+    pub(crate) const TRIANGLES: &'static str = include_str!("./shaders/triangles.vert");
 }
 
 pub(crate) mod fragment {
-    pub(crate) const SOLID_LINE_LOOP: &'static str = include_str!("./shaders/solid_line_loop.frag");
-    pub(crate) const SOLID_POLYGON: &'static str = include_str!("./shaders/solid_polygon.frag");
-    pub(crate) const SHADED_POLYGON: &'static str = include_str!("./shaders/shaded_polygon.frag");
-    pub(crate) const TEXTURED_POLYGON: &'static str = include_str!("./shaders/textured_polygon.frag");
+    pub(crate) const CRTC: &'static str = include_str!("./shaders/crtc.frag");
+    pub(crate) const RAW_READ: &'static str = include_str!("./shaders/raw_read.frag");
+    pub(crate) const RAW_WRITE: &'static str = include_str!("./shaders/raw_write.frag");
+    pub(crate) const RECTANGLE: &'static str = include_str!("./shaders/rectangle.frag");
+    pub(crate) const TRIANGLES: &'static str = include_str!("./shaders/triangles.frag");
 }
 
 lazy_static! {

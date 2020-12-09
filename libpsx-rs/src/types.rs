@@ -1,3 +1,4 @@
+pub(crate) mod array;
 pub(crate) mod bitfield;
 pub(crate) mod color;
 pub(crate) mod exclusive_state;
