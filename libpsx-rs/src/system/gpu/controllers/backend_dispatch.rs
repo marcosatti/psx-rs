@@ -6,16 +6,10 @@ mod opengl;
 use crate::{
     backends::video::VideoBackend,
     system::{
-        gpu::types::{
-            rendering::{
-                *,
-            },
-        },
+        gpu::types::rendering::*,
         types::ControllerResult,
     },
-    types::{
-        color::*,
-    },
+    types::color::*,
 };
 
 pub(crate) fn read_framebuffer(video_backend: &VideoBackend, params: ReadFramebufferParams) -> ControllerResult<Result<Vec<PackedColor>, ()>> {

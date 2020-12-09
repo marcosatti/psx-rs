@@ -1,12 +1,12 @@
-use crate::system::gpu::types::{
-    rendering::*,
-};
-use crate::types::geometry::*;
-use crate::types::color::*;
 use crate::{
     system::gpu::{
-        constants::*
-    }
+        constants::*,
+        types::rendering::*,
+    },
+    types::{
+        color::*,
+        geometry::*,
+    },
 };
 use smallvec::SmallVec;
 
@@ -69,19 +69,9 @@ pub(crate) fn make_triangle_fan(rect: Rect<isize, Pixel>) -> [f32; 8] {
     positions[3].x += 0;
     positions[3].y += rect.size.height;
 
-    let positions = [
-        normalize_position(positions[0]), 
-        normalize_position(positions[1]), 
-        normalize_position(positions[2]), 
-        normalize_position(positions[3]),
-    ];
-    
-    [
-        positions[0].x, positions[0].y,
-        positions[1].x, positions[1].y,
-        positions[2].x, positions[2].y,
-        positions[3].x, positions[3].y,
-    ]
+    let positions = [normalize_position(positions[0]), normalize_position(positions[1]), normalize_position(positions[2]), normalize_position(positions[3])];
+
+    [positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y, positions[3].x, positions[3].y]
 }
 
 pub(crate) fn make_positions_normalized(positions: &[Point2D<isize, Pixel>]) -> SmallVec<[Point2D<f32, Normalized>; 4]> {
@@ -99,16 +89,26 @@ pub(crate) fn make_texture_position_offsets_normalized(texture_position_offsets:
 pub(crate) fn rendering_mode_value(rendering_kind: RenderingKind) -> u32 {
     match rendering_kind {
         RenderingKind::Shaded => 0,
-        RenderingKind::TextureBlending { .. } => 1,
-        RenderingKind::RawTexture { .. } => 2,
+        RenderingKind::TextureBlending {
+            ..
+        } => 1,
+        RenderingKind::RawTexture {
+            ..
+        } => 2,
     }
 }
 
 pub(crate) fn texture_position_base_value(rendering_kind: RenderingKind) -> [f32; 2] {
     match rendering_kind {
         RenderingKind::Shaded => [0.0, 0.0],
-        RenderingKind::TextureBlending { page_base, .. } => normalize_texture_position(page_base).to_array(),
-        RenderingKind::RawTexture { page_base, .. } => normalize_texture_position(page_base).to_array(),
+        RenderingKind::TextureBlending {
+            page_base,
+            ..
+        } => normalize_texture_position(page_base).to_array(),
+        RenderingKind::RawTexture {
+            page_base,
+            ..
+        } => normalize_texture_position(page_base).to_array(),
     }
 }
 
@@ -120,15 +120,11 @@ pub(crate) fn clut_mode_value(rendering_kind: RenderingKind) -> u32 {
         RenderingKind::TextureBlending {
             clut_kind,
             ..
-        } => {
-            clut_kind
-        },
+        } => clut_kind,
         RenderingKind::RawTexture {
             clut_kind,
             ..
-        } => {
-            clut_kind
-        },
+        } => clut_kind,
     };
 
     match clut_kind {
@@ -150,31 +146,21 @@ pub(crate) fn clut_texture_position_base_value(rendering_kind: RenderingKind) ->
         RenderingKind::TextureBlending {
             clut_kind,
             ..
-        } => {
-            clut_kind
-        },
+        } => clut_kind,
         RenderingKind::RawTexture {
             clut_kind,
             ..
-        } => {
-            clut_kind
-        },
+        } => clut_kind,
     };
 
     match clut_kind {
-        ClutKind::Direct => {
-            [0.0, 0.0]
-        },
+        ClutKind::Direct => [0.0, 0.0],
         ClutKind::Bits4 {
             clut_base,
-        } => { 
-            normalize_texture_position(clut_base).to_array()
-        },
+        } => normalize_texture_position(clut_base).to_array(),
         ClutKind::Bits8 {
             clut_base,
-        } => { 
-            normalize_texture_position(clut_base).to_array()
-        },
+        } => normalize_texture_position(clut_base).to_array(),
     }
 }
 

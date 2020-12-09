@@ -5,25 +5,25 @@ use crate::{
     },
     system::{
         gpu::{
+            constants::{
+                VRAM_HEIGHT_LINES,
+                VRAM_WIDTH_16B,
+            },
             controllers::backend_dispatch::opengl::{
-                debug,
                 data::*,
+                debug,
             },
             types::rendering::*,
         },
         types::ControllerResult,
     },
-    types::{
-        color::*,
+    types::color::*,
+    utilities::{
+        array::*,
+        bool_to_flag,
     },
-    utilities::array::*,
-};
-use crate::system::gpu::constants::{
-    VRAM_HEIGHT_LINES,
-    VRAM_WIDTH_16B,
 };
 use opengl_sys::*;
-use crate::utilities::bool_to_flag;
 
 pub(crate) fn read_framebuffer(backend_params: &BackendParams, params: ReadFramebufferParams) -> ControllerResult<Vec<PackedColor>> {
     // TODO: resources are not free'd.
@@ -194,7 +194,7 @@ pub(crate) fn write_framebuffer(backend_params: &BackendParams, params: WriteFra
 
             let program_context = PROGRAM_CONTEXT.as_ref().unwrap();
             glUseProgram(program_context.program_id);
-            
+
             glBindVertexArray(program_context.vao_id);
 
             glActiveTexture(GL_TEXTURE0);
@@ -203,15 +203,25 @@ pub(crate) fn write_framebuffer(backend_params: &BackendParams, params: WriteFra
             let framebuffer_cstr = b"framebuffer\0";
             let framebuffer_uniform = glGetUniformLocation(program_context.program_id, framebuffer_cstr.as_ptr() as _);
             glUniform1i(framebuffer_uniform, 0);
-            
+
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, program_context.texture_ids[0]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA as _, params.rectangle.size.width as _, params.rectangle.size.height as _, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, buffer.as_ptr() as _);
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA as _,
+                params.rectangle.size.width as _,
+                params.rectangle.size.height as _,
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_SHORT_1_5_5_5_REV,
+                buffer.as_ptr() as _,
+            );
 
             let raw_texture_cstr = b"raw_texture\0";
             let raw_texture_uniform = glGetUniformLocation(program_context.program_id, raw_texture_cstr.as_ptr() as _);
             glUniform1i(raw_texture_uniform, 1);
-            
+
             let mask_bit_force_set_cstr = b"mask_bit_force_set\0";
             let mask_bit_force_set_uniform = glGetUniformLocation(program_context.program_id, mask_bit_force_set_cstr.as_ptr() as _);
             glUniform1i(mask_bit_force_set_uniform, mask_bit_force_set_value);

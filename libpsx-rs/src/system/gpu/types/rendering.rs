@@ -3,8 +3,10 @@ use crate::{
         ClutMode,
         TransparencyMode,
     },
-    types::geometry::*,
-    types::color::*,
+    types::{
+        color::*,
+        geometry::*,
+    },
 };
 
 #[derive(Copy, Clone, Debug)]

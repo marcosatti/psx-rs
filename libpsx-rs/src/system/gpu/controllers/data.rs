@@ -1,7 +1,5 @@
 use crate::{
-    system::gpu::{
-        types::*,
-    },
+    system::gpu::types::*,
     types::{
         bitfield::Bitfield,
         color::Color,
@@ -70,20 +68,11 @@ pub(crate) fn extract_color(color_raw: u32) -> Color {
 }
 
 pub(crate) fn extract_colors_3(colors_raw: [u32; 3]) -> [Color; 3] {
-    [
-        extract_color(colors_raw[0]), 
-        extract_color(colors_raw[1]), 
-        extract_color(colors_raw[2]),
-    ]
+    [extract_color(colors_raw[0]), extract_color(colors_raw[1]), extract_color(colors_raw[2])]
 }
 
 pub(crate) fn extract_colors_4(colors_raw: [u32; 4]) -> [Color; 4] {
-    [
-        extract_color(colors_raw[0]), 
-        extract_color(colors_raw[1]), 
-        extract_color(colors_raw[2]), 
-        extract_color(colors_raw[3]),
-    ]
+    [extract_color(colors_raw[0]), extract_color(colors_raw[1]), extract_color(colors_raw[2]), extract_color(colors_raw[3])]
 }
 
 pub(crate) fn extract_position_offset(point_raw: u32, x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> Size2D<isize, Pixel> {
@@ -96,8 +85,8 @@ pub(crate) fn extract_size(size_raw: u32, x_modifier: fn(isize) -> isize, y_modi
 
 pub(crate) fn extract_position_offsets_3(positions_raw: [u32; 3], x_modifier: fn(isize) -> isize, y_modifier: fn(isize) -> isize) -> [Size2D<isize, Pixel>; 3] {
     [
-        extract_position_offset(positions_raw[0], x_modifier, y_modifier), 
-        extract_position_offset(positions_raw[1], x_modifier, y_modifier), 
+        extract_position_offset(positions_raw[0], x_modifier, y_modifier),
+        extract_position_offset(positions_raw[1], x_modifier, y_modifier),
         extract_position_offset(positions_raw[2], x_modifier, y_modifier),
     ]
 }
@@ -116,16 +105,10 @@ pub(crate) fn extract_texture_position_offset(texcoord_raw: u32) -> Size2D<isize
 }
 
 pub(crate) fn extract_texture_position_offsets_3(texcoords_raw: [u32; 3]) -> [Size2D<isize, Pixel>; 3] {
-
-    [
-        extract_texture_position_offset(texcoords_raw[0]),
-        extract_texture_position_offset(texcoords_raw[1]),
-        extract_texture_position_offset(texcoords_raw[2]),
-    ]
+    [extract_texture_position_offset(texcoords_raw[0]), extract_texture_position_offset(texcoords_raw[1]), extract_texture_position_offset(texcoords_raw[2])]
 }
 
 pub(crate) fn extract_texture_position_offsets_4(texcoords_raw: [u32; 4]) -> [Size2D<isize, Pixel>; 4] {
-
     [
         extract_texture_position_offset(texcoords_raw[0]),
         extract_texture_position_offset(texcoords_raw[1]),
@@ -138,7 +121,7 @@ pub(crate) fn extract_clut_base(clut_raw: u32) -> Point2D<usize, Pixel> {
     const CLUT: Bitfield = Bitfield::new(16, 16);
     const CLUT_X: Bitfield = Bitfield::new(0, 6);
     const CLUT_Y: Bitfield = Bitfield::new(6, 9);
-    
+
     let clut = CLUT.extract_from(clut_raw);
     let clut_x = CLUT_X.extract_from(clut) as usize * 16;
     let clut_y = CLUT_Y.extract_from(clut) as usize;
@@ -154,7 +137,7 @@ pub(crate) fn extract_texpage_base(texpage_raw: u32) -> Point2D<usize, Pixel> {
     let texpage = TEXPAGE.extract_from(texpage_raw);
     let texpage_x_base = TEXPAGE_X.extract_from(texpage) as usize * 64;
     let texpage_y_base = TEXPAGE_Y.extract_from(texpage) as usize * 256;
-    
+
     Point2D::new(texpage_x_base, texpage_y_base)
 }
 

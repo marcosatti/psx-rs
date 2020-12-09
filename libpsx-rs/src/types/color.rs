@@ -1,6 +1,8 @@
+use crate::types::{
+    array::AsFlattened,
+    bitfield::Bitfield,
+};
 use smallvec::SmallVec;
-use crate::types::array::AsFlattened;
-use crate::types::bitfield::Bitfield;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Color {
@@ -29,10 +31,10 @@ impl Color {
 
 impl AsFlattened for [Color] {
     type Output = u8;
-    
+
     fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
         let mut buffer = SmallVec::new();
-        
+
         for item in self.iter() {
             for component in item.as_flat().iter() {
                 buffer.push(*component);
@@ -66,10 +68,10 @@ impl NormalizedColor {
 
 impl AsFlattened for [NormalizedColor] {
     type Output = f32;
-    
+
     fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
         let mut buffer = SmallVec::new();
-        
+
         for item in self.iter() {
             for component in item.as_flat().iter() {
                 buffer.push(*component);
@@ -89,24 +91,21 @@ pub(crate) struct PackedColor {
 impl PackedColor {
     pub(crate) fn new(color: u16) -> PackedColor {
         PackedColor {
-            color
+            color,
         }
     }
 
     pub(crate) fn from_x2(packed: u32) -> [PackedColor; 2] {
-        [
-            PackedColor::new(Bitfield::new(0, 16).extract_from(packed) as u16), 
-            PackedColor::new(Bitfield::new(16, 16).extract_from(packed) as u16),
-        ]
+        [PackedColor::new(Bitfield::new(0, 16).extract_from(packed) as u16), PackedColor::new(Bitfield::new(16, 16).extract_from(packed) as u16)]
     }
 }
 
 impl AsFlattened for [PackedColor] {
     type Output = u16;
-    
+
     fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
         let mut buffer = SmallVec::new();
-        
+
         for item in self.iter() {
             buffer.push(item.color);
         }

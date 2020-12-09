@@ -1,10 +1,10 @@
+use crate::types::array::AsFlattened;
 pub(crate) use euclid::{
     Point2D,
-    Size2D,
     Rect,
+    Size2D,
 };
 use smallvec::SmallVec;
-use crate::types::array::AsFlattened;
 
 // Units
 pub(crate) struct Normalized;
@@ -13,10 +13,10 @@ pub(crate) struct Pixel;
 
 impl<BaseType: Copy, Unit> AsFlattened for [Point2D<BaseType, Unit>] {
     type Output = BaseType;
-    
+
     fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
         let mut buffer = SmallVec::new();
-        
+
         for item in self.iter() {
             buffer.push(item.x);
             buffer.push(item.y);
@@ -28,10 +28,10 @@ impl<BaseType: Copy, Unit> AsFlattened for [Point2D<BaseType, Unit>] {
 
 impl<BaseType: Copy, Unit> AsFlattened for [Size2D<BaseType, Unit>] {
     type Output = BaseType;
-    
+
     fn as_flattened(&self) -> SmallVec<[Self::Output; 16]> {
         let mut buffer = SmallVec::new();
-        
+
         for item in self.iter() {
             buffer.push(item.width);
             buffer.push(item.height);
@@ -47,7 +47,7 @@ pub(crate) trait ToUsizeChecked {
     fn to_usize_checked(&self) -> Self::Output;
 }
 
-impl ToUsizeChecked for Point2D<isize, Pixel>  {
+impl ToUsizeChecked for Point2D<isize, Pixel> {
     type Output = Point2D<usize, Pixel>;
 
     fn to_usize_checked(&self) -> Self::Output {
@@ -57,7 +57,7 @@ impl ToUsizeChecked for Point2D<isize, Pixel>  {
     }
 }
 
-impl ToUsizeChecked for Size2D<isize, Pixel>  {
+impl ToUsizeChecked for Size2D<isize, Pixel> {
     type Output = Size2D<usize, Pixel>;
 
     fn to_usize_checked(&self) -> Self::Output {

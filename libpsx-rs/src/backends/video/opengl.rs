@@ -76,7 +76,7 @@ pub(crate) fn setup(config: &Config, backend_params: &BackendParams) {
 
         // Other.
         glViewport(0, 0, scene_texture_width, scene_texture_height);
-        
+
         glDisable(GL_DITHER);
         glDisable(GL_MULTISAMPLE);
 

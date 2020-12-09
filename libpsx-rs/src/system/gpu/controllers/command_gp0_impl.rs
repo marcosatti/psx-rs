@@ -1,20 +1,37 @@
-use crate::{backends::video::VideoBackend, system::{gpu::{constants::*, controllers::{
+use crate::{
+    backends::video::VideoBackend,
+    system::{
+        gpu::{
+            constants::*,
+            controllers::{
                 backend_dispatch,
                 data::*,
                 debug,
-            }, types::TransparencyMode, types::{ClutMode, ControllerState, rendering::*}}, types::{
+            },
+            types::{
+                rendering::*,
+                ClutMode,
+                ControllerState,
+                TransparencyMode,
+            },
+        },
+        types::{
             ControllerResult,
             State,
-        }}, types::{
+        },
+    },
+    types::{
         bitfield::Bitfield,
         color::*,
         geometry::*,
-    }};
-use crate::utilities::bool_to_flag;
+    },
+    utilities::bool_to_flag,
+};
 
 const NULL_TEXTURE_POSITION_OFFSET: Size2D<isize, Pixel> = Size2D::new(0, 0);
 const NULL_TEXTURE_POSITION_OFFSET_3: [Size2D<isize, Pixel>; 3] = [NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET];
-const NULL_TEXTURE_POSITION_OFFSET_4: [Size2D<isize, Pixel>; 4] = [NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET];
+const NULL_TEXTURE_POSITION_OFFSET_4: [Size2D<isize, Pixel>; 4] =
+    [NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET, NULL_TEXTURE_POSITION_OFFSET];
 const NULL_COLOR: Color = Color::new(0, 0, 0);
 const _NULL_COLOR_3: [Color; 3] = [NULL_COLOR, NULL_COLOR, NULL_COLOR];
 const NULL_COLOR_4: [Color; 4] = [NULL_COLOR, NULL_COLOR, NULL_COLOR, NULL_COLOR];
@@ -51,16 +68,19 @@ pub(crate) fn command_02_handler(_state: &State, _controller_state: &mut Control
     let color = extract_color(data[0]);
     let drawing_area = Rect::new(Point2D::new(0, 0), Size2D::new(VRAM_WIDTH_16B as isize, VRAM_HEIGHT_LINES as isize));
 
-    let _ = backend_dispatch::draw_rectangle(video_backend, RectangleParams {
-        rectangle,
-        color,
-        texture_position_base_offset: NULL_TEXTURE_POSITION_OFFSET,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: false,
-        mask_bit_check: false,
-    })?;
+    let _ = backend_dispatch::draw_rectangle(
+        video_backend,
+        RectangleParams {
+            rectangle,
+            color,
+            texture_position_base_offset: NULL_TEXTURE_POSITION_OFFSET,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: false,
+            mask_bit_check: false,
+        },
+    )?;
 
     Ok(())
 }
@@ -103,19 +123,23 @@ pub(crate) fn command_20_handler(_state: &State, controller_state: &mut Controll
     let offsets = extract_position_offsets_3([data[1], data[2], data[3]], default_render_x_position_modifier, default_render_y_position_modifier);
     let positions = make_positions_3(base, offsets);
     let color = extract_color(data[0]);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 3,
-        positions: &positions,
-        colors: &[color; 3],
-        texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind:  TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 3,
+            positions: &positions,
+            colors: &[color; 3],
+            texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -132,19 +156,23 @@ pub(crate) fn command_22_handler(_state: &State, controller_state: &mut Controll
     let positions = make_positions_3(base, offsets);
     let color = extract_color(data[0]);
     let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 3,
-        positions: &positions,
-        colors: &[color; 3],
-        texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind:  transparency_kind,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 3,
+            positions: &positions,
+            colors: &[color; 3],
+            texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -160,19 +188,23 @@ pub(crate) fn command_28_handler(_state: &State, controller_state: &mut Controll
     let offsets = extract_position_offsets_4([data[1], data[2], data[3], data[4]], default_render_x_position_modifier, default_render_y_position_modifier);
     let positions = make_positions_4(base, offsets);
     let color = extract_color(data[0]);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &[color; 4],
-        texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind:  TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &[color; 4],
+            texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -189,19 +221,23 @@ pub(crate) fn command_2a_handler(_state: &State, controller_state: &mut Controll
     let positions = make_positions_4(base, offsets);
     let color = extract_color(data[0]);
     let transparency_kind = TransparencyKind::from_data(controller_state.transparency_mode);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &[color; 4],
-        texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind:  transparency_kind,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &[color; 4],
+            texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -222,20 +258,27 @@ pub(crate) fn command_2c_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
-    let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &[color; 4],
-        texture_position_offsets: &texture_position_offsets,
-        rendering_kind,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let rendering_kind = RenderingKind::TextureBlending {
+        page_base,
+        clut_kind,
+    };
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &[color; 4],
+            texture_position_offsets: &texture_position_offsets,
+            rendering_kind,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -255,20 +298,27 @@ pub(crate) fn command_2d_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
-    let rendering_kind = RenderingKind::RawTexture { page_base, clut_kind };
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &NULL_COLOR_4,
-        texture_position_offsets: &texture_position_offsets,
-        rendering_kind,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let rendering_kind = RenderingKind::RawTexture {
+        page_base,
+        clut_kind,
+    };
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &NULL_COLOR_4,
+            texture_position_offsets: &texture_position_offsets,
+            rendering_kind,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -289,22 +339,29 @@ pub(crate) fn command_2e_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = extract_texpage_clut_mode(data[4]);
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
-    let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
+    let rendering_kind = RenderingKind::TextureBlending {
+        page_base,
+        clut_kind,
+    };
     let transparency_mode = extract_texpage_transparency_mode(data[4]);
     let transparency_kind = TransparencyKind::from_data(transparency_mode);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &[color; 4],
-        texture_position_offsets: &texture_position_offsets,
-        rendering_kind,
-        transparency_kind,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &[color; 4],
+            texture_position_offsets: &texture_position_offsets,
+            rendering_kind,
+            transparency_kind,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -320,19 +377,23 @@ pub(crate) fn command_30_handler(_state: &State, controller_state: &mut Controll
     let offsets = extract_position_offsets_3([data[1], data[3], data[5]], default_render_x_position_modifier, default_render_y_position_modifier);
     let positions = make_positions_3(base, offsets);
     let colors = extract_colors_3([data[0], data[2], data[4]]);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 3,
-        positions: &positions,
-        colors: &colors,
-        texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 3,
+            positions: &positions,
+            colors: &colors,
+            texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_3,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -348,19 +409,23 @@ pub(crate) fn command_38_handler(_state: &State, controller_state: &mut Controll
     let offsets = extract_position_offsets_4([data[1], data[3], data[5], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
     let positions = make_positions_4(base, offsets);
     let colors = extract_colors_4([data[0], data[2], data[4], data[6]]);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &colors,
-        texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
-        rendering_kind: RenderingKind::Shaded,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &colors,
+            texture_position_offsets: &NULL_TEXTURE_POSITION_OFFSET_4,
+            rendering_kind: RenderingKind::Shaded,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -393,22 +458,29 @@ pub(crate) fn command_3e_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = extract_texpage_clut_mode(data[5]);
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
-    let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
+    let rendering_kind = RenderingKind::TextureBlending {
+        page_base,
+        clut_kind,
+    };
     let transparency_mode = extract_texpage_transparency_mode(data[5]);
     let transparency_kind = TransparencyKind::from_data(transparency_mode);
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_triangles(video_backend, TrianglesParams {
-        vertices: 4,
-        positions: &positions,
-        colors: &colors,
-        texture_position_offsets: &texture_position_offsets,
-        rendering_kind,
-        transparency_kind,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 4,
+            positions: &positions,
+            colors: &colors,
+            texture_position_offsets: &texture_position_offsets,
+            rendering_kind,
+            transparency_kind,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -442,19 +514,26 @@ pub(crate) fn command_65_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = controller_state.clut_mode;
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
-    let rendering_kind = RenderingKind::RawTexture { page_base, clut_kind };
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_rectangle(video_backend, RectangleParams {
-        rectangle,
-        color: NULL_COLOR,
-        texture_position_base_offset,
-        rendering_kind,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let rendering_kind = RenderingKind::RawTexture {
+        page_base,
+        clut_kind,
+    };
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_rectangle(
+        video_backend,
+        RectangleParams {
+            rectangle,
+            color: NULL_COLOR,
+            texture_position_base_offset,
+            rendering_kind,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -489,19 +568,26 @@ pub(crate) fn command_7c_handler(_state: &State, controller_state: &mut Controll
     let clut_mode = controller_state.clut_mode;
     let clut_base = extract_clut_base(data[2]);
     let clut_kind = ClutKind::from_data(clut_mode, clut_base);
-    let rendering_kind = RenderingKind::TextureBlending { page_base, clut_kind };
-    let drawing_area = make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
-    
-    let _ = backend_dispatch::draw_rectangle(video_backend, RectangleParams {
-        rectangle,
-        color,
-        texture_position_base_offset,
-        rendering_kind,
-        transparency_kind: TransparencyKind::Opaque,
-        drawing_area,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let rendering_kind = RenderingKind::TextureBlending {
+        page_base,
+        clut_kind,
+    };
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_rectangle(
+        video_backend,
+        RectangleParams {
+            rectangle,
+            color,
+            texture_position_base_offset,
+            rendering_kind,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -536,8 +622,8 @@ pub(crate) fn command_a0_handler(_state: &State, controller_state: &mut Controll
     // colors / 5-5-5-1 colors). However, the command addresses the VRAM (and incoming data) as 16-bit units through
     // the coordinates given. Ie: they could be 24-bit pixel data where 8-bits overflows into next pixel and so
     // on... gives correct result for now. Hope this makes sense.... :/
-    // There is no great solution to this I don't think - just need to be careful about how data is interpreted including within the shaders.
-    // (ie: uniform variable specifying 16-bit or 24-bit mode.)
+    // There is no great solution to this I don't think - just need to be careful about how data is interpreted including
+    // within the shaders. (ie: uniform variable specifying 16-bit or 24-bit mode.)
 
     debug::trace_gp0_command("Copy Rectangle (CPU to VRAM)", data);
 
@@ -554,12 +640,15 @@ pub(crate) fn command_a0_handler(_state: &State, controller_state: &mut Controll
         texture_colors.push(colors[1]);
     }
 
-    let _ = backend_dispatch::write_framebuffer(video_backend, WriteFramebufferParams { 
-        rectangle, 
-        data: &texture_colors,
-        mask_bit_force_set: controller_state.mask_bit_force_set,
-        mask_bit_check: controller_state.mask_bit_check,
-    })?;
+    let _ = backend_dispatch::write_framebuffer(
+        video_backend,
+        WriteFramebufferParams {
+            rectangle,
+            data: &texture_colors,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
 
     Ok(())
 }
@@ -578,7 +667,9 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
     let rectangle = Rect::new(origin, size);
     assert!(rectangle.area() != 0, format!("Empty area - what happens? ({:?})", size));
 
-    let params = ReadFramebufferParams { rectangle };
+    let params = ReadFramebufferParams {
+        rectangle,
+    };
     let mut data = backend_dispatch::read_framebuffer(video_backend, params)?.map_err(|_| "No backend available for reading framebuffer".to_owned())?;
     assert!(data.len() == rectangle.area() as usize, format!("Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", rectangle.area(), data.len()));
 
@@ -639,7 +730,7 @@ pub(crate) fn command_e1_handler(state: &State, controller_state: &mut Controlle
     controller_state.texture_disable = texture_disable_raw > 0;
     controller_state.textured_rect_x_flip = textured_rect_x_flip_raw > 0;
     controller_state.textured_rect_y_flip = textured_rect_y_flip_raw > 0;
-    
+
     state.gpu.stat.write_bitfield(STAT_TEXPAGEX, texpage_base_x_raw);
     state.gpu.stat.write_bitfield(STAT_TEXPAGEY, texpage_base_y_raw);
     state.gpu.stat.write_bitfield(STAT_TRANSPARENCY, transparency_mode_raw);
@@ -685,7 +776,7 @@ pub(crate) fn command_e4_length(_data: &[u32]) -> Option<usize> {
 
 pub(crate) fn command_e4_handler(_state: &State, controller_state: &mut ControllerState, _video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
     debug::trace_gp0_command("Set Drawing Area bottom right", data);
-    
+
     controller_state.drawing_area_x2 = Bitfield::new(0, 10).extract_from(data[0]) as usize;
     controller_state.drawing_area_y2 = Bitfield::new(10, 9).extract_from(data[0]) as usize;
 
