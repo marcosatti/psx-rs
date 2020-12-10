@@ -168,18 +168,25 @@ void handle_transparency() {
 }
 
 void handle_clut() {
+    uint size = 16;
     float ratio = 1.0;
     if (clut_mode == CLUT_MODE_BIT4) {
         // 4-bits per sub-texel; 4 sub-texels per texel.
         ratio = 4.0;
+        size = 4;
     } else if (clut_mode == CLUT_MODE_BIT8) {
         // 8-bits per sub-texel; 2 sub-texels per texel.
-        ratio = 8.0;
+        ratio = 2.0;
+        size = 8;
     }
 
-    vec2 offset = texture_position_base_offset + size_to_texture_size(in_position - position_base);
+    vec2 texture_position = texture_position_base;
+    texture_position.x += texture_position_base_offset.x / ratio;
+    texture_position.y -= texture_position_base_offset.y;
+    vec2 offset = size_to_texture_size(in_position - position_base);
+    texture_position.x += offset.x / ratio;
+    texture_position.y += offset.y;
     offset.x = offset.x / ratio;
-    vec2 texture_position = texture_position_base + offset;
     vec4 texture_color = texture(framebuffer, texture_position);
 
     if (clut_mode == CLUT_MODE_DIRECT) {
@@ -192,7 +199,7 @@ void handle_clut() {
         // Get the appropriate bits out of the packed data and work out the CLUT pixel to use. 
         // Apply a half-pixel offset to ensure we sample the correct texel.
         uint raw_value = texel_value_5551(texture_color);
-        uint clut_index = extract_bitfield(raw_value, sub_texel_data_index, uint(ratio));
+        uint clut_index = extract_bitfield(raw_value, sub_texel_data_index, size);
         vec2 clut_texture_offset = vec2(TEXCOORD_NORMALIZED_WIDTH_PER_PIXEL * (0.5 + float(clut_index)), -0.5 * TEXCOORD_NORMALIZED_HEIGHT_PER_PIXEL);
         vec2 clut_texture_position = clut_texture_position_base + clut_texture_offset;
 
