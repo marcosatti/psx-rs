@@ -238,7 +238,7 @@ fn normal_color(context: &mut ControllerContext, shift: bool, lm: bool, color: b
     context.cp2_state.gd[22].write_u8(0, rgb1_value as u8);
     context.cp2_state.gd[22].write_u8(1, rgb2_value as u8);
     context.cp2_state.gd[22].write_u8(2, rgb3_value as u8);
-    context.cp2_state.gd[22].write_u8(3, code_value as u8);
+    context.cp2_state.gd[22].write_u8(3, code_value);
     context.cp2_state.gd[25].write_u32(mac1_value as i32 as u32);
     context.cp2_state.gd[9].write_u32(ir1_value as i32 as u32);
     context.cp2_state.gd[26].write_u32(mac2_value as i32 as u32);
@@ -369,17 +369,7 @@ pub(crate) fn op(_context: &mut ControllerContext, instruction: Instruction) -> 
     Err("Instruction op not implemented".into())
 }
 
-pub(crate) fn dpcs(_context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
-    let _instruction = GteInstruction::new(instruction);
-    Err("Instruction dpcs not implemented".into())
-}
-
-pub(crate) fn intpl(_context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
-    let _instruction = GteInstruction::new(instruction);
-    Err("Instruction intpl not implemented".into())
-}
-
-pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
+pub(crate) fn dpcs(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
     let instruction = GteInstruction::new(instruction);
 
     if !instruction.sf() {
@@ -390,6 +380,92 @@ pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -
     if !instruction.lm() {
         ir_clamp_min = std::i16::MIN;
     }
+
+    let r_value = context.cp2_state.gd[6].read_u8(0) as f64;
+    let g_value = context.cp2_state.gd[6].read_u8(1) as f64;
+    let b_value = context.cp2_state.gd[6].read_u8(2) as f64;
+    let code_value = context.cp2_state.gd[6].read_u8(3);
+
+    let rfc_value = f64::from_fixed_bits_i32::<U4>(context.cp2_state.gc[21].read_u32() as i32);
+    let gfc_value = f64::from_fixed_bits_i32::<U4>(context.cp2_state.gc[22].read_u32() as i32);
+    let bfc_value = f64::from_fixed_bits_i32::<U4>(context.cp2_state.gc[23].read_u32() as i32);
+
+    let (ir0_value, _) = split_32_fixedi16_f64::<U12>(context.cp2_state.gd[8].read_u32());
+
+    let mac1_value = r_value + (rfc_value - r_value) * ir0_value;
+    let mac2_value = g_value + (gfc_value - g_value) * ir0_value;
+    let mac3_value = b_value + (bfc_value - b_value) * ir0_value;
+
+    let (ir1_value, ir1_overflow_flag) = checked_clamp(mac1_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir2_value, ir2_overflow_flag) = checked_clamp(mac2_value, ir_clamp_min as f64, std::i16::MAX as f64);
+    let (ir3_value, ir3_overflow_flag) = checked_clamp(mac3_value, ir_clamp_min as f64, std::i16::MAX as f64);
+
+    let mac1_overflow_flag = f64::abs(mac1_value) >= ((1u64 << 44) as f64);
+    let mac1_negative_flag = mac1_value < 0.0;
+    let mac2_overflow_flag = f64::abs(mac2_value) >= ((1u64 << 44) as f64);
+    let mac2_negative_flag = mac2_value < 0.0;
+    let mac3_overflow_flag = f64::abs(mac3_value) >= ((1u64 << 44) as f64);
+    let mac3_negative_flag = mac3_value < 0.0;
+
+    let rgb1_value = checked_clamp(mac1_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
+    let rgb2_value = checked_clamp(mac2_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
+    let rgb3_value = checked_clamp(mac3_value, std::u8::MIN as f64, std::u8::MAX as f64).0;
+
+    // Write back.
+    handle_cp2_push_rgb(context.cp2_state);
+    context.cp2_state.gd[22].write_u8(0, rgb1_value as u8);
+    context.cp2_state.gd[22].write_u8(1, rgb2_value as u8);
+    context.cp2_state.gd[22].write_u8(2, rgb3_value as u8);
+    context.cp2_state.gd[22].write_u8(3, code_value);
+    context.cp2_state.gd[25].write_u32(mac1_value as i32 as u32);
+    context.cp2_state.gd[9].write_u32(ir1_value as i32 as u32);
+    context.cp2_state.gd[26].write_u32(mac2_value as i32 as u32);
+    context.cp2_state.gd[10].write_u32(ir2_value as i32 as u32);
+    context.cp2_state.gd[27].write_u32(mac3_value as i32 as u32);
+    context.cp2_state.gd[11].write_u32(ir3_value as i32 as u32);
+
+    // Flag register.
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(23, 1), bool_to_flag(ir2_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(24, 1), bool_to_flag(ir1_overflow_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(25, 1), bool_to_flag(mac3_overflow_flag && mac3_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(26, 1), bool_to_flag(mac2_overflow_flag && mac2_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(27, 1), bool_to_flag(mac1_overflow_flag && mac1_negative_flag));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(28, 1), bool_to_flag(mac3_overflow_flag && (!mac3_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(29, 1), bool_to_flag(mac2_overflow_flag && (!mac2_negative_flag)));
+    context.cp2_state.gc[31].write_bitfield(Bitfield::new(30, 1), bool_to_flag(mac1_overflow_flag && (!mac1_negative_flag)));
+
+    handle_cp2_flag_error_bit(context.cp2_state);
+
+    Ok(Ok(()))
+}
+
+pub(crate) fn intpl(_context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
+    let _instruction = GteInstruction::new(instruction);
+    Err("Instruction intpl not implemented".into())
+}
+
+pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -> ControllerResult<InstructionResult> {
+    static mut COUNTER: usize = 0;
+
+    let instruction = GteInstruction::new(instruction);
+
+    if !instruction.sf() {
+        return Err("Assumes sf bit is on for now".into());
+    }
+
+    let mut ir_clamp_min = 0;
+    if !instruction.lm() {
+        ir_clamp_min = std::i16::MIN;
+    }
+
+    log::debug!(
+        "{}: t = {}, v = {}, m = {}",
+        unsafe { COUNTER },
+        (instruction.instruction.value >> 13) & 0x3,
+        (instruction.instruction.value >> 15) & 0x3,
+        (instruction.instruction.value >> 17) & 0x3
+    );
 
     let mx1_raw_value;
     let mx2_raw_value;
@@ -421,6 +497,8 @@ pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -
         },
         MultiplyMatrix::Reserved => return Err("Invalid mvmva_mm bitfield value".into()),
     }
+
+    log::debug!("{}: m = 0x{:08X}, 0x{:08X}, 0x{:08X}, 0x{:08X}, 0x{:08X}", unsafe { COUNTER }, mx1_raw_value, mx2_raw_value, mx3_raw_value, mx4_raw_value, mx5_raw_value);
 
     let (mx11_value, mx12_value) = split_32_fixedi16_f64::<U12>(mx1_raw_value);
     let (mx13_value, mx21_value) = split_32_fixedi16_f64::<U12>(mx2_raw_value);
@@ -457,6 +535,8 @@ pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -
         },
     }
 
+    log::debug!("{}: v = 0x{:08X}, 0x{:08X}, 0x{:08X}", unsafe { COUNTER }, vx1_raw_value, vx2_raw_value, vx3_raw_value);
+
     let vxx_value;
     let vxy_value;
     let vxz_value;
@@ -479,17 +559,26 @@ pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -
 
     match instruction.mvmva_tv() {
         TranslationVector::TR => {
+            log::debug!(
+                "{}: tr = 0x{:08X}, 0x{:08X}, 0x{:08X}",
+                unsafe { COUNTER },
+                context.cp2_state.gc[5].read_u32(),
+                context.cp2_state.gc[6].read_u32(),
+                context.cp2_state.gc[7].read_u32()
+            );
             txx_value = context.cp2_state.gc[5].read_u32() as i32 as f64;
             txy_value = context.cp2_state.gc[6].read_u32() as i32 as f64;
             txz_value = context.cp2_state.gc[7].read_u32() as i32 as f64;
         },
         TranslationVector::BK => {
+            log::debug!("{}: tr = bk", unsafe { COUNTER });
             txx_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[13].read_u32() as i32);
             txy_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[14].read_u32() as i32);
             txz_value = f64::from_fixed_bits_i32::<U12>(context.cp2_state.gc[15].read_u32() as i32);
         },
         TranslationVector::FC => return Err("Bugged behaviour not implemented".into()),
         TranslationVector::None => {
+            log::debug!("{}: tr = none", unsafe { COUNTER });
             txx_value = 0.0;
             txy_value = 0.0;
             txz_value = 0.0;
@@ -511,12 +600,26 @@ pub(crate) fn mvmva(context: &mut ControllerContext, instruction: Instruction) -
     let mac3_overflow_flag = f64::abs(mac3_value) >= ((1u64 << 44) as f64);
     let mac3_negative_flag = mac3_value < 0.0;
 
-    context.cp2_state.gd[25].write_u32(mac1_value as i32 as u32);
-    context.cp2_state.gd[9].write_u32(ir1_value as i32 as u32);
-    context.cp2_state.gd[26].write_u32(mac2_value as i32 as u32);
-    context.cp2_state.gd[10].write_u32(ir2_value as i32 as u32);
-    context.cp2_state.gd[27].write_u32(mac3_value as i32 as u32);
-    context.cp2_state.gd[11].write_u32(ir3_value as i32 as u32);
+    let mac1_value = mac1_value.to_fixed_bits_i32::<U12>(true);
+    let ir1_value = ir1_value.to_fixed_bits_i16::<U12>(true) as i32;
+    let mac2_value = mac2_value.to_fixed_bits_i32::<U12>(true);
+    let ir2_value = ir2_value.to_fixed_bits_i16::<U12>(true) as i32;
+    let mac3_value = mac3_value.to_fixed_bits_i32::<U12>(true);
+    let ir3_value = ir3_value.to_fixed_bits_i16::<U12>(true) as i32;
+
+    unsafe {
+        log::debug!("{}: mac = 0x{:08X}, 0x{:08X}, 0x{:08X}", COUNTER, mac1_value as u32, mac2_value as u32, mac3_value as u32);
+        log::debug!("{}: ir = 0x{:08X}, 0x{:08X}, 0x{:08X}", COUNTER, ir1_value as u32, ir2_value as u32, ir3_value as u32);
+        log::debug!("");
+        COUNTER += 1;
+    }
+
+    context.cp2_state.gd[25].write_u32(mac1_value as u32);
+    context.cp2_state.gd[9].write_u32(ir1_value as u32);
+    context.cp2_state.gd[26].write_u32(mac2_value as u32);
+    context.cp2_state.gd[10].write_u32(ir2_value as u32);
+    context.cp2_state.gd[27].write_u32(mac3_value as u32);
+    context.cp2_state.gd[11].write_u32(ir3_value as u32);
 
     // Flag register.
     context.cp2_state.gc[31].write_bitfield(Bitfield::new(22, 1), bool_to_flag(ir3_overflow_flag));
