@@ -10,8 +10,6 @@ openal-sys = { path = "../openal-sys" }
 libmirage-sys = { path = "../libmirage-sys" }
 libcdio-sys = { path = "../libcdio-sys" }
 parking_lot = { version = "*", features = ["serde"] }
-crossbeam = "*"
-rayon = "*"
 log = "*"
 euclid = "*"
 num-traits = "*"
@@ -19,8 +17,11 @@ lazy_static = "*"
 hashbrown = "*"
 fixed = "*"
 typenum = "*"
+atomic_enum = "*"
+array-macro = "*"
 stdext = "*"
 smallvec = { version = "*", features = ["union", "const_generics"] }
+spsc-ringbuffer = { git = "https://github.com/marcosatti/spsc-ringbuffer", features = ["serialization"] }
 serde = { version = "*", optional = true, features = ["derive"] }
 bincode = { version = "*", optional = true }
 zstd = { version = "*", optional = true }
