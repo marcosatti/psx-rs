@@ -20,38 +20,29 @@ use crate::{
     Config,
 };
 use array_macro::*;
-use atomic_enum::*;
-use parking_lot::Mutex;
+use parking_lot::{
+    Condvar,
+    Mutex,
+};
 use std::{
     cell::UnsafeCell,
-    hint::spin_loop,
     ptr::NonNull,
-    sync::{
-        atomic::{
-            AtomicBool,
-            Ordering,
-        },
-        Arc,
-    },
+    sync::Arc,
     thread::{
-        sleep,
         Builder,
         JoinHandle,
     },
-    time::Duration,
 };
 
 const CONTROLLER_COUNT: usize = 9;
 const CONTROLLER_HANDLERS: [ControllerHandler; CONTROLLER_COUNT] = [run_r3000, run_intc, run_dmac, run_gpu, run_spu, run_timers, run_cdrom, run_padmc, run_gpu_crtc];
 const CONTROLLER_NAMES: [&'static str; CONTROLLER_COUNT] = ["r3000", "intc", "dmac", "gpu", "spu", "timers", "cdrom", "padmc", "gpu_crtc"];
 
-#[atomic_enum]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum TaskStatus {
     Finished,
     Pending,
     Running,
-    Error,
 }
 
 struct ThreadContext {
@@ -68,20 +59,34 @@ impl ThreadContext {
     }
 }
 
+struct ThreadStatus {
+    exited: bool,
+    task_status: [TaskStatus; CONTROLLER_COUNT],
+    errors: Vec<String>,
+}
+
+impl ThreadStatus {
+    fn new() -> ThreadStatus {
+        ThreadStatus {
+            exited: false,
+            task_status: [TaskStatus::Finished; CONTROLLER_COUNT],
+            errors: Vec::new(),
+        }
+    }
+}
+
 struct ThreadState {
-    exited: AtomicBool,
-    task_status: [AtomicTaskStatus; CONTROLLER_COUNT],
+    status: Mutex<ThreadStatus>,
+    status_cvar: Condvar,
     context: UnsafeCell<ThreadContext>,
-    errors: Mutex<[String; CONTROLLER_COUNT]>,
 }
 
 impl ThreadState {
     fn new() -> ThreadState {
         ThreadState {
-            exited: AtomicBool::new(false),
-            task_status: array![AtomicTaskStatus::new(TaskStatus::Finished); CONTROLLER_COUNT],
+            status: Mutex::new(ThreadStatus::new()),
+            status_cvar: Condvar::new(),
             context: UnsafeCell::new(ThreadContext::new()),
-            errors: Mutex::new(array![String::new(); CONTROLLER_COUNT]),
         }
     }
 }
@@ -93,79 +98,77 @@ unsafe impl Send for ThreadState {
 }
 
 fn thread_main(thread_state: Arc<ThreadState>, partition_index: usize) {
-    const UNSUCCESSFUL_LOOPS_THRESHOLD: usize = 10000;
+    let this_thread = std::thread::current();
+    log::info!("{} thread spawned", this_thread.name().unwrap_or("worker"));
 
-    let mut unsuccessful_loops = UNSUCCESSFUL_LOOPS_THRESHOLD + 1;
-
-    loop {
-        if unsuccessful_loops > UNSUCCESSFUL_LOOPS_THRESHOLD {
-            if thread_state.exited.load(Ordering::Acquire) {
-                break;
-            }
-
-            sleep(Duration::from_millis(5));
-        }
-
+    'main: loop {
         for offset in 0..CONTROLLER_COUNT {
             let controller_index = (partition_index + offset) % CONTROLLER_COUNT;
-            let status = &thread_state.task_status[controller_index];
 
-            // Test if we can "own" this task, otherwise we will try another one.
-            if status.compare_and_swap(TaskStatus::Pending, TaskStatus::Running, Ordering::AcqRel) == TaskStatus::Pending {
-                // We now own this task; execute it.
-                let result = unsafe {
-                    let handler = CONTROLLER_HANDLERS[controller_index];
-                    let thread_context = thread_state.context.get().as_ref().unwrap();
-                    let controller_context = thread_context.controller_context.as_ref();
-                    let event = thread_context.events[controller_index];
-                    handler(controller_context, event)
-                };
+            // Wait for pending status or exit.
+            {
+                let mut thread_status = thread_state.status.lock();
 
-                let new_status = match result {
-                    Ok(()) => TaskStatus::Finished,
-                    Err(s) => {
-                        let name = CONTROLLER_NAMES[controller_index];
-                        thread_state.errors.lock()[controller_index] = format!("{}: {}", name, &s);
-                        TaskStatus::Error
-                    },
-                };
-                status.store(new_status, Ordering::Release);
+                loop {
+                    if thread_status.exited {
+                        break 'main;
+                    }
 
-                unsuccessful_loops = 0;
-            } else {
-                unsuccessful_loops += 1;
-                spin_loop();
+                    if thread_status.task_status[controller_index] == TaskStatus::Pending {
+                        thread_status.task_status[controller_index] = TaskStatus::Running;
+                        break;
+                    }
+
+                    thread_state.status_cvar.wait(&mut thread_status);
+                }
+            }
+
+            // Run the controller.
+            let result = unsafe {
+                let handler = CONTROLLER_HANDLERS[controller_index];
+                let thread_context = thread_state.context.get().as_ref().unwrap();
+                let controller_context = thread_context.controller_context.as_ref();
+                let event = thread_context.events[controller_index];
+                handler(controller_context, event)
+            };
+
+            // Notify main thread & propagate errors.
+            {
+                let mut thread_status = thread_state.status.lock();
+                thread_status.task_status[controller_index] = TaskStatus::Finished;
+                result.unwrap_or_else(|s| thread_status.errors.push(format!("{}: {}", CONTROLLER_NAMES[controller_index], &s)));
+                thread_state.status_cvar.notify_all();
             }
         }
     }
 }
 
-pub(crate) struct Executor {
+pub(crate) struct ThreadedExecutor {
     thread_state: Arc<ThreadState>,
     thread_pool: Vec<JoinHandle<()>>,
 }
 
+impl Drop for ThreadedExecutor {
+    fn drop(&mut self) {
+        self.thread_state.status.lock().exited = true;
+        self.thread_state.status_cvar.notify_all();
+        self.thread_pool.drain(..).for_each(|h| h.join().unwrap());
+    }
+}
+
+pub(crate) struct Executor {
+    threaded: Option<ThreadedExecutor>,
+}
+
 impl Executor {
-    pub(crate) fn new(pool_size: usize) -> Executor {
-        let thread_state = Arc::new(ThreadState::new());
-
-        let mut thread_pool = Vec::new();
-        for i in 0..pool_size {
-            let thread_state_clone = Arc::clone(&thread_state);
-            let partition_index = (CONTROLLER_COUNT / pool_size) * i;
-            let name = format!("worker-{}", i);
-            let handle = Builder::new().name(name).spawn(move || thread_main(thread_state_clone, partition_index)).unwrap();
-            thread_pool.push(handle);
-        }
-
-        Executor {
-            thread_state,
-            thread_pool,
+    pub(crate) fn new(thread_count: Option<usize>) -> Executor {
+        match thread_count {
+            None => Executor::new_unthreaded(),
+            Some(c) => Executor::new_threaded(c),
         }
     }
 
     pub(crate) fn run(&self, config: &Config, context: &ControllerContext) -> Result<(), Vec<String>> {
-        let time_delta = config.time_delta * config.global_bias;
         let biases = [
             config.r3000_bias,
             config.intc_bias,
@@ -178,45 +181,97 @@ impl Executor {
             config.gpu_crtc_bias,
         ];
 
-        // Set the context.
-        unsafe {
-            let thread_context = self.thread_state.context.get().as_mut().unwrap();
-            thread_context.controller_context = NonNull::new_unchecked(std::mem::transmute(context));
-            (0..CONTROLLER_COUNT).for_each(|i| thread_context.events[i] = Event::Time(time_delta * biases[i]));
-        };
+        let time_delta = config.time_delta * config.global_bias;
+        let events = array![|i| Event::Time(time_delta * biases[i]); CONTROLLER_COUNT];
 
-        // Start the tasks.
-        for i in 0..CONTROLLER_COUNT {
-            self.thread_state.task_status[i].store(TaskStatus::Pending, Ordering::Release);
+        match self.threaded {
+            Some(ref t) => Executor::run_threaded(t, context, &events),
+            None => Executor::run_unthreaded(context, &events),
+        }
+    }
+
+    fn new_unthreaded() -> Executor {
+        Executor {
+            threaded: None,
+        }
+    }
+
+    fn new_threaded(thread_count: usize) -> Executor {
+        assert!(thread_count > 0);
+        let thread_state = Arc::new(ThreadState::new());
+
+        let mut thread_pool = Vec::new();
+        for i in 0..thread_count {
+            let thread_state_clone = Arc::clone(&thread_state);
+            let partition_index = i * CONTROLLER_COUNT / thread_count;
+            let name = format!("worker-{}", i);
+            let handle = Builder::new().name(name).spawn(move || thread_main(thread_state_clone, partition_index)).unwrap();
+            thread_pool.push(handle);
         }
 
+        Executor {
+            threaded: Some(ThreadedExecutor {
+                thread_state,
+                thread_pool,
+            }),
+        }
+    }
+
+    fn run_unthreaded(context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
 
-        // Wait for all tasks to be either finished or error'd.
         for i in 0..CONTROLLER_COUNT {
-            loop {
-                match self.thread_state.task_status[i].load(Ordering::Acquire) {
-                    TaskStatus::Error => {
-                        errors.push(self.thread_state.errors.lock()[i].clone());
-                        break;
-                    },
-                    TaskStatus::Finished => break,
-                    _ => {},
-                }
-            }
+            CONTROLLER_HANDLERS[i](context, events[i]).unwrap_or_else(|s| errors.push(format!("{}: {}", CONTROLLER_NAMES[i], &s)));
         }
 
-        if errors.len() == 0 {
+        if errors.is_empty() {
             Ok(())
         } else {
             Err(errors)
         }
     }
-}
 
-impl Drop for Executor {
-    fn drop(&mut self) {
-        self.thread_state.exited.store(true, Ordering::Release);
-        self.thread_pool.drain(..).for_each(|h| h.join().unwrap());
+    fn run_threaded(executor: &ThreadedExecutor, context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
+        let mut errors = Vec::new();
+
+        // Set the context.
+        unsafe {
+            let thread_context = executor.thread_state.context.get().as_mut().unwrap();
+            thread_context.controller_context = NonNull::new_unchecked(std::mem::transmute(context));
+            (0..CONTROLLER_COUNT).for_each(|i| thread_context.events[i] = events[i]);
+        };
+
+        // Start the tasks.
+        {
+            let mut thread_status = executor.thread_state.status.lock();
+            (0..CONTROLLER_COUNT).for_each(|i| thread_status.task_status[i] = TaskStatus::Pending);
+            executor.thread_state.status_cvar.notify_all();
+        }
+
+        // Wait for all tasks to be finished.
+        {
+            let mut thread_status = executor.thread_state.status.lock();
+
+            loop {
+                let mut all_finished = true;
+                for i in 0..CONTROLLER_COUNT {
+                    all_finished &= thread_status.task_status[i] == TaskStatus::Finished;
+                }
+
+                if all_finished {
+                    break;
+                }
+
+                executor.thread_state.status_cvar.wait(&mut thread_status);
+            }
+
+            errors.extend(thread_status.errors.drain(..));
+        };
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }

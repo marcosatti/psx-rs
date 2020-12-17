@@ -12,7 +12,7 @@ struct TomlConfig {
     audio_backend: String,
     cdrom_backend: String,
     video_backend: String,
-    worker_threads: usize,
+    worker_threads: String,
     time_delta: u64,
     pause_on_start: bool,
     quit_on_exception: bool,
@@ -35,7 +35,7 @@ pub(crate) struct Config {
     pub(crate) audio_backend_kind: AudioBackendKind,
     pub(crate) cdrom_backend_kind: CdromBackendKind,
     pub(crate) video_backend_kind: VideoBackendKind,
-    pub(crate) worker_threads: usize,
+    pub(crate) worker_threads: Option<usize>,
     pub(crate) time_delta_secs: f64,
     pub(crate) pause_on_start: bool,
     pub(crate) quit_on_exception: bool,
@@ -83,7 +83,13 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
                 _ => panic!("Unrecongnised config option for the video backend"),
             }
         },
-        worker_threads: toml_config.worker_threads,
+        worker_threads: {
+            if toml_config.worker_threads == "single" {
+                None
+            } else {
+                Some(toml_config.worker_threads.parse().unwrap())
+            }
+        },
         time_delta_secs: { toml_config.time_delta as f64 / 1e6 },
         pause_on_start: toml_config.pause_on_start,
         quit_on_exception: toml_config.quit_on_exception,

@@ -18,8 +18,6 @@ use std::{
     time::Instant,
 };
 
-pub(crate) static EXIT: AtomicBool = AtomicBool::new(false);
-
 #[cfg(target_os = "windows")]
 #[allow(non_upper_case_globals)]
 #[no_mangle]
@@ -30,13 +28,17 @@ pub static NvOptimusEnablement: std::os::raw::c_ulong = 0x00000001;
 #[no_mangle]
 pub static AmdPowerXpressRequestHighPerformance: std::os::raw::c_int = 1;
 
+#[allow(unused_attributes)]
 #[cfg(target_os = "windows")]
 #[link_args = "/EXPORT:NvOptimusEnablement"]
 extern "C" {}
 
+#[allow(unused_attributes)]
 #[cfg(target_os = "windows")]
 #[link_args = "/EXPORT:AmdPowerXpressRequestHighPerformance"]
 extern "C" {}
+
+pub(crate) static EXIT: AtomicBool = AtomicBool::new(false);
 
 fn main() {
     // Signal handlers

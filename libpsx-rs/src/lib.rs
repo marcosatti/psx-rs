@@ -45,7 +45,7 @@ pub struct Config<'a> {
     pub audio_backend: AudioBackend<'a>,
     pub cdrom_backend: CdromBackend<'a>,
     pub time_delta: f64,
-    pub worker_threads: usize,
+    pub worker_threads: Option<usize>,
     pub internal_scale_factor: usize,
     pub global_bias: f64,
     pub r3000_bias: f64,
