@@ -65,7 +65,7 @@ pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut Contro
                     if controller_state.interrupt_index > 0 {
                         return Err(format!("Interrupt still pending after acknowledgement: {}", controller_state.interrupt_index));
                     }
-                    
+
                     value = INTERRUPT_FLAGS.insert_into(value, 0);
                 }
 

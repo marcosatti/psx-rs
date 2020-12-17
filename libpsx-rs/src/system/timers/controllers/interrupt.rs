@@ -1,18 +1,18 @@
-use crate::system::{
-    intc::types::Line,
-    timers::{
-        controllers::{
-            timer::*,
+use crate::{
+    system::{
+        intc::types::Line,
+        timers::{
+            constants::*,
+            controllers::timer::*,
+            types::*,
         },
-        types::*,
-        constants::*,
+        types::{
+            ControllerResult,
+            State,
+        },
     },
-    types::{
-        ControllerResult,
-        State,
-    },
+    utilities::bool_to_flag,
 };
-use crate::utilities::bool_to_flag;
 
 pub(crate) fn handle_irq_trigger(state: &State, timer_state: &mut TimerState, timer_id: usize, irq_type: IrqType) -> ControllerResult<()> {
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.

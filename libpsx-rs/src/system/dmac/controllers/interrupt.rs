@@ -1,9 +1,7 @@
 use crate::system::{
     dmac::{
         constants::*,
-        controllers::{
-            channel::*,
-        },
+        controllers::channel::*,
         types::*,
     },
     intc::types::Line,
@@ -36,7 +34,7 @@ pub(crate) fn handle_irq_trigger(state: &State, controller_state: &mut Controlle
 
             Ok(value)
         })?;
-        
+
         if raise_master_irq {
             controller_state.master_interrupted = true;
             state.intc.stat.assert_line(Line::Dma);
