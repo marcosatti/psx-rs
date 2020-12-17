@@ -71,7 +71,7 @@ pub(crate) type InstructionFn = fn(&mut ControllerContext, Instruction) -> Contr
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub(crate) struct ControllerState {
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     pub(crate) pc: Register,
     pub(crate) branch_delay: BranchDelaySlot,
     pub(crate) gpr: [Register; 32],

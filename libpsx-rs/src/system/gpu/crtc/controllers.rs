@@ -37,7 +37,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f64) -> ControllerResult<()> {
+pub(crate) fn run_time(state: &State, video_backend: &VideoBackend, duration: f32) -> ControllerResult<()> {
     let controller_state = &mut state.gpu.crtc.controller_state.lock();
     controller_state.scanline_clock += duration;
     controller_state.frame_clock += duration;

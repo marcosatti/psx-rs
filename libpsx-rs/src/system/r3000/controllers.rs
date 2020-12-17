@@ -36,7 +36,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
+fn run_time(state: &State, duration: f32) -> ControllerResult<()> {
     let r3000_state = &mut state.r3000.controller_state.lock();
     r3000_state.clock += duration;
 
@@ -51,7 +51,7 @@ fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
                 cp0_state,
                 cp2_state,
             };
-            tick(&mut context)? as f64
+            tick(&mut context)? as f32
         };
 
         r3000_state.clock -= CLOCK_SPEED_PERIOD * ticks;

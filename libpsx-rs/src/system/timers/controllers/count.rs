@@ -97,7 +97,7 @@ pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerSta
     Ok(())
 }
 
-const fn calc_clock_source_period(clock_source: ClockSource) -> f64 {
+const fn calc_clock_source_period(clock_source: ClockSource) -> f32 {
     match clock_source {
         ClockSource::Dotclock => DOTCLOCK_320_PERIOD_NTSC,
         ClockSource::Hblank => {

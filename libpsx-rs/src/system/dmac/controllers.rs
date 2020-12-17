@@ -26,7 +26,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
+fn run_time(state: &State, duration: f32) -> ControllerResult<()> {
     let controller_state = &mut state.dmac.controller_state.lock();
     controller_state.clock += duration;
 
@@ -38,7 +38,7 @@ fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
 
         let ticks_available = (controller_state.clock / CLOCK_SPEED_PERIOD) as usize;
         let (ticks_used, cooloff_required) = handle_transfer(state, controller_state, channel_id, ticks_available)?;
-        controller_state.clock -= (ticks_used as f64) * CLOCK_SPEED_PERIOD;
+        controller_state.clock -= (ticks_used as f32) * CLOCK_SPEED_PERIOD;
 
         handle_irq_raise(state, controller_state)?;
 

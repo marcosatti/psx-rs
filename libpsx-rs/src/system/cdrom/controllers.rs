@@ -38,7 +38,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f64) -> ControllerResult<()> {
+fn run_time(state: &State, cdrom_backend: &CdromBackend, duration: f32) -> ControllerResult<()> {
     let controller_state = &mut state.cdrom.controller_state.lock();
     controller_state.clock += duration;
 

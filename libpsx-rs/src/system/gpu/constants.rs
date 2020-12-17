@@ -1,8 +1,8 @@
 use crate::types::bitfield::Bitfield;
 
-pub(crate) const CLOCK_SPEED_NTSC: f64 = 53.693175 * 1e6;
-pub(crate) const CLOCK_SPEED_NTSC_PERIOD: f64 = 1.0 / CLOCK_SPEED_NTSC;
-pub(crate) const _CLOCK_SPEED_PAL: f64 = 53.203425 * 1e6;
+pub(crate) const CLOCK_SPEED_NTSC: f32 = 53.693175 * 1e6;
+pub(crate) const CLOCK_SPEED_NTSC_PERIOD: f32 = 1.0 / CLOCK_SPEED_NTSC;
+pub(crate) const _CLOCK_SPEED_PAL: f32 = 53.203425 * 1e6;
 pub(crate) const VRAM_WIDTH_16B: usize = 1024; // Width in terms of halfwords (16 bit).
 pub(crate) const VRAM_HEIGHT_LINES: usize = 512;
 pub(crate) const _TEXPAGE_WIDTH: usize = 256;

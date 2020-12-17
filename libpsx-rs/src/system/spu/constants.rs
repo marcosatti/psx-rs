@@ -45,9 +45,9 @@ pub(crate) const ADSR_SUSTAIN_SHIFT: Bitfield = Bitfield::new(24, 5);
 pub(crate) const ADSR_SUSTAIN_DIRECTION: Bitfield = Bitfield::new(30, 1);
 pub(crate) const ADSR_SUSTAIN_MODE: Bitfield = Bitfield::new(31, 1);
 
-pub(crate) const CLOCK_SPEED: f64 = 33.8688 * 1e6; // 33.8688 MHz
-pub(crate) const CLOCK_SPEED_PERIOD: f64 = 1.0 / CLOCK_SPEED;
-pub(crate) const SAMPLE_RATE: f64 = 44100.0; // 44.1 kHz
-pub(crate) const SAMPLE_RATE_PERIOD: f64 = 1.0 / SAMPLE_RATE;
+pub(crate) const CLOCK_SPEED: f32 = 33.8688 * 1e6; // 33.8688 MHz
+pub(crate) const CLOCK_SPEED_PERIOD: f32 = 1.0 / CLOCK_SPEED;
+pub(crate) const SAMPLE_RATE: f32 = 44100.0; // 44.1 kHz
+pub(crate) const SAMPLE_RATE_PERIOD: f32 = 1.0 / SAMPLE_RATE;
 pub(crate) const BUFFER_SIZE: usize = 2048;
 pub(crate) const VOICES_COUNT: usize = 24;

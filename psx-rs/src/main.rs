@@ -68,7 +68,6 @@ fn main() {
     let gl_attr = video_subsystem.gl_attr();
     gl_attr.set_context_profile(GLProfile::Core);
     gl_attr.set_context_version(4, 5);
-    gl_attr.set_double_buffer(false);
     gl_attr.set_context_flags().debug().set();
     let window = video_subsystem.window("psx-rs", 1024, 512).position_centered().resizable().allow_highdpi().opengl().build().unwrap();
     log::info!("SDL initialized");

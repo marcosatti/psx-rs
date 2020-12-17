@@ -138,7 +138,7 @@ impl Stat {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct ControllerState {
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
 }
 
 impl ControllerState {

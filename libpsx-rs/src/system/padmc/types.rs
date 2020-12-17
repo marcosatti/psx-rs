@@ -12,7 +12,7 @@ use serde::{
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct ControllerState {
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     pub(crate) tx_enabled: bool,
     pub(crate) joy_select_enabled: bool,
     pub(crate) ack_interrupt_enabled: bool,

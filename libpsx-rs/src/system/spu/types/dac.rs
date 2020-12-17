@@ -59,7 +59,7 @@ impl VoiceState {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct DacState {
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     pub(crate) voice0_state: VoiceState,
     pub(crate) voice1_state: VoiceState,
     pub(crate) voice2_state: VoiceState,

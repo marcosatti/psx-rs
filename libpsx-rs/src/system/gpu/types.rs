@@ -38,7 +38,7 @@ pub(crate) enum ClutMode {
 #[derive(Clone)]
 pub(crate) struct ControllerState {
     /// Synchronization state.
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     pub(crate) display_area_start_x: usize,
     pub(crate) display_area_start_y: usize,
     pub(crate) horizontal_display_range_x1: usize,

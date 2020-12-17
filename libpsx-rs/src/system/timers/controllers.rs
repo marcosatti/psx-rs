@@ -26,7 +26,7 @@ pub(crate) fn run(context: &ControllerContext, event: Event) -> ControllerResult
     }
 }
 
-fn run_time(state: &State, duration: f64) -> ControllerResult<()> {
+fn run_time(state: &State, duration: f32) -> ControllerResult<()> {
     let controller_state = &mut state.timers.controller_state.lock();
 
     for timer_id in 0..TIMER_COUNT {

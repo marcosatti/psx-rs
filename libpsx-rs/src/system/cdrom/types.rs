@@ -35,7 +35,7 @@ pub(crate) enum WaitCyclesMode {
 #[derive(Clone)]
 pub(crate) struct ControllerState {
     // Synchronization state.
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     // Interrupt state.
     pub(crate) interrupt_index: usize,
     /// Command state.

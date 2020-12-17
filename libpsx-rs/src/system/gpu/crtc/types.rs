@@ -8,8 +8,8 @@ use serde::{
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct ControllerState {
-    pub(crate) scanline_clock: f64,
-    pub(crate) frame_clock: f64,
+    pub(crate) scanline_clock: f32,
+    pub(crate) frame_clock: f32,
 }
 
 impl ControllerState {

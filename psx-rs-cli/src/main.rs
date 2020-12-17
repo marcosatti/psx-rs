@@ -45,7 +45,7 @@ fn main() {
         video_backend: VideoBackend::None,
         audio_backend: AudioBackend::None,
         cdrom_backend: CdromBackend::None,
-        time_delta: time_delta_us as f64 / 1e6,
+        time_delta: time_delta_us as f32 / 1e6,
         worker_threads,
         internal_scale_factor: 1,
         global_bias: 1.0,

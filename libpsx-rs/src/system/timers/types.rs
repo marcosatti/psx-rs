@@ -43,7 +43,7 @@ pub(crate) enum SyncMode {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct TimerState {
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     pub(crate) reset_on_target: bool,
     pub(crate) irq_on_target: bool,
     pub(crate) irq_on_overflow: bool,

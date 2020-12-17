@@ -41,7 +41,7 @@ pub(crate) type ControllerResult<T> = Result<T, String>;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum Event {
-    Time(f64),
+    Time(f32),
 }
 
 pub(crate) struct ControllerContext<'a: 'b, 'b> {

@@ -1,7 +1,7 @@
 use crate::types::bitfield::Bitfield;
 
-pub(crate) const CLOCK_SPEED: f64 = 33.8688 * 1e6; // 33.8688 MHz
-pub(crate) const CLOCK_SPEED_PERIOD: f64 = 1.0 / CLOCK_SPEED;
+pub(crate) const CLOCK_SPEED: f32 = 33.8688 * 1e6; // 33.8688 MHz
+pub(crate) const CLOCK_SPEED_PERIOD: f32 = 1.0 / CLOCK_SPEED;
 pub(crate) const DATA_SIZE: u32 = 4;
 
 pub(crate) const CHANNEL_COUNT: usize = 7;

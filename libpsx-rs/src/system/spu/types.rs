@@ -17,7 +17,7 @@ pub(crate) use transfer::*;
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct ControllerState {
-    pub(crate) clock: f64,
+    pub(crate) clock: f32,
     pub(crate) muted: bool,
     pub(crate) transfer_state: TransferState,
     pub(crate) transfer_count: usize,
