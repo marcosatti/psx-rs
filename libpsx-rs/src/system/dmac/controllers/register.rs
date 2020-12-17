@@ -106,7 +106,7 @@ pub(crate) fn handle_chcr(state: &State, controller_state: &mut ControllerState,
 }
 
 pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
-    state.dmac.dicr.acknowledge(|value, latch_kind| {
+    state.dmac.dicr.acknowledge(|mut value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),
             LatchKind::Write => {
@@ -123,27 +123,33 @@ pub(crate) fn handle_dicr(state: &State, controller_state: &mut ControllerState)
 
                     if DICR_IRQ_FLAG_BITFIELDS[channel_id].extract_from(value) > 0 {
                         get_transfer_state(controller_state, channel_id).interrupted = false;
+                        value = DICR_IRQ_FLAG_BITFIELDS[channel_id].insert_into(value, 0);
                     }
                 }
 
-                calculate_dicr_value(controller_state)
+                controller_state.master_interrupted = calculate_dicr_master_flag_value(controller_state);
+                value = DICR_IRQ_MASTER_FLAG.insert_into(value, bool_to_flag(controller_state.master_interrupted));
+
+                Ok(value)
             },
         }
     })
 }
 
-pub(crate) fn calculate_dicr_value(controller_state: &mut ControllerState) -> ControllerResult<u32> {
-    let mut value = 0;
+pub(crate) fn calculate_dicr_master_flag_value(controller_state: &mut ControllerState) -> bool {
+    let mut value = false;
 
-    value = DICR_IRQ_MASTER_ENABLE.insert_into(value, bool_to_flag(controller_state.master_interrupt_enabled));
+    if controller_state.master_interrupt_enabled {
+        for channel_id in 0..CHANNEL_COUNT {
+            let enabled = get_transfer_state(controller_state, channel_id).interrupt_enabled;
+            let interrupted = get_transfer_state(controller_state, channel_id).interrupted;
 
-    for channel_id in 0..CHANNEL_COUNT {
-        let transfer_state = get_transfer_state(controller_state, channel_id);
-        value = DICR_IRQ_ENABLE_BITFIELDS[channel_id].insert_into(value, bool_to_flag(transfer_state.interrupt_enabled));
-        value = DICR_IRQ_FLAG_BITFIELDS[channel_id].insert_into(value, bool_to_flag(transfer_state.interrupted));
+            if enabled && interrupted {
+                value = true;
+                break;
+            }
+        }
     }
 
-    value = DICR_IRQ_MASTER_FLAG.insert_into(value, bool_to_flag(controller_state.master_interrupted));
-
-    Ok(value)
+    value
 }

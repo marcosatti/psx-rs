@@ -16,6 +16,7 @@ use crate::system::{
 pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerState, timer_id: usize) -> ControllerResult<()> {
     let count = get_count(state, timer_id);
     let target = get_target(state, timer_id);
+    let mode = get_mode(state, timer_id);
     let timer_state = get_state(controller_state, timer_id);
 
     let target_value = target.read_u32();
@@ -81,12 +82,14 @@ pub(crate) fn handle_counter(state: &State, controller_state: &mut ControllerSta
             if count_value == target_value {
                 count_value = 0;
                 timer_state.target_hit = true;
+                mode.update::<_, String>(|value| Ok(MODE_TARGET_HIT.insert_into(value, 1)))?;
                 handle_irq_trigger(state, timer_state, timer_id, IrqType::Target)?;
             }
         } else {
             if count_value == (std::u16::MAX as u32) {
                 count_value = 0;
                 timer_state.overflow_hit = true;
+                mode.update::<_, String>(|value| Ok(MODE_OVERFLOW_HIT.insert_into(value, 1)))?;
                 handle_irq_trigger(state, timer_state, timer_id, IrqType::Overflow)?;
             }
         }

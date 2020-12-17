@@ -142,7 +142,7 @@ pub(crate) fn handle_transfer(state: &State, controller_state: &mut ControllerSt
         if finished {
             handle_transfer_finalization(state, transfer_state, channel_id)?;
             transfer_state.started = false;
-            handle_irq_trigger(transfer_state);
+            handle_irq_trigger(state, controller_state, channel_id)?;
             state.bus_locked.store_barrier(false);
             break;
         }

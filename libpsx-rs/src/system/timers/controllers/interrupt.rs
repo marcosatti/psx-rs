@@ -2,16 +2,17 @@ use crate::system::{
     intc::types::Line,
     timers::{
         controllers::{
-            register::*,
             timer::*,
         },
         types::*,
+        constants::*,
     },
     types::{
         ControllerResult,
         State,
     },
 };
+use crate::utilities::bool_to_flag;
 
 pub(crate) fn handle_irq_trigger(state: &State, timer_state: &mut TimerState, timer_id: usize, irq_type: IrqType) -> ControllerResult<()> {
     // First check if we are in one-shot mode, don't raise an IRQ if we have already done so.
@@ -45,7 +46,7 @@ fn handle_irq_raise(state: &State, timer_state: &mut TimerState, timer_id: usize
         true
     };
 
-    mode.update(|_| calculate_mode_value(timer_state))?;
+    mode.update::<_, String>(|value| Ok(MODE_IRQ_STATUS.insert_into(value, bool_to_flag(!timer_state.irq_raised))))?;
 
     if raise_irq {
         state.intc.stat.assert_line(match timer_id {

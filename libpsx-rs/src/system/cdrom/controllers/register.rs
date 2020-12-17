@@ -2,7 +2,6 @@ use crate::{
     system::{
         cdrom::{
             constants::*,
-            controllers::interrupt::*,
             types::*,
         },
         types::{
@@ -55,7 +54,7 @@ pub(crate) fn handle_request(state: &State, controller_state: &mut ControllerSta
 }
 
 pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
-    state.cdrom.interrupt_flag.acknowledge(|value, latch_kind| {
+    state.cdrom.interrupt_flag.acknowledge(|mut value, latch_kind| {
         match latch_kind {
             LatchKind::Read => Ok(value),
             LatchKind::Write => {
@@ -66,9 +65,11 @@ pub(crate) fn handle_interrupt_flag(state: &State, controller_state: &mut Contro
                     if controller_state.interrupt_index > 0 {
                         return Err(format!("Interrupt still pending after acknowledgement: {}", controller_state.interrupt_index));
                     }
+                    
+                    value = INTERRUPT_FLAGS.insert_into(value, 0);
                 }
 
-                calculate_interrupt_flag_value(controller_state)
+                Ok(value)
             },
         }
     })

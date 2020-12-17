@@ -236,9 +236,13 @@ pub(crate) struct B8EdgeRegister {
 
 impl B8EdgeRegister {
     pub(crate) fn new() -> B8EdgeRegister {
+        B8EdgeRegister::with_value(0)
+    }
+
+    pub(crate) fn with_value(value: u8) -> B8EdgeRegister {
         B8EdgeRegister {
             dirty: AtomicBool::new(false),
-            memory: Mutex::new((LatchKind::Read, 0)),
+            memory: Mutex::new((LatchKind::Read, value)),
         }
     }
 

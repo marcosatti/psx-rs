@@ -15,7 +15,7 @@ pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerS
         return Err("Previous interrupt hasn't been acknowledged".into());
     }
 
-    if interrupt_index >= 16 || interrupt_index == 0 {
+    if interrupt_index >= 8 || interrupt_index == 0 {
         return Err(format!("Invalid interrupt index trying to be set: {}", interrupt_index));
     }
 
@@ -27,21 +27,9 @@ pub(crate) fn handle_irq_raise(state: &State, controller_state: &mut ControllerS
     }
 
     controller_state.interrupt_index = interrupt_index;
-    state.cdrom.interrupt_flag.update(|_| calculate_interrupt_flag_value(controller_state))?;
+    state.cdrom.interrupt_flag.update::<_, String>(|v| Ok(INTERRUPT_FLAGS.insert_into(v, controller_state.interrupt_index as u8)))?;
 
     state.intc.stat.assert_line(Line::Cdrom);
 
     Ok(())
-}
-
-pub(crate) fn calculate_interrupt_flag_value(controller_state: &ControllerState) -> ControllerResult<u8> {
-    let mut value = 0xFF;
-
-    if controller_state.interrupt_index >= 16 {
-        return Err(format!("Invalid interrupt index was set: {}", controller_state.interrupt_index));
-    }
-
-    value = INTERRUPT_FLAGS.insert_into(value, controller_state.interrupt_index as u8);
-
-    Ok(value)
 }

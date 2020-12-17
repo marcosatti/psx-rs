@@ -12,7 +12,6 @@ pub(crate) const TIMER_COUNT: usize = 3;
 
 pub(crate) const MODE_SYNC_ENABLE: Bitfield = Bitfield::new(0, 1);
 pub(crate) const MODE_SYNC_MODE: Bitfield = Bitfield::new(1, 2);
-pub(crate) const MODE_SYNC_ENABLE_MODE: Bitfield = Bitfield::new(0, 3);
 pub(crate) const MODE_RESET: Bitfield = Bitfield::new(3, 1);
 pub(crate) const MODE_IRQ_TARGET: Bitfield = Bitfield::new(4, 1);
 pub(crate) const MODE_IRQ_OVERFLOW: Bitfield = Bitfield::new(5, 1);

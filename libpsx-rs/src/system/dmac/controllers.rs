@@ -7,7 +7,6 @@ use crate::system::{
     dmac::{
         constants::*,
         controllers::{
-            interrupt::*,
             register::*,
             transfer::*,
         },
@@ -39,8 +38,6 @@ fn run_time(state: &State, duration: f32) -> ControllerResult<()> {
         let ticks_available = (controller_state.clock / CLOCK_SPEED_PERIOD) as usize;
         let (ticks_used, cooloff_required) = handle_transfer(state, controller_state, channel_id, ticks_available)?;
         controller_state.clock -= (ticks_used as f32) * CLOCK_SPEED_PERIOD;
-
-        handle_irq_raise(state, controller_state)?;
 
         if cooloff_required {
             // Delay the DMAC a litte bit and allow the CPU to use the memory bus.

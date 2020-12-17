@@ -104,7 +104,7 @@ impl State {
             data: Fifo::new(2048),
             command: B8EdgeRegister::new(),
             interrupt_enable: B8LevelRegister::new(),
-            interrupt_flag: B8EdgeRegister::new(),
+            interrupt_flag: B8EdgeRegister::with_value(0xE0),
             request: B8EdgeRegister::new(),
             audio_left_to_left: B8LevelRegister::new(),
             audio_left_to_right: B8LevelRegister::new(),
