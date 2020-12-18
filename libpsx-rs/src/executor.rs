@@ -33,6 +33,7 @@ use std::{
         JoinHandle,
     },
 };
+use thread_priority::*;
 
 const CONTROLLER_COUNT: usize = 9;
 const CONTROLLER_HANDLERS: [ControllerHandler; CONTROLLER_COUNT] = [run_r3000, run_intc, run_dmac, run_gpu, run_spu, run_timers, run_cdrom, run_padmc, run_gpu_crtc];
@@ -77,7 +78,8 @@ impl ThreadStatus {
 
 struct ThreadState {
     status: Mutex<ThreadStatus>,
-    status_cvar: Condvar,
+    pending_cvar: Condvar,
+    finished_cvar: Condvar,
     context: UnsafeCell<ThreadContext>,
 }
 
@@ -85,7 +87,8 @@ impl ThreadState {
     fn new() -> ThreadState {
         ThreadState {
             status: Mutex::new(ThreadStatus::new()),
-            status_cvar: Condvar::new(),
+            pending_cvar: Condvar::new(),
+            finished_cvar: Condvar::new(),
             context: UnsafeCell::new(ThreadContext::new()),
         }
     }
@@ -97,47 +100,62 @@ unsafe impl Sync for ThreadState {
 unsafe impl Send for ThreadState {
 }
 
-fn thread_main(thread_state: Arc<ThreadState>, partition_index: usize) {
+fn thread_main(thread_state: Arc<ThreadState>) {
+    set_current_thread_priority(ThreadPriority::Max).unwrap();
+
     let this_thread = std::thread::current();
     log::info!("{} thread spawned", this_thread.name().unwrap_or("worker"));
 
     'main: loop {
-        for offset in 0..CONTROLLER_COUNT {
-            let controller_index = (partition_index + offset) % CONTROLLER_COUNT;
+        // Wait for pending status or exit.
+        let worker_index;
+        let notify_worker;
+        {
+            let mut thread_status = thread_state.status.lock();
 
-            // Wait for pending status or exit.
-            {
-                let mut thread_status = thread_state.status.lock();
+            loop {
+                if thread_status.exited {
+                    break 'main;
+                }
 
-                loop {
-                    if thread_status.exited {
-                        break 'main;
-                    }
-
-                    if thread_status.task_status[controller_index] == TaskStatus::Pending {
-                        thread_status.task_status[controller_index] = TaskStatus::Running;
-                        break;
-                    }
-
-                    thread_state.status_cvar.wait(&mut thread_status);
+                if let Some(index) = thread_status.task_status.iter().position(|s| *s == TaskStatus::Pending) {
+                    thread_status.task_status[index] = TaskStatus::Running;
+                    worker_index = index;
+                    break;
+                } else {
+                    thread_state.pending_cvar.wait(&mut thread_status);
                 }
             }
 
-            // Run the controller.
-            let result = unsafe {
-                let handler = CONTROLLER_HANDLERS[controller_index];
-                let thread_context = thread_state.context.get().as_ref().unwrap();
-                let controller_context = thread_context.controller_context.as_ref();
-                let event = thread_context.events[controller_index];
-                handler(controller_context, event)
-            };
+            notify_worker = thread_status.task_status.iter().any(|s| *s == TaskStatus::Pending);
+        }
 
-            // Notify main thread & propagate errors.
+        if notify_worker {
+            thread_state.pending_cvar.notify_one();
+        }
+
+        // Run the controller.
+        let result = unsafe {
+            let handler = CONTROLLER_HANDLERS[worker_index];
+            let thread_context = thread_state.context.get().as_ref().unwrap();
+            let controller_context = thread_context.controller_context.as_ref();
+            let event = thread_context.events[worker_index];
+            handler(controller_context, event)
+        };
+
+        // Notify main thread & propagate errors.
+        {
+            let all_finished;
+
             {
                 let mut thread_status = thread_state.status.lock();
-                thread_status.task_status[controller_index] = TaskStatus::Finished;
-                result.unwrap_or_else(|s| thread_status.errors.push(format!("{}: {}", CONTROLLER_NAMES[controller_index], &s)));
-                thread_state.status_cvar.notify_all();
+                thread_status.task_status[worker_index] = TaskStatus::Finished;
+                result.unwrap_or_else(|s| thread_status.errors.push(format!("{}: {}", CONTROLLER_NAMES[worker_index], &s)));
+                all_finished = thread_status.task_status.iter().all(|s| *s == TaskStatus::Finished);
+            }
+
+            if all_finished {
+                thread_state.finished_cvar.notify_one();
             }
         }
     }
@@ -151,7 +169,7 @@ pub(crate) struct ThreadedExecutor {
 impl Drop for ThreadedExecutor {
     fn drop(&mut self) {
         self.thread_state.status.lock().exited = true;
-        self.thread_state.status_cvar.notify_all();
+        self.thread_state.pending_cvar.notify_all();
         self.thread_pool.drain(..).for_each(|h| h.join().unwrap());
     }
 }
@@ -162,6 +180,8 @@ pub(crate) struct Executor {
 
 impl Executor {
     pub(crate) fn new(thread_count: Option<usize>) -> Executor {
+        set_current_thread_priority(ThreadPriority::Max).unwrap();
+
         match thread_count {
             None => Executor::new_unthreaded(),
             Some(c) => Executor::new_threaded(c),
@@ -203,9 +223,8 @@ impl Executor {
         let mut thread_pool = Vec::new();
         for i in 0..thread_count {
             let thread_state_clone = Arc::clone(&thread_state);
-            let partition_index = i * CONTROLLER_COUNT / thread_count;
             let name = format!("worker-{}", i);
-            let handle = Builder::new().name(name).spawn(move || thread_main(thread_state_clone, partition_index)).unwrap();
+            let handle = Builder::new().name(name).spawn(move || thread_main(thread_state_clone)).unwrap();
             thread_pool.push(handle);
         }
 
@@ -245,24 +264,15 @@ impl Executor {
         {
             let mut thread_status = executor.thread_state.status.lock();
             (0..CONTROLLER_COUNT).for_each(|i| thread_status.task_status[i] = TaskStatus::Pending);
-            executor.thread_state.status_cvar.notify_all();
         }
+        executor.thread_state.pending_cvar.notify_one();
 
         // Wait for all tasks to be finished.
         {
             let mut thread_status = executor.thread_state.status.lock();
 
-            loop {
-                let mut all_finished = true;
-                for i in 0..CONTROLLER_COUNT {
-                    all_finished &= thread_status.task_status[i] == TaskStatus::Finished;
-                }
-
-                if all_finished {
-                    break;
-                }
-
-                executor.thread_state.status_cvar.wait(&mut thread_status);
+            while !thread_status.task_status.iter().all(|s| *s == TaskStatus::Finished) {
+                executor.thread_state.finished_cvar.wait(&mut thread_status);
             }
 
             errors.extend(thread_status.errors.drain(..));

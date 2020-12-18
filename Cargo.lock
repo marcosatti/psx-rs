@@ -395,6 +395,7 @@ dependencies = [
  "smallvec",
  "spsc-ringbuffer",
  "stdext",
+ "thread-priority",
  "typenum",
  "zstd",
 ]
@@ -722,6 +723,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 dependencies = [
  "unicode-width",
+]
+
+[[package]]
+name = "thread-priority"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dff8073d6382f78367078270c65b5e96cd7f6afc49c42562188e02fea28bfd1"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]

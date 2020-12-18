@@ -13,6 +13,8 @@ use crate::{
 };
 
 mod debug {
+    use lazy_static::*;
+    use parking_lot::Mutex;
     use std::time::{
         Duration,
         Instant,
@@ -24,6 +26,10 @@ mod debug {
     pub(crate) fn trace_fps() {
         static mut FPS_REPORT_INSTANT: Option<Instant> = None;
         static mut FRAME_COUNT: usize = 0;
+
+        lazy_static! {
+            static ref AVERAGE: Mutex<(f32, usize)> = Mutex::new((0.0, 0));
+        }
 
         if !ENABLE_FPS_TRACE {
             return;
@@ -39,8 +45,14 @@ mod debug {
             let elapsed = FPS_REPORT_INSTANT.unwrap().elapsed();
 
             if elapsed > FPS_TRACE_REPORT_PERIOD {
-                let fps = FRAME_COUNT as f64 / elapsed.as_secs_f64();
-                log::trace!("FPS: {:.2}", fps);
+                let fps = FRAME_COUNT as f32 / elapsed.as_secs_f32();
+
+                let mut average = AVERAGE.lock();
+                average.0 += fps;
+                average.1 += 1;
+
+                let average = average.0 / average.1 as f32;
+                log::trace!("FPS: {:.2} (average: {:.2})", fps, average);
 
                 FPS_REPORT_INSTANT = None;
                 FRAME_COUNT = 0;

@@ -20,8 +20,8 @@ pub(crate) fn apply_sample_volume(state: &State, controller_state: &mut Controll
 
 fn transform_voice_adsr_volume(controller_state: &mut ControllerState, voice_id: usize, adpcm_sample: i16) -> i16 {
     let voice_state = get_voice_state(controller_state, voice_id);
-    let adsr_volume_normalized = voice_state.adsr_state.current_volume as f64 / std::i16::MAX as f64;
-    (adpcm_sample as f64 * adsr_volume_normalized) as i16
+    let adsr_volume_normalized = voice_state.adsr_state.current_volume as f32 / std::i16::MAX as f32;
+    (adpcm_sample as f32 * adsr_volume_normalized) as i16
 }
 
 fn transform_voice_volume(state: &State, voice_id: usize, adpcm_sample: i16) -> Stereo {
@@ -79,8 +79,8 @@ fn transform_sample_fixed(sample: i16, volume15: u16) -> i16 {
     // volume15 is a 15-bit signed integer (fixed mode volume level).
     // Sign-extend it to 16-bit and double it as per docs.
     let signed_volume = (((volume15 << 1) as i16) >> 1) * 2;
-    let scale_factor = clamp(signed_volume as f64 / std::i16::MAX as f64, -1.0, 1.0);
-    (sample as f64 * scale_factor) as i16
+    let scale_factor = clamp(signed_volume as f32 / std::i16::MAX as f32, -1.0, 1.0);
+    (sample as f32 * scale_factor) as i16
 }
 
 fn transform_sample_sweep(sample: i16, sweep_params: SweepParams) -> i16 {
