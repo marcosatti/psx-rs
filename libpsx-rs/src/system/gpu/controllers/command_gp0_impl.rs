@@ -398,6 +398,47 @@ pub(crate) fn command_30_handler(_state: &State, controller_state: &mut Controll
     Ok(())
 }
 
+pub(crate) fn command_34_length(_data: &[u32]) -> Option<usize> {
+    Some(9)
+}
+
+pub(crate) fn command_34_handler(_state: &State, controller_state: &mut ControllerState, video_backend: &VideoBackend, data: &[u32]) -> ControllerResult<()> {
+    debug::trace_gp0_command("Shaded Textured three-point polygon, opaque, texture-blending", data);
+
+    let base = Point2D::new(controller_state.drawing_offset_x, controller_state.drawing_offset_y);
+    let offsets = extract_position_offsets_3([data[1], data[4], data[7]], default_render_x_position_modifier, default_render_y_position_modifier);
+    let positions = make_positions_3(base, offsets);
+    let colors = extract_colors_3([data[0], data[3], data[6]]);
+    let page_base = extract_texpage_base(data[5]);
+    let texture_position_offsets = extract_texture_position_offsets_3([data[2], data[5], data[8]]);
+    let clut_mode = extract_texpage_clut_mode(data[5]);
+    let clut_base = extract_clut_base(data[2]);
+    let clut_kind = ClutKind::from_data(clut_mode, clut_base);
+    let rendering_kind = RenderingKind::TextureBlending {
+        page_base,
+        clut_kind,
+    };
+    let drawing_area =
+        make_rectangle_by_corners(controller_state.drawing_area_x1, controller_state.drawing_area_y1, controller_state.drawing_area_x2, controller_state.drawing_area_y2);
+
+    let _ = backend_dispatch::draw_triangles(
+        video_backend,
+        TrianglesParams {
+            vertices: 3,
+            positions: &positions,
+            colors: &colors,
+            texture_position_offsets: &texture_position_offsets,
+            rendering_kind,
+            transparency_kind: TransparencyKind::Opaque,
+            drawing_area,
+            mask_bit_force_set: controller_state.mask_bit_force_set,
+            mask_bit_check: controller_state.mask_bit_check,
+        },
+    )?;
+
+    Ok(())
+}
+
 pub(crate) fn command_38_length(_data: &[u32]) -> Option<usize> {
     Some(8)
 }

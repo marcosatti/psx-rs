@@ -59,7 +59,7 @@ pub(crate) fn handle_cp2_push_rgb(state: &mut Cp2ControllerState) {
     let rgb1_value = state.gd[21].read_u32();
     let rgb2_value = state.gd[22].read_u32();
     state.gd[20].write_u32(rgb1_value); // RGB0 = RGB1
-    state.gd[13].write_u32(rgb2_value); // RGB1 = RGB2
+    state.gd[21].write_u32(rgb2_value); // RGB1 = RGB2
 }
 
 pub(crate) fn get_cp0_register(state: &mut Cp0ControllerState, register_id: usize) -> &mut Register {
