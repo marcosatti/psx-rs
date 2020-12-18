@@ -12,9 +12,9 @@ See BUILD.md for build details.
 - libcdio 2.1 (CDROM, Windows / Linux)
 
 ## Status
-- Video starting to work, needs implementing / bug fixing.
-- Audio starting to work, needs implementing / bug fixing, but you can make out the BIOS intro reasonably well.
-- CDROM starting to work, needs implementing (reading sectors is working).
+- Video working, partially implemented.
+- Audio working, partially implemented.
+- CDROM working, partially implemented.
 - Input not done at all (Hi-Z always).
 - Able to get to the main menu in Crash Bandicoot!
 
@@ -27,7 +27,7 @@ sdl2_force_wayland_video_driver = true  # Force use Wayland (will error out if n
 audio_backend = 'openal'                # 'openal' / 'none'
 cdrom_backend = 'libcdio'               # 'libcdio' / 'libmirage' / 'none'
 video_backend = 'opengl'                # 'opengl' / 'none'
-worker_threads = 2                      # Tune for your own system, it can use any number of threads. Use 'single' to disable multithreading.
+worker_threads = '2'                    # Tune for your own system, it can use any number of threads. Use 'single' to disable multithreading.
 time_delta = 10                         # Number of microseconds before a hard synchronize is required.
 quit_on_exception = false               # Quit automatically when an state exception occurs.
 pause_on_start = false                  # Pause upon starting the emulator.
@@ -56,6 +56,4 @@ Keymap:
 - F10 => Save state
 - F11 => Load state
 
-![BIOS Intro](/media/2019-03-18.png?raw=true "BIOS Intro")
-
-![Reading CDROM](/media/2020-03-12.png?raw=true "Reading CDROM")
+![Crash Bandicoot Main Menu](/media/2020-12-18.png?raw=true "Crash Bandicoot Main Menu")
