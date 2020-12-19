@@ -11,6 +11,7 @@ libmirage-sys = { path = "../libmirage-sys" }
 libcdio-sys = { path = "../libcdio-sys" }
 parking_lot = { version = "*", features = ["serde"] }
 thread-priority = "*"
+crossbeam-utils = "*"
 log = "*"
 euclid = "*"
 num-traits = "*"
@@ -21,6 +22,8 @@ typenum = "*"
 atomic_enum = "*"
 array-macro = "*"
 stdext = "*"
+rand = "*"
+rand_xorshift = "*"
 smallvec = { version = "*", features = ["union", "const_generics"] }
 spsc-ringbuffer = { git = "https://github.com/marcosatti/spsc-ringbuffer", features = ["serialization"] }
 serde = { version = "*", optional = true, features = ["derive"] }

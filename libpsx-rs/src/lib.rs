@@ -29,6 +29,7 @@ use crate::{
     system::types::State,
 };
 use executor::Executor;
+pub use executor::ThreadingKind;
 use std::{
     io::Result as IoResult,
     path::{
@@ -45,7 +46,7 @@ pub struct Config<'a> {
     pub audio_backend: AudioBackend<'a>,
     pub cdrom_backend: CdromBackend<'a>,
     pub time_delta: f32,
-    pub worker_threads: Option<usize>,
+    pub threading: ThreadingKind,
     pub internal_scale_factor: usize,
     pub global_bias: f32,
     pub r3000_bias: f32,
@@ -70,7 +71,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         log::info!("Initializing core");
 
         let state = State::with_bios(&config.workspace_path, &config.bios_filename)?;
-        let executor = Executor::new(config.worker_threads);
+        let executor = Executor::new(config.threading);
 
         video::setup(config);
         audio::setup(config);

@@ -6,6 +6,7 @@ use libpsx_rs::{
     },
     Config,
     Core,
+    ThreadingKind,
 };
 use std::{
     env::args,
@@ -38,7 +39,7 @@ fn main() {
 
     // Initialize psx_rs core
     let time_delta_us = args().nth(1).map_or(10, |v| v.parse::<usize>().unwrap());
-    let worker_threads = args().nth(2).map_or(None, |v| Some(v.parse::<usize>().unwrap()));
+    let worker_threads = args().nth(2).map_or(2, |v| v.parse::<usize>().unwrap());
     let config = Config {
         workspace_path: PathBuf::from(r"./workspace/"),
         bios_filename: "scph5501.bin".into(),
@@ -46,7 +47,7 @@ fn main() {
         audio_backend: AudioBackend::None,
         cdrom_backend: CdromBackend::None,
         time_delta: time_delta_us as f32 / 1e6,
-        worker_threads,
+        threading: ThreadingKind::Mutex(worker_threads),
         internal_scale_factor: 1,
         global_bias: 1.0,
         r3000_bias: 1.0,

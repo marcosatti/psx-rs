@@ -89,7 +89,7 @@ fn main() {
         audio_backend,
         cdrom_backend,
         time_delta: config.time_delta_secs,
-        worker_threads: config.worker_threads,
+        threading: config.threading,
         internal_scale_factor: config.internal_scale_factor,
         global_bias: config.global_bias,
         r3000_bias: config.r3000_bias,

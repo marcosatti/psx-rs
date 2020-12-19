@@ -1,4 +1,5 @@
 use crate::backend::*;
+use libpsx_rs::ThreadingKind;
 use serde::Deserialize;
 use std::{
     fs::File,
@@ -12,7 +13,8 @@ struct TomlConfig {
     audio_backend: String,
     cdrom_backend: String,
     video_backend: String,
-    worker_threads: String,
+    threading: String,
+    use_spinlocks: bool,
     time_delta: u64,
     pause_on_start: bool,
     quit_on_exception: bool,
@@ -35,7 +37,7 @@ pub(crate) struct Config {
     pub(crate) audio_backend_kind: AudioBackendKind,
     pub(crate) cdrom_backend_kind: CdromBackendKind,
     pub(crate) video_backend_kind: VideoBackendKind,
-    pub(crate) worker_threads: Option<usize>,
+    pub(crate) threading: ThreadingKind,
     pub(crate) time_delta_secs: f32,
     pub(crate) pause_on_start: bool,
     pub(crate) quit_on_exception: bool,
@@ -83,11 +85,15 @@ pub(crate) fn load(workspace_path: &Path) -> Config {
                 _ => panic!("Unrecongnised config option for the video backend"),
             }
         },
-        worker_threads: {
-            if toml_config.worker_threads == "single" {
-                None
+        threading: {
+            if toml_config.threading == "single" {
+                ThreadingKind::None
             } else {
-                Some(toml_config.worker_threads.parse().unwrap())
+                if toml_config.use_spinlocks {
+                    ThreadingKind::Spinlock(toml_config.threading.parse().unwrap())
+                } else {
+                    ThreadingKind::Mutex(toml_config.threading.parse().unwrap())
+                }
             }
         },
         time_delta_secs: { toml_config.time_delta as f32 / 1e6 },
