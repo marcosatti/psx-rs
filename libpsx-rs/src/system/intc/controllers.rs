@@ -37,7 +37,7 @@ fn handle_interrupt_check(state: &State) {
     let stat = &state.intc.stat;
     let mask = &state.intc.mask;
 
-    let stat_value = stat.value();
+    let stat_value = stat.read_u32();
     let mask_value = mask.read_u32();
     let masked_value = stat_value & mask_value;
 

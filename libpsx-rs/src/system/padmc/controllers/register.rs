@@ -10,12 +10,12 @@ use crate::{
         },
     },
     types::memory::LatchKind,
-    utilities::bool_to_flag,
 };
 
 pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState) -> ControllerResult<()> {
     state.padmc.ctrl.acknowledge(|value, latch_kind| {
         match latch_kind {
+            LatchKind::Read => Ok(value),
             LatchKind::Write => {
                 controller_state.tx_enabled = CTRL_TXEN.extract_from(value) > 0;
 
@@ -33,20 +33,8 @@ pub(crate) fn handle_ctrl(state: &State, controller_state: &mut ControllerState)
                     // log::debug!("RESET bit acknowledged")
                 }
 
-                Ok(calculate_ctrl_value(controller_state))
+                Ok(value)
             },
-            LatchKind::Read => Ok(value),
         }
     })
-}
-
-fn calculate_ctrl_value(controller_state: &mut ControllerState) -> u16 {
-    let mut value = 0;
-
-    value = CTRL_TXEN.insert_into(value, bool_to_flag(controller_state.tx_enabled) as u16);
-    value = CTRL_JOYN_OUTPUT.insert_into(value, bool_to_flag(controller_state.joy_select_enabled) as u16);
-    value = CTRL_ACKINT_ENABLE.insert_into(value, bool_to_flag(controller_state.ack_interrupt_enabled) as u16);
-    value = CTRL_JOY_SLOT.insert_into(value, bool_to_flag(controller_state.use_joy2) as u16);
-
-    value
 }

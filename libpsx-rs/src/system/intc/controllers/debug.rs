@@ -5,7 +5,7 @@ use crate::system::{
 use log::trace;
 
 pub(crate) fn trace_intc(state: &State, only_enabled: bool, enable_assert: bool) {
-    let stat = state.intc.stat.value();
+    let stat = state.intc.stat.read_u32();
     let mask = state.intc.mask.read_u32();
     let mut pending_sticky = false;
     for (name, bitfield) in IRQ_NAMES.iter().zip(IRQ_BITFIELDS.iter()) {

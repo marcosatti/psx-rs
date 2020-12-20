@@ -99,10 +99,8 @@ impl B32EdgeRegister {
     pub(crate) fn acknowledge<F, E>(&self, operation: F) -> Result<(), E>
     where F: FnOnce(u32, LatchKind) -> Result<u32, E> {
         if self.dirty.load(Ordering::Acquire) {
-            {
-                let data = &mut self.memory.lock();
-                data.1 = operation(data.1, data.0)?;
-            }
+            let data = &mut self.memory.lock();
+            data.1 = operation(data.1, data.0)?;
             self.dirty.store(false, Ordering::Release);
         }
 
@@ -195,10 +193,8 @@ impl B16EdgeRegister {
     pub(crate) fn acknowledge<F, E>(&self, operation: F) -> Result<(), E>
     where F: FnOnce(u16, LatchKind) -> Result<u16, E> {
         if self.dirty.load(Ordering::Acquire) {
-            {
-                let data = &mut self.memory.lock();
-                data.1 = operation(data.1, data.0)?;
-            }
+            let data = &mut self.memory.lock();
+            data.1 = operation(data.1, data.0)?;
             self.dirty.store(false, Ordering::Release);
         }
 
@@ -280,10 +276,8 @@ impl B8EdgeRegister {
     pub(crate) fn acknowledge<F, E>(&self, operation: F) -> Result<(), E>
     where F: FnOnce(u8, LatchKind) -> Result<u8, E> {
         if self.dirty.load(Ordering::Acquire) {
-            {
-                let data = &mut self.memory.lock();
-                data.1 = operation(data.1, data.0)?;
-            }
+            let data = &mut self.memory.lock();
+            data.1 = operation(data.1, data.0)?;
             self.dirty.store(false, Ordering::Release);
         }
 

@@ -2,10 +2,8 @@ use crate::{
     system::intc::constants::*,
     types::{
         exclusive_state::ExclusiveState,
-        flag::Flag,
         memory::*,
     },
-    utilities::bool_to_flag,
 };
 #[cfg(feature = "serialization")]
 use serde::{
@@ -31,49 +29,29 @@ pub(crate) enum Line {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub(crate) struct Stat {
-    vblank: Flag,
-    gpu: Flag,
-    cdrom: Flag,
-    dma: Flag,
-    tmr0: Flag,
-    tmr1: Flag,
-    tmr2: Flag,
-    padmc: Flag,
-    sio: Flag,
-    spu: Flag,
-    pio: Flag,
+    register: B32LevelRegister,
 }
 
 impl Stat {
     pub(crate) fn new() -> Stat {
         Stat {
-            vblank: Flag::new(),
-            gpu: Flag::new(),
-            cdrom: Flag::new(),
-            dma: Flag::new(),
-            tmr0: Flag::new(),
-            tmr1: Flag::new(),
-            tmr2: Flag::new(),
-            padmc: Flag::new(),
-            sio: Flag::new(),
-            spu: Flag::new(),
-            pio: Flag::new(),
+            register: B32LevelRegister::new(),
         }
     }
 
     pub(crate) fn assert_line(&self, line: Line) {
         match line {
-            Line::Vblank => self.vblank.store(true),
-            Line::Gpu => self.gpu.store(true),
-            Line::Cdrom => self.cdrom.store(true),
-            Line::Dma => self.dma.store(true),
-            Line::Tmr0 => self.tmr0.store(true),
-            Line::Tmr1 => self.tmr1.store(true),
-            Line::Tmr2 => self.tmr2.store(true),
-            Line::Padmc => self.padmc.store(true),
-            Line::Sio => self.sio.store(true),
-            Line::Spu => self.spu.store(true),
-            Line::Pio => self.pio.store(true),
+            Line::Vblank => self.register.write_bitfield_atomic(VBLANK, 1),
+            Line::Gpu => self.register.write_bitfield_atomic(GPU, 1),
+            Line::Cdrom => self.register.write_bitfield_atomic(CDROM, 1),
+            Line::Dma => self.register.write_bitfield_atomic(DMA, 1),
+            Line::Tmr0 => self.register.write_bitfield_atomic(TMR0, 1),
+            Line::Tmr1 => self.register.write_bitfield_atomic(TMR1, 1),
+            Line::Tmr2 => self.register.write_bitfield_atomic(TMR2, 1),
+            Line::Padmc => self.register.write_bitfield_atomic(PADMC, 1),
+            Line::Sio => self.register.write_bitfield_atomic(SIO, 1),
+            Line::Spu => self.register.write_bitfield_atomic(SPU, 1),
+            Line::Pio => self.register.write_bitfield_atomic(PIO, 1),
         }
     }
 
@@ -82,17 +60,17 @@ impl Stat {
             let acknowledged = ((acknowledge_mask >> i) & 1) == 0;
             if acknowledged {
                 match i {
-                    0 => self.vblank.store(false),
-                    1 => self.gpu.store(false),
-                    2 => self.cdrom.store(false),
-                    3 => self.dma.store(false),
-                    4 => self.tmr0.store(false),
-                    5 => self.tmr1.store(false),
-                    6 => self.tmr2.store(false),
-                    7 => self.padmc.store(false),
-                    8 => self.sio.store(false),
-                    9 => self.spu.store(false),
-                    10 => self.pio.store(false),
+                    0 => self.register.write_bitfield_atomic(VBLANK, 0),
+                    1 => self.register.write_bitfield_atomic(GPU, 0),
+                    2 => self.register.write_bitfield_atomic(CDROM, 0),
+                    3 => self.register.write_bitfield_atomic(DMA, 0),
+                    4 => self.register.write_bitfield_atomic(TMR0, 0),
+                    5 => self.register.write_bitfield_atomic(TMR1, 0),
+                    6 => self.register.write_bitfield_atomic(TMR2, 0),
+                    7 => self.register.write_bitfield_atomic(PADMC, 0),
+                    8 => self.register.write_bitfield_atomic(SIO, 0),
+                    9 => self.register.write_bitfield_atomic(SPU, 0),
+                    10 => self.register.write_bitfield_atomic(PIO, 0),
                     // Ignore (always zero).
                     _ => {},
                 }
@@ -100,25 +78,9 @@ impl Stat {
         }
     }
 
-    pub(crate) fn value(&self) -> u32 {
-        let mut value = 0;
-        value = VBLANK.insert_into(value, bool_to_flag(self.vblank.load()));
-        value = GPU.insert_into(value, bool_to_flag(self.gpu.load()));
-        value = CDROM.insert_into(value, bool_to_flag(self.cdrom.load()));
-        value = DMA.insert_into(value, bool_to_flag(self.dma.load()));
-        value = TMR0.insert_into(value, bool_to_flag(self.tmr0.load()));
-        value = TMR1.insert_into(value, bool_to_flag(self.tmr1.load()));
-        value = TMR2.insert_into(value, bool_to_flag(self.tmr2.load()));
-        value = PADMC.insert_into(value, bool_to_flag(self.padmc.load()));
-        value = SIO.insert_into(value, bool_to_flag(self.sio.load()));
-        value = SPU.insert_into(value, bool_to_flag(self.spu.load()));
-        value = PIO.insert_into(value, bool_to_flag(self.pio.load()));
-        value
-    }
-
     pub(crate) fn read_u16(&self, offset: u32) -> u16 {
         assert_eq!(offset, 0);
-        self.value() as u16
+        self.register.read_u16(0)
     }
 
     pub(crate) fn write_u16(&self, offset: u32, value: u16) {
@@ -127,7 +89,7 @@ impl Stat {
     }
 
     pub(crate) fn read_u32(&self) -> u32 {
-        self.value() as u32
+        self.register.read_u32()
     }
 
     pub(crate) fn write_u32(&self, value: u32) {

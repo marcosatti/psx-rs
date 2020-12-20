@@ -61,6 +61,17 @@ impl B32LevelRegister {
     pub(crate) fn write_bitfield(&self, bitfield: Bitfield, value: u32) {
         self.write_u32(bitfield.insert_into(self.read_u32(), value));
     }
+
+    pub(crate) fn write_bitfield_atomic(&self, bitfield: Bitfield, value: u32) {
+        loop {
+            let register_value = self.memory.load(Ordering::Relaxed);
+            let new_register_value = bitfield.insert_into(register_value, value);
+
+            if self.memory.compare_and_swap(register_value, new_register_value, Ordering::AcqRel) == register_value {
+                break;
+            }
+        }
+    }
 }
 
 unsafe impl Send for B32LevelRegister {
