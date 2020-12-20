@@ -20,7 +20,6 @@ use crate::{
     Config,
 };
 use array_macro::*;
-use atomic_enum::*;
 use parking_lot::{
     Condvar,
     Mutex,
@@ -37,6 +36,7 @@ use std::{
     sync::{
         atomic::{
             AtomicBool,
+            AtomicU8,
             Ordering,
         },
         Arc,
@@ -52,13 +52,14 @@ const CONTROLLER_COUNT: usize = 9;
 const CONTROLLER_HANDLERS: [ControllerHandler; CONTROLLER_COUNT] = [run_r3000, run_intc, run_dmac, run_gpu, run_spu, run_timers, run_cdrom, run_padmc, run_gpu_crtc];
 const CONTROLLER_NAMES: [&'static str; CONTROLLER_COUNT] = ["r3000", "intc", "dmac", "gpu", "spu", "timers", "cdrom", "padmc", "gpu_crtc"];
 
-#[atomic_enum]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum TaskStatus {
-    Finished,
-    Pending,
-    Running,
+    Finished = 0,
+    Pending = 1,
+    Running = 2,
 }
+
+type TaskStatusU8 = AtomicU8;
 
 struct ThreadContext {
     controller_context: NonNull<ControllerContext<'static, 'static>>,
@@ -116,7 +117,8 @@ unsafe impl Send for MutexThreadState {
 
 struct SpinlockThreadState {
     exited: AtomicBool,
-    status: [AtomicTaskStatus; CONTROLLER_COUNT],
+    status: [TaskStatusU8; CONTROLLER_COUNT],
+    errors_occurred: AtomicBool,
     errors: Mutex<Vec<String>>,
     context: UnsafeCell<ThreadContext>,
 }
@@ -125,7 +127,8 @@ impl SpinlockThreadState {
     fn new() -> SpinlockThreadState {
         SpinlockThreadState {
             exited: AtomicBool::new(false),
-            status: array![AtomicTaskStatus::new(TaskStatus::Finished); CONTROLLER_COUNT],
+            status: array![TaskStatusU8::new(TaskStatus::Finished as u8); CONTROLLER_COUNT],
+            errors_occurred: AtomicBool::new(false),
             errors: Mutex::new(Vec::new()),
             context: UnsafeCell::new(ThreadContext::new()),
         }
@@ -217,11 +220,16 @@ fn thread_main_spinlock(thread_state: Arc<SpinlockThreadState>) {
             }
 
             let start_index: u32 = rng.gen();
-            for index in 0..CONTROLLER_COUNT {
+            for index in 0..(CONTROLLER_COUNT * 1024) {
                 let index = index.overflowing_add(start_index as usize).0 % CONTROLLER_COUNT;
-                if thread_state.status[index].compare_and_swap(TaskStatus::Pending, TaskStatus::Running, Ordering::AcqRel) == TaskStatus::Pending {
-                    worker_index = index;
-                    break 'work;
+
+                // Test.
+                if thread_state.status[index].load(Ordering::Relaxed) == TaskStatus::Pending as u8 {
+                    // Test-and-set.
+                    if thread_state.status[index].compare_and_swap(TaskStatus::Pending as u8, TaskStatus::Running as u8, Ordering::AcqRel) == TaskStatus::Pending as u8 {
+                        worker_index = index;
+                        break 'work;
+                    }
                 }
 
                 spin_loop();
@@ -240,9 +248,13 @@ fn thread_main_spinlock(thread_state: Arc<SpinlockThreadState>) {
         };
 
         // Propagate errors and signal finished.
-        result.unwrap_or_else(|s| thread_state.errors.lock().push(format!("{}: {}", CONTROLLER_NAMES[worker_index], &s)));
+        result.unwrap_or_else(|s| {
+            let mut errors = thread_state.errors.lock();
+            errors.push(format!("{}: {}", CONTROLLER_NAMES[worker_index], &s));
+            thread_state.errors_occurred.store(true, Ordering::Relaxed);
+        });
 
-        thread_state.status[worker_index].store(TaskStatus::Finished, Ordering::Release);
+        thread_state.status[worker_index].store(TaskStatus::Finished as u8, Ordering::Release);
     }
 }
 
@@ -299,7 +311,7 @@ impl Executor {
         }
     }
 
-    pub(crate) fn run(&self, config: &Config, context: &ControllerContext) -> Result<(), Vec<String>> {
+    pub(crate) fn run(&self, iterations: usize, config: &Config, context: &ControllerContext) -> Result<(), Vec<String>> {
         let biases = [
             config.r3000_bias,
             config.intc_bias,
@@ -316,9 +328,9 @@ impl Executor {
         let events = array![|i| Event::Time(time_delta * biases[i]); CONTROLLER_COUNT];
 
         match self.threaded {
-            ThreadedExecutorKind::None => Executor::run_unthreaded(context, &events),
-            ThreadedExecutorKind::Mutex(ref t) => Executor::run_threaded_mutex(t, context, &events),
-            ThreadedExecutorKind::Spinlock(ref t) => Executor::run_threaded_spinlock(t, context, &events),
+            ThreadedExecutorKind::None => Executor::run_unthreaded(iterations, context, &events),
+            ThreadedExecutorKind::Mutex(ref t) => Executor::run_threaded_mutex(t, iterations, context, &events),
+            ThreadedExecutorKind::Spinlock(ref t) => Executor::run_threaded_spinlock(t, iterations, context, &events),
         }
     }
 
@@ -367,57 +379,25 @@ impl Executor {
         thread_pool
     }
 
-    fn run_unthreaded(context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
+    fn run_unthreaded(iterations: usize, context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
 
-        for i in 0..CONTROLLER_COUNT {
-            CONTROLLER_HANDLERS[i](context, events[i]).unwrap_or_else(|s| errors.push(format!("{}: {}", CONTROLLER_NAMES[i], &s)));
-        }
-
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-
-    fn run_threaded_mutex(executor: &MutexThreadedExecutor, context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
-        // Start the tasks.
-        {
-            let mut thread_status = executor.thread_state.status.lock();
-            (0..CONTROLLER_COUNT).for_each(|i| thread_status.task_status[i] = TaskStatus::Pending);
-        }
-
-        // Set the context.
-        unsafe {
-            let thread_context = executor.thread_state.context.get().as_mut().unwrap();
-            thread_context.controller_context = NonNull::new_unchecked(std::mem::transmute(context));
-            (0..CONTROLLER_COUNT).for_each(|i| thread_context.events[i] = events[i]);
-        };
-
-        executor.thread_state.pending_cvar.notify_one();
-
-        // Wait for all tasks to be finished.
-        let mut errors = Vec::new();
-
-        {
-            let mut thread_status = executor.thread_state.status.lock();
-
-            while !thread_status.task_status.iter().all(|s| *s == TaskStatus::Finished) {
-                executor.thread_state.finished_cvar.wait(&mut thread_status);
+        for _ in 0..iterations {
+            for i in 0..CONTROLLER_COUNT {
+                CONTROLLER_HANDLERS[i](context, events[i]).unwrap_or_else(|s| errors.push(format!("{}: {}", CONTROLLER_NAMES[i], &s)));
             }
 
-            errors.extend(thread_status.errors.drain(..));
-        };
-
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
+            if !errors.is_empty() {
+                return Err(errors);
+            }
         }
+
+        Ok(())
     }
 
-    fn run_threaded_spinlock(executor: &SpinlockThreadedExecutor, context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
+    fn run_threaded_mutex(executor: &MutexThreadedExecutor, iterations: usize, context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
+        let mut errors = Vec::new();
+
         // Set the context.
         unsafe {
             let thread_context = executor.thread_state.context.get().as_mut().unwrap();
@@ -425,21 +405,61 @@ impl Executor {
             (0..CONTROLLER_COUNT).for_each(|i| thread_context.events[i] = events[i]);
         };
 
-        // Start the tasks.
-        (0..CONTROLLER_COUNT).for_each(|i| executor.thread_state.status[i].store(TaskStatus::Pending, Ordering::Release));
+        for _ in 0..iterations {
+            // Start the tasks.
+            {
+                let mut thread_status = executor.thread_state.status.lock();
+                (0..CONTROLLER_COUNT).for_each(|i| thread_status.task_status[i] = TaskStatus::Pending);
+            }
 
-        // Wait for all tasks to be finished.
-        while !executor.thread_state.status.iter().all(|s| s.load(Ordering::Acquire) == TaskStatus::Finished) {
-            spin_loop();
+            executor.thread_state.pending_cvar.notify_one();
+
+            // Wait for all tasks to be finished.
+            {
+                let mut thread_status = executor.thread_state.status.lock();
+
+                while !thread_status.task_status.iter().all(|s| *s == TaskStatus::Finished) {
+                    executor.thread_state.finished_cvar.wait(&mut thread_status);
+                }
+
+                if !thread_status.errors.is_empty() {
+                    errors.extend(thread_status.errors.drain(..));
+                }
+            };
+
+            if !errors.is_empty() {
+                return Err(errors);
+            }
         }
 
+        Ok(())
+    }
+
+    fn run_threaded_spinlock(executor: &SpinlockThreadedExecutor, iterations: usize, context: &ControllerContext, events: &[Event; CONTROLLER_COUNT]) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
-        errors.extend(executor.thread_state.errors.lock().drain(..));
 
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
+        // Set the context.
+        unsafe {
+            let thread_context = executor.thread_state.context.get().as_mut().unwrap();
+            thread_context.controller_context = NonNull::new_unchecked(std::mem::transmute(context));
+            (0..CONTROLLER_COUNT).for_each(|i| thread_context.events[i] = events[i]);
+        };
+
+        for _ in 0..iterations {
+            // Start the tasks.
+            (0..CONTROLLER_COUNT).for_each(|i| executor.thread_state.status[i].store(TaskStatus::Pending as u8, Ordering::Release));
+
+            // Wait for all tasks to be finished.
+            while !executor.thread_state.status.iter().all(|s| s.load(Ordering::Acquire) == TaskStatus::Finished as u8) {
+                spin_loop();
+            }
+
+            if executor.thread_state.errors_occurred.load(Ordering::Relaxed) {
+                errors.extend(executor.thread_state.errors.lock().drain(..));
+                return Err(errors);
+            }
         }
+
+        Ok(())
     }
 }

@@ -78,12 +78,10 @@ pub(crate) fn main_inner<'a>(_window: &'a Window, event_pump: &mut EventPump, co
                 if !handle_events(event_pump, quit_fn, keydown_fn) {
                     // Run for 1ms before checking for events again.
                     let iterations = ((1e-3 / config.time_delta_secs) as usize).max(1);
-                    for _ in 0..iterations {
-                        if let Err(()) = handle_core_step(&mut core) {
-                            state.set(State::Exception);
-                            log::error!("Exception");
-                            break;
-                        }
+                    if let Err(()) = handle_core_step(&mut core, iterations) {
+                        state.set(State::Exception);
+                        log::error!("Exception");
+                        break;
                     }
                 }
             },
@@ -200,8 +198,8 @@ where
     handled_event
 }
 
-fn handle_core_step(core: &mut Core) -> Result<(), ()> {
-    core.step().map_err(|errors| {
+fn handle_core_step(core: &mut Core, iterations: usize) -> Result<(), ()> {
+    core.step(iterations).map_err(|errors| {
         log::error!("Error occurred while stepping controller(s):");
         for error in errors.iter() {
             log::error!("    {}", &error);

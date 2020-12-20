@@ -90,6 +90,6 @@ fn main_inner(config: Config) {
     log::info!("Core initialized");
 
     while !EXIT.load(Ordering::Acquire) {
-        core.step().unwrap();
+        core.step(1).unwrap();
     }
 }

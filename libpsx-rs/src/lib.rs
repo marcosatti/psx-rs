@@ -94,7 +94,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
         Ok(())
     }
 
-    pub fn step(&mut self) -> Result<(), Vec<String>> {
+    pub fn step(&mut self, iterations: usize) -> Result<(), Vec<String>> {
         let context = ControllerContext {
             state: &self.state,
             video_backend: &self.config.video_backend,
@@ -102,7 +102,7 @@ impl<'a: 'b, 'b> Core<'a, 'b> {
             cdrom_backend: &self.config.cdrom_backend,
         };
 
-        self.executor.run(&self.config, &context)
+        self.executor.run(iterations, &self.config, &context)
     }
 
     pub fn change_disc(&mut self, path: &Path) -> Result<(), String> {
