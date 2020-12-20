@@ -223,7 +223,7 @@ fn thread_main_spinlock(thread_state: Arc<SpinlockThreadState>) {
             for _ in 0..1024 {
                 for index in 0..CONTROLLER_COUNT {
                     let index = index.overflowing_add(start_index as usize).0 % CONTROLLER_COUNT;
-    
+
                     if thread_state.status[index].load(Ordering::Relaxed) == TaskStatus::Pending as u8 {
                         if thread_state.status[index].compare_and_swap(TaskStatus::Pending as u8, TaskStatus::Running as u8, Ordering::AcqRel) == TaskStatus::Pending as u8 {
                             worker_index = index;
@@ -234,7 +234,6 @@ fn thread_main_spinlock(thread_state: Arc<SpinlockThreadState>) {
 
                 spin_loop();
             }
-
 
             spin_loop();
         }
