@@ -76,9 +76,14 @@ pub(crate) fn main_inner<'a>(_window: &'a Window, event_pump: &mut EventPump, co
                 };
 
                 if !handle_events(event_pump, quit_fn, keydown_fn) {
-                    if let Err(()) = handle_core_step(&mut core) {
-                        state.set(State::Exception);
-                        log::error!("Exception");
+                    // Run for 1ms before checking for events again.
+                    let iterations = ((1e-3 / config.time_delta_secs) as usize).max(1);
+                    for _ in 0..iterations {
+                        if let Err(()) = handle_core_step(&mut core) {
+                            state.set(State::Exception);
+                            log::error!("Exception");
+                            break;
+                        }
                     }
                 }
             },

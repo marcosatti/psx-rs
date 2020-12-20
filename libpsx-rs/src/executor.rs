@@ -216,9 +216,9 @@ fn thread_main_spinlock(thread_state: Arc<SpinlockThreadState>) {
                 break 'main;
             }
 
-            let start_index: usize = rng.gen();
+            let start_index: u32 = rng.gen();
             for index in 0..CONTROLLER_COUNT {
-                let index = (start_index + index) % CONTROLLER_COUNT;
+                let index = index.overflowing_add(start_index as usize).0 % CONTROLLER_COUNT;
                 if thread_state.status[index].compare_and_swap(TaskStatus::Pending, TaskStatus::Running, Ordering::AcqRel) == TaskStatus::Pending {
                     worker_index = index;
                     break 'work;
