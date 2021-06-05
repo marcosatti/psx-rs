@@ -17,10 +17,10 @@ struct Output {
     library_search_paths: Vec<String>,
     library_names: Vec<String>,
     defines: Vec<String>,
-    blacklist_item_regexes: Vec<String>,
-    whitelist_function_regexes: Vec<String>,
-    whitelist_type_regexes: Vec<String>,
-    whitelist_variable_regexes: Vec<String>,
+    blocklist_item_regexes: Vec<String>,
+    allowlist_function_regexes: Vec<String>,
+    allowlist_type_regexes: Vec<String>,
+    allowlist_variable_regexes: Vec<String>,
 }
 
 pub fn generate_external_include(external_name: &str) -> PathBuf {
@@ -72,20 +72,20 @@ pub fn external_build(external_name: &str, cxx_mode: bool) {
         builder = builder.header(&header_path);
     }
 
-    for blacklist_item_regex in output.blacklist_item_regexes {
-        builder = builder.blacklist_item(blacklist_item_regex);
+    for blocklist_item_regex in output.blocklist_item_regexes {
+        builder = builder.blocklist_item(blocklist_item_regex);
     }
 
-    for whitelist_function_regex in output.whitelist_function_regexes {
-        builder = builder.whitelist_function(whitelist_function_regex);
+    for allowlist_function_regex in output.allowlist_function_regexes {
+        builder = builder.allowlist_function(allowlist_function_regex);
     }
 
-    for whitelist_type_regex in output.whitelist_type_regexes {
-        builder = builder.whitelist_type(whitelist_type_regex);
+    for allowlist_type_regex in output.allowlist_type_regexes {
+        builder = builder.allowlist_type(allowlist_type_regex);
     }
 
-    for whitelist_variable_regex in output.whitelist_variable_regexes {
-        builder = builder.whitelist_var(whitelist_variable_regex);
+    for allowlist_variable_regex in output.allowlist_variable_regexes {
+        builder = builder.allowlist_var(allowlist_variable_regex);
     }
 
     builder.generate().unwrap().write_to_file(&out_file_path).unwrap();

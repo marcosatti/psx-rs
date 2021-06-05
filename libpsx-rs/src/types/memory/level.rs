@@ -67,7 +67,7 @@ impl B32LevelRegister {
             let register_value = self.memory.load(Ordering::Relaxed);
             let new_register_value = bitfield.insert_into(register_value, value);
 
-            if self.memory.compare_and_swap(register_value, new_register_value, Ordering::AcqRel) == register_value {
+            if self.memory.compare_exchange_weak(register_value, new_register_value, Ordering::Release, Ordering::Relaxed).is_ok() {
                 break;
             }
         }

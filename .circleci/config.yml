@@ -32,6 +32,10 @@ jobs:
             cp external-sample/check-disable.py external/libmirage/check.py
             cp external-sample/check-disable.py external/libcdio/check.py
       - run:
+          name: Formatting check
+          command: |
+            cargo fmt -- --check
+      - run:
           name: Build libpsx-rs
           command: |
             cd libpsx-rs
@@ -41,10 +45,6 @@ jobs:
           command: |
             cd libpsx-rs
             echo "Not implemented yet; see issue 10"
-      - run:
-          name: Formatting check
-          command: |
-            cargo fmt -- --check
 workflows:
   version: 2
   main:

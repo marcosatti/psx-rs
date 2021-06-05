@@ -6,8 +6,8 @@ print(json.dumps({
     'library_search_paths': [],
     'library_names': [],
     'defines': [],
-    'blacklist_item_regexes': [],
-    'whitelist_function_regexes': [],
-    'whitelist_type_regexes': [],
-    'whitelist_variable_regexes': [],
+    'blocklist_item_regexes': [],
+    'allowlist_function_regexes': [],
+    'allowlist_type_regexes': [],
+    'allowlist_variable_regexes': [],
 }))

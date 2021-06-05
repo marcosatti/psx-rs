@@ -12,18 +12,18 @@ library_names = [
 ]
 defines = [
 ]
-blacklist_item_regexes = [
+blocklist_item_regexes = [
 ]
-whitelist_function_regexes = [
+allowlist_function_regexes = [
     r'mirage\w+',
     r'g_\w+',
 ]
-whitelist_type_regexes = [
+allowlist_type_regexes = [
     r'GObject',
     r'GError',
     r'Mirage\w+',
 ]
-whitelist_variable_regexes = [
+allowlist_variable_regexes = [
     r'MIRAGE\w+',
     r'mirage\w+',
 ]
@@ -51,8 +51,8 @@ print(json.dumps({
     'library_search_paths': library_search_paths,
     'library_names': library_names,
     'defines': defines,
-    'blacklist_item_regexes': blacklist_item_regexes,
-    'whitelist_function_regexes': whitelist_function_regexes,
-    'whitelist_type_regexes': whitelist_type_regexes,
-    'whitelist_variable_regexes': whitelist_variable_regexes,
+    'blocklist_item_regexes': blocklist_item_regexes,
+    'allowlist_function_regexes': allowlist_function_regexes,
+    'allowlist_type_regexes': allowlist_type_regexes,
+    'allowlist_variable_regexes': allowlist_variable_regexes,
 }))

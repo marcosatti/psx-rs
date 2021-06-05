@@ -51,8 +51,8 @@ impl ToUsizeChecked for Point2D<isize, Pixel> {
     type Output = Point2D<usize, Pixel>;
 
     fn to_usize_checked(&self) -> Self::Output {
-        assert!(self.x >= 0, format!("X coordinate is not positive: {}", self.x));
-        assert!(self.y >= 0, format!("Y coordinate is not positive: {}", self.y));
+        assert!(self.x >= 0, "X coordinate is not positive: {}", self.x);
+        assert!(self.y >= 0, "Y coordinate is not positive: {}", self.y);
         self.cast()
     }
 }
@@ -61,8 +61,8 @@ impl ToUsizeChecked for Size2D<isize, Pixel> {
     type Output = Size2D<usize, Pixel>;
 
     fn to_usize_checked(&self) -> Self::Output {
-        assert!(self.width >= 0, format!("Width is not positive: {}", self.width));
-        assert!(self.height >= 0, format!("Height is not positive: {}", self.height));
+        assert!(self.width >= 0, "Width is not positive: {}", self.width);
+        assert!(self.height >= 0, "Height is not positive: {}", self.height);
         self.cast()
     }
 }

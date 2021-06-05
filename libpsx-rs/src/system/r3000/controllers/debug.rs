@@ -203,7 +203,7 @@ pub(crate) fn trace_stdout_putchar(state: &ControllerState, cp0_state: &Cp0Contr
         let buffer = &mut BUFFER.lock();
 
         let a1 = state.gpr[4].read_u32();
-        assert!(a1 < 128, format!("stdout putchar a1 = 0x{:08X}", a1)); // Assumed to be ASCII encoding.
+        assert!(a1 < 128, "stdout putchar a1 = 0x{:08X}", a1); // Assumed to be ASCII encoding.
 
         let ch = a1 as u8 as char;
 

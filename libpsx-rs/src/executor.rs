@@ -126,7 +126,7 @@ struct SpinlockThreadState {
 impl SpinlockThreadState {
     fn new() -> SpinlockThreadState {
         SpinlockThreadState {
-            status: array![TaskStatusInt::new(TaskStatus::Finished as _); CONTROLLER_COUNT],
+            status: array![_ => TaskStatusInt::new(TaskStatus::Finished as _); CONTROLLER_COUNT],
             exited: AtomicBool::new(false),
             errors: Mutex::new(Vec::new()),
             errors_occurred: AtomicBool::new(false),
@@ -228,7 +228,9 @@ fn thread_main_spinlock(thread_state: Arc<SpinlockThreadState>) {
                     let index = (base_index.overflowing_add(index as u8).0 as usize) % CONTROLLER_COUNT;
 
                     if thread_state.status[index].load(Ordering::Relaxed) == TaskStatus::Pending as _ {
-                        if thread_state.status[index].compare_and_swap(TaskStatus::Pending as _, TaskStatus::Running as _, Ordering::AcqRel) == TaskStatus::Pending as _ {
+                        let cmpxchg = thread_state.status[index].compare_exchange_weak(TaskStatus::Pending as _, TaskStatus::Running as _, Ordering::Acquire, Ordering::Relaxed);
+
+                        if cmpxchg.is_ok() {
                             worker_index = index;
                             break 'work;
                         }
@@ -326,7 +328,7 @@ impl Executor {
         ];
 
         let time_delta = config.time_delta * config.global_bias;
-        let events = array![|i| Event::Time(time_delta * biases[i]); CONTROLLER_COUNT];
+        let events = array![i => Event::Time(time_delta * biases[i]); CONTROLLER_COUNT];
 
         match self.threaded {
             ThreadedExecutorKind::None => Executor::run_unthreaded(iterations, context, &events),

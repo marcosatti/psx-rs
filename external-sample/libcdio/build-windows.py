@@ -15,14 +15,14 @@ library_names = [
 ]
 defines = [
 ]
-blacklist_item_regexes = [
+blocklist_item_regexes = [
 ]
-whitelist_function_regexes = [
+allowlist_function_regexes = [
     r'cdio\w+',
 ]
-whitelist_type_regexes = [
+allowlist_type_regexes = [
 ]
-whitelist_variable_regexes = [
+allowlist_variable_regexes = [
     r'cdio_version_string',
 ]
 
@@ -32,8 +32,8 @@ print(json.dumps({
     'library_search_paths': library_search_paths,
     'library_names': library_names,
     'defines': defines,
-    'blacklist_item_regexes': blacklist_item_regexes,
-    'whitelist_function_regexes': whitelist_function_regexes,
-    'whitelist_type_regexes': whitelist_type_regexes,
-    'whitelist_variable_regexes': whitelist_variable_regexes,
+    'blocklist_item_regexes': blocklist_item_regexes,
+    'allowlist_function_regexes': allowlist_function_regexes,
+    'allowlist_type_regexes': allowlist_type_regexes,
+    'allowlist_variable_regexes': allowlist_variable_regexes,
 }))

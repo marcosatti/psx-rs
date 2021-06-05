@@ -47,7 +47,7 @@ pub(crate) fn initialize_video_backend_opengl<'a>(window: &'a Window) -> VideoBa
 
     opengl_sys::load_with(|s| {
         let fn_ptr = window.subsystem().gl_get_proc_address(s) as *const std::ffi::c_void;
-        assert!(!fn_ptr.is_null(), format!("Error loading OpenGL function {}: GL_GetProcAddress returned null!", s));
+        assert!(!fn_ptr.is_null(), "Error loading OpenGL function {}: GL_GetProcAddress returned null!", s);
         fn_ptr
     });
 

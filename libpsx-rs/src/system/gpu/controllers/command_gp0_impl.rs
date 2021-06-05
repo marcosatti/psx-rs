@@ -735,13 +735,13 @@ pub(crate) fn command_c0_handler(state: &State, controller_state: &mut Controlle
     let origin = make_position(base, offset).to_usize_checked();
     let size = extract_size(data[2], default_copy_x_size_modifier, default_copy_y_size_modifier).to_usize_checked();
     let rectangle = Rect::new(origin, size);
-    assert!(rectangle.area() != 0, format!("Empty area - what happens? ({:?})", size));
+    assert!(rectangle.area() != 0, "Empty area - what happens? ({:?})", size);
 
     let params = ReadFramebufferParams {
         rectangle,
     };
     let mut data = backend_dispatch::read_framebuffer(video_backend, params)?.map_err(|_| "No backend available for reading framebuffer".to_owned())?;
-    assert!(data.len() == rectangle.area() as usize, format!("Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", rectangle.area(), data.len()));
+    assert!(data.len() == rectangle.area() as usize, "Unexpected length of returned framebuffer rectangle buffer: expecting {}, got {}", rectangle.area(), data.len());
 
     // Data is to be packed from 2 x u16 into u32. Pad the last u16 if its an odd amount.
     if data.len() % 2 != 0 {
